@@ -8,6 +8,7 @@ This module groups the post-update analysis tools:
 |--------|---------|--------------|
 | `evaluate_iterations.py` | Score each frozen stage against the wet-lab batch it actually produced | `results/evaluation/` |
 | `explainability.py` | Visualize what the active model is learning | `results/explainability/<iteration_tag>/` |
+| `stage_r2_predicted_vs_actual.py` | Generate stage-indexed prospective/cumulative wet-lab R² scatter plots | `results/explainability/stage_r2/` |
 
 Both scripts use the same iteration-aware model resolution used by
 `03_optimization` and `05_bo_optimization`.
@@ -25,6 +26,9 @@ python src/06_evaluation_explainability/explainability.py
 
 # Model explainability (alternate palette profile)
 python src/06_evaluation_explainability/explainability.py --palette-profile legacy
+
+# Stage-indexed wet-lab R² plots (default: prospective cumulative)
+python src/06_evaluation_explainability/stage_r2_predicted_vs_actual.py
 ```
 
 ## Shared Inputs
@@ -59,8 +63,6 @@ Outputs:
 - `results/evaluation/stage_performance.png`
 - `results/evaluation/single_objective_progress.png`
 - `results/evaluation/single_objective_progress_metrics.csv`
-- `results/evaluation/figure7_style_ectoin_ucb.png`
-- `results/evaluation/figure7_style_ectoin_ucb_slice_data.csv`
 
 The evaluator reports:
 
@@ -93,22 +95,6 @@ the only difference is a trace ingredient that should effectively be zero.
 Additional evaluation outputs:
 
 - `results/evaluation/next_formulations_performance.png`
-
-Figure-7-style Cryo empirical slice output:
-
-- `results/evaluation/figure7_style_ectoin_ucb.png` (3x2 objective/acquisition layout)
-- `results/evaluation/figure7_style_ectoin_ucb_slice_data.csv` (full sweep data)
-
-Fixed choices for this Figure-7-style plot:
-
-- swept feature is `ectoin_M`
-- non-swept features use the stage training-data median profile anchor
-- acquisition curve is UCB with `kappa=0.5`
-- selected marker is the 1D argmax of the plotted UCB curve
-- stage rows are auto-chosen as earliest/median/latest with data
-
-This is an empirical Cryo analog and does not plot a synthetic ground-truth
-function.
 
 The recommendation-slate audit rescales the saved `07` rows with the frozen
 stage model inside `06`, then compares them with subsequent wet-lab measurements.
@@ -163,7 +149,6 @@ Artifacts:
 | `interaction_contours.png` | Support-aware pairwise contour maps with observed-point overlays and dashed support boundaries |
 | `acquisition_landscape.png` | Static BO score landscape using the `05` visual language, with support and sparsity penalties but no sequential batch-diversity term |
 | `uncertainty_analysis.png` | Decision-focused uncertainty dashboard covering calibration, residual growth, and uncertainty by viability band |
-| `wetlab_r2_predicted_vs_actual.png` | Wet-lab-only predicted-vs-actual scatter colored by signed error (`actual - predicted`), with `R²` computed across all wet-lab rows in the active observed context |
 | `support_diagnostics.png` | Compact support-envelope view for the top features and top pair, split by literature vs wet lab |
 
 Feature importance is always recomputed at runtime against the resolved active
@@ -174,6 +159,34 @@ wet-lab rows influence importance consistently with the active iteration.
 the production BO objective. It reuses the `05_bo_optimization` acquisition
 settings and static penalties, but it does not include sequential
 batch-diversity effects that depend on already-selected candidates.
+
+## Stage-Indexed Wet-Lab R² Plots
+
+`stage_r2_predicted_vs_actual.py` writes stage-indexed wet-lab R² plots to:
+
+- `results/explainability/stage_r2/`
+
+Default behavior is `--evaluation-mode prospective_batch`, implemented as
+prospective cumulative staging:
+
+- `iteration_0_wetlab_r2_predicted_vs_actual.png`: literature-only model on wet-lab stage `<=0`
+- `iteration_1_wetlab_r2_predicted_vs_actual.png`: iteration-1 model on wet-lab stages `<=1`
+- ...
+- `iteration_7_wetlab_r2_predicted_vs_actual.png`: iteration-7 model on wet-lab stages `<=7`
+
+The same script also writes:
+
+- `literature_only_r2_predicted_vs_actual.png` (reported-vs-predicted on literature rows)
+
+Plot styling details:
+
+- x-axis: measured/reported viability; y-axis: predicted mean viability
+- points are colored by prediction uncertainty (`std`) using `plasma` + colorbar
+- annotation box includes `n` and `R²`
+
+Alternative mode:
+
+- `--evaluation-mode post_update_cutoff` uses each iteration model with wet-lab rows up to that model's `updated_at` date.
 
 > `shap` is optional. If it is not installed, the SHAP plots are skipped while
 > the other explainability outputs run.

@@ -54,6 +54,9 @@ python src/06_evaluation_explainability/explainability.py
 # 6. Evaluate frozen stages against their wet-lab batches
 python src/06_evaluation_explainability/evaluate_iterations.py
 
+# 6b. Generate stage-indexed wet-lab R² plots (default: prospective cumulative)
+python src/06_evaluation_explainability/stage_r2_predicted_vs_actual.py
+
 # 7. Generate the next 20-formulation wet-lab batch
 python src/07_next_formulations/next_formulations.py
 ```
@@ -196,15 +199,7 @@ Outputs:
 - `results/evaluation/next_formulations_performance.png`
 - `results/evaluation/single_objective_progress.png`
 - `results/evaluation/single_objective_progress_metrics.csv`
-- `results/evaluation/figure7_style_ectoin_ucb.png`
-- `results/evaluation/figure7_style_ectoin_ucb_slice_data.csv`
-
-`figure7_style_ectoin_ucb.png` is a Cryo empirical analog of the paper's
-Figure 7 layout: each row pairs an objective slice and acquisition slice for
-early/mid/late stages using a 1D sweep on `ectoin_M`. It uses the frozen stage
-model with calibrated prediction, a median-profile anchor for non-swept
-features, and a UCB acquisition (`kappa=0.5`). The selected marker on each row
-is the 1D argmax of that row's acquisition curve.
+- `results/explainability/stage_r2/*.png` (from `stage_r2_predicted_vs_actual.py`)
 
 Candidate-hit matching in `06_evaluation_explainability` uses the same
 practical concentration floor, so frozen candidate rows count as hits in
@@ -232,6 +227,15 @@ Interpretation:
 - hit rate at 50% remains high for recent completed stages (iterations 5 to 7)
 - `07_next_formulations` uses stage residuals plus BO outputs to choose a mixed exploit/explore wet-lab batch
 
+Stage-indexed wet-lab R² visuals are generated separately by:
+
+```bash
+python src/06_evaluation_explainability/stage_r2_predicted_vs_actual.py
+```
+
+The default mode is prospective cumulative (stage-indexed `iteration_0` to
+`iteration_7` in `results/explainability/stage_r2/`).
+
 ![Stage Performance](results/evaluation/stage_performance.png)
 
 ---
@@ -243,6 +247,9 @@ Understanding which ingredients drive cell viability predictions is crucial for 
 ### Explainability Outputs (`iteration_8_prior_mean`)
 
 The explainability outputs shown here live in `results/explainability/iteration_8_prior_mean/`. The suite emphasizes top drivers such as `ethylene_glycol`, `dmso`, `ectoin`, `fbs`, and `hsa`, while making the support envelope explicit.
+
+`explainability.py` no longer emits a wet-lab R² scatter; wet-lab R² reporting
+is now handled by `stage_r2_predicted_vs_actual.py`.
 
 #### SHAP Summary
 

@@ -40,9 +40,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
-import matplotlib.transforms as mtransforms
 from matplotlib.lines import Line2D
-from matplotlib.offsetbox import AnchoredText
 from matplotlib.patches import Patch
 
 try:
@@ -1304,122 +1302,6 @@ def plot_uncertainty_analysis(model, scaler, X: np.ndarray, y: np.ndarray,
     print(f"  ✓ Uncertainty analysis saved: {output_path}")
 
 
-def plot_wetlab_r2_predicted_vs_actual(model, scaler, X: np.ndarray, y: np.ndarray,
-                                       df: pd.DataFrame, output_dir: str,
-                                       is_composite: bool, config: ExplainabilityConfig):
-    """Create a wet-lab-only predicted-vs-actual plot annotated with global wet-lab R²."""
-    annotation_scale = 1.5
-    output_path = os.path.join(output_dir, 'wetlab_r2_predicted_vs_actual.png')
-    y_pred, y_std = predict_model(model, scaler, X, is_composite, return_std=True)
-    y_pred = np.asarray(y_pred, dtype=float)
-    y_std = np.asarray(y_std, dtype=float)
-    masks = source_masks(df)
-    wetlab_mask = masks['wetlab']
-
-    if not np.any(wetlab_mask):
-        fig, ax = plt.subplots(figsize=config.figsize_small)
-        ax.axis('off')
-        ax.text(
-            0.5,
-            0.52,
-            'No wet-lab rows available in active observed context.',
-            ha='center',
-            va='center',
-            fontsize=12 + FONT_BUMP,
-            color='#33414f',
-        )
-        ax.text(
-            0.5,
-            0.40,
-            'Wet-lab R² plot not generated from data points.',
-            ha='center',
-            va='center',
-            fontsize=10 + FONT_BUMP,
-            color='#55616d',
-        )
-        fig.suptitle('Wet-Lab Predicted vs Actual', fontsize=16 + FONT_BUMP, fontweight='bold', y=0.95)
-        fig.tight_layout(rect=(0, 0, 1, 0.93))
-        fig.savefig(output_path, dpi=config.dpi, bbox_inches='tight', transparent=True)
-        plt.close(fig)
-        print(f"  ✓ Wet-lab R² plot saved: {output_path} (n=0, R²=N/A)")
-        return
-
-    y_wet = y[wetlab_mask]
-    y_pred_wet = y_pred[wetlab_mask]
-    signed_error_wet = y_wet - y_pred_wet
-
-    ss_res = float(np.sum((y_wet - y_pred_wet) ** 2))
-    ss_tot = float(np.sum((y_wet - np.mean(y_wet)) ** 2))
-    r2 = None if ss_tot == 0 else float(1.0 - (ss_res / ss_tot))
-    r2_text = 'N/A' if r2 is None else f'{r2:.3f}'
-
-    fig, ax = plt.subplots(figsize=config.figsize_small)
-    ax.plot([0, 100], [0, 100], linestyle='--', color='#4a5966', alpha=0.7, linewidth=2)
-    max_abs_signed_error = float(np.max(np.abs(signed_error_wet))) if len(signed_error_wet) else 1.0
-    if max_abs_signed_error <= 0.0:
-        max_abs_signed_error = 1.0
-    signed_error_norm = mcolors.TwoSlopeNorm(vmin=-max_abs_signed_error, vcenter=0.0, vmax=max_abs_signed_error)
-
-    scatter = ax.scatter(
-        y_wet,
-        y_pred_wet,
-        c=signed_error_wet,
-        cmap='plasma',
-        norm=signed_error_norm,
-        marker=config.marker_wetlab,
-        s=80,
-        alpha=0.90,
-        edgecolors='white',
-        linewidths=0.55,
-    )
-    plt.colorbar(scatter, ax=ax, label='Signed Error (pp, actual - predicted)')
-    ax.set_xlim(0, 100)
-    ax.set_ylim(0, 100)
-    ax.set_xlabel('Measured / Reported Viability (%)')
-    ax.set_ylabel('Predicted Viability (%)')
-    ax.set_title('Wet-Lab Predicted vs Actual', fontsize=14 + FONT_BUMP, fontweight='bold', pad=10)
-
-    legend_handle = Line2D(
-        [0],
-        [0],
-        marker=config.marker_wetlab,
-        color='none',
-        markerfacecolor=config.color_wetlab,
-        markeredgecolor='white',
-        markeredgewidth=0.6,
-        label='Wet Lab',
-        markersize=8,
-        alpha=0.95,
-    )
-    ax.legend(handles=[legend_handle], loc='lower right')
-
-    annotation_transform = ax.transAxes + mtransforms.ScaledTranslation(
-        20.0 / fig.dpi,
-        -20.0 / fig.dpi,
-        fig.dpi_scale_trans,
-    )
-    stats_box = AnchoredText(
-        f'n = {len(y_wet)}\nR² = {r2_text}',
-        loc='upper left',
-        bbox_to_anchor=(0.0, 1.0),
-        bbox_transform=annotation_transform,
-        prop={'size': (10 + FONT_BUMP) * annotation_scale},
-        frameon=True,
-        borderpad=0.18 * annotation_scale,
-        pad=0.18 * annotation_scale,
-    )
-    stats_box.patch.set_facecolor('white')
-    stats_box.patch.set_alpha(0.82)
-    stats_box.patch.set_edgecolor('#c4ccd4')
-    stats_box.patch.set_boxstyle(f'round,pad={0.28 * annotation_scale}')
-    ax.add_artist(stats_box)
-
-    fig.tight_layout()
-    fig.savefig(output_path, dpi=config.dpi, bbox_inches='tight', transparent=True)
-    plt.close(fig)
-    print(f"  ✓ Wet-lab R² plot saved: {output_path} (n={len(y_wet)}, R²={r2_text})")
-
-
 def plot_support_diagnostics(X: np.ndarray, y: np.ndarray, feature_names: Sequence[str],
                              importance_df: pd.DataFrame, df: pd.DataFrame,
                              output_dir: str, config: ExplainabilityConfig):
@@ -1576,10 +1458,7 @@ def main(argv: Optional[Sequence[str]] = None):
     print("\n6️⃣  GP Uncertainty Visualization")
     plot_uncertainty_analysis(gp, scaler, X, y, df, output_dir, is_composite, config)
 
-    print("\n7️⃣  Wet-Lab R² Predicted vs Actual")
-    plot_wetlab_r2_predicted_vs_actual(gp, scaler, X, y, df, output_dir, is_composite, config)
-
-    print("\n8️⃣  Support Diagnostics")
+    print("\n7️⃣  Support Diagnostics")
     plot_support_diagnostics(X, y, feature_names, importance_df, df, output_dir, config)
 
     print("\n" + "=" * 80)
