@@ -7,4 +7,5 @@ stage,label,iteration_dir,timestamp,model_method,batch_dates,batch_rows,batch_be
 5,iteration_5,iteration_5_prior_mean,2026-03-18T14:03:08.919319,prior_mean_correction,"2026-03-24,2026-03-26",23,95.15,95.15,0.0,95.15,20.8718,0.7935,0.8261,12.0,76.198,0.8,19.6563,0.4286,1.0
 6,iteration_6,iteration_6_prior_mean,2026-03-27T11:41:35.221080,prior_mean_correction,2026-03-31,6,74.16,95.15,0.0,95.15,20.6788,0.6571,0.8333,6.0,74.02,1.0,-7.5949,0.5,0.25
 7,iteration_7,iteration_7_prior_mean,2026-04-01T13:51:38.837195,prior_mean_correction,2026-04-09,12,79.04,95.15,0.0,95.15,18.4976,0.8182,0.75,12.0,76.0725,1.0,-18.9955,0.875,0.0
-8,iteration_8,iteration_8_prior_mean,2026-04-10T16:26:50.795134,prior_mean_correction,,0,,95.15,0.0,95.15,,,,,,,,,
+8,iteration_8,iteration_8_prior_mean,2026-04-10T16:26:50.795134,prior_mean_correction,2026-04-14,8,71.7,95.15,0.0,95.15,10.1005,0.8571,0.75,8.0,70.9633,1.0,-2.3645,1.0,0.2
+9,iteration_9,iteration_9_prior_mean,2026-04-15T11:26:42.109476,prior_mean_correction,,0,,95.15,0.0,95.15,,,,,,,,,

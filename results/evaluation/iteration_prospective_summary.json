@@ -2680,28 +2680,53 @@
     "timestamp": "2026-04-10T16:26:50.795134",
     "model_method": "prior_mean_correction",
     "is_composite_model": true,
-    "batch_dates": [],
-    "batch_rows": 0,
-    "batch_best_actual_viability": null,
+    "batch_dates": [
+      "2026-04-14"
+    ],
+    "batch_rows": 8,
+    "batch_best_actual_viability": 71.7,
     "batch_metrics": {
-      "n_rows": 0,
-      "rmse": null,
-      "mae": null,
-      "r2": null,
-      "spearman_rho": null,
-      "kendall_tau": null,
-      "mean_uncertainty": null,
-      "coverage_1sigma": null,
-      "coverage_2sigma": null,
-      "hit_rate_ge_50": null,
-      "hit_rate_ge_70": null
+      "n_rows": 8,
+      "rmse": 10.1005,
+      "mae": 8.3293,
+      "r2": -0.0051,
+      "spearman_rho": 0.8571,
+      "kendall_tau": 0.7857,
+      "mean_uncertainty": 15.5382,
+      "coverage_1sigma": 1.0,
+      "coverage_2sigma": 1.0,
+      "hit_rate_ge_50": 0.75,
+      "hit_rate_ge_70": 0.75
     },
     "candidate_evaluation": [
       {
         "file": "bo_candidates_dmso_free_iteration_8_prior_mean.csv",
         "n_candidates": 20,
-        "n_tested_later": 0,
-        "tested_examples": [],
+        "n_tested_later": 2,
+        "tested_examples": [
+          {
+            "rank": 4,
+            "source_rank": 4,
+            "effective_rank": 4,
+            "predicted_viability": 75.8016524862424,
+            "uncertainty": 14.067825589793257,
+            "experiment_id": "EXP8102",
+            "experiment_date": "4/14/26",
+            "actual_viability": 71.7,
+            "signature": "26.9mM dmso + 341.2mM ectoin + 1.89M ethylene_glycol + 6.2% fbs"
+          },
+          {
+            "rank": 8,
+            "source_rank": 8,
+            "effective_rank": 8,
+            "predicted_viability": 75.11436718228309,
+            "uncertainty": 14.040644815555845,
+            "experiment_id": "EXP8103",
+            "experiment_date": "4/14/26",
+            "actual_viability": 69.97,
+            "signature": "35.8mM dmso + 337.2mM ectoin + 1.86M ethylene_glycol + 6.4% fbs"
+          }
+        ],
         "top_k": {
           "top_3": {
             "tested_count": 0,
@@ -2712,28 +2737,62 @@
             "hit_rate_ge_70": null
           },
           "top_5": {
-            "tested_count": 0,
-            "tested_fraction": 0.0,
-            "mean_actual_viability": null,
-            "best_actual_viability": null,
-            "hit_rate_ge_50": null,
-            "hit_rate_ge_70": null
+            "tested_count": 1,
+            "tested_fraction": 0.2,
+            "mean_actual_viability": 71.7,
+            "best_actual_viability": 71.7,
+            "hit_rate_ge_50": 1.0,
+            "hit_rate_ge_70": 1.0
           },
           "top_10": {
-            "tested_count": 0,
-            "tested_fraction": 0.0,
-            "mean_actual_viability": null,
-            "best_actual_viability": null,
-            "hit_rate_ge_50": null,
-            "hit_rate_ge_70": null
+            "tested_count": 2,
+            "tested_fraction": 0.2,
+            "mean_actual_viability": 70.835,
+            "best_actual_viability": 71.7,
+            "hit_rate_ge_50": 1.0,
+            "hit_rate_ge_70": 0.5
           }
         }
       },
       {
         "file": "bo_candidates_general_iteration_8_prior_mean.csv",
         "n_candidates": 20,
-        "n_tested_later": 0,
-        "tested_examples": [],
+        "n_tested_later": 3,
+        "tested_examples": [
+          {
+            "rank": 5,
+            "source_rank": 5,
+            "effective_rank": 5,
+            "predicted_viability": 75.48451665190285,
+            "uncertainty": 14.97872143910003,
+            "experiment_id": "EXP8101",
+            "experiment_date": "4/14/26",
+            "actual_viability": 71.22,
+            "signature": "362.0mM ectoin + 1.94M ethylene_glycol + 6.6% fbs"
+          },
+          {
+            "rank": 18,
+            "source_rank": 18,
+            "effective_rank": 18,
+            "predicted_viability": 71.9060664830385,
+            "uncertainty": 15.72471516052985,
+            "experiment_id": "EXP8105",
+            "experiment_date": "4/14/26",
+            "actual_viability": 64.69,
+            "signature": "380.2mM ectoin + 1.83M ethylene_glycol + 3.0% fbs"
+          },
+          {
+            "rank": 20,
+            "source_rank": 20,
+            "effective_rank": 20,
+            "predicted_viability": 69.18598233396912,
+            "uncertainty": 17.48567584349202,
+            "experiment_id": "EXP8104",
+            "experiment_date": "4/14/26",
+            "actual_viability": 58.76,
+            "signature": "408.3mM ectoin + 2.06M ethylene_glycol + 7.1% fbs"
+          }
+        ],
         "top_k": {
           "top_3": {
             "tested_count": 0,
@@ -2744,20 +2803,20 @@
             "hit_rate_ge_70": null
           },
           "top_5": {
-            "tested_count": 0,
-            "tested_fraction": 0.0,
-            "mean_actual_viability": null,
-            "best_actual_viability": null,
-            "hit_rate_ge_50": null,
-            "hit_rate_ge_70": null
+            "tested_count": 1,
+            "tested_fraction": 0.2,
+            "mean_actual_viability": 71.22,
+            "best_actual_viability": 71.22,
+            "hit_rate_ge_50": 1.0,
+            "hit_rate_ge_70": 1.0
           },
           "top_10": {
-            "tested_count": 0,
-            "tested_fraction": 0.0,
-            "mean_actual_viability": null,
-            "best_actual_viability": null,
-            "hit_rate_ge_50": null,
-            "hit_rate_ge_70": null
+            "tested_count": 1,
+            "tested_fraction": 0.1,
+            "mean_actual_viability": 71.22,
+            "best_actual_viability": 71.22,
+            "hit_rate_ge_50": 1.0,
+            "hit_rate_ge_70": 1.0
           }
         }
       },
@@ -2795,6 +2854,430 @@
       },
       {
         "file": "candidates_general_iteration_8_prior_mean.csv",
+        "n_candidates": 20,
+        "n_tested_later": 0,
+        "tested_examples": [],
+        "top_k": {
+          "top_3": {
+            "tested_count": 0,
+            "tested_fraction": 0.0,
+            "mean_actual_viability": null,
+            "best_actual_viability": null,
+            "hit_rate_ge_50": null,
+            "hit_rate_ge_70": null
+          },
+          "top_5": {
+            "tested_count": 0,
+            "tested_fraction": 0.0,
+            "mean_actual_viability": null,
+            "best_actual_viability": null,
+            "hit_rate_ge_50": null,
+            "hit_rate_ge_70": null
+          },
+          "top_10": {
+            "tested_count": 0,
+            "tested_fraction": 0.0,
+            "mean_actual_viability": null,
+            "best_actual_viability": null,
+            "hit_rate_ge_50": null,
+            "hit_rate_ge_70": null
+          }
+        }
+      }
+    ],
+    "next_formulations_evaluation": {
+      "file": "next_formulations.csv",
+      "n_rows_in_output": 20,
+      "n_tested_later": 8,
+      "tested_examples": [
+        {
+          "recommendation_type": "exploit",
+          "origin": "bo_candidate",
+          "bucket_rank": 3,
+          "predicted_viability": 75.8016524862424,
+          "actual_viability": 71.7,
+          "residual": -4.101652486242401,
+          "experiment_id": "EXP8102",
+          "experiment_date": "4/14/26",
+          "formulation": "26.9mM dmso + 341.2mM ectoin + 1.89M ethylene_glycol + 6.2% fbs"
+        },
+        {
+          "recommendation_type": "exploit",
+          "origin": "bo_candidate",
+          "bucket_rank": 5,
+          "predicted_viability": 75.48451665190285,
+          "actual_viability": 71.22,
+          "residual": -4.264516651902852,
+          "experiment_id": "EXP8101",
+          "experiment_date": "4/14/26",
+          "formulation": "362.0mM ectoin + 1.94M ethylene_glycol + 6.6% fbs"
+        },
+        {
+          "recommendation_type": "exploit",
+          "origin": "bo_candidate",
+          "bucket_rank": 7,
+          "predicted_viability": 75.11436718228309,
+          "actual_viability": 69.97,
+          "residual": -5.144367182283091,
+          "experiment_id": "EXP8103",
+          "experiment_date": "4/14/26",
+          "formulation": "35.8mM dmso + 337.2mM ectoin + 1.86M ethylene_glycol + 6.4% fbs"
+        },
+        {
+          "recommendation_type": "explore",
+          "origin": "coverage_probe",
+          "bucket_rank": 8,
+          "predicted_viability": 69.18598233396912,
+          "actual_viability": 58.76,
+          "residual": -10.425982333969124,
+          "experiment_id": "EXP8104",
+          "experiment_date": "4/14/26",
+          "formulation": "408.3mM ectoin + 2.06M ethylene_glycol + 7.1% fbs"
+        },
+        {
+          "recommendation_type": "explore",
+          "origin": "coverage_probe",
+          "bucket_rank": 9,
+          "predicted_viability": 71.9060664830385,
+          "actual_viability": 64.69,
+          "residual": -7.216066483038503,
+          "experiment_id": "EXP8105",
+          "experiment_date": "4/14/26",
+          "formulation": "380.2mM ectoin + 1.83M ethylene_glycol + 3.0% fbs"
+        },
+        {
+          "recommendation_type": "explore",
+          "origin": "blindspot_probe",
+          "bucket_rank": 10,
+          "predicted_viability": 43.692469303620854,
+          "actual_viability": 64.37,
+          "residual": 20.67753069637915,
+          "experiment_id": "EXP8106",
+          "experiment_date": "4/14/26",
+          "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.7% peg_3350 + 149.5mM proline + 7.2% pvp"
+        },
+        {
+          "recommendation_type": "explore",
+          "origin": "blindspot_probe",
+          "bucket_rank": 12,
+          "predicted_viability": 56.73461708673789,
+          "actual_viability": 54.64,
+          "residual": -2.094617086737891,
+          "experiment_id": "EXP8107",
+          "experiment_date": "4/14/26",
+          "formulation": "704.0mM dmso + 125.0mM sucrose"
+        },
+        {
+          "recommendation_type": "explore",
+          "origin": "blindspot_probe",
+          "bucket_rank": 13,
+          "predicted_viability": 52.58312247907207,
+          "actual_viability": 39.82,
+          "residual": -12.763122479072067,
+          "experiment_id": "EXP8108",
+          "experiment_date": "4/14/26",
+          "formulation": "616.0mM dmso + 100.0mM sucrose"
+        }
+      ],
+      "overall": {
+        "n_rows_in_output": 20,
+        "n_tested_later": 8,
+        "tested_fraction": 0.4,
+        "mean_predicted_viability": 65.0628,
+        "mean_uncertainty": 15.5411,
+        "mean_actual_viability": 61.8962,
+        "best_actual_viability": 71.7,
+        "hit_rate_ge_50": 0.875,
+        "hit_rate_ge_70": 0.25,
+        "mean_signed_residual": -3.1666,
+        "mean_abs_residual": 8.336,
+        "rmse": 10.1063,
+        "coverage_1sigma": 1.0,
+        "coverage_2sigma": 1.0,
+        "fraction_actual_gt_predicted": 0.125,
+        "fraction_residual_ge_5": 0.125,
+        "fraction_residual_ge_10": 0.125
+      },
+      "by_recommendation_type": {
+        "exploit": {
+          "n_rows_in_output": 7,
+          "n_tested_later": 3,
+          "tested_fraction": 0.4286,
+          "mean_predicted_viability": 75.4668,
+          "mean_uncertainty": 14.3624,
+          "mean_actual_viability": 70.9633,
+          "best_actual_viability": 71.7,
+          "hit_rate_ge_50": 1.0,
+          "hit_rate_ge_70": 0.6667,
+          "mean_signed_residual": -4.5035,
+          "mean_abs_residual": 4.5035,
+          "rmse": 4.5267,
+          "coverage_1sigma": 1.0,
+          "coverage_2sigma": 1.0,
+          "fraction_actual_gt_predicted": 0.0,
+          "fraction_residual_ge_5": 0.0,
+          "fraction_residual_ge_10": 0.0
+        },
+        "explore": {
+          "n_rows_in_output": 13,
+          "n_tested_later": 5,
+          "tested_fraction": 0.3846,
+          "mean_predicted_viability": 58.8205,
+          "mean_uncertainty": 16.2482,
+          "mean_actual_viability": 56.456,
+          "best_actual_viability": 64.69,
+          "hit_rate_ge_50": 0.8,
+          "hit_rate_ge_70": 0.0,
+          "mean_signed_residual": -2.3645,
+          "mean_abs_residual": 10.6355,
+          "rmse": 12.2932,
+          "coverage_1sigma": 1.0,
+          "coverage_2sigma": 1.0,
+          "fraction_actual_gt_predicted": 0.2,
+          "fraction_residual_ge_5": 0.2,
+          "fraction_residual_ge_10": 0.2
+        }
+      },
+      "by_origin": {
+        "bo_candidate": {
+          "n_rows_in_output": 7,
+          "n_tested_later": 3,
+          "tested_fraction": 0.4286,
+          "mean_predicted_viability": 75.4668,
+          "mean_uncertainty": 14.3624,
+          "mean_actual_viability": 70.9633,
+          "best_actual_viability": 71.7,
+          "hit_rate_ge_50": 1.0,
+          "hit_rate_ge_70": 0.6667,
+          "mean_signed_residual": -4.5035,
+          "mean_abs_residual": 4.5035,
+          "rmse": 4.5267,
+          "coverage_1sigma": 1.0,
+          "coverage_2sigma": 1.0,
+          "fraction_actual_gt_predicted": 0.0,
+          "fraction_residual_ge_5": 0.0,
+          "fraction_residual_ge_10": 0.0
+        },
+        "local_rank_probe": {
+          "n_rows_in_output": 7,
+          "n_tested_later": 0,
+          "tested_fraction": 0.0,
+          "mean_predicted_viability": null,
+          "mean_uncertainty": null,
+          "mean_actual_viability": null,
+          "best_actual_viability": null,
+          "hit_rate_ge_50": null,
+          "hit_rate_ge_70": null,
+          "mean_signed_residual": null,
+          "mean_abs_residual": null,
+          "rmse": null,
+          "coverage_1sigma": null,
+          "coverage_2sigma": null,
+          "fraction_actual_gt_predicted": null,
+          "fraction_residual_ge_5": null,
+          "fraction_residual_ge_10": null
+        },
+        "blindspot_probe": {
+          "n_rows_in_output": 4,
+          "n_tested_later": 3,
+          "tested_fraction": 0.75,
+          "mean_predicted_viability": 51.0034,
+          "mean_uncertainty": 16.0103,
+          "mean_actual_viability": 52.9433,
+          "best_actual_viability": 64.37,
+          "hit_rate_ge_50": 0.6667,
+          "hit_rate_ge_70": 0.0,
+          "mean_signed_residual": 1.9399,
+          "mean_abs_residual": 11.8451,
+          "rmse": 14.0813,
+          "coverage_1sigma": 1.0,
+          "coverage_2sigma": 1.0,
+          "fraction_actual_gt_predicted": 0.3333,
+          "fraction_residual_ge_5": 0.3333,
+          "fraction_residual_ge_10": 0.3333
+        },
+        "generated_probe": {
+          "n_rows_in_output": 0,
+          "n_tested_later": 0,
+          "tested_fraction": null,
+          "mean_predicted_viability": null,
+          "mean_uncertainty": null,
+          "mean_actual_viability": null,
+          "best_actual_viability": null,
+          "hit_rate_ge_50": null,
+          "hit_rate_ge_70": null,
+          "mean_signed_residual": null,
+          "mean_abs_residual": null,
+          "rmse": null,
+          "coverage_1sigma": null,
+          "coverage_2sigma": null,
+          "fraction_actual_gt_predicted": null,
+          "fraction_residual_ge_5": null,
+          "fraction_residual_ge_10": null
+        },
+        "explore_fallback": {
+          "n_rows_in_output": 0,
+          "n_tested_later": 0,
+          "tested_fraction": null,
+          "mean_predicted_viability": null,
+          "mean_uncertainty": null,
+          "mean_actual_viability": null,
+          "best_actual_viability": null,
+          "hit_rate_ge_50": null,
+          "hit_rate_ge_70": null,
+          "mean_signed_residual": null,
+          "mean_abs_residual": null,
+          "rmse": null,
+          "coverage_1sigma": null,
+          "coverage_2sigma": null,
+          "fraction_actual_gt_predicted": null,
+          "fraction_residual_ge_5": null,
+          "fraction_residual_ge_10": null
+        },
+        "coverage_probe": {
+          "n_rows_in_output": 2,
+          "n_tested_later": 2,
+          "tested_fraction": 1.0,
+          "mean_predicted_viability": 70.546,
+          "mean_uncertainty": 16.6052,
+          "mean_actual_viability": 61.725,
+          "best_actual_viability": 64.69,
+          "hit_rate_ge_50": 1.0,
+          "hit_rate_ge_70": 0.0,
+          "mean_signed_residual": -8.821,
+          "mean_abs_residual": 8.821,
+          "rmse": 8.9658,
+          "coverage_1sigma": 1.0,
+          "coverage_2sigma": 1.0,
+          "fraction_actual_gt_predicted": 0.0,
+          "fraction_residual_ge_5": 0.0,
+          "fraction_residual_ge_10": 0.0
+        }
+      }
+    }
+  },
+  {
+    "stage": 9,
+    "label": "iteration_9",
+    "iteration_dir": "iteration_9_prior_mean",
+    "timestamp": "2026-04-15T11:26:42.109476",
+    "model_method": "prior_mean_correction",
+    "is_composite_model": true,
+    "batch_dates": [],
+    "batch_rows": 0,
+    "batch_best_actual_viability": null,
+    "batch_metrics": {
+      "n_rows": 0,
+      "rmse": null,
+      "mae": null,
+      "r2": null,
+      "spearman_rho": null,
+      "kendall_tau": null,
+      "mean_uncertainty": null,
+      "coverage_1sigma": null,
+      "coverage_2sigma": null,
+      "hit_rate_ge_50": null,
+      "hit_rate_ge_70": null
+    },
+    "candidate_evaluation": [
+      {
+        "file": "bo_candidates_dmso_free_iteration_9_prior_mean.csv",
+        "n_candidates": 20,
+        "n_tested_later": 0,
+        "tested_examples": [],
+        "top_k": {
+          "top_3": {
+            "tested_count": 0,
+            "tested_fraction": 0.0,
+            "mean_actual_viability": null,
+            "best_actual_viability": null,
+            "hit_rate_ge_50": null,
+            "hit_rate_ge_70": null
+          },
+          "top_5": {
+            "tested_count": 0,
+            "tested_fraction": 0.0,
+            "mean_actual_viability": null,
+            "best_actual_viability": null,
+            "hit_rate_ge_50": null,
+            "hit_rate_ge_70": null
+          },
+          "top_10": {
+            "tested_count": 0,
+            "tested_fraction": 0.0,
+            "mean_actual_viability": null,
+            "best_actual_viability": null,
+            "hit_rate_ge_50": null,
+            "hit_rate_ge_70": null
+          }
+        }
+      },
+      {
+        "file": "bo_candidates_general_iteration_9_prior_mean.csv",
+        "n_candidates": 20,
+        "n_tested_later": 0,
+        "tested_examples": [],
+        "top_k": {
+          "top_3": {
+            "tested_count": 0,
+            "tested_fraction": 0.0,
+            "mean_actual_viability": null,
+            "best_actual_viability": null,
+            "hit_rate_ge_50": null,
+            "hit_rate_ge_70": null
+          },
+          "top_5": {
+            "tested_count": 0,
+            "tested_fraction": 0.0,
+            "mean_actual_viability": null,
+            "best_actual_viability": null,
+            "hit_rate_ge_50": null,
+            "hit_rate_ge_70": null
+          },
+          "top_10": {
+            "tested_count": 0,
+            "tested_fraction": 0.0,
+            "mean_actual_viability": null,
+            "best_actual_viability": null,
+            "hit_rate_ge_50": null,
+            "hit_rate_ge_70": null
+          }
+        }
+      },
+      {
+        "file": "candidates_dmso_free_iteration_9_prior_mean.csv",
+        "n_candidates": 20,
+        "n_tested_later": 0,
+        "tested_examples": [],
+        "top_k": {
+          "top_3": {
+            "tested_count": 0,
+            "tested_fraction": 0.0,
+            "mean_actual_viability": null,
+            "best_actual_viability": null,
+            "hit_rate_ge_50": null,
+            "hit_rate_ge_70": null
+          },
+          "top_5": {
+            "tested_count": 0,
+            "tested_fraction": 0.0,
+            "mean_actual_viability": null,
+            "best_actual_viability": null,
+            "hit_rate_ge_50": null,
+            "hit_rate_ge_70": null
+          },
+          "top_10": {
+            "tested_count": 0,
+            "tested_fraction": 0.0,
+            "mean_actual_viability": null,
+            "best_actual_viability": null,
+            "hit_rate_ge_50": null,
+            "hit_rate_ge_70": null
+          }
+        }
+      },
+      {
+        "file": "candidates_general_iteration_9_prior_mean.csv",
         "n_candidates": 20,
         "n_tested_later": 0,
         "tested_examples": [],
