@@ -1,0 +1,828 @@
+[
+  {
+    "batch_size": 6,
+    "heuristic_score": 5.0777,
+    "target_counts": {
+      "exploit": 4,
+      "local_rank": 1,
+      "blindspot": 1
+    },
+    "selected_counts": {
+      "exploit": 4,
+      "local_rank": 1,
+      "blindspot": 1
+    },
+    "mean_predicted_viability": 69.6766,
+    "mean_uncertainty": 14.1852,
+    "unique_chemistry_families": 2,
+    "rows": [
+      {
+        "selection_order": 1,
+        "recommendation_id": 1,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 1,
+        "predicted_viability": 74.5875,
+        "uncertainty": 12.5782,
+        "batch_utility": 0.8958,
+        "formulation": "301.7mM ectoin + 1.87M ethylene_glycol + 4.9% fbs + 120.7mM raffinose"
+      },
+      {
+        "selection_order": 2,
+        "recommendation_id": 2,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 2,
+        "predicted_viability": 73.7215,
+        "uncertainty": 13.1626,
+        "batch_utility": 0.8573,
+        "formulation": "296.2mM ectoin + 1.88M ethylene_glycol + 4.9% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 3,
+        "recommendation_id": 3,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 3,
+        "predicted_viability": 73.4493,
+        "uncertainty": 13.0645,
+        "batch_utility": 0.8519,
+        "formulation": "9.6mM dmso + 295.8mM ectoin + 1.87M ethylene_glycol + 4.6% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 4,
+        "recommendation_id": 5,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 5,
+        "predicted_viability": 72.1386,
+        "uncertainty": 12.4024,
+        "batch_utility": 0.8303,
+        "formulation": "28.9mM dmso + 289.6mM ectoin + 1.69M ethylene_glycol + 5.0% fbs"
+      },
+      {
+        "selection_order": 5,
+        "recommendation_id": 16,
+        "recommendation_type": "explore",
+        "origin": "local_rank_probe",
+        "bucket_rank": 4,
+        "predicted_viability": 72.0137,
+        "uncertainty": 13.2333,
+        "batch_utility": 0.6083,
+        "formulation": "296.2mM ectoin + 2.07M ethylene_glycol + 5.4% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 6,
+        "recommendation_id": 19,
+        "recommendation_type": "explore",
+        "origin": "blindspot_probe",
+        "bucket_rank": 7,
+        "predicted_viability": 52.1491,
+        "uncertainty": 20.6703,
+        "batch_utility": 0.7541,
+        "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.0% peg_3350 + 149.5mM proline + 5.4% pvp"
+      }
+    ]
+  },
+  {
+    "batch_size": 7,
+    "heuristic_score": 5.8201,
+    "target_counts": {
+      "exploit": 4,
+      "local_rank": 1,
+      "blindspot": 2
+    },
+    "selected_counts": {
+      "exploit": 4,
+      "local_rank": 1,
+      "blindspot": 2
+    },
+    "mean_predicted_viability": 66.8649,
+    "mean_uncertainty": 15.1317,
+    "unique_chemistry_families": 2,
+    "rows": [
+      {
+        "selection_order": 1,
+        "recommendation_id": 1,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 1,
+        "predicted_viability": 74.5875,
+        "uncertainty": 12.5782,
+        "batch_utility": 0.8958,
+        "formulation": "301.7mM ectoin + 1.87M ethylene_glycol + 4.9% fbs + 120.7mM raffinose"
+      },
+      {
+        "selection_order": 2,
+        "recommendation_id": 2,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 2,
+        "predicted_viability": 73.7215,
+        "uncertainty": 13.1626,
+        "batch_utility": 0.8573,
+        "formulation": "296.2mM ectoin + 1.88M ethylene_glycol + 4.9% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 3,
+        "recommendation_id": 3,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 3,
+        "predicted_viability": 73.4493,
+        "uncertainty": 13.0645,
+        "batch_utility": 0.8519,
+        "formulation": "9.6mM dmso + 295.8mM ectoin + 1.87M ethylene_glycol + 4.6% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 4,
+        "recommendation_id": 5,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 5,
+        "predicted_viability": 72.1386,
+        "uncertainty": 12.4024,
+        "batch_utility": 0.8303,
+        "formulation": "28.9mM dmso + 289.6mM ectoin + 1.69M ethylene_glycol + 5.0% fbs"
+      },
+      {
+        "selection_order": 5,
+        "recommendation_id": 16,
+        "recommendation_type": "explore",
+        "origin": "local_rank_probe",
+        "bucket_rank": 4,
+        "predicted_viability": 72.0137,
+        "uncertainty": 13.2333,
+        "batch_utility": 0.6083,
+        "formulation": "296.2mM ectoin + 2.07M ethylene_glycol + 5.4% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 6,
+        "recommendation_id": 19,
+        "recommendation_type": "explore",
+        "origin": "blindspot_probe",
+        "bucket_rank": 7,
+        "predicted_viability": 52.1491,
+        "uncertainty": 20.6703,
+        "batch_utility": 0.7541,
+        "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.0% peg_3350 + 149.5mM proline + 5.4% pvp"
+      },
+      {
+        "selection_order": 7,
+        "recommendation_id": 20,
+        "recommendation_type": "explore",
+        "origin": "blindspot_probe",
+        "bucket_rank": 8,
+        "predicted_viability": 49.9946,
+        "uncertainty": 20.8105,
+        "batch_utility": 0.7424,
+        "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.7% peg_3350 + 186.9mM proline + 9.0% pvp"
+      }
+    ]
+  },
+  {
+    "batch_size": 8,
+    "heuristic_score": 6.5916,
+    "target_counts": {
+      "exploit": 5,
+      "local_rank": 2,
+      "blindspot": 1
+    },
+    "selected_counts": {
+      "exploit": 5,
+      "local_rank": 2,
+      "blindspot": 1
+    },
+    "mean_predicted_viability": 70.5109,
+    "mean_uncertainty": 13.9007,
+    "unique_chemistry_families": 2,
+    "rows": [
+      {
+        "selection_order": 1,
+        "recommendation_id": 1,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 1,
+        "predicted_viability": 74.5875,
+        "uncertainty": 12.5782,
+        "batch_utility": 0.8958,
+        "formulation": "301.7mM ectoin + 1.87M ethylene_glycol + 4.9% fbs + 120.7mM raffinose"
+      },
+      {
+        "selection_order": 2,
+        "recommendation_id": 2,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 2,
+        "predicted_viability": 73.7215,
+        "uncertainty": 13.1626,
+        "batch_utility": 0.8573,
+        "formulation": "296.2mM ectoin + 1.88M ethylene_glycol + 4.9% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 3,
+        "recommendation_id": 3,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 3,
+        "predicted_viability": 73.4493,
+        "uncertainty": 13.0645,
+        "batch_utility": 0.8519,
+        "formulation": "9.6mM dmso + 295.8mM ectoin + 1.87M ethylene_glycol + 4.6% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 4,
+        "recommendation_id": 4,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 4,
+        "predicted_viability": 73.0055,
+        "uncertainty": 13.4473,
+        "batch_utility": 0.8301,
+        "formulation": "296.4mM ectoin + 1.87M ethylene_glycol + 4.8% fbs + 0.3% methylcellulose"
+      },
+      {
+        "selection_order": 5,
+        "recommendation_id": 5,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 5,
+        "predicted_viability": 72.1386,
+        "uncertainty": 12.4024,
+        "batch_utility": 0.8303,
+        "formulation": "28.9mM dmso + 289.6mM ectoin + 1.69M ethylene_glycol + 5.0% fbs"
+      },
+      {
+        "selection_order": 6,
+        "recommendation_id": 14,
+        "recommendation_type": "explore",
+        "origin": "local_rank_probe",
+        "bucket_rank": 2,
+        "predicted_viability": 73.0221,
+        "uncertainty": 12.6471,
+        "batch_utility": 0.6038,
+        "formulation": "301.7mM ectoin + 2.06M ethylene_glycol + 5.4% fbs + 120.7mM raffinose"
+      },
+      {
+        "selection_order": 7,
+        "recommendation_id": 16,
+        "recommendation_type": "explore",
+        "origin": "local_rank_probe",
+        "bucket_rank": 4,
+        "predicted_viability": 72.0137,
+        "uncertainty": 13.2333,
+        "batch_utility": 0.6083,
+        "formulation": "296.2mM ectoin + 2.07M ethylene_glycol + 5.4% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 8,
+        "recommendation_id": 19,
+        "recommendation_type": "explore",
+        "origin": "blindspot_probe",
+        "bucket_rank": 7,
+        "predicted_viability": 52.1491,
+        "uncertainty": 20.6703,
+        "batch_utility": 0.7541,
+        "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.0% peg_3350 + 149.5mM proline + 5.4% pvp"
+      }
+    ]
+  },
+  {
+    "batch_size": 9,
+    "heuristic_score": 7.334,
+    "target_counts": {
+      "exploit": 5,
+      "local_rank": 2,
+      "blindspot": 2
+    },
+    "selected_counts": {
+      "exploit": 5,
+      "local_rank": 2,
+      "blindspot": 2
+    },
+    "mean_predicted_viability": 68.2313,
+    "mean_uncertainty": 14.6685,
+    "unique_chemistry_families": 2,
+    "rows": [
+      {
+        "selection_order": 1,
+        "recommendation_id": 1,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 1,
+        "predicted_viability": 74.5875,
+        "uncertainty": 12.5782,
+        "batch_utility": 0.8958,
+        "formulation": "301.7mM ectoin + 1.87M ethylene_glycol + 4.9% fbs + 120.7mM raffinose"
+      },
+      {
+        "selection_order": 2,
+        "recommendation_id": 2,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 2,
+        "predicted_viability": 73.7215,
+        "uncertainty": 13.1626,
+        "batch_utility": 0.8573,
+        "formulation": "296.2mM ectoin + 1.88M ethylene_glycol + 4.9% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 3,
+        "recommendation_id": 3,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 3,
+        "predicted_viability": 73.4493,
+        "uncertainty": 13.0645,
+        "batch_utility": 0.8519,
+        "formulation": "9.6mM dmso + 295.8mM ectoin + 1.87M ethylene_glycol + 4.6% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 4,
+        "recommendation_id": 4,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 4,
+        "predicted_viability": 73.0055,
+        "uncertainty": 13.4473,
+        "batch_utility": 0.8301,
+        "formulation": "296.4mM ectoin + 1.87M ethylene_glycol + 4.8% fbs + 0.3% methylcellulose"
+      },
+      {
+        "selection_order": 5,
+        "recommendation_id": 5,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 5,
+        "predicted_viability": 72.1386,
+        "uncertainty": 12.4024,
+        "batch_utility": 0.8303,
+        "formulation": "28.9mM dmso + 289.6mM ectoin + 1.69M ethylene_glycol + 5.0% fbs"
+      },
+      {
+        "selection_order": 6,
+        "recommendation_id": 14,
+        "recommendation_type": "explore",
+        "origin": "local_rank_probe",
+        "bucket_rank": 2,
+        "predicted_viability": 73.0221,
+        "uncertainty": 12.6471,
+        "batch_utility": 0.6038,
+        "formulation": "301.7mM ectoin + 2.06M ethylene_glycol + 5.4% fbs + 120.7mM raffinose"
+      },
+      {
+        "selection_order": 7,
+        "recommendation_id": 16,
+        "recommendation_type": "explore",
+        "origin": "local_rank_probe",
+        "bucket_rank": 4,
+        "predicted_viability": 72.0137,
+        "uncertainty": 13.2333,
+        "batch_utility": 0.6083,
+        "formulation": "296.2mM ectoin + 2.07M ethylene_glycol + 5.4% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 8,
+        "recommendation_id": 19,
+        "recommendation_type": "explore",
+        "origin": "blindspot_probe",
+        "bucket_rank": 7,
+        "predicted_viability": 52.1491,
+        "uncertainty": 20.6703,
+        "batch_utility": 0.7541,
+        "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.0% peg_3350 + 149.5mM proline + 5.4% pvp"
+      },
+      {
+        "selection_order": 9,
+        "recommendation_id": 20,
+        "recommendation_type": "explore",
+        "origin": "blindspot_probe",
+        "bucket_rank": 8,
+        "predicted_viability": 49.9946,
+        "uncertainty": 20.8105,
+        "batch_utility": 0.7424,
+        "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.7% peg_3350 + 186.9mM proline + 9.0% pvp"
+      }
+    ]
+  },
+  {
+    "batch_size": 10,
+    "heuristic_score": 8.158,
+    "target_counts": {
+      "exploit": 6,
+      "local_rank": 2,
+      "blindspot": 2
+    },
+    "selected_counts": {
+      "exploit": 6,
+      "local_rank": 2,
+      "blindspot": 2
+    },
+    "mean_predicted_viability": 68.6023,
+    "mean_uncertainty": 14.4449,
+    "unique_chemistry_families": 2,
+    "rows": [
+      {
+        "selection_order": 1,
+        "recommendation_id": 1,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 1,
+        "predicted_viability": 74.5875,
+        "uncertainty": 12.5782,
+        "batch_utility": 0.8958,
+        "formulation": "301.7mM ectoin + 1.87M ethylene_glycol + 4.9% fbs + 120.7mM raffinose"
+      },
+      {
+        "selection_order": 2,
+        "recommendation_id": 2,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 2,
+        "predicted_viability": 73.7215,
+        "uncertainty": 13.1626,
+        "batch_utility": 0.8573,
+        "formulation": "296.2mM ectoin + 1.88M ethylene_glycol + 4.9% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 3,
+        "recommendation_id": 3,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 3,
+        "predicted_viability": 73.4493,
+        "uncertainty": 13.0645,
+        "batch_utility": 0.8519,
+        "formulation": "9.6mM dmso + 295.8mM ectoin + 1.87M ethylene_glycol + 4.6% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 4,
+        "recommendation_id": 4,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 4,
+        "predicted_viability": 73.0055,
+        "uncertainty": 13.4473,
+        "batch_utility": 0.8301,
+        "formulation": "296.4mM ectoin + 1.87M ethylene_glycol + 4.8% fbs + 0.3% methylcellulose"
+      },
+      {
+        "selection_order": 5,
+        "recommendation_id": 5,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 5,
+        "predicted_viability": 72.1386,
+        "uncertainty": 12.4024,
+        "batch_utility": 0.8303,
+        "formulation": "28.9mM dmso + 289.6mM ectoin + 1.69M ethylene_glycol + 5.0% fbs"
+      },
+      {
+        "selection_order": 6,
+        "recommendation_id": 6,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 6,
+        "predicted_viability": 71.9411,
+        "uncertainty": 12.4333,
+        "batch_utility": 0.8239,
+        "formulation": "27.3mM dmso + 314.4mM ectoin + 2.04M ethylene_glycol + 3.4% fbs"
+      },
+      {
+        "selection_order": 7,
+        "recommendation_id": 14,
+        "recommendation_type": "explore",
+        "origin": "local_rank_probe",
+        "bucket_rank": 2,
+        "predicted_viability": 73.0221,
+        "uncertainty": 12.6471,
+        "batch_utility": 0.6038,
+        "formulation": "301.7mM ectoin + 2.06M ethylene_glycol + 5.4% fbs + 120.7mM raffinose"
+      },
+      {
+        "selection_order": 8,
+        "recommendation_id": 16,
+        "recommendation_type": "explore",
+        "origin": "local_rank_probe",
+        "bucket_rank": 4,
+        "predicted_viability": 72.0137,
+        "uncertainty": 13.2333,
+        "batch_utility": 0.6083,
+        "formulation": "296.2mM ectoin + 2.07M ethylene_glycol + 5.4% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 9,
+        "recommendation_id": 19,
+        "recommendation_type": "explore",
+        "origin": "blindspot_probe",
+        "bucket_rank": 7,
+        "predicted_viability": 52.1491,
+        "uncertainty": 20.6703,
+        "batch_utility": 0.7541,
+        "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.0% peg_3350 + 149.5mM proline + 5.4% pvp"
+      },
+      {
+        "selection_order": 10,
+        "recommendation_id": 20,
+        "recommendation_type": "explore",
+        "origin": "blindspot_probe",
+        "bucket_rank": 8,
+        "predicted_viability": 49.9946,
+        "uncertainty": 20.8105,
+        "batch_utility": 0.7424,
+        "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.7% peg_3350 + 186.9mM proline + 9.0% pvp"
+      }
+    ]
+  },
+  {
+    "batch_size": 11,
+    "heuristic_score": 8.9694,
+    "target_counts": {
+      "exploit": 7,
+      "local_rank": 2,
+      "blindspot": 2
+    },
+    "selected_counts": {
+      "exploit": 7,
+      "local_rank": 2,
+      "blindspot": 2
+    },
+    "mean_predicted_viability": 68.872,
+    "mean_uncertainty": 14.2694,
+    "unique_chemistry_families": 2,
+    "rows": [
+      {
+        "selection_order": 1,
+        "recommendation_id": 1,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 1,
+        "predicted_viability": 74.5875,
+        "uncertainty": 12.5782,
+        "batch_utility": 0.8958,
+        "formulation": "301.7mM ectoin + 1.87M ethylene_glycol + 4.9% fbs + 120.7mM raffinose"
+      },
+      {
+        "selection_order": 2,
+        "recommendation_id": 2,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 2,
+        "predicted_viability": 73.7215,
+        "uncertainty": 13.1626,
+        "batch_utility": 0.8573,
+        "formulation": "296.2mM ectoin + 1.88M ethylene_glycol + 4.9% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 3,
+        "recommendation_id": 3,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 3,
+        "predicted_viability": 73.4493,
+        "uncertainty": 13.0645,
+        "batch_utility": 0.8519,
+        "formulation": "9.6mM dmso + 295.8mM ectoin + 1.87M ethylene_glycol + 4.6% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 4,
+        "recommendation_id": 4,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 4,
+        "predicted_viability": 73.0055,
+        "uncertainty": 13.4473,
+        "batch_utility": 0.8301,
+        "formulation": "296.4mM ectoin + 1.87M ethylene_glycol + 4.8% fbs + 0.3% methylcellulose"
+      },
+      {
+        "selection_order": 5,
+        "recommendation_id": 5,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 5,
+        "predicted_viability": 72.1386,
+        "uncertainty": 12.4024,
+        "batch_utility": 0.8303,
+        "formulation": "28.9mM dmso + 289.6mM ectoin + 1.69M ethylene_glycol + 5.0% fbs"
+      },
+      {
+        "selection_order": 6,
+        "recommendation_id": 6,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 6,
+        "predicted_viability": 71.9411,
+        "uncertainty": 12.4333,
+        "batch_utility": 0.8239,
+        "formulation": "27.3mM dmso + 314.4mM ectoin + 2.04M ethylene_glycol + 3.4% fbs"
+      },
+      {
+        "selection_order": 7,
+        "recommendation_id": 7,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 7,
+        "predicted_viability": 71.5693,
+        "uncertainty": 12.5145,
+        "batch_utility": 0.8114,
+        "formulation": "48.1mM dmso + 294.1mM ectoin + 1.86M ethylene_glycol + 4.7% fbs"
+      },
+      {
+        "selection_order": 8,
+        "recommendation_id": 14,
+        "recommendation_type": "explore",
+        "origin": "local_rank_probe",
+        "bucket_rank": 2,
+        "predicted_viability": 73.0221,
+        "uncertainty": 12.6471,
+        "batch_utility": 0.6038,
+        "formulation": "301.7mM ectoin + 2.06M ethylene_glycol + 5.4% fbs + 120.7mM raffinose"
+      },
+      {
+        "selection_order": 9,
+        "recommendation_id": 16,
+        "recommendation_type": "explore",
+        "origin": "local_rank_probe",
+        "bucket_rank": 4,
+        "predicted_viability": 72.0137,
+        "uncertainty": 13.2333,
+        "batch_utility": 0.6083,
+        "formulation": "296.2mM ectoin + 2.07M ethylene_glycol + 5.4% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 10,
+        "recommendation_id": 19,
+        "recommendation_type": "explore",
+        "origin": "blindspot_probe",
+        "bucket_rank": 7,
+        "predicted_viability": 52.1491,
+        "uncertainty": 20.6703,
+        "batch_utility": 0.7541,
+        "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.0% peg_3350 + 149.5mM proline + 5.4% pvp"
+      },
+      {
+        "selection_order": 11,
+        "recommendation_id": 20,
+        "recommendation_type": "explore",
+        "origin": "blindspot_probe",
+        "bucket_rank": 8,
+        "predicted_viability": 49.9946,
+        "uncertainty": 20.8105,
+        "batch_utility": 0.7424,
+        "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.7% peg_3350 + 186.9mM proline + 9.0% pvp"
+      }
+    ]
+  },
+  {
+    "batch_size": 12,
+    "heuristic_score": 9.3145,
+    "target_counts": {
+      "exploit": 7,
+      "local_rank": 2,
+      "blindspot": 3
+    },
+    "selected_counts": {
+      "exploit": 7,
+      "local_rank": 2,
+      "blindspot": 2
+    },
+    "mean_predicted_viability": 68.783,
+    "mean_uncertainty": 14.3146,
+    "unique_chemistry_families": 3,
+    "rows": [
+      {
+        "selection_order": 1,
+        "recommendation_id": 1,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 1,
+        "predicted_viability": 74.5875,
+        "uncertainty": 12.5782,
+        "batch_utility": 0.8958,
+        "formulation": "301.7mM ectoin + 1.87M ethylene_glycol + 4.9% fbs + 120.7mM raffinose"
+      },
+      {
+        "selection_order": 2,
+        "recommendation_id": 2,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 2,
+        "predicted_viability": 73.7215,
+        "uncertainty": 13.1626,
+        "batch_utility": 0.8573,
+        "formulation": "296.2mM ectoin + 1.88M ethylene_glycol + 4.9% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 3,
+        "recommendation_id": 3,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 3,
+        "predicted_viability": 73.4493,
+        "uncertainty": 13.0645,
+        "batch_utility": 0.8519,
+        "formulation": "9.6mM dmso + 295.8mM ectoin + 1.87M ethylene_glycol + 4.6% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 4,
+        "recommendation_id": 4,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 4,
+        "predicted_viability": 73.0055,
+        "uncertainty": 13.4473,
+        "batch_utility": 0.8301,
+        "formulation": "296.4mM ectoin + 1.87M ethylene_glycol + 4.8% fbs + 0.3% methylcellulose"
+      },
+      {
+        "selection_order": 5,
+        "recommendation_id": 5,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 5,
+        "predicted_viability": 72.1386,
+        "uncertainty": 12.4024,
+        "batch_utility": 0.8303,
+        "formulation": "28.9mM dmso + 289.6mM ectoin + 1.69M ethylene_glycol + 5.0% fbs"
+      },
+      {
+        "selection_order": 6,
+        "recommendation_id": 6,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 6,
+        "predicted_viability": 71.9411,
+        "uncertainty": 12.4333,
+        "batch_utility": 0.8239,
+        "formulation": "27.3mM dmso + 314.4mM ectoin + 2.04M ethylene_glycol + 3.4% fbs"
+      },
+      {
+        "selection_order": 7,
+        "recommendation_id": 7,
+        "recommendation_type": "exploit",
+        "origin": "bo_candidate",
+        "bucket_rank": 7,
+        "predicted_viability": 71.5693,
+        "uncertainty": 12.5145,
+        "batch_utility": 0.8114,
+        "formulation": "48.1mM dmso + 294.1mM ectoin + 1.86M ethylene_glycol + 4.7% fbs"
+      },
+      {
+        "selection_order": 8,
+        "recommendation_id": 14,
+        "recommendation_type": "explore",
+        "origin": "local_rank_probe",
+        "bucket_rank": 2,
+        "predicted_viability": 73.0221,
+        "uncertainty": 12.6471,
+        "batch_utility": 0.6038,
+        "formulation": "301.7mM ectoin + 2.06M ethylene_glycol + 5.4% fbs + 120.7mM raffinose"
+      },
+      {
+        "selection_order": 9,
+        "recommendation_id": 16,
+        "recommendation_type": "explore",
+        "origin": "local_rank_probe",
+        "bucket_rank": 4,
+        "predicted_viability": 72.0137,
+        "uncertainty": 13.2333,
+        "batch_utility": 0.6083,
+        "formulation": "296.2mM ectoin + 2.07M ethylene_glycol + 5.4% fbs + 0.2% methylcellulose"
+      },
+      {
+        "selection_order": 10,
+        "recommendation_id": 17,
+        "recommendation_type": "explore",
+        "origin": "coverage_probe",
+        "bucket_rank": 5,
+        "predicted_viability": 67.8032,
+        "uncertainty": 14.8109,
+        "batch_utility": 0.2451,
+        "formulation": "310.1mM ectoin + 1.95M ethylene_glycol + 1.0% hsa"
+      },
+      {
+        "selection_order": 11,
+        "recommendation_id": 19,
+        "recommendation_type": "explore",
+        "origin": "blindspot_probe",
+        "bucket_rank": 7,
+        "predicted_viability": 52.1491,
+        "uncertainty": 20.6703,
+        "batch_utility": 0.7541,
+        "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.0% peg_3350 + 149.5mM proline + 5.4% pvp"
+      },
+      {
+        "selection_order": 12,
+        "recommendation_id": 20,
+        "recommendation_type": "explore",
+        "origin": "blindspot_probe",
+        "bucket_rank": 8,
+        "predicted_viability": 49.9946,
+        "uncertainty": 20.8105,
+        "batch_utility": 0.7424,
+        "formulation": "1.53M ethylene_glycol + 33.9% fbs + 1.4% hsa + 2.7% peg_3350 + 186.9mM proline + 9.0% pvp"
+      }
+    ]
+  }
+]
