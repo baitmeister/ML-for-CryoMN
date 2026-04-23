@@ -1037,7 +1037,17 @@ def write_performance_plot(results: Sequence[Dict[str, object]]):
     if not results:
         return
 
-    stage_results = list(results)
+    def has_evaluable_batch(result: Dict[str, object]) -> bool:
+        """Only keep stages that have matched wet-lab rows and real batch metrics."""
+        batch_metrics = result.get("batch_metrics") or {}
+        try:
+            return int(batch_metrics.get("n_rows") or 0) > 0
+        except (TypeError, ValueError):
+            return False
+
+    stage_results = [result for result in results if has_evaluable_batch(result)]
+    if not stage_results:
+        return
 
     def stage_axis_label(stage: object) -> str:
         """Render stage labels as numeric stage IDs."""

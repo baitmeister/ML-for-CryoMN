@@ -142,11 +142,10 @@ matching:
 - `_pct` values `<0.1%` are omitted
 - `_M` values `<0.001 M` (`<1.0 mM`) are omitted
 
-The metadata and input-validation artifacts also record which residual thresholds
-were tried, which threshold was selected, how many exploration rows came
-from local-rank probes, blind-spot probes, and BO fallback, which historical
-anchor stages fed the generated probes, and how each recommended smaller batch
-was scored. Adaptive split fields are included, for example:
+The metadata and input-validation artifacts record residual thresholds, selected
+threshold, exploration-row sources (local-rank probes, blind-spot probes, BO
+fallback), historical anchor stages for generated probes, and scoring details
+for each recommended smaller batch. Adaptive split fields include:
 
 - `adaptive_split_policy`
 - `adaptive_split_diagnostics`

@@ -26,7 +26,7 @@ python src/05_bo_optimization/bo_optimizer.py
 This script uses the same active-model resolver as `03_optimization`:
 - If `models/model_metadata.json` matches a recorded iteration, `05` loads that iteration's artifacts directly.
 - If metadata is missing, malformed, or points at the wrong iteration, `05` prompts for an iteration number.
-- If you choose a valid iteration during conflict recovery, `05` overwrites `models/model_metadata.json` to repair the conflict and explicitly notifies you before and after doing so.
+- If you choose a valid iteration during conflict recovery, `05` overwrites `models/model_metadata.json` to repair the conflict and prints an explicit overwrite notice.
 - If metadata says the model is composite but the composite artifacts are missing, the script stops. It does **not** fall back to the standard GP automatically.
 - For BO context, `05` loads the same observed context used by `03` and `06`, and reconstructs it on demand if the artifact is missing.
 
@@ -55,7 +55,7 @@ These BO outputs are also the BO source pool consumed by
 `<iteration_tag>` comes from the resolved active model identity, for example:
 - `iteration_1`
 - `iteration_3_weighted_simple`
-- `iteration_8_prior_mean`
+- `iteration_10_prior_mean`
 
 ## How It Works
 

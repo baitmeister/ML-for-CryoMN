@@ -2,7 +2,7 @@
 
 Machine learning pipeline for optimizing cryoprotective formulations for cryomicroneedle (CryoMN) technology.
 
-Repository checkpoint artifacts referenced below use stage-tagged iteration directories such as `iteration_8_prior_mean`.
+Repository checkpoint artifacts referenced below use stage-tagged iteration directories such as `iteration_10_prior_mean`.
 
 ## Goals
 
@@ -14,7 +14,7 @@ Repository checkpoint artifacts referenced below use stage-tagged iteration dire
 
 ## Workflow Overview
 
-The project was developed using a multi-agent AI workflow, combining planning and implementation phases with human oversight:
+Project workflow with planning and implementation phases under human oversight:
 
 ![Project Workflow Schematic](workflow_schematic_final.png)
 
@@ -66,22 +66,21 @@ python src/07_next_formulations/next_formulations.py
 
 ## Repository Snapshot
 
-The snapshot dated 2026-04-10 uses the composite prior-mean correction checkpoint `iteration_8_prior_mean`.
+Snapshot date: `2026-04-22` (checkpoint: `iteration_10_prior_mean`).
 
 | Metric | Snapshot value |
 |--------|---------------|
-| Wet-lab validation rows | 90 |
-| Latest wet-lab batch date in snapshot | 2026-04-09 |
+| Wet-lab validation rows | 106 |
+| Latest wet-lab batch date in snapshot | 2026-04-21 |
 | Best validated viability | 95.15% |
 | Best validated formulation | 21.0mM DMSO + 291.1mM ectoin + 1.79M ethylene glycol + 5.4% FBS |
-| Mean wet-lab viability | 50.13% |
-| Median wet-lab viability | 52.13% |
-| Wet-lab runs at or above 50% viability | 49 |
+| Mean wet-lab viability | 52.26% |
+| Median wet-lab viability | 57.45% |
+| Wet-lab runs at or above 50% viability | 63 |
 
 The snapshot highlights the ectoin + ethylene glycol ridge with FBS-augmented
-variants, while the
-residual-driven `07_next_formulations` step adapts to the blind spots exposed
-by completed wet-lab stages.
+variants. The residual-driven `07_next_formulations` step targets blind spots
+from completed wet-lab stages.
 
 ## Active Model and Iterations
 
@@ -111,15 +110,15 @@ That same region remains the model's top BO target, which is a useful consistenc
 
 ### DE-Based Bayesian Optimization (`05_bo_optimization`)
 
-General BO summary for this snapshot: `results/bo_candidates_general_iteration_8_prior_mean_summary.txt`
+General BO summary for this snapshot: `results/bo_candidates_general_iteration_10_prior_mean_summary.txt`
 
 | Rank | Formulation | Predicted viability |
 |------|-------------|---------------------|
-| 1 | 11.0mM DMSO + 289.7mM ectoin + 1.81M ethylene glycol + 5.7% FBS | 76.3% ± 13.3% |
-| 2 | 284.8mM ectoin + 1.81M ethylene glycol + 4.9% FBS | 75.7% ± 13.4% |
-| 3 | 21.0mM DMSO + 291.1mM ectoin + 1.79M ethylene glycol + 5.4% FBS | 75.7% ± 13.3% |
-| 4 | 331.4mM ectoin + 1.89M ethylene glycol + 6.7% FBS + 0.3% methylcellulose | 75.6% ± 14.8% |
-| 5 | 362.0mM ectoin + 1.94M ethylene glycol + 6.6% FBS | 75.5% ± 15.0% |
+| 1 | 284.8mM ectoin + 1.81M ethylene glycol + 4.9% FBS | 75.4% ± 12.4% |
+| 2 | 11.0mM DMSO + 289.7mM ectoin + 1.81M ethylene glycol + 5.7% FBS | 75.0% ± 12.3% |
+| 3 | 301.7mM ectoin + 1.87M ethylene glycol + 4.9% FBS + 120.7mM raffinose | 74.6% ± 12.6% |
+| 4 | 284.8mM ectoin + 2.01M ethylene glycol + 5.4% FBS | 74.2% ± 12.4% |
+| 5 | 21.0mM DMSO + 291.1mM ectoin + 1.79M ethylene glycol + 5.4% FBS | 74.2% ± 12.3% |
 
 ### Next Formulations (`07_next_formulations`)
 
@@ -144,22 +143,22 @@ This script:
 - validates inputs before generation and validates all 20 outputs again before writing
 
 Outputs are written under `results/next_formulations/<iteration_tag>/`, for example:
-- `results/next_formulations/iteration_8_prior_mean/next_formulations.csv`
-- `results/next_formulations/iteration_8_prior_mean/next_formulations_summary.txt`
-- `results/next_formulations/iteration_8_prior_mean/next_formulations_metadata.json`
-- `results/next_formulations/iteration_8_prior_mean/input_validation.json`
-- `results/next_formulations/iteration_8_prior_mean/batch_recommendations.json`
-- `results/next_formulations/iteration_8_prior_mean/batch_recommendations.csv`
+- `results/next_formulations/iteration_10_prior_mean/next_formulations.csv`
+- `results/next_formulations/iteration_10_prior_mean/next_formulations_summary.txt`
+- `results/next_formulations/iteration_10_prior_mean/next_formulations_metadata.json`
+- `results/next_formulations/iteration_10_prior_mean/input_validation.json`
+- `results/next_formulations/iteration_10_prior_mean/batch_recommendations.json`
+- `results/next_formulations/iteration_10_prior_mean/batch_recommendations.csv`
 
-The summary and metadata artifacts record which positive-residual thresholds
-were tried, which threshold was selected, how many exploration rows came
-from local-rank probes, coverage probes, blind-spot probes, and BO fallback, and which
-historical anchor stages fed the generated probes. The text summary also
+The summary and metadata artifacts record positive-residual thresholds,
+selected threshold, exploration-row sources (local-rank probes, coverage
+probes, blind-spot probes, BO fallback), and historical anchor stages for
+generated probes. The text summary also
 includes a human-readable version of each recommended batch subset for wet-lab
 capacities from 6 through 12 formulations.
 
-The batch recommendation `score` is a heuristic subset-selection score. It is
-used to rank candidate subsets built from the 20-row slate, not to represent
+The batch recommendation `score` is a heuristic subset-selection score. It
+ranks candidate subsets built from the 20-row slate and does not represent
 predicted viability or expected improvement directly. Higher scores reflect a
 better tradeoff among row utility, chemistry-family diversity, local-anchor
 diversity, and closeness to the intended exploit / local-rank / blind-spot mix.
@@ -183,7 +182,9 @@ model output against the wet-lab batch it actually generated:
 - `iteration_5_*` outputs → wet-lab batches on 2026-03-24 and 2026-03-26
 - `iteration_6_*` outputs → wet-lab batch on 2026-03-31
 - `iteration_7_*` outputs → wet-lab batch on 2026-04-09
-- `iteration_8_*` outputs → pending wet-lab results
+- `iteration_8_*` outputs → wet-lab batch on 2026-04-14
+- `iteration_9_*` outputs → wet-lab batch on 2026-04-21
+- `iteration_10_*` outputs → pending wet-lab results
 
 Run:
 
@@ -218,7 +219,9 @@ Stage-level metrics from the saved evaluation artifacts:
 | Iteration 5 | `2026-03-24, 2026-03-26` | 23 | 20.87 | 0.793 | 0.826 |
 | Iteration 6 | `2026-03-31` | 6 | 20.68 | 0.657 | 0.833 |
 | Iteration 7 | `2026-04-09` | 12 | 18.50 | 0.818 | 0.750 |
-| Iteration 8 | pending wet-lab results | 0 | N/A | N/A | N/A |
+| Iteration 8 | `2026-04-14` | 8 | 10.10 | 0.857 | 0.750 |
+| Iteration 9 | `2026-04-21` | 8 | 6.86 | 0.810 | 0.875 |
+| Iteration 10 | pending wet-lab results | 0 | N/A | N/A | N/A |
 
 Interpretation:
 
@@ -233,8 +236,8 @@ Stage-indexed wet-lab R² visuals are generated separately by:
 python src/06_evaluation_explainability/stage_r2_predicted_vs_actual.py
 ```
 
-The default mode is prospective cumulative (stage-indexed `iteration_0` to
-`iteration_7` in `results/explainability/stage_r2/`).
+The default mode is prospective cumulative (stage-indexed outputs in
+`results/explainability/stage_r2/` through the latest completed stage).
 
 ![Stage Performance](results/evaluation/stage_performance.png)
 
@@ -244,22 +247,22 @@ The default mode is prospective cumulative (stage-indexed `iteration_0` to
 
 Understanding which ingredients drive cell viability predictions is crucial for guiding wet lab experiments. The explainability module renders a support-aware visual suite: contour-style figures preserve the BO aesthetic, observed literature and wet-lab support are shown directly, and stronger-support regions are indicated with boundaries instead of masking the surfaces.
 
-### Explainability Outputs (`iteration_8_prior_mean`)
+### Explainability Outputs (`iteration_10_prior_mean`)
 
-The explainability outputs shown here live in `results/explainability/iteration_8_prior_mean/`. The suite emphasizes top drivers such as `ethylene_glycol`, `dmso`, `ectoin`, `fbs`, and `hsa`, while making the support envelope explicit.
+The explainability outputs shown here live in `results/explainability/iteration_10_prior_mean/`. The suite emphasizes top drivers such as `ethylene_glycol`, `dmso`, `ectoin`, `fbs`, and `hsa`, while making the support envelope explicit.
 
-`explainability.py` no longer emits a wet-lab R² scatter; wet-lab R² reporting
-is now handled by `stage_r2_predicted_vs_actual.py`.
+`explainability.py` focuses on support-aware interpretability visuals.
+`stage_r2_predicted_vs_actual.py` generates wet-lab R² scatter plots.
 
 #### SHAP Summary
 
-![SHAP Summary](results/explainability/iteration_8_prior_mean/shap_summary.png)
+![SHAP Summary](results/explainability/iteration_10_prior_mean/shap_summary.png)
 
 The SHAP summary is intentionally limited to the top features. Point color encodes feature value and horizontal spread shows the direction and magnitude of each feature's contribution across observed formulations.
 
 #### Feature Importance
 
-![Feature Importance](results/explainability/iteration_8_prior_mean/feature_importance.png)
+![Feature Importance](results/explainability/iteration_10_prior_mean/feature_importance.png)
 
 In the feature-importance chart, the dashed vertical line is only a visual dominance cutoff separating the strongest drivers from the long tail; it is not a hard selection threshold.
 
@@ -267,25 +270,25 @@ In the feature-importance chart, the dashed vertical line is only a visual domin
 
 The acquisition landscape defaults to **Upper Confidence Bound (UCB)** and mirrors the `05` BO visual language. The static score view includes support and sparsity penalties, while dashed support boundaries indicate where the pair is better grounded in observed data:
 
-![Acquisition Landscape](results/explainability/iteration_8_prior_mean/acquisition_landscape.png)
+![Acquisition Landscape](results/explainability/iteration_10_prior_mean/acquisition_landscape.png)
 
 #### Interaction Contours
 
 Visualizing how pairs of top ingredients interact to affect viability, with observed-point overlays and dashed support boundaries:
 
-![Interaction Contours](results/explainability/iteration_8_prior_mean/interaction_contours.png)
+![Interaction Contours](results/explainability/iteration_10_prior_mean/interaction_contours.png)
 
 Across the support-aware figures, the dashed white boundary marks the stronger pairwise support envelope inferred from observed formulations. Inside that boundary, the surface is better anchored by observed data; outside it, the same surface is rendered for continuity but should be read as more extrapolative.
 
 #### Uncertainty Analysis
 
-![Uncertainty Analysis](results/explainability/iteration_8_prior_mean/uncertainty_analysis.png)
+![Uncertainty Analysis](results/explainability/iteration_10_prior_mean/uncertainty_analysis.png)
 
 #### Support Diagnostics
 
 This companion diagnostic shows where the top features and top pair are actually supported by literature and wet-lab observations:
 
-![Support Diagnostics](results/explainability/iteration_8_prior_mean/support_diagnostics.png)
+![Support Diagnostics](results/explainability/iteration_10_prior_mean/support_diagnostics.png)
 
 For detailed interpretation and additional visualizations, see [`src/06_evaluation_explainability/README.md`](src/06_evaluation_explainability/README.md).
 

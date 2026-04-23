@@ -23,7 +23,7 @@ python src/03_optimization/optimize_formulation.py
 The script uses the shared active-model resolver that is also used by `05_bo_optimization` and `06_evaluation_explainability`. It validates the active model against both root metadata and the recorded iteration history:
 - If `models/model_metadata.json` matches a recorded iteration, `03` loads that iteration's artifacts directly.
 - If metadata is missing, malformed, or points at the wrong iteration, `03` prompts for an iteration number.
-- If you choose a valid iteration during conflict recovery, `03` overwrites `models/model_metadata.json` to repair the conflict and explicitly notifies you before and after doing so.
+- If you choose a valid iteration during conflict recovery, `03` overwrites `models/model_metadata.json` to repair the conflict and prints an explicit overwrite notice.
 - If metadata says the model is composite but the composite artifacts are missing, the script stops. It does **not** fall back to the standard GP automatically.
 - For observed data, `03` loads the same iteration-aware observed context used by `05` and `06`. If the artifact is missing, it reconstructs the context from literature + measured wet-lab rows without requiring any other downstream module to run first.
 
@@ -45,7 +45,7 @@ candidate identity/output text.
 `<iteration_tag>` comes from the resolved active model identity, for example:
 - `iteration_1`
 - `iteration_3_weighted_simple`
-- `iteration_8_prior_mean`
+- `iteration_10_prior_mean`
 
 ## Algorithm
 

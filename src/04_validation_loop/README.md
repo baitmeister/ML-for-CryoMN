@@ -9,7 +9,7 @@ This module integrates wet lab validation results to iteratively refine the GP m
 | Script | Method | Best For |
 |--------|--------|----------|
 | `update_model.py` | Simple concatenation | Baseline (no weighting) |
-| `update_model_weighted_simple.py` | Sample duplication (10x) | Quick experiments, first iterations |
+| `update_model_weighted_simple.py` | Sample duplication (10x) | Quick experiments |
 | `update_model_weighted_prior.py` | Prior mean + correction | When literature has systematic bias |
 | `compare_update_methods.py` | Shadow rolling comparison | Comparing update methods without activating any candidate |
 
@@ -56,7 +56,7 @@ This creates a validation template at `data/validation/validation_template.csv`.
 3. Choose and run a script:
 
 ```bash
-# Option 1: No weighting (original)
+# Option 1: No weighting
 python src/04_validation_loop/update_model.py
 
 # Option 2: Simple weighting (10x duplication)
@@ -91,7 +91,7 @@ are one of the inputs to the dedicated next-batch generator in
 python src/07_next_formulations/next_formulations.py
 ```
 
-That script is separate from the update loop on purpose:
+That script is separate from the update loop:
 
 - `04_validation_loop` measures how the frozen stages performed
 - `07_next_formulations` uses stage residuals plus active BO outputs to choose the next 20 formulations
@@ -205,10 +205,10 @@ Produced metadata keys include:
 - `cv_mean_signed_residual`, `cv_mean_abs_residual`
 - `cv_coverage_1sigma_calibrated`, `cv_coverage_2sigma_calibrated`
 
-Why this is not wet-lab data manipulation:
+Data integrity:
 
 - wet-lab measurements in `validation_results.csv` are never altered
-- model fit still uses the original measured labels
+- model fit uses measured labels
 - calibration adjusts predicted mean/std outputs, not the measured outcomes
 
 **Pros:**

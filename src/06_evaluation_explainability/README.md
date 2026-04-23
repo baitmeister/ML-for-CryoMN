@@ -80,8 +80,8 @@ a 3-metric summary chart. It groups stage metrics into:
 - threshold decision: hit rate @ 50% and hit rate @ 70%
 
 Each metric gets its own raw-value bar-chart subplot, with the category
-groupings preserved in the overall layout. Missing stages render as `N/A`
-annotations instead of bars.
+groupings preserved in the overall layout. Stages without matched wet-lab
+results are omitted from the x-axis.
 
 Candidate-hit matching uses the same practical concentration floor as `05` and
 `07`:
@@ -114,7 +114,7 @@ It reports:
 
 - `iteration_1`
 - `iteration_3_weighted_simple`
-- `iteration_8_prior_mean`
+- `iteration_10_prior_mean`
 
 If no explicit iteration metadata exists, the fallback directory is:
 
@@ -172,7 +172,7 @@ prospective cumulative staging:
 - `iteration_0_wetlab_r2_predicted_vs_actual.png`: literature-only model on wet-lab stage `<=0`
 - `iteration_1_wetlab_r2_predicted_vs_actual.png`: iteration-1 model on wet-lab stages `<=1`
 - ...
-- `iteration_7_wetlab_r2_predicted_vs_actual.png`: iteration-7 model on wet-lab stages `<=7`
+- `iteration_N_wetlab_r2_predicted_vs_actual.png`: latest completed iteration model on wet-lab stages `<=N`
 
 The same script also writes:
 
