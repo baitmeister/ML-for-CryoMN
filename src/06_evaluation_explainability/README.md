@@ -180,7 +180,7 @@ The same script also writes:
 
 Plot styling details:
 
-- x-axis: measured/reported viability; y-axis: predicted mean viability
+- x-axis: measured viability for wet-lab plots; reported viability for `literature_only`; y-axis: predicted mean viability
 - points are colored by prediction uncertainty (`std`) using `plasma` + colorbar
 - annotation box includes `n` and `R²`
 

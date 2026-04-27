@@ -269,7 +269,7 @@ def plot_predicted_vs_actual(
     legend_label: str,
     marker_color: str,
     config: PlotConfig,
-    x_label: str = "Measured / Reported Viability (%)",
+    x_label: str = "Measured Viability (%)",
 ):
     """Create one mean-predicted-vs-actual scatter with uncertainty color encoding."""
     annotation_scale = 1.5
