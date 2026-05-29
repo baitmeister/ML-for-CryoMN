@@ -1,0 +1,277 @@
+ingredients:
+  - canonical_name: dmso
+    display_name: DMSO
+    feature_name: dmso_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 78.13
+    lower_bound: 0.0
+    upper_bound: 0.10
+    penalize_single_over_500mM: true
+    synonyms: [dimethyl sulfoxide, dimethylsulfoxide]
+  - canonical_name: ectoin
+    display_name: ectoin
+    feature_name: ectoin_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 142.16
+    lower_bound: 0.0
+    upper_bound: 0.50
+    penalize_single_over_500mM: true
+    synonyms: [ectoine]
+  - canonical_name: ethylene_glycol
+    display_name: ethylene glycol
+    feature_name: ethylene_glycol_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 62.07
+    lower_bound: 0.0
+    upper_bound: 2.50
+    penalize_single_over_500mM: true
+    synonyms: [eg]
+  - canonical_name: glycerol
+    display_name: glycerol
+    feature_name: glycerol_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 92.09
+    lower_bound: 0.0
+    upper_bound: 2.50
+    penalize_single_over_500mM: true
+    synonyms: [glycerine]
+  - canonical_name: propylene_glycol
+    display_name: propylene glycol
+    feature_name: propylene_glycol_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 76.09
+    lower_bound: 0.0
+    upper_bound: 2.50
+    penalize_single_over_500mM: true
+    synonyms: [pg]
+  - canonical_name: trehalose
+    display_name: trehalose
+    feature_name: trehalose_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 342.30
+    lower_bound: 0.0
+    upper_bound: 0.50
+    penalize_single_over_500mM: true
+    synonyms: [alpha alpha trehalose]
+  - canonical_name: sucrose
+    display_name: sucrose
+    feature_name: sucrose_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 342.30
+    lower_bound: 0.0
+    upper_bound: 0.50
+    penalize_single_over_500mM: true
+    synonyms: []
+  - canonical_name: raffinose
+    display_name: raffinose
+    feature_name: raffinose_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 504.44
+    lower_bound: 0.0
+    upper_bound: 0.50
+    penalize_single_over_500mM: true
+    synonyms: []
+  - canonical_name: taurine
+    display_name: taurine
+    feature_name: taurine_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 125.15
+    lower_bound: 0.0
+    upper_bound: 0.50
+    penalize_single_over_500mM: true
+    synonyms: []
+  - canonical_name: myo_inositol
+    display_name: myo-inositol
+    feature_name: myo_inositol_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 180.16
+    lower_bound: 0.0
+    upper_bound: 0.50
+    penalize_single_over_500mM: true
+    synonyms: [inositol, myoinositol]
+  - canonical_name: methoxyphenyl_beta_d_glucopyranoside
+    display_name: 4-methoxyphenyl beta-D-glucopyranoside
+    feature_name: methoxyphenyl_beta_d_glucopyranoside_M
+    unit: M
+    active: true
+    molecular_weight_g_mol:
+    lower_bound: 0.0
+    upper_bound: 0.50
+    penalize_single_over_500mM: true
+    synonyms:
+      - 4-methoxyphenyl beta-D-glucopyranoside
+      - pmp-beta-d-glucopyranoside
+      - 4mpg
+  - canonical_name: betaine
+    display_name: betaine
+    feature_name: betaine_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 117.15
+    lower_bound: 0.0
+    upper_bound: 0.50
+    penalize_single_over_500mM: true
+    synonyms: [trimethylglycine]
+  - canonical_name: proline
+    display_name: proline
+    feature_name: proline_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 115.13
+    lower_bound: 0.0
+    upper_bound: 0.50
+    penalize_single_over_500mM: true
+    synonyms: []
+  - canonical_name: glucose
+    display_name: glucose
+    feature_name: glucose_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 180.16
+    lower_bound: 0.0
+    upper_bound: 0.50
+    penalize_single_over_500mM: true
+    synonyms: [dextrose]
+  - canonical_name: creatine
+    display_name: creatine
+    feature_name: creatine_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 131.13
+    lower_bound: 0.0
+    upper_bound: 0.50
+    penalize_single_over_500mM: true
+    synonyms: []
+  - canonical_name: acetamide
+    display_name: acetamide
+    feature_name: acetamide_M
+    unit: M
+    active: true
+    molecular_weight_g_mol: 59.07
+    lower_bound: 0.0
+    upper_bound: 0.50
+    penalize_single_over_500mM: true
+    synonyms: []
+  - canonical_name: sericin
+    display_name: sericin
+    feature_name: sericin_pct
+    unit: pct
+    active: true
+    molecular_weight_g_mol:
+    lower_bound: 0.0
+    upper_bound: 10.0
+    penalize_single_over_500mM: false
+    synonyms: [silk sericin]
+  - canonical_name: methylcellulose
+    display_name: methylcellulose
+    feature_name: methylcellulose_pct
+    unit: pct
+    active: true
+    molecular_weight_g_mol:
+    lower_bound: 0.0
+    upper_bound: 2.0
+    penalize_single_over_500mM: false
+    synonyms: [mc]
+  - canonical_name: dextran
+    display_name: dextran
+    feature_name: dextran_pct
+    unit: pct
+    active: true
+    molecular_weight_g_mol:
+    lower_bound: 0.0
+    upper_bound: 10.0
+    penalize_single_over_500mM: false
+    synonyms: []
+  - canonical_name: ficoll
+    display_name: ficoll
+    feature_name: ficoll_pct
+    unit: pct
+    active: false
+    molecular_weight_g_mol:
+    lower_bound: 0.0
+    upper_bound: 20.0
+    penalize_single_over_500mM: false
+    synonyms: []
+  - canonical_name: hes
+    display_name: hydroxyethyl starch
+    feature_name: hes_pct
+    unit: pct
+    active: false
+    molecular_weight_g_mol:
+    lower_bound: 0.0
+    upper_bound: 20.0
+    penalize_single_over_500mM: false
+    synonyms: [hydroxyethyl starch]
+  - canonical_name: pvp
+    display_name: PVP
+    feature_name: pvp_pct
+    unit: pct
+    active: true
+    molecular_weight_g_mol:
+    lower_bound: 0.0
+    upper_bound: 20.0
+    penalize_single_over_500mM: false
+    synonyms: [polyvinylpyrrolidone]
+  - canonical_name: hyaluronic_acid
+    display_name: hyaluronic acid
+    feature_name: hyaluronic_acid_pct
+    unit: pct
+    active: true
+    molecular_weight_g_mol:
+    lower_bound: 0.0
+    upper_bound: 5.0
+    penalize_single_over_500mM: false
+    synonyms: [ha]
+  - canonical_name: fbs
+    display_name: FBS
+    feature_name: fbs_pct
+    unit: pct
+    active: true
+    molecular_weight_g_mol:
+    lower_bound: 0.0
+    upper_bound: 10.0
+    penalize_single_over_500mM: false
+    synonyms: [fetal bovine serum]
+  - canonical_name: hsa
+    display_name: HSA
+    feature_name: hsa_pct
+    unit: pct
+    active: true
+    molecular_weight_g_mol:
+    lower_bound: 0.0
+    upper_bound: 10.0
+    penalize_single_over_500mM: false
+    synonyms: [human serum albumin]
+  - canonical_name: human_serum
+    display_name: human serum
+    feature_name: human_serum_pct
+    unit: pct
+    active: true
+    molecular_weight_g_mol:
+    lower_bound: 0.0
+    upper_bound: 10.0
+    penalize_single_over_500mM: false
+    synonyms: []
+
+excluded_variables:
+  - culture_media
+  - basal_media
+  - basal_buffer
+  - dmem
+  - mem
+  - alpha_mem
+  - pbs
+  - dpbs
+  - hbss
+  - saline
+  - balanced_salt_solution

@@ -1,0 +1,10 @@
+CryoMN v2 Visualization Summary
+==================================
+
+Formulation rows: 304
+Observation rows: 304
+Candidate rows: 12
+
+Generated files:
+- endpoint_observation_counts.png
+- next_round_candidate_screen.png

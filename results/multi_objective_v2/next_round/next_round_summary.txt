@@ -1,0 +1,47 @@
+CryoMN v2 Next-Round Candidate Summary
+==========================================
+
+Batch ID: ROUND_001
+Candidates to make: 12
+Mechanical tests requested: 4
+Mechanical selection mode: k_center_cold_start
+Mechanical observations in database: 0
+
+Main database used by selector:
+- data/processed_v2/formulations.csv
+- data/processed_v2/observations.csv
+
+Temporary selection restrictions:
+- methoxyphenyl_beta_d_glucopyranoside_M, methylcellulose_pct, myo_inositol_M, raffinose_M, sericin_pct, taurine_M, trehalose_M
+
+Wet-lab instructions:
+1. Make every formulation listed below.
+2. Fill viability_percent and intact_patch_formation_pass in next_round_candidates.csv.
+3. For rows marked mechanical_test_recommended=true and intact_patch_formation_pass=true, run Instron or enter raw critical load.
+4. Run 03_record_results/update_from_results.py after the CSV is filled.
+
+Candidates:
+- #1; candidate_id=cand_000711; formulation_id=v2_f0bcc89cffe3; mechanical_test=True; predicted_viability=61.1%; intact_probability=1.00
+  formulation: 3.34mM dmso + 209mM ethylene_glycol + 0.217% hyaluronic_acid + 2.61% fbs
+- #2; candidate_id=cand_000585; formulation_id=v2_e4586f83ec41; mechanical_test=True; predicted_viability=59.8%; intact_probability=1.00
+  formulation: 97.4mM dmso + 379mM ectoin + 444mM betaine + 127mM proline + 367mM creatine + 9.3% pvp + 6.59% hsa + 8.68% human_serum
+- #3; candidate_id=cand_001991; formulation_id=v2_a42c9f3b03de; mechanical_test=True; predicted_viability=59.8%; intact_probability=1.00
+  formulation: 484mM ectoin + 467mM sucrose + 326mM proline + 322mM glucose + 469mM creatine + 341mM acetamide + 7.88% fbs
+- #4; candidate_id=cand_000594; formulation_id=v2_07fa42603a93; mechanical_test=True; predicted_viability=59.8%; intact_probability=1.00
+  formulation: 410mM sucrose + 379mM betaine + 312mM glucose + 6.02% dextran + 19.2% pvp + 4.84% hyaluronic_acid + 4.44% fbs + 4.33% human_serum
+- #5; candidate_id=cand_000908; formulation_id=v2_5fb7d611211f; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
+  formulation: 5.97mM ectoin + 304mM sucrose + 407mM proline + 493mM acetamide + 5.98% dextran + 4.79% hyaluronic_acid + 8.32% fbs
+- #6; candidate_id=cand_001430; formulation_id=v2_bebc89c154d2; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
+  formulation: 95.2mM dmso + 317mM proline + 408mM glucose + 9.43% dextran + 5.35% pvp + 1.08% hyaluronic_acid + 0.592% hsa + 6.43% human_serum
+- #7; candidate_id=cand_001733; formulation_id=v2_93db4403da46; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
+  formulation: 0.59mM dmso + 482mM ectoin + 498mM sucrose + 221mM betaine + 184mM glucose + 0.342mM creatine + 1.08% hyaluronic_acid + 2.47% fbs + 9.13% hsa + 5.81% human_serum
+- #8; candidate_id=cand_000626; formulation_id=v2_0ce140042671; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
+  formulation: 362mM ectoin + 487mM betaine + 456mM proline + 121mM glucose + 287mM acetamide + 3.48% hyaluronic_acid + 3.09% human_serum
+- #9; candidate_id=cand_001073; formulation_id=v2_2935b046b3c7; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
+  formulation: 358mM glucose + 417mM creatine + 298mM acetamide + 1.4% dextran + 12.7% pvp + 3.74% hyaluronic_acid + 7.89% hsa
+- #10; candidate_id=cand_000685; formulation_id=v2_0c2bafa48bc3; mechanical_test=False; predicted_viability=60.7%; intact_probability=1.00
+  formulation: 475mM betaine + 6.5% fbs
+- #11; candidate_id=cand_001055; formulation_id=v2_fae0c77a46cf; mechanical_test=False; predicted_viability=60.6%; intact_probability=1.00
+  formulation: 14.3% pvp + 3.61% fbs + 8.09% hsa
+- #12; candidate_id=cand_001734; formulation_id=v2_4ace4eeecac7; mechanical_test=False; predicted_viability=61.0%; intact_probability=1.00
+  formulation: 12.9% pvp

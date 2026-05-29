@@ -1,0 +1,444 @@
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{hyperref}
+\usepackage{setspace}
+
+\setstretch{1.12}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.75em}
+\emergencystretch=3em
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\metric}[1]{\texttt{#1}}
+\newcommand{\yes}{\textsc{yes}}
+\newcommand{\no}{\textsc{no}}
+
+\title{GPT-5.5 Plan: Minimal-Endpoint Multi-Objective Cryomicroneedle Optimization}
+\author{CryoMN ML Project}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This document specifies the next-generation implementation plan for cryomicroneedle
+(CryoMN) formulation optimization. The previous repository successfully used
+literature transfer, Gaussian-process surrogate modeling, Bayesian optimization, and
+wet-lab validation to improve mesenchymal stem-cell post-thaw viability. The next
+project must add mechanical robustness without turning the experimental workflow into
+an impractical mechanical-testing campaign. The proposed system therefore uses only
+two optimization objectives, one required screening gate, one secondary mechanical
+diagnostic, and one final qualitative insertion check. The main optimization objectives
+are post-thaw viability and Instron-derived axial critical load. Intact patch formation
+is modeled as a feasibility gate, initial stiffness is retained only as a diagnostic or
+tie-breaker, and thumb insertion is recorded only qualitatively.
+\end{abstract}
+
+\section{Executive Summary}
+
+The new project should be implemented as a cost-aware, minimal-endpoint,
+multi-objective active-learning workflow. The purpose is not to discover the strongest
+possible frozen material in isolation, but to find CryoMN formulations that preserve MSC
+viability while forming intact, mechanically useful frozen microneedle patches.
+
+The production objectives are:
+\begin{itemize}
+    \item maximize \metric{viability\_percent};
+    \item maximize \metric{critical\_axial\_load\_N\_per\_needle}.
+\end{itemize}
+
+The required screening gate is:
+\begin{itemize}
+    \item \metric{intact\_patch\_formation\_pass}.
+\end{itemize}
+
+The only secondary mechanical endpoint is:
+\begin{itemize}
+    \item \metric{initial\_stiffness\_N\_per\_mm\_per\_needle}.
+\end{itemize}
+
+The final insertion check is:
+\begin{itemize}
+    \item \metric{thumb\_insertion\_pass}, recorded only as a qualitative yes/no
+    result with optional notes or an image link.
+\end{itemize}
+
+The optimizer should not estimate insertion force, insertion margin, or Young's
+modulus in version 1. Thumb insertion is deliberately uncontrolled and should not be
+converted into a quantitative mechanical target.
+
+\section{Endpoint Hierarchy}
+
+\subsection{Screening Gate}
+
+\metric{intact\_patch\_formation\_pass} is measured before mechanical testing and is
+not a Pareto objective. It is a feasibility gate and classifier endpoint.
+
+Default pass definition:
+\begin{itemize}
+    \item the CryoMN patch is visibly filled after molding;
+    \item the patch demolds and handles as an intact frozen microneedle patch;
+    \item there is no slurry-like collapse, gross bending, patch disintegration, or
+    obvious unfrozen liquid phase;
+    \item at least 90 of 100 tips are visually intact after demolding and handling.
+\end{itemize}
+
+If the laboratory later changes the mold geometry, the 90/100 rule should be stored as
+a configurable threshold, not hard-coded into downstream modeling logic.
+
+\subsection{Primary Objectives}
+
+\begin{longtable}{@{}p{0.38\linewidth}p{0.54\linewidth}@{}}
+\toprule
+\textbf{Endpoint} & \textbf{Definition and use} \\
+\midrule
+\metric{viability\_percent} &
+Post-thaw MSC viability, measured using the existing viability assay. This remains
+the biological objective transferred from the current repository. \\
+\metric{critical\_axial\_load\_N\_per\_needle} &
+Maximum compressive load before buckling, fracture, sudden load drop, or force
+plateau during Instron axial compression, divided by the number of needles actually
+compressed. This is the mechanical objective. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Single Secondary Endpoint}
+
+\metric{initial\_stiffness\_N\_per\_mm\_per\_needle} is calculated as the slope of
+the early linear force-displacement region, divided by the number of needles
+compressed. It should be stored, visualized, and optionally used as a diagnostic
+covariate or tie-breaker. It is not a Pareto objective in version 1.
+
+\subsection{Final Qualitative Check}
+
+\metric{thumb\_insertion\_pass} is recorded only for finalists. It is a qualitative
+yes/no result, optionally accompanied by free-text notes or an image link. Because the
+applied thumb force is uncontrolled and unquantifiable, this endpoint must not be used
+to calculate insertion force, insertion margin, or a continuous insertion objective.
+
+\section{Instron 5942 Mechanical Protocol}
+
+The Instron 5942 is a 0.5 kN single-column test system in the 5900 series. The relevant
+capability for this project is controlled force-displacement testing in compression
+using Bluehill-compatible load and extension acquisition. The CryoMN mechanical assay
+should therefore be a low-temperature axial compression test against a rigid platen or
+equivalent rigid contact surface.
+
+The mechanical test should export raw force-displacement data for every specimen.
+The importer will compute only:
+\begin{itemize}
+    \item \metric{critical\_axial\_load\_N\_per\_needle};
+    \item \metric{initial\_stiffness\_N\_per\_mm\_per\_needle}.
+\end{itemize}
+
+The raw file and observation record must include the following metadata:
+\begin{itemize}
+    \item formulation identifier;
+    \item experiment date;
+    \item test temperature or cold-stage condition;
+    \item number of needles compressed;
+    \item crosshead speed;
+    \item fixture/platen description;
+    \item whether the curve had a clear peak, sudden drop, plateau, or no clear failure;
+    \item operator notes.
+\end{itemize}
+
+Young's modulus should not be optimized in version 1. For frozen pyramidal CryoMN
+arrays, apparent modulus would be confounded by patch base deformation, fixture
+compliance, nonuniform tip contact, alignment, temperature drift, and thawing. The more
+defensible version-1 measurements are peak axial load and early force-displacement
+stiffness.
+
+\section{Experimental Policy}
+
+Each active-learning round should assume tight wet-lab capacity:
+\begin{itemize}
+    \item 12 viability screens;
+    \item intact patch formation screening for all 12 if enough molded material exists;
+    \item 3--4 Instron mechanical tests;
+    \item thumb insertion only for finalists.
+\end{itemize}
+
+Mechanical testing should be selected from candidates with
+\metric{intact\_patch\_formation\_pass = true}. One novelty or coverage exception per
+round is allowed if it is scientifically useful, but the exception must be flagged in
+the batch metadata so later analysis does not treat it as an ordinary mechanical
+candidate.
+
+\section{Constraints and Penalties}
+
+\subsection{Ingredient Count}
+
+Ingredient count is a soft penalty, not a hard cutoff. Candidates with more than 8
+active ingredients may be exported if the acquisition value justifies them, but they
+must be penalized and flagged.
+
+For candidate $x$, let $n_{\mathrm{active}}(x)$ be the number of active ingredients
+after applying the existing practical trace floor. The ingredient-count penalty should
+be:
+\[
+P_{\mathrm{ingredients}}(x)
+= \lambda_{\mathrm{ingredients}}\,
+\max(0, n_{\mathrm{active}}(x)-8).
+\]
+
+The implementation should store both the raw active count and the penalty value.
+
+\subsection{Single-Ingredient 500 mM Rule}
+
+The 500 mM rule applies to each single molar ingredient independently. It is not a
+total-solute-concentration penalty.
+
+For each molar feature $x_j$, the concentration penalty should be:
+\[
+P_{\mathrm{500mM}}(x)
+= \lambda_{\mathrm{500mM}}\,
+\sum_{j \in \mathcal{M}}
+\max(0, x_j - 0.5)^2,
+\]
+where $\mathcal{M}$ is the set of molar-valued ingredient features and concentrations
+are represented in molar units. Percentage-valued ingredients should use separate
+registry-defined caps.
+
+The candidate generator may still emit a candidate with one ingredient above 0.5 M if
+the acquisition value is compelling, but the row must be flagged as
+\metric{single\_ingredient\_gt\_500mM = true}.
+
+\subsection{Culture Media Exclusion}
+
+Culture media, basal media, salts, and buffers remain excluded as formulation variables.
+They may be recorded as fixed protocol context, but they must not appear as optimizable
+features.
+
+\section{Ingredient Registry}
+
+The next implementation should introduce a central formulation registry. This registry
+must define canonical names, feature names, units, synonyms, molecular weights or
+conversion rules, optimization bounds, percentage caps, and whether the 500 mM penalty
+applies.
+
+The following ingredients must be added or activated:
+\begin{longtable}{@{}p{0.28\linewidth}p{0.18\linewidth}p{0.45\linewidth}@{}}
+\toprule
+\textbf{Ingredient} & \textbf{Status} & \textbf{Implementation note} \\
+\midrule
+taurine & parsed but inactive & Activate as \metric{taurine\_M} if retained by registry rules. \\
+sericin & parsed but inactive & Retain as percentage-valued \metric{sericin\_pct}. \\
+raffinose & already present & Keep as \metric{raffinose\_M}. \\
+methylcellulose & already present & Keep as \metric{methylcellulose\_pct}. \\
+myo-inositol & new & Add as molar-valued \metric{myo\_inositol\_M}. \\
+4-methoxyphenyl beta-D-glucopyranoside & new & Add as molar-valued \metric{methoxyphenyl\_glucopyranoside\_M}. \\
+trehalose & already present & Keep as \metric{trehalose\_M}. \\
+\bottomrule
+\end{longtable}
+
+The registry should be the single source of truth for feature generation. Parser,
+candidate generator, penalty engine, batch exporter, and report code should all consume
+the same registry.
+
+\textbf{Current acquisition restrictions.} The legacy literature import should read
+\code{data/processed/parsed\_formulations.csv}, but \metric{cooh\_pll},
+\metric{ficoll}, and \metric{hes} are excluded from the active v2 feature set because
+they cannot currently be acquired. Separately, ingredients that are valid scientific
+candidates but temporarily unavailable in the lab should remain active registry
+features and be excluded only at selection time through
+\code{config\_v2/availability.yaml}. This temporary list currently contains
+\metric{taurine\_M}, \metric{sericin\_pct}, \metric{raffinose\_M},
+\metric{methylcellulose\_pct}, \metric{myo\_inositol\_M},
+\metric{methoxyphenyl\_beta\_d\_glucopyranoside\_M}, and
+\metric{trehalose\_M}.
+
+\section{Data Transfer Policy}
+
+The current repository transfers into the new project as viability evidence only. The
+existing literature rows and 106 CryoMN wet-lab rows should seed the viability model,
+but no mechanical labels should be inferred from legacy data.
+
+Recommended source assumptions:
+\begin{longtable}{@{}p{0.28\linewidth}p{0.34\linewidth}p{0.30\linewidth}@{}}
+\toprule
+\textbf{Source} & \textbf{Default noise} & \textbf{Use} \\
+\midrule
+Literature viability & 50 percentage points & Weak viability prior; 10$\times$ legacy wet-lab noise. \\
+Legacy CryoMN wet-lab viability & 5 percentage points & Trusted viability correction signal. \\
+New viability & 1 percentage point by default & Active biological observations; one fifth of legacy wet-lab noise unless overridden. \\
+Intact patch formation & classifier likelihood & Feasibility model, not objective. \\
+Instron critical load and stiffness & maximum of replicate SD, 15\% of mean, and instrument floor & Mechanical objective and diagnostic. \\
+\bottomrule
+\end{longtable}
+
+\section{Algorithm}
+
+\subsection{Cold Start}
+
+Mechanical data start at zero, so the first phase should not rely immediately on a full
+hypervolume acquisition function. Instead, use k-center or greedy diversity selection
+among candidates that are predicted to be viable and likely to pass intact patch
+formation. Continue this cold-start phase until at least 8 mechanical observations have
+been collected.
+
+Cold-start mechanical selection should:
+\begin{itemize}
+    \item prefer predicted intact-patch pass candidates;
+    \item cover chemically distinct regions near promising viability predictions;
+    \item include one optional novelty/coverage exception per round;
+    \item avoid duplicate or near-duplicate formulations already tested mechanically.
+\end{itemize}
+
+\subsection{Main Acquisition}
+
+After mechanical cold start, use noisy hypervolume-based multi-objective Bayesian
+optimization. The production acquisition should be \code{qLogNEHVI}. The two objectives
+used for hypervolume are normalized:
+\begin{itemize}
+    \item normalized \metric{viability\_percent};
+    \item normalized \metric{critical\_axial\_load\_N\_per\_needle}.
+\end{itemize}
+
+\metric{intact\_patch\_formation\_pass} should enter as a feasibility classifier and
+acquisition penalty. \metric{initial\_stiffness\_N\_per\_mm\_per\_needle} should not
+enter the hypervolume objective set. It can be used only as a diagnostic, covariate, or
+tie-breaker.
+
+Evaluation baselines should include:
+\begin{itemize}
+    \item random or diversity sampling;
+    \item \code{qLogNParEGO};
+    \item known-noise or variance-aware \code{qLogNEHVI} variants.
+\end{itemize}
+
+\section{Computational Architecture}
+
+\subsection{Directory Layout}
+
+The next project should add new numbered workflow stages without breaking the legacy
+viability pipeline:
+\begin{itemize}
+    \item \code{src/08\_multi\_objective/01\_build\_database/build\_database.py}:
+    build the v2 database from legacy viability-only evidence;
+    \item \code{src/08\_multi\_objective/02\_select\_candidates/select\_candidates.py}:
+    score a candidate pool and export the next wet-lab slate;
+    \item \code{src/08\_multi\_objective/03\_record\_results/update\_from\_results.py}:
+    ingest filled wet-lab results and technical replicates;
+    \item \code{src/08\_multi\_objective/03\_record\_results/import\_instron.py}:
+    parse Bluehill/Instron CSV files into the round CSV;
+    \item \code{src/08\_multi\_objective/04\_visualization/visualize.py}:
+    generate v2 diagnostics and candidate plots;
+    \item \code{src/08\_multi\_objective/helper/}: non-executable shared model,
+    registry, importer, penalty, acquisition, and selection code.
+\end{itemize}
+
+\subsection{Decoupled Tables}
+
+The new data layer should avoid forcing every endpoint into one wide validation CSV.
+Use two persistent model-state tables and two selector-output CSV files:
+
+\begin{longtable}{@{}p{0.25\linewidth}p{0.67\linewidth}@{}}
+\toprule
+\textbf{Table} & \textbf{Purpose} \\
+\midrule
+\code{formulations} &
+One row per canonical formulation vector, including formulation ID, ingredient columns,
+active ingredient count, 500 mM flags, percentage cap flags, and human-readable recipe. \\
+\code{observations} &
+One row per measured endpoint per formulation. Required columns include formulation ID,
+endpoint name, value, uncertainty, replicate count, assay type, source, date, and notes. \\
+\code{total\_candidate\_pool.csv} &
+Full generated and scored candidate pool after temporary availability filtering. This
+file is useful for audit and troubleshooting, but it is not wet-lab input and is not
+persistent model state. \\
+\code{next\_round\_candidates.csv} &
+Per-round selector output containing candidate identity, formulation values,
+predictions, feasibility diagnostics, mechanical-test recommendations, and blank
+wet-lab result columns. This file is not persistent model state; stage 03 folds filled
+results back into \code{observations}. \\
+\bottomrule
+\end{longtable}
+
+Required observation endpoint names:
+\begin{itemize}
+    \item \metric{viability\_percent};
+    \item \metric{intact\_patch\_formation\_pass};
+    \item \metric{critical\_axial\_load\_N\_per\_needle};
+    \item \metric{initial\_stiffness\_N\_per\_mm\_per\_needle};
+    \item \metric{thumb\_insertion\_pass}.
+\end{itemize}
+
+\section{Acceptance Tests}
+
+The implementation should include tests for the following scenarios:
+\begin{itemize}
+    \item intact-patch gate ingestion and classifier training;
+    \item per-ingredient 500 mM penalties;
+    \item ingredient-count soft penalties above 8 active ingredients;
+    \item culture media and basal buffer exclusion;
+    \item new ingredient registry entries and synonyms;
+    \item Instron CSV parsing for peak load and initial stiffness;
+    \item cold-start selection restricted to predicted intact-patch-pass candidates;
+    \item \code{qLogNEHVI} candidate generation after seeded formation and mechanical data;
+    \item LaTeX compilation of this planning document.
+\end{itemize}
+
+\section{Implementation Order}
+
+\begin{enumerate}
+    \item Add the registry and migrate parser/candidate code to consume it.
+    \item Add decoupled formulation, observation, and batch table helpers.
+    \item Implement the Instron importer and synthetic force-displacement test fixtures.
+    \item Import legacy literature and CryoMN viability data as viability-only observations.
+    \item Implement formation classifier training.
+    \item Implement mechanical cold-start selection.
+    \item Implement \code{qLogNEHVI} optimization once enough mechanical data exist.
+    \item Add Pareto-front evaluation, normalized hypervolume, IGD, and diagnostic plots.
+    \item Run regression tests to confirm the legacy single-objective viability pipeline remains usable.
+\end{enumerate}
+
+\section{Evidence Base}
+
+The plan is grounded in four evidence streams. First, the current repository shows that
+literature-only viability transfer is useful but insufficient without CryoMN-specific
+wet-lab correction. Second, the Emerson et al. CPA-cocktail study supports noisy
+hypervolume-based multi-objective Bayesian optimization over random search or purely
+scalarized baselines for limited-experiment formulation discovery. Third, Instron
+documentation confirms that the 5942/5900-series frame is appropriate for controlled
+force-displacement testing in compression with Bluehill-compatible acquisition. Fourth,
+microneedle mechanical-characterization literature supports extracting buckling or
+fracture load and stiffness from load-displacement curves, while warning that speed,
+alignment, base deformation, and number of compressed needles affect measured values.
+
+\begin{thebibliography}{9}
+
+\bibitem{instron5900}
+Instron.
+\textit{Out of Production 5900 Series Universal Testing Systems}.
+\url{https://www.instron.com/en/products/testing-systems/universal-testing-systems/low-force-universal-testing-systems/5900-series/}
+
+\bibitem{instron5940support}
+Instron.
+\textit{5940 Series Single Column Table Frames System Support}.
+\url{https://www.instron.com/wp-content/uploads/2024/07/5940-single-column-table-frames-system-support.pdf}
+
+\bibitem{mnmechanical}
+Mechanical characterization of individual needles in microneedle arrays: factors
+affecting compression test results.
+\url{https://pdfs.semanticscholar.org/02d4/c6981289f07083ee62c04637c4ddd8e5c335.pdf}
+
+\bibitem{polymermnfailure}
+Park and Prausnitz.
+\textit{Analysis of Mechanical Failure of Polymer Microneedles by Axial Force}.
+\url{https://pmc.ncbi.nlm.nih.gov/articles/PMC3016089/}
+
+\bibitem{emerson}
+Emerson et al.
+\textit{Accelerated Discovery of Cryoprotectant Cocktails via Multi-Objective Bayesian Optimization}.
+Local repository PDF:
+\code{docs/Accelerated Discovery of Cryoprotectant Cocktails via Multi-Objective Bayesian Optimization.pdf}.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,32 @@
+screening_gate:
+  name: intact_patch_formation_pass
+  type: binary
+  total_tip_count_default: 100
+  min_intact_tip_count_default: 90
+  min_intact_tip_fraction: 0.90
+  description: >
+    Filled and demolded CryoMN patch remains intact, shows no slurry or collapse,
+    and meets the minimum visually intact tip count after handling.
+
+primary_objectives:
+  - name: viability_percent
+    direction: maximize
+    unit: percent
+    legacy_transfer: true
+  - name: critical_axial_load_N_per_needle
+    direction: maximize
+    unit: N_per_needle
+    legacy_transfer: false
+
+secondary_endpoints:
+  - name: initial_stiffness_N_per_mm_per_needle
+    role: diagnostic_covariate_tiebreaker
+    unit: N_per_mm_per_needle
+
+final_qualitative_checks:
+  - name: thumb_insertion_pass
+    type: binary
+    modeled: false
+    description: >
+      Final yes/no qualitative check only. Thumb force is not quantified and is
+      not used as a modeled force endpoint.

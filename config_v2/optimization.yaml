@@ -1,0 +1,34 @@
+random_seed: 42
+
+round_policy:
+  viability_screens_per_round: 12
+  mechanical_tests_per_round: 4
+  mechanical_min_tests_per_round: 3
+  allow_one_novelty_exception: true
+  intact_probability_threshold: 0.50
+  mechanics_startup_observation_threshold: 8
+
+penalties:
+  active_ingredient_soft_limit: 8
+  active_ingredient_excess_weight: 0.05
+  single_molar_ingredient_limit_M: 0.5
+  single_molar_excess_weight: 0.20
+  intact_failure_weight: 0.80
+
+transfer:
+  literature_viability_noise_percent: 50.0
+  legacy_wetlab_viability_noise_percent: 5.0
+  legacy_mechanical_transfer: false
+
+feedback:
+  new_viability_noise_percent: 1.0
+
+selection:
+  generated_candidate_pool_size: 2000
+  viability_ucb_kappa: 0.35
+  mechanical_ucb_kappa: 0.50
+  diversity_weight: 0.10
+  novelty_exception_probability_floor: 0.25
+  reference_point:
+    viability_percent: 0.0
+    critical_axial_load_N_per_needle: 0.0

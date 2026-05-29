@@ -1,0 +1,5 @@
+# Optional dependencies for exact BoTorch qLogNEHVI optimization.
+# The v2 code has an executable finite-pool fallback when these are absent.
+torch>=2.0.0
+gpytorch>=1.11
+botorch>=0.9.0

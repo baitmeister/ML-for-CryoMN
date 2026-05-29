@@ -1,0 +1,491 @@
+\documentclass[preprint,12pt]{elsarticle}
+
+\usepackage{amsmath,amssymb}
+\usepackage[hypertexnames=false]{hyperref}
+
+\emergencystretch=10em
+\newenvironment{promptbar}{\begin{quote}\scriptsize\raggedright\sloppy}{\end{quote}}
+
+\journal{}
+
+\begin{document}
+
+\begin{frontmatter}
+
+\title{Supplementary Methods: Agentic Discovery of Cryomicroneedle Formulations}
+
+\author[cityu]{Hao Li}
+\author[cityu]{Lifu Du}
+\author[cityu]{Nurul Hameed}
+\author[cityu]{Shemonti Saha Authai}
+\author[cityu]{Zlata Stefanovic}
+\author[cityu]{Chenjie Xu\texorpdfstring{\corref{cor1}}{}}
+\ead{chenjie.xu@cityu.edu.hk}
+\cortext[cor1]{Corresponding author}
+
+\affiliation[cityu]{organization={Department of Biomedical Engineering, City University of Hong Kong},
+            addressline={83 Tat Chee Avenue},
+            city={Kowloon},
+            country={Hong Kong SAR, China}}
+
+\end{frontmatter}
+
+\section{Supplementary Methods}
+
+\subsection{AI-assisted workflow construction}
+
+The initial one-shot prompt and agent transcript were recorded in \texttt{prompt.md} in the GitHub repository. Project code is available at \url{https://github.com/baitmeister/ML-for-CryoMN}. A condensed transcript is provided below with local machine-specific absolute paths replaced by relative project-root references. The transcript is included only to document the first computational scaffold; final workflow components already described in the main manuscript are not repeated here.
+
+
+\begingroup
+\small
+\setlength{\parskip}{0.45em}
+\begin{promptbar}
+\subsubsection*{Condensed chat conversation}
+
+Note: \textit{Long scientific background already covered in the main manuscript and routine file-edit confirmations are omitted except where they document a change in workflow logic.}
+
+\paragraph*{User Input}
+
+The scientific background, optimization targets and major constraints from the initial prompt are summarized in the main manuscript rather than repeated here. Implementation-specific prompt details retained for reproducibility were that the agent should parse formulation and viability text into a structured matrix, merge supplied synonym groups, exclude culture media as variables, harmonize concentration units where possible, handle duplicate formulations with discordant viability values, and output scripts plus Markdown README files for each major step. The complete original wording is preserved in \texttt{prompt.md}.
+
+\textit{Listed directory [ML for CryoMN](project-root/)}
+
+\paragraph*{Planner Response}
+
+Found the CSV file. Let me examine its contents to understand the data structure and then develop an appropriate ML approach.
+
+\textit{Viewed [Cryopreservative Data 2026.csv](project-root/Cryopreservative\%20Data\%202026.csv)}
+
+\paragraph*{Planner Response}
+
+Let me see the rest of the file to understand the full dataset and then create a comprehensive plan.
+
+\textit{Viewed [Cryopreservative Data 2026.csv](project-root/Cryopreservative\%20Data\%202026.csv)}
+
+\paragraph*{Planner Response}
+
+Now I have a comprehensive understanding of the data. Let me create the implementation plan detailing the ML approach and the first step (data parsing). The dataset has \textasciitilde{}900 rows which is relatively small, so I need to choose an appropriate ML approach.
+
+\textit{Edited relevant file}
+
+\textit{Edited relevant file}
+
+\paragraph*{Planner Response}
+
+I've created the implementation plan. Now I need to notify the user for their review and approval before proceeding to execution.
+
+\paragraph*{User Input}
+
+This is a system-generated message that is sent due to the user's review policy. Proceed with the decision that you think is the most optimal here.
+
+\textit{User accepted the command \texttt{mkdir -p "ML for CryoMN/data/raw" "ML for CryoMN/data/processed" "ML for CryoMN/data/validation" "ML for CryoMN/src/01\_data\_parsing" "ML for CryoMN/src/02\_model\_training" "ML for CryoMN/src/03\_optimization" "ML for CryoMN/src/04\_validation\_loop" "ML for CryoMN/docs"}}
+
+\textit{User accepted the command \texttt{cp "ML for CryoMN/Cryopreservative Data 2026.csv" "ML for CryoMN/data/raw/"}}
+
+\paragraph*{Planner Response}
+
+Now let me create the main parsing script. This is a comprehensive script that will parse the formulation data from the CSV file.
+
+\textit{Edited relevant file}
+
+\paragraph*{Planner Response}
+
+Now let me create the README documentation for the parsing step and also create a requirements.txt file:
+
+\textit{Edited relevant file}
+
+\textit{Edited relevant file}
+
+\textit{Edited relevant file}
+
+\paragraph*{Planner Response}
+
+Now let me run the parsing script to test it and verify it works correctly:
+
+\textit{User accepted the command \texttt{cd "ML for CryoMN" \&\& python src/01\_data\_parsing/parse\_formulations.py 2>\&1 | head -100}}
+
+\paragraph*{Planner Response}
+
+The script found 169 duplicate pairs which is too many to resolve interactively. I need to modify the script to handle this better - by automatically using the mean viability for duplicates or keeping the first occurrence. Let me update the script:
+
+\paragraph*{Planner Response}
+
+I need to update the parsing script to handle duplicates automatically instead of requiring interactive input for 169 pairs. Let me fix this:
+
+\textit{Viewed [parse\_formulations.py](project-root/src/01\_data\_parsing/parse\_formulations.py)}
+
+\paragraph*{Planner Response}
+
+Now I need to update the script to handle duplicates automatically. I'll modify the duplicate resolution function to automatically average viabilities for duplicate formulations instead of requiring interactive input:
+
+\textit{Edited relevant file}
+
+\paragraph*{Planner Response}
+
+I need to use the proper format for replace\_file\_content with the TargetContent parameter:
+
+\textit{Edited relevant file}
+
+\paragraph*{Planner Response}
+
+Now I need to update the main function to call the new [auto\_resolve\_duplicates](cci:1://project-root/src/01\_data\_parsing/parse\_formulations.py:489:0-552:13) function instead of the old interactive one:
+
+\textit{Edited relevant file}
+
+\paragraph*{Planner Response}
+
+Now let me run the parsing script again to verify it works correctly:
+
+\textit{User accepted the command \texttt{cd "ML for CryoMN" \&\& python src/01\_data\_parsing/parse\_formulations.py}}
+
+\paragraph*{Planner Response}
+
+The script ran successfully! It parsed 374 formulations, found 169 duplicate pairs, averaged them down to 200 unique formulations, and saved the output. However, I notice a viability value of 341\% which seems invalid (likely a relative viability compared to control). Let me verify the output and check on this issue:
+
+\textit{User accepted the command \texttt{cd "ML for CryoMN" \&\& head -20 data/processed/parsed\_formulations.csv}}
+
+\textit{User accepted the command \texttt{cd "ML for CryoMN" \&\& python -c "import pandas as pd; df = pd.read\_csv('data/processed/parsed\_formulations.csv'); print('Rows with viability > 100\%:'); print(df[df['viability\_percent'] > 100][['formulation\_id', 'viability\_percent', 'source\_doi']].head(10))"}}
+
+\paragraph*{Planner Response}
+
+I see there are some entries with viability > 100\% (like 341\% which is an average including values "130\% compared to standard DMSO"). These are relative viabilities compared to a control, not absolute percentages. I need to handle this edge case. Let me also update the task checklist and create a walkthrough document:
+
+\textit{Edited relevant file}
+
+\textit{Edited relevant file}
+
+\paragraph*{Planner Response}
+
+I've completed Step 1: Data Parsing. Let me notify the user about the completed work and share the results:
+
+\paragraph*{User Input}
+
+Proceed, do not ask me for permission in the future. Complete the entire workflow
+
+\textit{Edited relevant file}
+
+\textit{Edited relevant file}
+
+\paragraph*{Planner Response}
+
+Now let me run the model training script:
+
+\textit{User accepted the command \texttt{cd "ML for CryoMN" \&\& python src/02\_model\_training/train\_gp\_model.py}}
+
+\paragraph*{Planner Response}
+
+Model training completed successfully! The GP model achieved:
+\begin{itemize}
+\item CV R\textsuperscript{2}: 0.239 (indicating the task is challenging with this limited data)
+\item Training R\textsuperscript{2}: 0.686
+\item DMSO is the most important feature
+\end{itemize}
+
+Now let me proceed with Step 3: Optimization:
+
+\textit{Edited relevant file}
+
+\textit{Edited relevant file}
+
+\paragraph*{Planner Response}
+
+Now let me run the optimization script:
+
+\textit{User accepted the command \texttt{cd "ML for CryoMN" \&\& python src/03\_optimization/optimize\_formulation.py}}
+
+\paragraph*{Planner Response}
+
+The optimization is running in background. Let me check its status:
+
+\textit{Checked command status}
+
+\paragraph*{Planner Response}
+
+Still running. Let me wait a bit more:
+
+\textit{Checked command status}
+
+\paragraph*{Planner Response}
+
+There's an error - the candidates DataFrame is empty because the optimization isn't finding valid candidates. Let me fix the optimize function:
+
+\textit{Viewed [optimize\_formulation.py](project-root/src/03\_optimization/optimize\_formulation.py)}
+
+\paragraph*{Planner Response}
+
+I see the issue - the \texttt{differential\_evolution} might not be converging properly. Let me fix the optimize function to handle empty candidates and simplify the optimization approach:
+
+\textit{Edited relevant file}
+
+\paragraph*{Planner Response}
+
+Now let me run the optimization again:
+
+\textit{User accepted the command \texttt{cd "ML for CryoMN" \&\& python src/03\_optimization/optimize\_formulation.py}}
+
+\paragraph*{Planner Response}
+
+Excellent! Optimization completed successfully! Now let me create Step 4: Validation Loop and finish the workflow:
+
+\textit{Edited relevant file}
+
+\textit{Edited relevant file}
+
+\paragraph*{Planner Response}
+
+Now let me run the validation loop script to create the template, then update the task checklist and walkthrough:
+
+\textit{User accepted the command \texttt{cd "ML for CryoMN" \&\& python src/04\_validation\_loop/update\_model.py}}
+
+\paragraph*{Planner Response}
+
+Now let me update the task.md and walkthrough.md with the final results:
+
+\textit{Edited relevant file}
+
+\textit{Edited relevant file}
+
+\paragraph*{Planner Response}
+
+Now let me update the main project README with complete documentation and verify everything is working correctly:
+
+\textit{Edited relevant file}
+
+\textit{User accepted the command \texttt{cd "ML for CryoMN" \&\& ls -la results/}}
+
+\textit{User accepted the command \texttt{cd "ML for CryoMN" \&\& cat results/candidates\_general\_summary.txt}}
+
+\paragraph*{Planner Response}
+
+Excellent! The entire pipeline is complete and working. Let me view the DMSO-free candidates and then notify the user with the final summary:
+
+\textit{User accepted the command \texttt{cd "ML for CryoMN" \&\& cat results/candidates\_dmso\_free\_summary.txt}}
+
+\paragraph*{User Input}
+
+have you run the whole pipeline once? if not please run it to see if there's any error
+
+\paragraph*{Planner Response}
+
+Yes, I ran each step individually during development! But let me run the complete pipeline from scratch end-to-end to verify there are no errors:
+
+\textit{User accepted the command \texttt{cd "ML for CryoMN" \&\& echo "=== Step 1: Data Parsing ===" \&\& python src/01\_data\_parsing/parse\_formulations.py \&\& echo "" \&\& echo "=== Step 2: Model Training ===" \&\& python src/02\_model\_training/train\_gp\_model.py \&\& echo "" \&\& echo "=== Step 3: Optimization ===" \&\& python src/03\_optimization/optimize\_formulation.py \&\& echo "" \&\& echo "=== Step 4: Validation Loop ===" \&\& python src/04\_validation\_loop/update\_model.py \&\& echo "" \&\& echo "=== PIPELINE COMPLETE ==="}}
+
+\paragraph*{Planner Response}
+
+\textbf{\(\checkmark\) Complete pipeline ran successfully with no errors!}
+
+All 4 steps executed without any issues:
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+Step & Status & Key Output \\ \hline
+\textbf{1. Data Parsing} & \(\checkmark\) & 200 unique formulations extracted \\
+\textbf{2. Model Training} & \(\checkmark\) & GP model trained (CV R\textsuperscript{2}=0.24, Training R\textsuperscript{2}=0.69) \\
+\textbf{3. Optimization} & \(\checkmark\) & 20 general + 15 DMSO-free candidates generated \\
+\textbf{4. Validation Loop} & \(\checkmark\) & Template created, awaiting wet lab results \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Key Results:}
+\begin{itemize}
+\item \textbf{Best general candidate}: 78.6\% \(\pm\) 21.1\% viability at 0.5\% DMSO
+\item \textbf{Best DMSO-free candidate}: 77.9\% \(\pm\) 23.5\% viability at 0\% DMSO
+\end{itemize}
+
+The pipeline is ready for use. Step 4 correctly indicates it's waiting for wet lab validation results before it can update the model.
+
+\end{promptbar}
+\endgroup
+
+\subsection{Dataset parsing and feature encoding}
+
+The first step was to identify data points with ‘unique conditions’. These included: (i) experiments conducted with the same formulations tested on different cell types, (ii) experiments where pre-treatment was done, or specialised methods such as electroporation was used to introduce the cryoprotectant into the cell, (iii) experiments conducted with the same polymer or copolymer of different molecular weights/ratios, (iv) studies where viability or recovery metrics was reported as a value relative to a standard experiment, and (v) experiments where commercial cryoprotectants was used whose full formations is unknown or not reported. This  manual process reduced usable data points
+from 499 to 393 (Supplementary Data).
+
+Free-text formulation records were parsed into canonical ingredient features. Synonyms were merged for common cryoprotectants and additives, including DMSO/Me\(_2\)SO, ethylene glycol/EG, propylene glycol/1,2-propanediol/PROH, ectoin/ectoine, FBS/FCS, HES/hydroxyethyl starch, HSA/human serum albumin, methylcellulose/MC, hyaluronic acid/HMW-HA and dextran/dextran-40. Basal media and buffers, including DMEM, \(\alpha\)-MEM, PBS, HBSS, saline and related media terms, were excluded as formulation variables.
+
+Molar-convertible ingredients were represented in molar units (\texttt{\_M}). Percentage-only ingredients, including sera, proteins, PEG species, polymers and other complex mixtures, were represented as percentage features (\texttt{\_pct}). PEG was split by molecular weight class rather than treated as one generic feature. Concentration parsing supported percentage, M, mM and \(\mathrm{mg}/\mathrm{ml}\) inputs where molecular weights and densities permitted conversion.
+
+Rows without extractable formulation text or extractable viability were excluded from model training. When identical canonical formulation signatures were associated with different extracted viabilities, the duplicate signatures were collapsed by averaging the viability values and retaining one representative formulation row. The final parsed literature dataset contained 198 unique formulations and 34 canonical formulation features. For active model training, features were retained only if present in at least three literature formulations, yielding 21 active input variables.
+
+\subsection{Gaussian-process model configuration}
+
+The literature-only surrogate used Gaussian-process regression with a Mat\'ern kernel with smoothness parameter \(\nu=2.5\), where \(\nu\) controls the smoothness of the fitted response function. The kernel also included a constant-amplitude term and a white-noise term. Input features were standardized using \texttt{StandardScaler}, the target was normalized internally by the Gaussian-process regressor and hyperparameter optimization used 10 optimizer restarts. The initial model used five-fold cross-validation with \texttt{shuffle=True} and \texttt{random\_state=42}.
+
+\subsection{Prior-mean correction update}
+
+After wet-lab data became available, the production update strategy used a composite model. A literature Gaussian process first predicted a baseline viability for each formulation. A second Gaussian process was then fitted to wet-lab residuals, where residual means measured viability minus literature-model prediction. The composite prediction was:
+
+\begin{equation}
+\hat{y}(x)=\hat{y}_{\mathrm{literature}}(x)+\hat{r}_{\mathrm{wetlab}}(x),
+\end{equation}
+
+where \(x\) is the formulation vector, \(\hat{y}(x)\) is final predicted viability, \(\hat{y}_{\mathrm{literature}}(x)\) is the literature-model prediction and \(\hat{r}_{\mathrm{wetlab}}(x)\) is the wet-lab residual correction. The combined uncertainty was computed by summing the literature and correction variances and taking the square root.
+
+Source-specific noise assumptions were fixed at \(\alpha_{\mathrm{literature}}=1.0\) and \(\alpha_{\mathrm{wetlab}}=0.02\), where \(\alpha\) is the Gaussian-process observation-noise regularization parameter. This corresponds to a 50-fold relative weighting in favour of wet-lab observations. Wet-lab generalization was estimated by cross-validating the wet-lab rows only, with \(K=\min(5,n_{\mathrm{wetlab}})\), where \(K\) is the number of folds and \(n_{\mathrm{wetlab}}\) is the number of available wet-lab rows. All literature rows were retained in the training set for every fold. Cross-validated residuals were used to estimate an additive prediction-bias correction (\texttt{bias\_shift\_percent}) and a multiplicative uncertainty correction (\texttt{uncertainty\_scale}), which were applied consistently during optimization, evaluation and next-batch recommendation.
+
+\subsection{Random-sampling candidate generation}
+
+In the first five stages, a large random pool of formulations was sampled from the feasible formulation space. Candidates were normalized, trace concentrations were removed and hard constraints were applied before prediction. Candidates were then ranked by Gaussian-process predicted mean viability. We used two predefined DMSO-capped candidate pools: a general pool allowing up to 5\% v/v DMSO, and a project-defined “DMSO-free” pool allowing up to 0.5\% v/v DMSO. In this manuscript, “DMSO-free pool” refers to this operational low-DMSO optimization stratum rather than strict chemical absence. Candidate identity used a practical concentration floor: percentage features below 0.1\% and molar features below 0.001 M, equivalent to 1 mM, were treated as absent.
+
+\subsection{Acquisition-score scale and prediction calibration}
+
+For Bayesian optimization, the acquisition score was computed on the original post-thaw viability scale, not on a standardized target scale. Feature standardization was applied internally before Gaussian-process prediction, but both the predictive mean and uncertainty used for acquisition remained in viability percentage-point units.
+
+For literature-only checkpoints, the uncalibrated prediction was the mean and standard deviation returned by the literature-trained Gaussian process. For wet-lab-updated checkpoints, the prior-mean correction model described above supplied the uncalibrated composite mean \(\mu_{0}(x)\) and standard deviation \(\sigma_{0}(x)\). After each wet-lab update, cross-validated wet-lab residuals were used to estimate an additive bias correction \(b\) and a multiplicative uncertainty scale \(s\), with \(s\) selected to improve empirical one- and two-standard-deviation coverage.
+
+The calibrated prediction used for acquisition scoring was therefore
+\begin{equation}
+\mu(x)=\mu_{0}(x)+b,
+\end{equation}
+\begin{equation}
+\sigma(x)=s\,\sigma_{0}(x).
+\end{equation}
+If a checkpoint did not contain calibration metadata, the defaults were
+\begin{equation}
+b=0,
+\qquad
+s=1.
+\end{equation}
+For the iteration-10 checkpoint, for example, the stored calibration parameters were
+\begin{equation}
+b=-6.83 \text{ percentage points},
+\qquad
+s=0.78.
+\end{equation}
+
+The upper-confidence-bound (UCB) acquisition score was then computed as
+\begin{equation}
+a_{\mathrm{UCB}}(x)
+=
+\mu(x)+\kappa\sigma(x),
+\end{equation}
+with \(\kappa=0.5\). Predictions were not clipped to the interval $0$--$100\%$ before acquisition scoring. Exported candidate tables reported the calibrated predicted viability, calibrated uncertainty, and acquisition value for each candidate.
+
+\subsection{Bayesian optimization candidate generation}
+
+Bayesian optimization used the same Gaussian-process or composite surrogate model but replaced random candidate search with Differential-Evolution optimization of the calibrated upper-confidence-bound score defined above. Each run generated 20 candidates with \texttt{maxiter=100}, \texttt{popsize=15} and \texttt{random\_seed=42}.
+
+The objective also included implementation penalties to keep candidates chemically plausible and experimentally useful: a sparsity penalty of 0.35 for formulations with more active ingredients than the observed reference count, a support penalty of 4.0 for candidates outside the observed formulation manifold, and a local batch-diversity penalty of 5.0 with radius 0.05 to discourage near-duplicate candidates within the same slate. The support radius was the weighted 90th percentile of observed nearest-neighbour distances multiplied by 1.25. Search bounds were ingredient-specific: DMSO was bounded by the selected cap, ethylene glycol/glycerol/propylene glycol by 2.5 M, trehalose/sucrose/raffinose by 1.0 M, proline/betaine/ectoin-class osmolytes by 0.5 M, serum features by 90\%, and hyaluronic acid/methylcellulose by 2\%.
+
+\subsection{Reasoning for optimization method}
+
+We used a staged active-learning strategy that transitioned from broad constrained random candidate generation toward Bayesian-optimization-guided candidate generation as wet-lab evidence accumulated. The initial phase used random sampling to explore the experimentally feasible formulation space under practical constraints. Bayesian-optimization candidate files were generated during the transition period and were audited against wet-lab testing outcomes, but the early prospective batches were not treated as purely acquisition-driven optimization campaigns.
+
+This design was recommended by Claude and chosen because the initial model was trained largely from literature-derived formulations, which provided useful prior structure but was not yet sufficiently calibrated to the specific wet-lab assay, formulation constraints, and experimental handling conditions used in this study. In this setting, applying Bayesian optimization too aggressively at the outset would risk over-exploiting artefacts of the literature prior, inaccurate uncertainty estimates, or sparsely supported regions of the high-dimensional formulation space.
+
+The random-search phase therefore served as a burn-in period. Candidate formulations were sampled broadly under practical constraints and then evaluated prospectively, producing wet-lab observations that were not concentrated around a single predicted optimum. This broad sampling improved coverage of the experimentally accessible formulation space, exposed systematic model residuals, and provided the wet-lab anchors needed to recalibrate prediction bias and uncertainty. It also reduced the risk that the optimization trajectory would collapse prematurely onto a narrow region supported only by the literature model.
+
+After this initial wet-lab grounding phase, the accumulated experimental data provided a more reliable basis for model-guided optimization. Later stages increasingly used Differential-Evolution-based Bayesian optimization together with the dedicated next-batch generator. The Bayesian-optimization module searched for high-acquisition candidate pools, while the next-batch generator converted those pools into wet-lab slates with an adaptive exploitation/exploration split, residual-based blind-spot probes, local-rank probes and coverage probes.
+
+This two-phase strategy separates model grounding from model exploitation. Broad random sampling was used while uncertainty estimates and rankings were still being established; acquisition-guided search was introduced once the model had sufficient prospective wet-lab evidence to make model-guided selection scientifically meaningful. The approach therefore prioritizes robustness in the early phase and sample efficiency in the later phase.
+
+\subsection{Cryomicroneedle mold specification}
+
+The PDMS mold was made using a 1:9 ratio of curing agent and base supplied in the SYLGARD 184 Silicone Elastomer kit. Following vacuuming to remove air bubbles, the PDMS with the positive mold was cured in an oven at \(60\,^{\circ}\mathrm{C}\) for 60 minutes. The positive mold was 3-D printed with the following specification: a \(10\times10\) pyramidal microneedle array patch; patch dimensions of \(1.63\,\mathrm{cm}\times1.63\,\mathrm{cm}\) with \(0.25\,\mathrm{cm}\) margins on each side; pitch \(=1200\,\mu\mathrm{m}\); needle base \(=500\,\mu\mathrm{m}\); needle height \(=1600\,\mu\mathrm{m}\); volume per needle \(=(1/3)\times500\times500\times1600\,\mu\mathrm{m}^{3}\approx0.133\,\mu\mathrm{L}\); and volume per patch \(=100\times0.133\approx13.3\,\mu\mathrm{L}\).
+
+\subsection{Experimental batch design}
+
+The next-batch generator treated Bayesian optimization as a candidate-pool source rather than as the complete experimental policy. It always wrote a 20-formulation slate. The default split was 8 exploitation rows and 12 exploration rows, with exploitation count adaptively bounded between 4 and 12 according to the previous completed stage's RMSE, mean signed residual and empirical \(1\sigma\) coverage. Exploitation candidates were selected from the active-stage Bayesian-optimization candidate files after removing already tested formulations and applying a chemistry-family diversity cap.
+
+Exploration candidates came from local-rank probes, blind-spot probes and coverage probes. Local-rank probes perturbed dominant ingredients around high-value anchors. Blind-spot probes targeted historically underpredicted regions using positive residual thresholds evaluated in descending order: 10, 8, 5, 2 and 0 percentage points. Exactly two coverage probes were reserved by default and selected by greedy \(k\)-center distance from the observed context. The generator also wrote recommended subsets for wet-lab capacities from 6 to 12 formulations.
+
+\subsection{Stage-based evaluation}
+
+Stage evaluation used frozen model checkpoints. Each stage was evaluated against the wet-lab batch selected by that stage's own candidate outputs. For example, the literature-only model was evaluated against the first wet-lab batch selected from literature-only candidate files, while iteration 3 was evaluated against the formulations selected from iteration 3 outputs. The evaluation did not use later models to rescore earlier decisions as if those later models had been available at the time.
+
+For each stage batch, the evaluation script reported root mean squared error (RMSE), mean absolute error (MAE), Spearman's rank correlation coefficient \(\rho\), Kendall's rank correlation coefficient \(\tau\), mean predictive standard deviation, empirical coverage within \(\pm 1\sigma\) and \(\pm 2\sigma\), and threshold-decision hit rates at 50\% and 70\% viability. Note that only the first four were reported in the main text.
+
+Specifically, model predictions were evaluated on the wet-lab-tested formulations, where \(y_i\) is the measured post-thaw viability, and viability and uncertainty were expressed in percentage-point units:
+\begin{equation}
+\mathcal{D}_{s}=\{(x_i,y_i)\}_{i=1}^{n_s}
+\end{equation}
+
+Then prediction error was quantified using root mean squared error (RMSE) and mean absolute error (MAE), where \(\mu_i\) is the model-predicted mean viability:
+\begin{equation}
+\mathrm{RMSE}_{s}=\sqrt{\frac{1}{n_s}\sum_{i=1}^{n_s}(y_i-\mu_i)^2}
+\end{equation}
+\begin{equation}
+\mathrm{MAE}_{s}=\frac{1}{n_s}\sum_{i=1}^{n_s}|y_i-\mu_i|
+\end{equation}
+Lower RMSE and MAE indicate more accurate viability prediction. RMSE penalizes large errors more strongly because residuals are squared, whereas MAE reports the average absolute prediction error in the original viability scale.
+
+Ranking performance was assessed using Spearman's rank correlation coefficient and Kendall's rank correlation coefficient. Spearman's \(\rho\) was computed as the Pearson correlation between the ranks of measured and predicted viability:
+\begin{equation}
+\rho_s =
+\frac{
+\sum_{i=1}^{n_s}
+\left(R(y_i)-\overline{R(y)}\right)
+\left(R(\mu_i)-\overline{R(\mu)}\right)
+}{
+\sqrt{
+\sum_{i=1}^{n_s}\left(R(y_i)-\overline{R(y)}\right)^2
+}
+\sqrt{
+\sum_{i=1}^{n_s}\left(R(\mu_i)-\overline{R(\mu)}\right)^2
+}
+}
+\end{equation}
+Higher \(\rho_s\) indicates better preservation of the ordering of formulations by viability; \(\rho_s=1\) indicates perfect monotonic agreement, \(\rho_s=0\) indicates no monotonic association, and negative values indicate inverse ranking.
+
+Kendall's \(\tau\) was computed from pairwise ordering agreement:
+\begin{equation}
+\tau_s =
+\frac{C_s-D_s}
+{\sqrt{(C_s+D_s+T_y)(C_s+D_s+T_\mu)}}
+\end{equation}
+where \(C_s\) and \(D_s\) are the numbers of concordant and discordant formulation pairs, respectively, and \(T_y\) and \(T_\mu\) denote ties only in measured and predicted viability. Higher \(\tau_s\) indicates better pairwise ranking consistency.
+
+Predictive uncertainty was summarized by the mean predicted standard deviation:
+\begin{equation}
+\overline{\sigma}_{s}=\frac{1}{n_s}\sum_{i=1}^{n_s}\sigma_i
+\end{equation}
+This metric reports the average model uncertainty for the evaluated formulations. It is diagnostic rather than directly optimized: lower values indicate narrower predictive distributions, but uncertainty should be interpreted jointly with empirical coverage and error.
+
+Calibration was assessed by empirical one-standard-deviation coverage:
+\begin{equation}
+\mathrm{Coverage@1\sigma}_{s}
+=
+\frac{1}{n_s}
+\sum_{i=1}^{n_s}
+\mathbf{1}\left(|y_i-\mu_i|\leq\sigma_i\right)
+\end{equation}
+For well-calibrated Gaussian predictive intervals, this value is expected to be approximately \(0.68\). Values below \(0.68\) indicate overconfident uncertainty estimates or systematic prediction bias, whereas values above \(0.68\) indicate conservative uncertainty estimates.
+
+Threshold decision performance was evaluated at viability thresholds of \(50\%\) and \(70\%\). For a threshold \(\theta\), the hit rate was defined as:
+\begin{equation}
+\mathrm{HitRate}_{s}(\theta)
+=
+\frac{1}{n_s}
+\sum_{i=1}^{n_s}
+\mathbf{1}
+\left[
+\mathbf{1}(\mu_i\geq\theta)
+=
+\mathbf{1}(y_i\geq\theta)
+\right],
+\qquad
+\theta\in\{50,70\}
+\end{equation}
+
+Candidate files and next-formulation slates were cross-referenced against wet-lab rows by canonical formulation signatures after applying the same trace-concentration floor used during candidate generation.
+
+\subsection{\texorpdfstring{Prospective-cumulative $R^2$}{Prospective-cumulative R2}}
+
+For predicted-versus-actual model-performance reporting, $R^2$, the coefficient of determination, was computed using a prospective-cumulative protocol. At stage \(k\), where \(k\) is the current model stage, predictions from the frozen stage model were evaluated against the cumulative wet-lab rows available through stages \(0 \ldots k\). This preserves temporal ordering while increasing sample size and outcome-range coverage. Batch-specific $R^2$ was not used as a primary endpoint because individual wet-lab batches were small and often had restricted response ranges, making $R^2$ sensitive to outliers and sign changes that did not necessarily reflect practical predictive utility. The stage-indexed predicted-versus-actual plots used measured viability on the x-axis, predicted mean viability on the y-axis and predictive standard deviation as point colour.
+
+\subsection{Explainability analysis}
+
+Explainability analyses were generated from the active iteration-specific observed context, combining literature and wet-lab rows with source weights. Feature importance was computed by weighted permutation importance using degradation in weighted $R^2$. SHAP analysis used \texttt{KernelExplainer} when the SHAP package was available, with up to 100 background samples and up to 100 explained samples. The feature-importance overview and SHAP plots were limited to the top 12 features, empirical marginal plots to the top 6 features and interaction contours to the top 3 feature pairs.
+
+Support-aware plots (on Github) used weighted observed quantile ranges from the 1st to 95th percentile rather than raw extrema. In one-dimensional empirical marginal plots, stronger local support was indicated by solid line segments and weaker support by dashed segments. In two-dimensional interaction and acquisition plots, dashed boundaries indicated stronger pairwise empirical support. The static acquisition landscape reused the Bayesian-optimization scoring convention, including UCB with \(\kappa=0.5\), support penalty 4.0, support-radius scale 1.25 and sparsity penalty 0.35, but excluded sequential batch-diversity penalties because those depend on already selected candidates. The uncertainty dashboard summarized predicted-versus-actual agreement, empirical-versus-nominal coverage over uncertainty multipliers from 0.5 to 2.5, absolute error versus predictive standard deviation and mean uncertainty across viability bands.
+
+\subsection{Figure and artifact traceability}
+
+The computational figures referenced in this supplementary analysis were generated directly from GitHub repository artifacts. Stage-level evaluation outputs were written under \texttt{results/evaluation/}, including \texttt{stage\_performance.png}, \texttt{next\_formulations\_performance.png}, \texttt{single\_objective\_progress.png} and \texttt{iteration\_prospective\_metrics.csv}. Stage-indexed predicted-versus-actual $R^2$ plots were written under \texttt{results/explainability/stage\_r2/}. Iteration-specific explainability outputs were written under \texttt{explainability/<iteration\_tag>/}, including \texttt{feature\_importance.png}, \texttt{shap\_summary.png}, \texttt{shap\_importance.png}, \newline \texttt{partial\_dependence\_plots.png}, \texttt{interaction\_contours.png}, \texttt{acquisition\_landscape.png}, \texttt{uncertainty\_analysis.png} and \texttt{support\_diagnostics.png}.
+
+\end{document}

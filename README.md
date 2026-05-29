@@ -6,9 +6,18 @@ Repository checkpoint artifacts referenced below use stage-tagged iteration dire
 
 ## Goals
 
-1. **Minimize DMSO usage** (reduce toxicity)
-2. **Maximize cell viability** (maintain therapeutic efficacy)
-3. **Limit ingredients** (≤10 components per formulation)
+Legacy viability-only lane:
+
+1. **Minimize DMSO usage** to reduce toxicity.
+2. **Maximize MSC post-thaw viability**.
+3. **Limit ingredient burden** during formulation search.
+
+V2 multi-objective lane:
+
+1. **Maximize MSC post-thaw viability**.
+2. **Maximize CryoMN critical axial load per needle**.
+3. **Gate candidates by intact patch formation** before mechanical testing.
+4. **Use initial stiffness as a diagnostic endpoint**, not a Pareto objective.
 
 ---
 
@@ -27,7 +36,63 @@ Project workflow with planning and implementation phases under human oversight:
 - Provides uncertainty quantification
 - Supports iterative refinement with wet lab validation
 
-## Quick Start
+## Which Workflow To Use
+
+| Lane | Use when | Main entry point |
+|------|----------|------------------|
+| Legacy viability-only | Reproduce the manuscript viability pipeline and prior BO outputs. | `src/01_data_parsing` through `src/07_next_formulations` |
+| V2 multi-objective | Run the new viability + CryoMN mechanical robustness loop. | `src/08_multi_objective` |
+
+The current implementation work is concentrated in the v2 lane. Its detailed
+workflow documentation lives in `src/08_multi_objective/README.md`, with one
+README in each numbered stage folder.
+
+## Quick Start: V2 Multi-Objective Loop
+
+```bash
+# 1. Build the v2 database from legacy viability evidence
+python3 src/08_multi_objective/01_build_database/build_database.py
+
+# 2. Generate the full scored pool and the 12-row wet-lab slate
+python3 src/08_multi_objective/02_select_candidates/select_candidates.py
+
+# 3. After wet lab, fill the current next_round_candidates.csv, then ingest it
+python3 src/08_multi_objective/03_record_results/update_from_results.py \
+  results/multi_objective_v2/next_round/next_round_candidates.csv
+
+# 4. Generate v2 diagnostic plots
+python3 src/08_multi_objective/04_visualization/visualize.py
+```
+
+V2 files to know:
+
+| File | Meaning |
+|------|---------|
+| `data/processed_v2/formulations.csv` | Persistent formulation table. |
+| `data/processed_v2/observations.csv` | Persistent endpoint observation table. |
+| `results/multi_objective_v2/total_candidate_pool.csv` | Full generated/scored candidate pool for audit. |
+| `results/multi_objective_v2/next_round/next_round_candidates.csv` | Current 12-row wet-lab sheet to fill. |
+| `results/multi_objective_v2/next_round/next_round_summary.txt` | Human-readable validation summary. |
+| `config_v2/availability.yaml` | Temporary ingredient availability restrictions. |
+| `config_v2/optimization.yaml` | Candidate-pool size, penalties, and noise settings. |
+
+`next_round_candidates.csv` is overwritten each Stage 02 run. The batch ID is
+generated from `observations.csv`: after Stage 03 ingests `ROUND_001`, the next
+Stage 02 run emits `ROUND_002`.
+
+New validation viability feedback defaults to `1.0` observation noise, one fifth
+of the legacy wet-lab viability noise. Change this in
+`config_v2/optimization.yaml` or pass `--viability-noise` to Stage 03 for a
+single import.
+
+The v2 lane treats prior data as viability-only evidence, uses
+`intact_patch_formation_pass` as the mechanical screening gate, and optimizes
+viability with `critical_axial_load_N_per_needle`.
+Exact BoTorch qLogNEHVI support uses the optional packages listed in
+`requirements-v2-optional.txt`; if those are unavailable, the executable
+fallback mode is reported in `next_round_summary.txt`.
+
+## Quick Start: Legacy Viability Pipeline
 
 ```bash
 # Install dependencies
@@ -59,6 +124,7 @@ python src/06_evaluation_explainability/stage_r2_predicted_vs_actual.py
 
 # 7. Generate the next 20-formulation wet-lab batch
 python src/07_next_formulations/next_formulations.py
+
 ```
 
 > [!CAUTION]
