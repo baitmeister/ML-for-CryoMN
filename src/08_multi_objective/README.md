@@ -37,7 +37,7 @@ selection; they do not delete historical observations or change result imports.
 | 01 | Build the v2 database from legacy viability evidence. | [`01_build_database`](01_build_database/README.md) |
 | 02 | Select the next wet-lab candidate set. | [`02_select_candidates`](02_select_candidates/README.md) |
 | 03 | Record wet-lab results and optional Instron files. | [`03_record_results`](03_record_results/README.md) |
-| 04 | Generate v2 plots and visualization summary. | [`04_visualization`](04_visualization/README.md) |
+| 04 | Generate v2 plots, best-performer reporting, and visualization summary. | [`04_visualization`](04_visualization/README.md) |
 
 ## Selector Outputs
 

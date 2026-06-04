@@ -130,6 +130,7 @@ def main() -> None:
         args.output_dir,
         batch_id=batch_id,
         total_candidate_pool_path=args.total_candidate_pool,
+        registry=registry,
     )
     print(f"Selected {len(result.viability_screen)} viability-screen candidates.")
     print(f"Selected {len(result.mechanical_tests)} mechanical-test candidates.")

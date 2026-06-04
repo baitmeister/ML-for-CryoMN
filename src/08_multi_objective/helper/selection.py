@@ -267,23 +267,29 @@ def select_next_round(
     )
 
 
-def _format_candidate_line(row: pd.Series) -> str:
+def _format_candidate_line(row: pd.Series, registry: IngredientRegistry) -> str:
     ingredients = []
     for column, value in row.items():
         if not (column.endswith("_M") or column.endswith("_pct")):
             continue
         if pd.isna(value) or float(value) <= 0.0:
             continue
+        display_name = registry.get_by_feature(column).display_name if column in registry.feature_names else column
         if column.endswith("_pct"):
-            ingredients.append(f"{float(value):.3g}% {column.removesuffix('_pct')}")
+            ingredients.append(f"{float(value):.3g}% {display_name}")
         elif float(value) >= 1.0:
-            ingredients.append(f"{float(value):.3g}M {column.removesuffix('_M')}")
+            ingredients.append(f"{float(value):.3g}M {display_name}")
         else:
-            ingredients.append(f"{float(value) * 1000:.3g}mM {column.removesuffix('_M')}")
+            ingredients.append(f"{float(value) * 1000:.3g}mM {display_name}")
     return " + ".join(ingredients) if ingredients else "No active ingredients"
 
 
-def _write_summary(result: SelectionResult, selected: pd.DataFrame, output_path: Path) -> None:
+def _write_summary(
+    result: SelectionResult,
+    selected: pd.DataFrame,
+    output_path: Path,
+    registry: IngredientRegistry,
+) -> None:
     lines = [
         "CryoMN v2 Next-Round Candidate Summary",
         "=" * 42,
@@ -341,7 +347,7 @@ def _write_summary(result: SelectionResult, selected: pd.DataFrame, output_path:
                 f"{float(row['predicted_critical_axial_load_N_per_needle']):.3g} N/needle"
             )
         lines.append("- " + "; ".join(parts))
-        lines.append(f"  formulation: {_format_candidate_line(row)}")
+        lines.append(f"  formulation: {_format_candidate_line(row, registry)}")
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -350,9 +356,12 @@ def write_selection_result(
     output_dir: str | Path,
     batch_id: str = "",
     total_candidate_pool_path: str | Path | None = None,
+    registry: IngredientRegistry | None = None,
 ) -> None:
     output = Path(output_dir)
     output.mkdir(parents=True, exist_ok=True)
+    if registry is None:
+        registry = IngredientRegistry.from_config()
     selected = result.viability_screen.copy()
     selected["mechanical_test_recommended"] = selected["candidate_id"].isin(
         set(result.mechanical_tests["candidate_id"]) if not result.mechanical_tests.empty else set()
@@ -430,4 +439,4 @@ def write_selection_result(
     )
     total_pool_output.parent.mkdir(parents=True, exist_ok=True)
     total_pool.to_csv(total_pool_output, index=False)
-    _write_summary(result, selected, output / "next_round_summary.txt")
+    _write_summary(result, selected, output / "next_round_summary.txt", registry=registry)

@@ -1,10 +1,18 @@
 CryoMN v2 Visualization Summary
-==================================
+================================
 
 Formulation rows: 304
 Observation rows: 304
 Candidate rows: 12
+Formulations with observed viability: 304
+Formulations with observed critical load: 0
+Formulations with observed intact-patch gate: 0
 
 Generated files:
+- best_performers_summary.txt
 - endpoint_observation_counts.png
+- model_evaluation_overview.png
 - next_round_candidate_screen.png
+
+Reader note:
+Stage 04 now produces a best-performers report and reader-friendly model evaluation graphics.

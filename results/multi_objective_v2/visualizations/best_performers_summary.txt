@@ -1,0 +1,37 @@
+CryoMN v2 Best Performers
+=========================
+
+Database snapshot:
+- Formulations tracked: 304
+- Observation rows: 304
+- Current next-round candidates: 12
+
+Best observed viability performers:
+- #1 legacy_lit_37 | viability 100.0% | source legacy_literature
+  formulation: 986mM DMSO
+- #2 legacy_lit_38 | viability 100.0% | source legacy_literature
+  formulation: 1.13M DMSO
+- #3 legacy_lit_309 | viability 99.0% | source legacy_literature
+  formulation: 1.41M DMSO + 0.5mM trehalose
+- #4 legacy_lit_306 | viability 99.0% | source legacy_literature
+  formulation: 0.5mM trehalose
+- #5 legacy_lit_1 | viability 96.0% | source legacy_literature
+  formulation: 1.41M DMSO + 70.3mM ectoin + 300mM ethylene glycol + 1mM taurine
+
+Best observed mechanical performers:
+- none yet; no critical axial load measurements are in the v2 database
+
+Balanced multi-objective leaders:
+- none yet; this section appears after formulations have both viability and mechanical measurements
+
+Current leading next-round candidates:
+- #1 v2_f0bcc89cffe3 | predicted viability 61.1% | intact probability 1.00 | mechanical test True
+  formulation: 3.34mM DMSO + 209mM ethylene glycol + 0.217% hyaluronic acid + 2.61% FBS
+- #2 v2_e4586f83ec41 | predicted viability 59.8% | intact probability 1.00 | mechanical test True
+  formulation: 97.4mM DMSO + 379mM ectoin + 444mM betaine + 127mM proline + 367mM creatine + 9.3% PVP + 6.59% HSA + 8.68% human serum
+- #3 v2_a42c9f3b03de | predicted viability 59.8% | intact probability 1.00 | mechanical test True
+  formulation: 484mM ectoin + 467mM sucrose + 326mM proline + 322mM glucose + 469mM creatine + 341mM acetamide + 7.88% FBS
+- #4 v2_07fa42603a93 | predicted viability 59.8% | intact probability 1.00 | mechanical test True
+  formulation: 410mM sucrose + 379mM betaine + 312mM glucose + 6.02% dextran + 19.2% PVP + 4.84% hyaluronic acid + 4.44% FBS + 4.33% human serum
+- #5 v2_5fb7d611211f | predicted viability 59.8% | intact probability 1.00 | mechanical test False
+  formulation: 5.97mM ectoin + 304mM sucrose + 407mM proline + 493mM acetamide + 5.98% dextran + 4.79% hyaluronic acid + 8.32% FBS

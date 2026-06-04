@@ -2,8 +2,8 @@
 
 ## Purpose
 
-Generate diagnostic plots and a short text summary for the v2 database and
-current next-round slate.
+Generate diagnostic plots, a best-performers report, and a short text summary
+for the v2 database and current next-round slate.
 
 This stage is analogous to the legacy explainability/reporting modules, but it
 is scoped to the v2 multi-objective workflow.
@@ -32,7 +32,10 @@ python3 src/08_multi_objective/04_visualization/visualize.py \
 
 ## Outputs
 
+- `results/multi_objective_v2/visualizations/best_performers_summary.txt`
 - `results/multi_objective_v2/visualizations/endpoint_observation_counts.png`
+- `results/multi_objective_v2/visualizations/model_evaluation_overview.png`
+- `results/multi_objective_v2/visualizations/observed_performance_landscape.png`
 - `results/multi_objective_v2/visualizations/next_round_candidate_screen.png`
 - `results/multi_objective_v2/visualizations/visualization_summary.txt`
 
