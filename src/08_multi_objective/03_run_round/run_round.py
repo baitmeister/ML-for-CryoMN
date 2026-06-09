@@ -89,6 +89,14 @@ def _archived_name(batch_id: str, base_name: str, suffix: str) -> str:
     return f"{batch_id}_{base_name}{suffix}"
 
 
+def _resolve_current_summary_path(candidates_csv: str | Path) -> Path:
+    candidate_path = Path(candidates_csv)
+    sibling_summary = candidate_path.with_name("next_round_summary.txt")
+    if sibling_summary.exists():
+        return sibling_summary
+    return NEXT_ROUND_SUMMARY_PATH
+
+
 def _resolve_batch_id(candidates_csv: str | Path, cli_batch_id: str | None) -> str:
     if not _is_blank(cli_batch_id):
         return str(cli_batch_id).strip()
@@ -161,7 +169,7 @@ def main() -> None:
             review_dir / _archived_name(batch_id, "next_round_candidates", ".csv"),
         )
         _copy_if_present(
-            NEXT_ROUND_SUMMARY_PATH,
+            _resolve_current_summary_path(args.candidates_csv),
             review_dir / _archived_name(batch_id, "next_round_summary", ".txt"),
         )
         _copy_if_present(

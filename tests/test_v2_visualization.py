@@ -7,6 +7,7 @@ import pandas as pd
 from helper.registry import load_registry
 from helper.visualization import (
     _apply_plot_style,
+    generate_multiobjective_evaluation_artifacts,
     generate_visualization_artifacts,
     _save_candidate_plot,
     _save_model_evaluation_overview,
@@ -173,3 +174,25 @@ def test_generate_visualization_artifacts_writes_prefixed_archive_and_eval_table
     assert {"actual", "predicted", "predicted_std", "absolute_error", "squared_error"}.issubset(
         set(eval_table.columns)
     )
+
+
+def test_generate_multiobjective_evaluation_artifacts_writes_unified_graph_set(tmp_path: Path) -> None:
+    _apply_plot_style()
+    generated = generate_multiobjective_evaluation_artifacts(
+        _formulations(),
+        _observations(),
+        tmp_path,
+        artifact_prefix="ROUND_004",
+    )
+
+    generated_names = {path.name for path in generated}
+    assert "ROUND_004_multiobjective_paired_parity.png" in generated_names
+    assert "ROUND_004_normalized_hypervolume_igd_vs_round.png" in generated_names
+    assert "ROUND_004_pareto_front_progression.png" in generated_names
+    assert "ROUND_004_endpoint_r2_vs_round.png" in generated_names
+    assert "ROUND_004_multiobjective_round_metrics.csv" in generated_names
+    assert "ROUND_004_multiobjective_evaluation_summary.txt" in generated_names
+
+    metrics = pd.read_csv(tmp_path / "ROUND_004_multiobjective_round_metrics.csv")
+    assert list(metrics["batch_id"]) == ["ROUND_001", "ROUND_002", "ROUND_003", "ROUND_004"]
+    assert {"normalized_hypervolume", "igd", "pareto_points_cumulative"}.issubset(set(metrics.columns))

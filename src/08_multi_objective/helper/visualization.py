@@ -1,9 +1,11 @@
-"""Generate v2 review snapshots, best performers, and model-fit graphics."""
+"""Generate v2 review snapshots and real multi-objective evaluation graphics."""
 
 from __future__ import annotations
 
+import argparse
 import os
 from pathlib import Path
+import sys
 
 os.environ.setdefault("MPLCONFIGDIR", "/private/tmp/matplotlib")
 os.environ.setdefault("XDG_CACHE_HOME", "/private/tmp")
@@ -17,8 +19,17 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, brier_score_loss, mean_absolute_error, r2_score
 from sklearn.model_selection import KFold
 
-from .models import build_training_frame, train_endpoint_models
-from .registry import IngredientRegistry, load_registry
+if __package__ in (None, ""):
+    V2_ROOT = Path(__file__).resolve().parents[1]
+    if str(V2_ROOT) not in sys.path:
+        sys.path.insert(0, str(V2_ROOT))
+    from helper.models import build_training_frame, train_endpoint_models
+    from helper.paths import FORMULATIONS_PATH, NEXT_ROUND_CANDIDATES_PATH, OBSERVATIONS_PATH, VISUALIZATIONS_DIR
+    from helper.registry import IngredientRegistry, load_registry
+else:
+    from .models import build_training_frame, train_endpoint_models
+    from .paths import FORMULATIONS_PATH, NEXT_ROUND_CANDIDATES_PATH, OBSERVATIONS_PATH, VISUALIZATIONS_DIR
+    from .registry import IngredientRegistry, load_registry
 
 
 PAGE_BG = "#f7f2e8"
@@ -69,6 +80,15 @@ def _read_or_empty(path: str | Path) -> pd.DataFrame:
     if path.exists() and path.stat().st_size > 0:
         return pd.read_csv(path)
     return pd.DataFrame()
+
+
+def _round_sort_key(batch_id: object) -> tuple[int, str]:
+    value = str(batch_id).strip()
+    if value.startswith("ROUND_"):
+        suffix = value.removeprefix("ROUND_")
+        if suffix.isdigit():
+            return (0, f"{int(suffix):09d}")
+    return (1, value)
 
 
 def _format_metric(value: float | None, fmt: str = "{:.2f}") -> str:
@@ -125,6 +145,19 @@ def _observed_endpoint_frame(formulations: pd.DataFrame, observations: pd.DataFr
     frame = frame.merge(batch_map, on="formulation_id", how="left")
     frame = frame.merge(source_map, on="formulation_id", how="left")
     return frame
+
+
+def _paired_frame(formulations: pd.DataFrame, observations: pd.DataFrame, registry: IngredientRegistry) -> pd.DataFrame:
+    frame = build_training_frame(formulations, observations, registry)
+    required = ["formulation_id", "batch_id", "viability_percent", "critical_axial_load_N_per_needle"]
+    if any(column not in frame.columns for column in required):
+        return pd.DataFrame()
+    paired = frame.dropna(subset=["viability_percent", "critical_axial_load_N_per_needle"]).copy()
+    if paired.empty:
+        return paired
+    paired["batch_id"] = paired["batch_id"].fillna("").astype(str)
+    paired["round_order"] = paired["batch_id"].map(_round_sort_key)
+    return paired.sort_values(["round_order", "formulation_id"]).reset_index(drop=True)
 
 
 def _pareto_frontier_mask(frame: pd.DataFrame, x_col: str, y_col: str) -> np.ndarray:
@@ -498,6 +531,60 @@ def _cross_validated_predictions(
     return pd.concat(predictions, ignore_index=True) if predictions else pd.DataFrame()
 
 
+def _normalize_frame(frame: pd.DataFrame, columns: list[str], reference: pd.DataFrame) -> pd.DataFrame:
+    normalized = frame.copy()
+    for column in columns:
+        low = float(reference[column].min())
+        high = float(reference[column].max())
+        spread = max(high - low, 1e-9)
+        normalized[column] = (pd.to_numeric(frame[column], errors="coerce") - low) / spread
+    return normalized
+
+
+def _hypervolume_2d(frontier: pd.DataFrame, x_col: str, y_col: str) -> float:
+    if frontier.empty:
+        return 0.0
+    ordered = frontier.sort_values(x_col)
+    hv = 0.0
+    previous_x = 0.0
+    for _, row in ordered.iterrows():
+        x_value = max(float(row[x_col]), previous_x)
+        y_value = max(float(row[y_col]), 0.0)
+        hv += max(x_value - previous_x, 0.0) * y_value
+        previous_x = x_value
+    return float(hv)
+
+
+def _igd_2d(true_frontier: pd.DataFrame, estimated_frontier: pd.DataFrame, x_col: str, y_col: str) -> float | None:
+    if true_frontier.empty or estimated_frontier.empty:
+        return None
+    reference = true_frontier[[x_col, y_col]].to_numpy(dtype=float)
+    estimated = estimated_frontier[[x_col, y_col]].to_numpy(dtype=float)
+    distances = []
+    for point in reference:
+        distances.append(float(np.min(np.linalg.norm(estimated - point, axis=1))))
+    return float(np.mean(distances)) if distances else None
+
+
+def _save_placeholder(
+    output_dir: Path,
+    base_name: str,
+    title: str,
+    message: str,
+    artifact_prefix: str = "",
+) -> Path:
+    fig, ax = plt.subplots(figsize=(8, 5))
+    fig.patch.set_facecolor(PAGE_BG)
+    ax.axis("off")
+    ax.set_title(title, pad=16)
+    ax.text(0.5, 0.5, message, ha="center", va="center", fontsize=14, color=MUTED, transform=ax.transAxes)
+    fig.tight_layout()
+    path = _artifact_path(output_dir, base_name, ".png", artifact_prefix)
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+    return path
+
+
 def _plot_parity_axis(
     ax: plt.Axes,
     frame: pd.DataFrame,
@@ -648,6 +735,64 @@ def _save_model_evaluation_overview(
     return path
 
 
+def _save_multiobjective_parity_plot(
+    viability_predictions: pd.DataFrame,
+    load_predictions: pd.DataFrame,
+    output_dir: Path,
+    artifact_prefix: str = "",
+) -> Path:
+    if viability_predictions.empty and load_predictions.empty:
+        return _save_placeholder(
+            output_dir,
+            "multiobjective_paired_parity",
+            "Multi-objective parity overview",
+            "Not enough real paired data yet.",
+            artifact_prefix=artifact_prefix,
+        )
+
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5.5))
+    fig.patch.set_facecolor(PAGE_BG)
+    panels = [
+        (axes[0], viability_predictions, "Viability parity", "Observed viability (%)", "Predicted viability (%)", BLUE),
+        (axes[1], load_predictions, "Critical-load parity", "Observed critical load (N/needle)", "Predicted critical load (N/needle)", GOLD),
+    ]
+    for ax, frame, title, xlabel, ylabel, color in panels:
+        if frame.empty:
+            ax.text(0.5, 0.5, "Not enough data yet", ha="center", va="center", color=MUTED, transform=ax.transAxes)
+            ax.set_title(title)
+            ax.set_xlabel(xlabel)
+            ax.set_ylabel(ylabel)
+            continue
+        actual = frame["actual"].to_numpy(dtype=float)
+        predicted = frame["predicted"].to_numpy(dtype=float)
+        low = float(np.nanmin(np.concatenate([actual, predicted])))
+        high = float(np.nanmax(np.concatenate([actual, predicted])))
+        pad = max((high - low) * 0.08, 1e-6)
+        ax.scatter(actual, predicted, s=70, color=color, alpha=0.85, edgecolor="white", linewidth=0.7)
+        ax.plot([low - pad, high + pad], [low - pad, high + pad], linestyle="--", color=MUTED, linewidth=1.4)
+        r2 = float(r2_score(actual, predicted)) if len(frame) >= 2 and np.nanstd(actual) > 0 else np.nan
+        ax.text(
+            0.03,
+            0.97,
+            f"n={len(frame)}\nR²={r2:.3f}" if np.isfinite(r2) else f"n={len(frame)}\nR²=n/a",
+            transform=ax.transAxes,
+            va="top",
+            ha="left",
+            bbox={"boxstyle": "round,pad=0.35", "facecolor": AX_BG, "edgecolor": GRID},
+        )
+        ax.set_xlim(low - pad, high + pad)
+        ax.set_ylim(low - pad, high + pad)
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+    fig.suptitle("Observed vs predicted fits from the real multi-objective database", fontsize=16, y=0.98)
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    path = _artifact_path(output_dir, "multiobjective_paired_parity", ".png", artifact_prefix)
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+    return path
+
+
 def _save_candidate_plot(
     candidates: pd.DataFrame,
     output_dir: Path,
@@ -731,6 +876,226 @@ def _save_candidate_plot(
     fig.savefig(path, dpi=180)
     plt.close(fig)
     return path
+
+
+def _round_metrics(paired: pd.DataFrame) -> pd.DataFrame:
+    if paired.empty:
+        return pd.DataFrame()
+    rounds = sorted(paired["batch_id"].unique(), key=_round_sort_key)
+    normalized_reference = _normalize_frame(
+        paired,
+        ["viability_percent", "critical_axial_load_N_per_needle"],
+        paired,
+    )
+    true_frontier = normalized_reference.loc[
+        _pareto_frontier_mask(normalized_reference, "viability_percent", "critical_axial_load_N_per_needle")
+    ].copy()
+    final_hv = _hypervolume_2d(true_frontier, "viability_percent", "critical_axial_load_N_per_needle")
+    rows = []
+    for round_id in rounds:
+        cumulative = paired.loc[paired["batch_id"].map(_round_sort_key) <= _round_sort_key(round_id)].copy()
+        normalized = _normalize_frame(
+            cumulative,
+            ["viability_percent", "critical_axial_load_N_per_needle"],
+            paired,
+        )
+        frontier = normalized.loc[
+            _pareto_frontier_mask(normalized, "viability_percent", "critical_axial_load_N_per_needle")
+        ].copy()
+        hv = _hypervolume_2d(frontier, "viability_percent", "critical_axial_load_N_per_needle")
+        igd = _igd_2d(true_frontier, frontier, "viability_percent", "critical_axial_load_N_per_needle")
+        rows.append(
+            {
+                "batch_id": round_id,
+                "paired_rows_cumulative": int(len(cumulative)),
+                "pareto_points_cumulative": int(len(frontier)),
+                "normalized_hypervolume": float(hv / final_hv) if final_hv > 0 else np.nan,
+                "igd": igd,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
+def _save_hv_igd_plot(metrics: pd.DataFrame, output_dir: Path, artifact_prefix: str = "") -> Path:
+    if metrics.empty:
+        return _save_placeholder(
+            output_dir,
+            "normalized_hypervolume_igd_vs_round",
+            "Normalized hypervolume and IGD vs round",
+            "No paired viability/load rounds yet.",
+            artifact_prefix=artifact_prefix,
+        )
+    fig, axes = plt.subplots(1, 2, figsize=(12, 4.8), sharex=True)
+    fig.patch.set_facecolor(PAGE_BG)
+    x = np.arange(1, len(metrics) + 1)
+    axes[0].plot(x, metrics["normalized_hypervolume"], marker="o", color=TEAL, linewidth=2)
+    axes[0].set_title("Normalized hypervolume vs round")
+    axes[0].set_xlabel("Round")
+    axes[0].set_ylabel("Normalized hypervolume")
+    axes[0].set_xticks(x, metrics["batch_id"], rotation=30, ha="right")
+
+    axes[1].plot(x, metrics["igd"], marker="o", color=CORAL, linewidth=2)
+    axes[1].set_title("IGD vs round")
+    axes[1].set_xlabel("Round")
+    axes[1].set_ylabel("IGD")
+    axes[1].set_xticks(x, metrics["batch_id"], rotation=30, ha="right")
+    fig.tight_layout()
+    path = _artifact_path(output_dir, "normalized_hypervolume_igd_vs_round", ".png", artifact_prefix)
+    fig.savefig(path, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+    return path
+
+
+def _save_pareto_progression_plot(paired: pd.DataFrame, output_dir: Path, artifact_prefix: str = "") -> Path:
+    if paired.empty:
+        return _save_placeholder(
+            output_dir,
+            "pareto_front_progression",
+            "Pareto-front progression",
+            "No paired viability/load observations yet.",
+            artifact_prefix=artifact_prefix,
+        )
+    rounds = sorted(paired["batch_id"].unique(), key=_round_sort_key)
+    colors = plt.cm.viridis(np.linspace(0.15, 0.95, len(rounds)))
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    fig.patch.set_facecolor(PAGE_BG)
+    ax.scatter(
+        paired["viability_percent"],
+        paired["critical_axial_load_N_per_needle"],
+        s=40,
+        color=SLATE,
+        alpha=0.18,
+        edgecolor="none",
+        label="All paired observations",
+    )
+    for color, round_id in zip(colors, rounds):
+        cumulative = paired.loc[paired["batch_id"].map(_round_sort_key) <= _round_sort_key(round_id)].copy()
+        frontier = cumulative.loc[
+            _pareto_frontier_mask(cumulative, "viability_percent", "critical_axial_load_N_per_needle")
+        ].sort_values("viability_percent")
+        if frontier.empty:
+            continue
+        ax.plot(
+            frontier["viability_percent"],
+            frontier["critical_axial_load_N_per_needle"],
+            color=color,
+            linewidth=2,
+            marker="o",
+            label=round_id,
+        )
+    ax.set_title("Pareto-front progression across real multi-objective rounds")
+    ax.set_xlabel("Observed viability (%)")
+    ax.set_ylabel("Observed critical load (N/needle)")
+    ax.legend(frameon=False, loc="best", fontsize=8)
+    fig.tight_layout()
+    path = _artifact_path(output_dir, "pareto_front_progression", ".png", artifact_prefix)
+    fig.savefig(path, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+    return path
+
+
+def _save_endpoint_r2_plot(
+    formulations: pd.DataFrame,
+    observations: pd.DataFrame,
+    metrics: pd.DataFrame,
+    output_dir: Path,
+    registry: IngredientRegistry,
+    artifact_prefix: str = "",
+) -> Path:
+    if metrics.empty:
+        return _save_placeholder(
+            output_dir,
+            "endpoint_r2_vs_round",
+            "Endpoint R² vs round",
+            "No paired viability/load rounds yet.",
+            artifact_prefix=artifact_prefix,
+        )
+
+    rounds = metrics["batch_id"].tolist()
+    rows = []
+    for round_id in rounds:
+        cumulative_obs = observations.loc[observations["batch_id"].map(_round_sort_key) <= _round_sort_key(round_id)].copy()
+        cumulative_frame = build_training_frame(formulations, cumulative_obs, registry)
+        paired_keys = cumulative_frame.dropna(subset=["viability_percent", "critical_axial_load_N_per_needle"])[["formulation_id", "batch_id"]]
+        if paired_keys.empty:
+            rows.append({"batch_id": round_id, "viability_r2": np.nan, "load_r2": np.nan})
+            continue
+        allowed = set((str(row.formulation_id), str(row.batch_id)) for row in paired_keys.itertuples())
+        filtered_obs = cumulative_obs.loc[
+            cumulative_obs.apply(lambda row: (str(row.get("formulation_id", "")), str(row.get("batch_id", ""))) in allowed, axis=1)
+        ].copy()
+        viability_predictions = _cross_validated_predictions(formulations, filtered_obs, registry, "viability_percent")
+        load_predictions = _cross_validated_predictions(
+            formulations,
+            filtered_obs,
+            registry,
+            "critical_axial_load_N_per_needle",
+        )
+        viability_r2 = (
+            float(r2_score(viability_predictions["actual"], viability_predictions["predicted"]))
+            if len(viability_predictions) >= 2 and np.nanstd(viability_predictions["actual"]) > 0
+            else np.nan
+        )
+        load_r2 = (
+            float(r2_score(load_predictions["actual"], load_predictions["predicted"]))
+            if len(load_predictions) >= 2 and np.nanstd(load_predictions["actual"]) > 0
+            else np.nan
+        )
+        rows.append({"batch_id": round_id, "viability_r2": viability_r2, "load_r2": load_r2})
+    r2_frame = pd.DataFrame(rows)
+
+    fig, ax = plt.subplots(figsize=(8.5, 5))
+    fig.patch.set_facecolor(PAGE_BG)
+    x = np.arange(1, len(r2_frame) + 1)
+    ax.plot(x, r2_frame["viability_r2"], marker="o", linewidth=2, color=BLUE, label="Viability R²")
+    ax.plot(x, r2_frame["load_r2"], marker="o", linewidth=2, color=GOLD, label="Critical-load R²")
+    ax.set_title("Cross-validated endpoint R² vs cumulative round")
+    ax.set_xlabel("Round")
+    ax.set_ylabel("R²")
+    ax.set_xticks(x, r2_frame["batch_id"], rotation=30, ha="right")
+    ax.legend(frameon=False, loc="best")
+    fig.tight_layout()
+    path = _artifact_path(output_dir, "endpoint_r2_vs_round", ".png", artifact_prefix)
+    fig.savefig(path, dpi=180, bbox_inches="tight")
+    plt.close(fig)
+    return path
+
+
+def _write_multiobjective_summary(
+    output_dir: Path,
+    paired: pd.DataFrame,
+    metrics: pd.DataFrame,
+    generated_paths: list[Path],
+    artifact_prefix: str = "",
+) -> Path:
+    summary_path = _artifact_path(output_dir, "multiobjective_evaluation_summary", ".txt", artifact_prefix)
+    lines = [
+        "CryoMN v2 Multi-Objective Evaluation",
+        "===================================",
+        "",
+        f"Paired viability/load rows: {len(paired)}",
+        f"Distinct paired batches: {int(paired['batch_id'].nunique()) if not paired.empty else 0}",
+        f"Distinct paired formulations: {int(paired['formulation_id'].nunique()) if not paired.empty else 0}",
+        "",
+    ]
+    if metrics.empty:
+        lines.append(
+            "Not enough real paired viability-plus-load observations are currently present to compute roundwise hypervolume, IGD, or Pareto progression."
+        )
+    else:
+        last = metrics.iloc[-1]
+        lines.extend(
+            [
+                f"Latest cumulative normalized hypervolume: {last['normalized_hypervolume']:.4f}",
+                f"Latest cumulative IGD: {last['igd']:.4f}" if pd.notna(last["igd"]) else "Latest cumulative IGD: n/a",
+                "",
+                "Generated files:",
+            ]
+        )
+        lines.extend(f"- {path.name}" for path in generated_paths)
+    summary_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return summary_path
 
 
 def _write_visualization_summary(
@@ -829,3 +1194,121 @@ def generate_visualization_artifacts(
         )
     )
     return generated
+
+
+def generate_multiobjective_evaluation_artifacts(
+    formulations: pd.DataFrame,
+    observations: pd.DataFrame,
+    output_dir: str | Path,
+    artifact_prefix: str = "",
+) -> list[Path]:
+    _apply_plot_style()
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    registry = load_registry()
+
+    paired = _paired_frame(formulations, observations, registry)
+    metrics = _round_metrics(paired)
+    metrics_path = _artifact_path(output_dir, "multiobjective_round_metrics", ".csv", artifact_prefix)
+    metrics.to_csv(metrics_path, index=False)
+
+    paired_obs = pd.DataFrame()
+    if not paired.empty:
+        paired_keys = set((str(row.formulation_id), str(row.batch_id)) for row in paired.itertuples())
+        paired_obs = observations.loc[
+            observations.apply(
+                lambda row: (str(row.get("formulation_id", "")), str(row.get("batch_id", ""))) in paired_keys,
+                axis=1,
+            )
+        ].copy()
+
+    viability_predictions = (
+        _cross_validated_predictions(formulations, paired_obs, registry, "viability_percent")
+        if not paired_obs.empty
+        else pd.DataFrame()
+    )
+    load_predictions = (
+        _cross_validated_predictions(formulations, paired_obs, registry, "critical_axial_load_N_per_needle")
+        if not paired_obs.empty
+        else pd.DataFrame()
+    )
+
+    generated = [
+        _save_multiobjective_parity_plot(
+            viability_predictions,
+            load_predictions,
+            output_dir,
+            artifact_prefix=artifact_prefix,
+        ),
+        _save_hv_igd_plot(metrics, output_dir, artifact_prefix=artifact_prefix),
+        _save_pareto_progression_plot(paired, output_dir, artifact_prefix=artifact_prefix),
+        _save_endpoint_r2_plot(
+            formulations,
+            observations,
+            metrics,
+            output_dir,
+            registry,
+            artifact_prefix=artifact_prefix,
+        ),
+    ]
+    generated.append(
+        _write_multiobjective_summary(
+            output_dir,
+            paired,
+            metrics,
+            generated + [metrics_path],
+            artifact_prefix=artifact_prefix,
+        )
+    )
+    generated.append(metrics_path)
+    return generated
+
+
+def _parse_cli_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--mode",
+        choices=["review", "multiobjective", "all"],
+        default="all",
+        help="Visualization entrypoint to run from the command line.",
+    )
+    parser.add_argument("--formulations", default=str(FORMULATIONS_PATH))
+    parser.add_argument("--observations", default=str(OBSERVATIONS_PATH))
+    parser.add_argument("--candidates", default=str(NEXT_ROUND_CANDIDATES_PATH))
+    parser.add_argument("--output-dir", default=str(VISUALIZATIONS_DIR))
+    parser.add_argument("--artifact-prefix", default="")
+    parser.add_argument("--review-label", default="")
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = _parse_cli_args()
+    formulations = _read_or_empty(args.formulations)
+    observations = _read_or_empty(args.observations)
+    generated: list[Path] = []
+    if args.mode in {"review", "all"}:
+        candidates = _read_or_empty(args.candidates)
+        generated.extend(
+            generate_visualization_artifacts(
+                formulations,
+                observations,
+                candidates,
+                args.output_dir,
+                review_label=args.review_label,
+                artifact_prefix=args.artifact_prefix,
+            )
+        )
+    if args.mode in {"multiobjective", "all"}:
+        generated.extend(
+            generate_multiobjective_evaluation_artifacts(
+                formulations,
+                observations,
+                args.output_dir,
+                artifact_prefix=args.artifact_prefix,
+            )
+        )
+    print(f"Wrote {len(generated)} visualization artifact(s) to: {Path(args.output_dir).resolve()}")
+
+
+if __name__ == "__main__":
+    main()
