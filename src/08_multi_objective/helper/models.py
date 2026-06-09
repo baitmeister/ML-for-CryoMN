@@ -87,29 +87,57 @@ class EndpointModels:
 
 def _pivot_observations(formulations: pd.DataFrame, observations: pd.DataFrame) -> pd.DataFrame:
     if observations.empty:
-        return formulations.copy()
+        frame = formulations.copy()
+        if "batch_id" not in frame.columns:
+            frame["batch_id"] = ""
+        return frame
     obs = observations.copy()
     obs["value"] = pd.to_numeric(obs["value"], errors="coerce")
     if "observation_noise" not in obs.columns:
         obs["observation_noise"] = np.nan
     obs["observation_noise"] = pd.to_numeric(obs["observation_noise"], errors="coerce")
-    pivot = obs.pivot_table(
-        index="formulation_id",
+    if "batch_id" not in obs.columns:
+        obs["batch_id"] = ""
+    obs["batch_id"] = obs["batch_id"].fillna("").astype(str)
+    aggregated = (
+        obs.groupby(["formulation_id", "batch_id", "endpoint"], dropna=False, as_index=False)
+        .agg(
+            value=("value", "mean"),
+            observation_noise=("observation_noise", "mean"),
+        )
+    )
+    pivot = aggregated.pivot_table(
+        index=["formulation_id", "batch_id"],
         columns="endpoint",
         values="value",
         aggfunc="mean",
     ).reset_index()
-    noise_pivot = obs.pivot_table(
-        index="formulation_id",
+    noise_pivot = aggregated.pivot_table(
+        index=["formulation_id", "batch_id"],
         columns="endpoint",
         values="observation_noise",
         aggfunc="mean",
     ).add_suffix("__noise").reset_index()
     return formulations.merge(pivot, on="formulation_id", how="left").merge(
         noise_pivot,
-        on="formulation_id",
+        on=["formulation_id", "batch_id"],
         how="left",
     )
+
+
+def build_training_frame(
+    formulations: pd.DataFrame,
+    observations: pd.DataFrame,
+    registry: IngredientRegistry,
+) -> pd.DataFrame:
+    frame = _pivot_observations(formulations, observations)
+    for feature_name in registry.feature_names:
+        if feature_name not in frame.columns:
+            frame[feature_name] = 0.0
+    if "batch_id" not in frame.columns:
+        frame["batch_id"] = ""
+    frame["batch_id"] = frame["batch_id"].fillna("").astype(str)
+    return frame
 
 
 def _fit_regression(
@@ -189,10 +217,7 @@ def train_endpoint_models(
     registry: IngredientRegistry,
 ) -> EndpointModels:
     """Train lightweight surrogates for selection and screening."""
-    frame = _pivot_observations(formulations, observations)
-    for feature_name in registry.feature_names:
-        if feature_name not in frame.columns:
-            frame[feature_name] = 0.0
+    frame = build_training_frame(formulations, observations, registry)
     x = frame[registry.feature_names].apply(pd.to_numeric, errors="coerce").fillna(0.0).to_numpy(dtype=float)
 
     viability = _fit_regression(

@@ -36,8 +36,7 @@ selection; they do not delete historical observations or change result imports.
 |-------|---------|---------|
 | 01 | Build the v2 database from legacy viability evidence. | [`01_build_database`](01_build_database/README.md) |
 | 02 | Select the next wet-lab candidate set. | [`02_select_candidates`](02_select_candidates/README.md) |
-| 03 | Record wet-lab results and optional Instron files. | [`03_record_results`](03_record_results/README.md) |
-| 04 | Generate v2 plots, best-performer reporting, and visualization summary. | [`04_visualization`](04_visualization/README.md) |
+| 03 | Archive one pre-update review of the current slate state, ingest wet-lab results, and generate the next slate. | [`03_run_round`](03_run_round/README.md) |
 
 ## Selector Outputs
 
@@ -78,22 +77,16 @@ Later rounds:
 python3 src/08_multi_objective/02_select_candidates/select_candidates.py
 ```
 
-The batch ID is generated as `ROUND_###` from `observations.csv`. After Stage 03
-ingests `ROUND_001`, the next Stage 02 run emits `ROUND_002`. If you rerun Stage
-02 before ingesting results, it will still emit the same next unused round ID.
-
-After wet-lab work:
+Supported round-progression entry point:
 
 ```bash
-python3 src/08_multi_objective/03_record_results/update_from_results.py \
+python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv
 ```
 
-Visualization:
-
-```bash
-python3 src/08_multi_objective/04_visualization/visualize.py
-```
+The batch ID is generated as `ROUND_###` from `observations.csv`. After Stage 03
+ingests `ROUND_001`, the next Stage 02 run emits `ROUND_002`. If you rerun Stage
+02 before ingesting results, it will still emit the same next unused round ID.
 
 ## What To Fill In The CSV
 
@@ -128,7 +121,7 @@ You can either paste that path into `next_round_candidates.csv`, or let the
 helper parse and fill the mechanical columns:
 
 ```bash
-python3 src/08_multi_objective/03_record_results/import_instron.py \
+python3 src/08_multi_objective/helper/instron.py \
   data/raw/instron/ROUND_001/v2_50b41683dfd4_rep_001.csv \
   --formulation-id v2_50b41683dfd4 \
   --batch-id ROUND_001 \
@@ -136,9 +129,9 @@ python3 src/08_multi_objective/03_record_results/import_instron.py \
   --needles-compressed 100
 ```
 
-The normal output of `import_instron.py` is an updated
-`next_round_candidates.csv`. The internal `observations.csv` is updated only by
-`03_record_results/update_from_results.py`.
+The normal output of `instron.py` is an updated
+`next_round_candidates.csv`. The internal `observations.csv` is updated when
+`03_run_round/run_round.py` ingests the filled round CSV.
 
 ## ID Meanings
 
@@ -159,7 +152,7 @@ flowchart TD
     C --> D["Wet-lab sheet<br/>next_round_candidates.csv"]
     C --> E["Human summary<br/>next_round_summary.txt"]
     D --> F["Wet lab fills results<br/>viability, intact patch, Instron/raw load"]
-    F --> G["03 Update database<br/>update_from_results.py"]
+    C --> R["Pre-update round review archive"]
+    F --> G["03 Run round<br/>run_round.py"]
     G --> B
-    B --> H["04 Visualize<br/>visualize.py"]
 ```

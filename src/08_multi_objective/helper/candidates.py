@@ -62,6 +62,22 @@ def filter_available_candidate_pool(
     return candidates.loc[mask].reset_index(drop=True).copy()
 
 
+def filter_nonzero_active_candidate_pool(
+    candidates: pd.DataFrame,
+    registry: IngredientRegistry,
+) -> pd.DataFrame:
+    """Drop candidate rows that contain no active ingredients at all."""
+    if candidates.empty:
+        return candidates.copy()
+    filtered = candidates.copy()
+    filtered["active_ingredient_count"] = filtered.apply(
+        lambda row: count_active_ingredients(row, registry),
+        axis=1,
+    )
+    mask = pd.to_numeric(filtered["active_ingredient_count"], errors="coerce").fillna(0).astype(int) > 0
+    return filtered.loc[mask].reset_index(drop=True).copy()
+
+
 def generate_random_candidate_pool(
     registry: IngredientRegistry,
     n_candidates: int,

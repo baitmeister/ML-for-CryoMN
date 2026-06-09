@@ -54,17 +54,25 @@ the 12 selected wet-lab formulations and blank result columns.
    `2000`.
 2. Exclude temporary unavailable ingredients listed in
    `config_v2/availability.yaml`.
-3. Train v2 surrogate models from `formulations.csv` and `observations.csv`.
-4. Score every candidate with predicted viability, uncertainty, intact-patch
-   probability, predicted mechanical metrics, and soft penalties.
-5. Select 12 viability-screen candidates using a greedy diversity-aware ranking.
-6. Select 3-4 mechanical-test recommendations from those 12.
+3. Train v2 surrogate models from `formulations.csv` and `observations.csv`,
+   preserving separate validation batches instead of collapsing everything to
+   one formulation-wide mean.
+4. Resolve the active selection phase automatically:
+   - `screening_only` while real paired viability + mechanical data are still sparse
+   - `mechanics_enabled` once the configured evidence thresholds are met
+5. Score the full candidate pool with the active phase policy, then build the
+   12-row wet-lab slate directly from that full-pool ranking.
+6. Add any `retest_priority` formulations separately when the latest batch for
+   an existing formulation appears off-trend or unstable.
+7. Select 3-4 mechanical follow-up rows from the final slate.
 
 The pool generation step is random. The final 12-candidate selection is model
-scored and diversity-aware, not random.
+scored and diversity-aware, not random. In early rounds, “mechanical follow-up”
+rows are data-collection recommendations rather than true mechanics-optimized
+picks.
 
 ## Batch ID
 
-The batch ID is generated as `ROUND_###` from `observations.csv`. After Stage 03
+The batch ID is generated as `ROUND_###` from `observations.csv`. After `03_run_round/run_round.py`
 ingests `ROUND_001`, the next Stage 02 run emits `ROUND_002`. If you rerun Stage
 02 before ingesting results, it will emit the same next unused round ID.

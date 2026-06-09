@@ -1,11 +1,8 @@
-#!/usr/bin/env python3
-"""Visualize v2 multi-objective database, best performers, and model fit."""
+"""Generate v2 review snapshots, best performers, and model-fit graphics."""
 
 from __future__ import annotations
 
-import argparse
 import os
-import sys
 from pathlib import Path
 
 os.environ.setdefault("MPLCONFIGDIR", "/private/tmp/matplotlib")
@@ -20,13 +17,8 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, brier_score_loss, mean_absolute_error, r2_score
 from sklearn.model_selection import KFold
 
-V2_ROOT = Path(__file__).resolve().parents[1]
-if str(V2_ROOT) not in sys.path:
-    sys.path.insert(0, str(V2_ROOT))
-
-from helper.models import train_endpoint_models
-from helper.paths import FORMULATIONS_PATH, NEXT_ROUND_CANDIDATES_PATH, OBSERVATIONS_PATH, RESULTS_V2_DIR
-from helper.registry import IngredientRegistry, load_registry
+from .models import build_training_frame, train_endpoint_models
+from .registry import IngredientRegistry, load_registry
 
 
 PAGE_BG = "#f7f2e8"
@@ -41,14 +33,14 @@ CORAL = "#d96c5f"
 SLATE = "#6c7a89"
 
 
-def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--formulations", default=str(FORMULATIONS_PATH))
-    parser.add_argument("--observations", default=str(OBSERVATIONS_PATH))
-    parser.add_argument("--candidates", default=str(NEXT_ROUND_CANDIDATES_PATH))
-    parser.add_argument("--output-dir", default=str(RESULTS_V2_DIR / "visualizations"))
-    return parser.parse_args()
-
+def _artifact_path(
+    output_dir: Path,
+    base_name: str,
+    suffix: str,
+    artifact_prefix: str = "",
+) -> Path:
+    prefix = f"{artifact_prefix}_" if str(artifact_prefix).strip() else ""
+    return output_dir / f"{prefix}{base_name}{suffix}"
 
 def _apply_plot_style() -> None:
     plt.rcParams.update(
@@ -170,6 +162,7 @@ def _write_best_performers_summary(
     candidates: pd.DataFrame,
     output_dir: Path,
     registry: IngredientRegistry,
+    artifact_prefix: str = "",
 ) -> Path:
     observed = _observed_endpoint_frame(formulations, observations)
     top_candidates = _top_candidate_frame(candidates).head(5)
@@ -243,6 +236,29 @@ def _write_best_performers_summary(
             lines.append(f"  formulation: {_format_formulation(row, registry)}")
     lines.append("")
 
+    retest_mask = (
+        candidates.get(
+            "recommendation_type",
+            pd.Series([""] * len(candidates), index=candidates.index, dtype="object"),
+        ).astype(str)
+        == "retest_priority"
+    ) if not candidates.empty else pd.Series(dtype=bool)
+    retest_candidates = candidates.loc[retest_mask].copy() if not candidates.empty else pd.DataFrame()
+    lines.append("Retest-priority recommendations:")
+    if retest_candidates.empty:
+        lines.append("- none in the current slate")
+    else:
+        for _, row in retest_candidates.iterrows():
+            lines.append(
+                f"- {row.get('formulation_id', '')} | predicted viability "
+                f"{_format_metric(pd.to_numeric(row.get('predicted_viability_percent'), errors='coerce'), '{:.1f}')}% | "
+                f"intact probability {_format_metric(pd.to_numeric(row.get('intact_patch_pass_probability'), errors='coerce'), '{:.2f}')}"
+            )
+            if str(row.get("selection_explanation", "")).strip():
+                lines.append(f"  note: {row['selection_explanation']}")
+            lines.append(f"  formulation: {_format_formulation(row, registry)}")
+    lines.append("")
+
     lines.append("Current leading next-round candidates:")
     if top_candidates.empty:
         lines.append("- none; run Stage 02 to generate a candidate slate")
@@ -258,12 +274,16 @@ def _write_best_performers_summary(
             )
             lines.append(f"  formulation: {_format_formulation(row, registry)}")
 
-    output_path = output_dir / "best_performers_summary.txt"
+    output_path = _artifact_path(output_dir, "best_performers_summary", ".txt", artifact_prefix)
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return output_path
 
 
-def _save_endpoint_counts(observations: pd.DataFrame, output_dir: Path) -> Path | None:
+def _save_endpoint_counts(
+    observations: pd.DataFrame,
+    output_dir: Path,
+    artifact_prefix: str = "",
+) -> Path | None:
     if observations.empty or "endpoint" not in observations.columns:
         return None
     counts = observations["endpoint"].value_counts().sort_values(ascending=True)
@@ -277,7 +297,7 @@ def _save_endpoint_counts(observations: pd.DataFrame, output_dir: Path) -> Path 
     for bar, value in zip(bars, counts.values):
         ax.text(bar.get_width() + max(counts.values) * 0.02, bar.get_y() + bar.get_height() / 2, str(int(value)), va="center")
     fig.tight_layout()
-    path = output_dir / "endpoint_observation_counts.png"
+    path = _artifact_path(output_dir, "endpoint_observation_counts", ".png", artifact_prefix)
     fig.savefig(path, dpi=180)
     plt.close(fig)
     return path
@@ -287,6 +307,7 @@ def _save_observed_performance_landscape(
     formulations: pd.DataFrame,
     observations: pd.DataFrame,
     output_dir: Path,
+    artifact_prefix: str = "",
 ) -> Path | None:
     frame = _observed_endpoint_frame(formulations, observations)
     required = {"viability_percent", "critical_axial_load_N_per_needle"}
@@ -340,10 +361,72 @@ def _save_observed_performance_landscape(
     ax.set_title("Observed performance landscape", pad=14)
     ax.legend(frameon=False, loc="best")
     fig.tight_layout()
-    path = output_dir / "observed_performance_landscape.png"
+    path = _artifact_path(output_dir, "observed_performance_landscape", ".png", artifact_prefix)
     fig.savefig(path, dpi=180)
     plt.close(fig)
     return path
+
+
+def _build_model_evaluation_frames(
+    formulations: pd.DataFrame,
+    observations: pd.DataFrame,
+    registry: IngredientRegistry,
+) -> dict[str, pd.DataFrame]:
+    return {
+        "viability_percent": _cross_validated_predictions(
+            formulations,
+            observations,
+            registry,
+            "viability_percent",
+        ),
+        "critical_axial_load_N_per_needle": _cross_validated_predictions(
+            formulations,
+            observations,
+            registry,
+            "critical_axial_load_N_per_needle",
+        ),
+        "intact_patch_formation_pass": _cross_validated_predictions(
+            formulations,
+            observations,
+            registry,
+            "intact_patch_formation_pass",
+        ),
+    }
+
+
+def _write_model_evaluation_table(
+    evaluation_frames: dict[str, pd.DataFrame],
+    output_dir: Path,
+    artifact_prefix: str = "",
+) -> Path | None:
+    rows: list[pd.DataFrame] = []
+    for endpoint, frame in evaluation_frames.items():
+        if frame.empty:
+            continue
+        table = frame.copy()
+        table["endpoint"] = endpoint
+        table["absolute_error"] = (table["predicted"] - table["actual"]).abs()
+        table["squared_error"] = (table["predicted"] - table["actual"]) ** 2
+        rows.append(
+            table[
+                [
+                    "endpoint",
+                    "formulation_id",
+                    "batch_id",
+                    "actual",
+                    "predicted",
+                    "predicted_std",
+                    "absolute_error",
+                    "squared_error",
+                ]
+            ]
+        )
+    if not rows:
+        return None
+
+    output_path = _artifact_path(output_dir, "model_evaluation_table", ".csv", artifact_prefix)
+    pd.concat(rows, ignore_index=True).to_csv(output_path, index=False)
+    return output_path
 
 
 def _cross_validated_predictions(
@@ -352,7 +435,7 @@ def _cross_validated_predictions(
     registry: IngredientRegistry,
     endpoint: str,
 ) -> pd.DataFrame:
-    frame = _observed_endpoint_frame(formulations, observations)
+    frame = build_training_frame(formulations, observations, registry)
     if frame.empty or endpoint not in frame.columns:
         return pd.DataFrame()
     valid = frame.dropna(subset=[endpoint]).copy()
@@ -367,13 +450,19 @@ def _cross_validated_predictions(
     splitter = KFold(n_splits=n_splits, shuffle=True, random_state=42)
     for _, test_index in splitter.split(valid):
         test_rows = valid.iloc[test_index].copy()
-        test_ids = set(test_rows["formulation_id"])
-        train_observations = observations.loc[
-            ~(
-                observations["formulation_id"].isin(test_ids)
-                & (observations["endpoint"].astype(str) == endpoint)
-            )
-        ].copy()
+        holdout_keys = {
+            (str(row["formulation_id"]), str(row.get("batch_id", "")))
+            for _, row in test_rows.iterrows()
+        }
+        train_observations = observations.copy()
+        if "batch_id" not in train_observations.columns:
+            train_observations["batch_id"] = ""
+        endpoint_mask = train_observations["endpoint"].astype(str) == endpoint
+        holdout_mask = train_observations.apply(
+            lambda row: (str(row.get("formulation_id", "")), str(row.get("batch_id", ""))) in holdout_keys,
+            axis=1,
+        )
+        train_observations = train_observations.loc[~(endpoint_mask & holdout_mask)].copy()
         models = train_endpoint_models(formulations, train_observations, registry)
         x_test = (
             test_rows[registry.feature_names]
@@ -399,6 +488,7 @@ def _cross_validated_predictions(
             pd.DataFrame(
                 {
                     "formulation_id": test_rows["formulation_id"].to_numpy(),
+                    "batch_id": test_rows.get("batch_id", pd.Series([""] * len(test_rows))).to_numpy(),
                     "actual": pd.to_numeric(test_rows[endpoint], errors="coerce").to_numpy(dtype=float),
                     "predicted": np.asarray(predicted, dtype=float),
                     "predicted_std": np.asarray(predicted_std, dtype=float),
@@ -501,13 +591,15 @@ def _save_model_evaluation_overview(
     observations: pd.DataFrame,
     output_dir: Path,
     registry: IngredientRegistry,
+    artifact_prefix: str = "",
 ) -> Path | None:
     if formulations.empty or observations.empty:
         return None
 
-    viability_cv = _cross_validated_predictions(formulations, observations, registry, "viability_percent")
-    load_cv = _cross_validated_predictions(formulations, observations, registry, "critical_axial_load_N_per_needle")
-    intact_cv = _cross_validated_predictions(formulations, observations, registry, "intact_patch_formation_pass")
+    evaluation_frames = _build_model_evaluation_frames(formulations, observations, registry)
+    viability_cv = evaluation_frames["viability_percent"]
+    load_cv = evaluation_frames["critical_axial_load_N_per_needle"]
+    intact_cv = evaluation_frames["intact_patch_formation_pass"]
     if viability_cv.empty and load_cv.empty and intact_cv.empty:
         return None
 
@@ -550,13 +642,17 @@ def _save_model_evaluation_overview(
     fig.suptitle("V2 model evaluation overview", fontsize=16, y=0.98)
     fig.tight_layout(rect=[0, 0, 1, 0.97])
 
-    path = output_dir / "model_evaluation_overview.png"
+    path = _artifact_path(output_dir, "model_evaluation_overview", ".png", artifact_prefix)
     fig.savefig(path, dpi=180)
     plt.close(fig)
     return path
 
 
-def _save_candidate_plot(candidates: pd.DataFrame, output_dir: Path) -> Path | None:
+def _save_candidate_plot(
+    candidates: pd.DataFrame,
+    output_dir: Path,
+    artifact_prefix: str = "",
+) -> Path | None:
     required = {"predicted_viability_percent", "intact_patch_pass_probability"}
     if candidates.empty or not required.issubset(set(candidates.columns)):
         return None
@@ -631,7 +727,7 @@ def _save_candidate_plot(candidates: pd.DataFrame, output_dir: Path) -> Path | N
     ax.set_title("Next-round candidate screen", pad=14)
     ax.legend(frameon=False, loc="lower right")
     fig.tight_layout()
-    path = output_dir / "next_round_candidate_screen.png"
+    path = _artifact_path(output_dir, "next_round_candidate_screen", ".png", artifact_prefix)
     fig.savefig(path, dpi=180)
     plt.close(fig)
     return path
@@ -643,15 +739,19 @@ def _write_visualization_summary(
     candidates: pd.DataFrame,
     generated: list[Path],
     output_dir: Path,
+    review_label: str = "",
+    artifact_prefix: str = "",
 ) -> Path:
     observed = _observed_endpoint_frame(formulations, observations)
     summary = [
-        "CryoMN v2 Visualization Summary",
-        "=" * 32,
+        "CryoMN v2 Round Review Summary",
+        "=" * 30,
         "",
+        f"Review label: {review_label or 'default'}",
         f"Formulation rows: {len(formulations)}",
         f"Observation rows: {len(observations)}",
         f"Candidate rows: {len(candidates)}",
+        f"Retest-priority rows in current slate: {int((candidates.get('recommendation_type', pd.Series([''] * len(candidates), index=candidates.index, dtype='object')).astype(str) == 'retest_priority').sum()) if not candidates.empty else 0}",
         f"Formulations with observed viability: {int(observed.get('viability_percent', pd.Series(dtype=float)).notna().sum()) if not observed.empty else 0}",
         f"Formulations with observed critical load: {int(observed.get('critical_axial_load_N_per_needle', pd.Series(dtype=float)).notna().sum()) if not observed.empty else 0}",
         f"Formulations with observed intact-patch gate: {int(observed.get('intact_patch_formation_pass', pd.Series(dtype=float)).notna().sum()) if not observed.empty else 0}",
@@ -663,38 +763,69 @@ def _write_visualization_summary(
         summary.append("- none; not enough data for plots or reports")
     summary.append("")
     summary.append("Reader note:")
-    summary.append("Stage 04 now produces a best-performers report and reader-friendly model evaluation graphics.")
-    output_path = output_dir / "visualization_summary.txt"
+    summary.append("This review snapshot captures one specific state of the round workflow.")
+    output_path = _artifact_path(output_dir, "visualization_summary", ".txt", artifact_prefix)
     output_path.write_text("\n".join(summary) + "\n", encoding="utf-8")
     return output_path
 
 
-def main() -> None:
+def generate_visualization_artifacts(
+    formulations: pd.DataFrame,
+    observations: pd.DataFrame,
+    candidates: pd.DataFrame,
+    output_dir: str | Path,
+    review_label: str = "",
+    artifact_prefix: str = "",
+) -> list[Path]:
     _apply_plot_style()
-    args = parse_args()
-    output_dir = Path(args.output_dir)
+    output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-
-    formulations = _read_or_empty(args.formulations)
-    observations = _read_or_empty(args.observations)
-    candidates = _read_or_empty(args.candidates)
     registry = load_registry()
+    evaluation_frames = _build_model_evaluation_frames(formulations, observations, registry)
 
     generated = [
         path
         for path in [
-            _write_best_performers_summary(formulations, observations, candidates, output_dir, registry),
-            _save_endpoint_counts(observations, output_dir),
-            _save_observed_performance_landscape(formulations, observations, output_dir),
-            _save_model_evaluation_overview(formulations, observations, output_dir, registry),
-            _save_candidate_plot(candidates, output_dir),
+            _write_best_performers_summary(
+                formulations,
+                observations,
+                candidates,
+                output_dir,
+                registry,
+                artifact_prefix=artifact_prefix,
+            ),
+            _save_endpoint_counts(observations, output_dir, artifact_prefix=artifact_prefix),
+            _save_observed_performance_landscape(
+                formulations,
+                observations,
+                output_dir,
+                artifact_prefix=artifact_prefix,
+            ),
+            _write_model_evaluation_table(
+                evaluation_frames,
+                output_dir,
+                artifact_prefix=artifact_prefix,
+            ),
+            _save_model_evaluation_overview(
+                formulations,
+                observations,
+                output_dir,
+                registry,
+                artifact_prefix=artifact_prefix,
+            ),
+            _save_candidate_plot(candidates, output_dir, artifact_prefix=artifact_prefix),
         ]
         if path is not None
     ]
-    generated.append(_write_visualization_summary(formulations, observations, candidates, generated, output_dir))
-    print(f"Generated {len(generated)} visualization file(s).")
-    print(f"Output directory: {output_dir.resolve()}")
-
-
-if __name__ == "__main__":
-    main()
+    generated.append(
+        _write_visualization_summary(
+            formulations,
+            observations,
+            candidates,
+            generated,
+            output_dir,
+            review_label=review_label,
+            artifact_prefix=artifact_prefix,
+        )
+    )
+    return generated

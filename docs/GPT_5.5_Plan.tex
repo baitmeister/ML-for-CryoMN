@@ -323,14 +323,12 @@ viability pipeline:
     build the v2 database from legacy viability-only evidence;
     \item \code{src/08\_multi\_objective/02\_select\_candidates/select\_candidates.py}:
     score a candidate pool and export the next wet-lab slate;
-    \item \code{src/08\_multi\_objective/03\_record\_results/update\_from\_results.py}:
-    ingest filled wet-lab results and technical replicates;
-    \item \code{src/08\_multi\_objective/03\_record\_results/import\_instron.py}:
+    \item \code{src/08\_multi\_objective/03\_run\_round/run\_round.py}:
+    generate pre/post round reviews, ingest filled wet-lab results, and generate the next slate;
+    \item \code{src/08\_multi\_objective/helper/instron.py}:
     parse Bluehill/Instron CSV files into the round CSV;
-    \item \code{src/08\_multi\_objective/04\_visualization/visualize.py}:
-    generate v2 diagnostics and candidate plots;
     \item \code{src/08\_multi\_objective/helper/}: non-executable shared model,
-    registry, importer, penalty, acquisition, and selection code.
+    registry, instron, review, penalty, acquisition, and selection code.
 \end{itemize}
 
 \subsection{Decoupled Tables}

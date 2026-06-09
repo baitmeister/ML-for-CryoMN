@@ -5,8 +5,9 @@ from pathlib import Path
 import pandas as pd
 
 from helper.registry import load_registry
-from visualize import (
+from helper.visualization import (
     _apply_plot_style,
+    generate_visualization_artifacts,
     _save_candidate_plot,
     _save_model_evaluation_overview,
     _save_observed_performance_landscape,
@@ -144,3 +145,31 @@ def test_visualization_plots_are_created_with_small_complete_dataset(tmp_path: P
     assert model_eval is not None and model_eval.exists()
     assert observed_plot is not None and observed_plot.exists()
     assert candidate_plot is not None and candidate_plot.exists()
+
+
+def test_generate_visualization_artifacts_writes_prefixed_archive_and_eval_table(tmp_path: Path) -> None:
+    _apply_plot_style()
+    generated = generate_visualization_artifacts(
+        _formulations(),
+        _observations(),
+        _candidates(),
+        tmp_path,
+        review_label="selection_state_before_update_ROUND_001",
+        artifact_prefix="ROUND_001",
+    )
+
+    generated_names = {path.name for path in generated}
+    assert "ROUND_001_best_performers_summary.txt" in generated_names
+    assert "ROUND_001_visualization_summary.txt" in generated_names
+    assert "ROUND_001_model_evaluation_table.csv" in generated_names
+    assert "ROUND_001_model_evaluation_overview.png" in generated_names
+
+    eval_table = pd.read_csv(tmp_path / "ROUND_001_model_evaluation_table.csv")
+    assert set(eval_table["endpoint"]) == {
+        "viability_percent",
+        "critical_axial_load_N_per_needle",
+        "intact_patch_formation_pass",
+    }
+    assert {"actual", "predicted", "predicted_std", "absolute_error", "squared_error"}.issubset(
+        set(eval_table.columns)
+    )

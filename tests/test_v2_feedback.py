@@ -7,7 +7,7 @@ import pytest
 
 from helper.feedback import ingest_feedback
 from helper.registry import load_registry
-from update_from_results import _resolve_batch_id, _resolve_viability_noise
+from run_round import _resolve_batch_id, _resolve_viability_noise
 
 
 def test_feedback_ingests_viability_intact_and_raw_critical_load(tmp_path: Path) -> None:

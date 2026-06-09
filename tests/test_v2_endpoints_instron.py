@@ -6,8 +6,7 @@ import pandas as pd
 import pytest
 
 from helper.endpoints import intact_patch_formation_pass
-from helper.instron import metrics_to_observations, parse_instron_csv
-from import_instron import update_candidate_results
+from helper.instron import metrics_to_observations, parse_instron_csv, update_candidate_results
 
 
 def test_intact_patch_gate_uses_tip_count_and_collapse_flags() -> None:

@@ -1,9 +1,11 @@
 from __future__ import annotations
 
+import pandas as pd
 import pytest
 
 from helper.candidates import (
     filter_available_candidate_pool,
+    filter_nonzero_active_candidate_pool,
     generate_random_candidate_pool,
     unavailable_features_from_config,
 )
@@ -80,3 +82,21 @@ def test_temporary_availability_restrictions_only_affect_candidate_selection() -
     pool.loc[0, "trehalose_M"] = 0.2
     filtered = filter_available_candidate_pool(pool, unavailable)
     assert len(filtered) == len(pool) - 1
+
+
+def test_zero_active_candidates_are_removed_at_candidate_pool_entry() -> None:
+    registry = load_registry()
+    pool = generate_random_candidate_pool(
+        registry,
+        n_candidates=5,
+        random_seed=7,
+        unavailable_feature_names=[],
+    )
+    zero_row = {feature_name: 0.0 for feature_name in registry.feature_names}
+    zero_row.update({"candidate_id": "zero_row", "formulation_id": "v2_zero", "active_ingredient_count": 0})
+    pool = pd.concat([pool, pd.DataFrame([zero_row])], ignore_index=True)
+
+    filtered = filter_nonzero_active_candidate_pool(pool, registry)
+
+    assert "zero_row" not in set(filtered["candidate_id"])
+    assert (filtered["active_ingredient_count"] > 0).all()

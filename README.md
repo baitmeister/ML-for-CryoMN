@@ -56,12 +56,10 @@ python3 src/08_multi_objective/01_build_database/build_database.py
 # 2. Generate the full scored pool and the 12-row wet-lab slate
 python3 src/08_multi_objective/02_select_candidates/select_candidates.py
 
-# 3. After wet lab, fill the current next_round_candidates.csv, then ingest it
-python3 src/08_multi_objective/03_record_results/update_from_results.py \
+# 3. After wet lab, fill the current next_round_candidates.csv, then run the
+# full round step: review current state, ingest, review updated state, generate
+python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv
-
-# 4. Generate v2 diagnostic plots
-python3 src/08_multi_objective/04_visualization/visualize.py
 ```
 
 V2 files to know:

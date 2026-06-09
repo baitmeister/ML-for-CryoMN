@@ -5,24 +5,42 @@ import pandas as pd
 
 from helper.config import load_optimization_config
 from helper.models import EndpointModels
+from helper.phase import PHASE_MECHANICS, PHASE_SCREENING, PhaseResolution
 from helper.registry import load_registry
 from helper.selection import select_mechanical_tests
 
 
 def _dummy_models(mechanical_count: int) -> EndpointModels:
+    registry = load_registry()
     frame = pd.DataFrame(
         {
+            "viability_percent": [60.0] * mechanical_count
+            + [np.nan] * max(0, 2 - mechanical_count),
             "critical_axial_load_N_per_needle": [1.0] * mechanical_count
             + [np.nan] * max(0, 2 - mechanical_count)
         }
     )
+    for feature_name in registry.feature_names:
+        frame[feature_name] = 0.0
     return EndpointModels(
-        feature_names=[],
+        feature_names=registry.feature_names,
         viability=None,
         critical_load=None,
         initial_stiffness=None,
         intact=None,
         training_frame=frame,
+    )
+
+
+def _phase(active_phase: str) -> PhaseResolution:
+    return PhaseResolution(
+        requested_phase_mode=active_phase,
+        active_phase=active_phase,
+        paired_observation_count=8 if active_phase == PHASE_MECHANICS else 0,
+        distinct_formulation_count=6 if active_phase == PHASE_MECHANICS else 0,
+        batch_count=2 if active_phase == PHASE_MECHANICS else 0,
+        reason="test",
+        override_used=True,
     )
 
 
@@ -53,9 +71,10 @@ def test_cold_start_mechanical_selection_restricts_to_predicted_intact_pass() ->
         _dummy_models(mechanical_count=0),
         registry,
         config,
+        _phase(PHASE_SCREENING),
         n=4,
     )
-    assert metadata["mechanical_selection_mode"] == "k_center_cold_start"
+    assert metadata["mechanical_selection_mode"] == "screening_data_collection"
     assert len(selected) == 4
     assert (selected["intact_patch_pass_probability"] >= 0.5).all()
 
@@ -68,6 +87,7 @@ def test_seeded_mechanical_selection_switches_to_qlognehvi_path() -> None:
         _dummy_models(mechanical_count=8),
         registry,
         config,
+        _phase(PHASE_MECHANICS),
         n=3,
     )
     assert len(selected) == 3

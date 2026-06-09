@@ -15,6 +15,7 @@ if str(V2_ROOT) not in sys.path:
 
 from helper.candidates import (
     filter_available_candidate_pool,
+    filter_nonzero_active_candidate_pool,
     generate_random_candidate_pool,
     load_candidate_pool,
     unavailable_features_from_config,
@@ -49,6 +50,12 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--pool-size", type=int, default=None, help="Generated candidate pool size.")
     parser.add_argument("--seed", type=int, default=None, help="Random seed for generated pool.")
+    parser.add_argument(
+        "--phase-mode",
+        choices=["auto", "screening_only", "mechanics_enabled"],
+        default=None,
+        help="Optional override for the automatic selection phase.",
+    )
     parser.add_argument(
         "--batch-id",
         default=None,
@@ -115,16 +122,26 @@ def main() -> None:
         )
         filtered_count = 0
 
+    before_zero_active_filter = len(candidate_pool)
+    candidate_pool = filter_nonzero_active_candidate_pool(candidate_pool, registry)
+    zero_active_filtered_count = before_zero_active_filter - len(candidate_pool)
+    if candidate_pool.empty:
+        raise SystemExit(
+            "Candidate pool is empty after removing zero-active formulations."
+        )
+
     result = select_next_round(
         formulations=formulations,
         observations=observations,
         candidate_pool=candidate_pool,
         registry=registry,
         optimization_config=optimization_config,
+        requested_phase_mode=args.phase_mode,
     )
     batch_id = args.batch_id or _next_round_id(args.observations)
     result.metadata["temporary_unavailable_features"] = unavailable_features
     result.metadata["candidate_pool_rows_filtered_by_availability"] = filtered_count
+    result.metadata["candidate_pool_rows_filtered_zero_active_at_entry"] = zero_active_filtered_count
     write_selection_result(
         result,
         args.output_dir,
@@ -135,11 +152,18 @@ def main() -> None:
     print(f"Selected {len(result.viability_screen)} viability-screen candidates.")
     print(f"Selected {len(result.mechanical_tests)} mechanical-test candidates.")
     print(f"Batch ID: {batch_id}")
+    print(f"Active phase: {result.metadata['active_phase']}")
     print(f"Mechanical selection mode: {result.metadata['mechanical_policy']['mechanical_selection_mode']}")
     if unavailable_features:
         print("Temporary ingredient restrictions: " + ", ".join(unavailable_features))
     if filtered_count:
         print(f"Filtered {filtered_count} externally supplied candidate-pool rows by availability.")
+    if zero_active_filtered_count:
+        print(
+            "WARNING: "
+            f"filtered {zero_active_filtered_count} zero-active candidate-pool rows before scoring. "
+            "This usually means the supplied candidate pool or upstream candidate-generation logic needs review."
+        )
     print(f"Output directory: {Path(args.output_dir).resolve()}")
     print(f"Total candidate pool: {Path(args.total_candidate_pool).resolve()}")
 
