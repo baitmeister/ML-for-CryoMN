@@ -40,6 +40,8 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
   stage anymore.
 - The command creates one pre-update review snapshot before any new wet-lab
   observations are appended.
+- The command also refreshes `results/multi_objective_v2/current_round_status.json`
+  so the current/latest round and next round remain visible outside the CSVs.
 - That review output is archived per batch under:
   - `results/multi_objective_v2/round_review/ROUND_###`
 - Each round archive also stores:

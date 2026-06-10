@@ -43,6 +43,7 @@ selection; they do not delete historical observations or change result imports.
 Stage 02 writes:
 
 - `results/multi_objective_v2/total_candidate_pool.csv`
+- `results/multi_objective_v2/current_round_status.json`
 - `results/multi_objective_v2/next_round/next_round_candidates.csv`
 - `results/multi_objective_v2/next_round/next_round_summary.txt`
 
@@ -50,14 +51,21 @@ Stage 02 writes:
 availability filtering. It includes model predictions, penalties, selection
 scores, and flags showing which rows were promoted into the wet-lab slate.
 
+`current_round_status.json` is a derived status file for operators. It records
+the latest observed `ROUND_###`, the next proposed round ID, the active phase,
+and whether the current proposal matches the next round implied by
+`observations.csv`.
+
 `next_round_candidates.csv` is the one detailed CSV. It contains the candidate
 identity, formulation concentrations, model predictions, soft-constraint
 diagnostics, mechanical-test recommendation flags, and blank wet-lab result
-columns to fill.
+columns to fill. Those mechanical flags stay off until the selector reaches
+`mechanics_enabled`.
 
 `next_round_summary.txt` is the human-friendly validation sheet. Use it to see
 the batch ID, which formulations to make, which rows are recommended for
-Instron testing, and what command to run after results are filled.
+Instron testing once mechanics is enabled, and what command to run after
+results are filled.
 
 To lift the current temporary restriction on an ingredient, remove its
 `feature_name` from `config_v2/availability.yaml` and rerun stage 02.
@@ -87,6 +95,8 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
 The batch ID is generated as `ROUND_###` from `observations.csv`. After Stage 03
 ingests `ROUND_001`, the next Stage 02 run emits `ROUND_002`. If you rerun Stage
 02 before ingesting results, it will still emit the same next unused round ID.
+`current_round_status.json` is regenerated alongside that process for redundant,
+human-readable tracking.
 
 ## What To Fill In The CSV
 

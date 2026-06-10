@@ -64,12 +64,13 @@ the 12 selected wet-lab formulations and blank result columns.
    12-row wet-lab slate directly from that full-pool ranking.
 6. Add any `retest_priority` formulations separately when the latest batch for
    an existing formulation appears off-trend or unstable.
-7. Select 3-4 mechanical follow-up rows from the final slate.
+7. If the active phase is `mechanics_enabled`, select 3-4 mechanical follow-up
+   rows from the final slate.
 
 The pool generation step is random. The final 12-candidate selection is model
-scored and diversity-aware, not random. In early rounds, “mechanical follow-up”
-rows are data-collection recommendations rather than true mechanics-optimized
-picks.
+scored and diversity-aware, not random. During `screening_only`, the selector
+does not emit any mechanical-test recommendations. The mechanical recommender
+only turns on after the phase transitions to `mechanics_enabled`.
 
 ## Batch ID
 

@@ -251,23 +251,29 @@ def select_mechanical_tests(
 
     mechanical_count = models.mechanical_observation_count
     if phase_resolution.active_phase == PHASE_SCREENING:
-        mode = "screening_data_collection"
-        seed_score = (
-            minmax(pool["viability_ucb"].to_numpy(dtype=float))
-            + minmax(pool["intact_patch_pass_probability"].to_numpy(dtype=float))
-        )
-        selected_indices = _kcenter_pick(pool, seed_score, registry.feature_names, n)
-    else:
-        score, mechanics_metadata = _mechanics_phase_scores(pool, models, registry, optimization_config)
-        mode = mechanics_metadata["pool_selection_mode"]
-        selected_indices = _greedy_diverse_pick(pool, score, registry.feature_names, n)
+        selected = pool.head(0).copy()
+        selected.insert(0, "mechanical_selection_rank", pd.Series(dtype=int))
+        selected["selection_role"] = "mechanical_test_disabled"
+        selected["mechanical_selection_mode"] = "disabled_screening_only"
+        metadata = {
+            "mechanical_selection_mode": "disabled_screening_only",
+            "mechanical_selection_reason": "mechanical recommendations stay off until the selector enters mechanics_enabled",
+            "mechanical_observation_count": mechanical_count,
+            "intact_probability_threshold": threshold,
+            "pass_pool_size": int(len(pass_pool)),
+            "botorch_available": bool(botorch_available()),
+            "active_phase": phase_resolution.active_phase,
+        }
+        return selected, metadata
+
+    score, mechanics_metadata = _mechanics_phase_scores(pool, models, registry, optimization_config)
+    mode = mechanics_metadata["pool_selection_mode"]
+    selected_indices = _greedy_diverse_pick(pool, score, registry.feature_names, n)
 
     selected = pool.iloc[selected_indices].copy() if selected_indices else pool.head(0).copy()
     selected = selected.head(n).copy()
     selected.insert(0, "mechanical_selection_rank", range(1, len(selected) + 1))
-    selected["selection_role"] = (
-        "mechanical_data_collection" if phase_resolution.active_phase == PHASE_SCREENING else "mechanical_test"
-    )
+    selected["selection_role"] = "mechanical_test"
     selected["mechanical_selection_mode"] = mode
     metadata = {
         "mechanical_selection_mode": mode,
@@ -394,12 +400,18 @@ def _write_summary(
     registry: IngredientRegistry,
 ) -> None:
     zero_active_filtered = int(result.metadata.get("candidate_pool_rows_filtered_zero_active_at_entry", 0))
+    active_phase = result.metadata.get("active_phase", PHASE_SCREENING)
+    mechanical_instruction = (
+        "3. Do not use this sheet for mechanical-test recommendations yet; the recommender stays off during screening_only."
+        if active_phase == PHASE_SCREENING
+        else "3. For rows marked mechanical_test_recommended=true and intact_patch_formation_pass=true, run Instron or enter raw critical load."
+    )
     lines = [
         "CryoMN v2 Next-Round Candidate Summary",
         "=" * 42,
         "",
         f"Batch ID: {result.metadata.get('batch_id', '')}",
-        f"Active phase: {result.metadata.get('active_phase', PHASE_SCREENING)}",
+        f"Active phase: {active_phase}",
         f"Phase reason: {result.metadata.get('phase_resolution', {}).get('reason', '')}",
         f"Candidates to make: {len(selected)}",
         f"Mechanical tests requested: {int(selected['mechanical_test_recommended'].sum())}",
@@ -422,7 +434,7 @@ def _write_summary(
         "Wet-lab instructions:",
         "1. Make every formulation listed below.",
         "2. Fill viability_percent and intact_patch_formation_pass in next_round_candidates.csv.",
-        "3. For rows marked mechanical_test_recommended=true and intact_patch_formation_pass=true, run Instron or enter raw critical load.",
+        mechanical_instruction,
         "4. Run 03_run_round/run_round.py after the CSV is filled.",
         "",
         "Candidates:",

@@ -23,6 +23,7 @@ from helper.candidates import (
 from helper.config import load_availability_config, load_optimization_config, nested_get
 from helper.paths import (
     AVAILABILITY_CONFIG,
+    CURRENT_ROUND_STATUS_PATH,
     FORMULATIONS_PATH,
     OBSERVATIONS_PATH,
     RESULTS_V2_DIR,
@@ -30,6 +31,7 @@ from helper.paths import (
 )
 from helper.registry import load_registry
 from helper.selection import select_next_round, write_selection_result
+from helper.status import derive_round_tracker, write_current_round_status
 
 
 def parse_args() -> argparse.Namespace:
@@ -73,17 +75,7 @@ def _read_or_empty(path: str | Path) -> pd.DataFrame:
 
 def _next_round_id(observations_path: str | Path = OBSERVATIONS_PATH) -> str:
     observations = _read_or_empty(observations_path)
-    if observations.empty or "batch_id" not in observations.columns:
-        return "ROUND_001"
-    max_round = 0
-    for value in observations["batch_id"].dropna().astype(str):
-        value = value.strip()
-        if not value.startswith("ROUND_"):
-            continue
-        suffix = value.removeprefix("ROUND_")
-        if suffix.isdigit():
-            max_round = max(max_round, int(suffix))
-    return f"ROUND_{max_round + 1:03d}"
+    return str(derive_round_tracker(observations)["next_round_id"])
 
 
 def main() -> None:
@@ -149,6 +141,15 @@ def main() -> None:
         total_candidate_pool_path=args.total_candidate_pool,
         registry=registry,
     )
+    status_path = write_current_round_status(
+        Path(args.output_dir).parent / CURRENT_ROUND_STATUS_PATH.name,
+        observations=observations,
+        source_observations_path=args.observations,
+        active_phase=result.metadata["active_phase"],
+        phase_reason=result.metadata.get("phase_resolution", {}).get("reason", ""),
+        proposed_batch_id=batch_id,
+        proposed_batch_override_used=args.batch_id is not None,
+    )
     print(f"Selected {len(result.viability_screen)} viability-screen candidates.")
     print(f"Selected {len(result.mechanical_tests)} mechanical-test candidates.")
     print(f"Batch ID: {batch_id}")
@@ -166,6 +167,7 @@ def main() -> None:
         )
     print(f"Output directory: {Path(args.output_dir).resolve()}")
     print(f"Total candidate pool: {Path(args.total_candidate_pool).resolve()}")
+    print(f"Round status: {status_path.resolve()}")
 
 
 if __name__ == "__main__":

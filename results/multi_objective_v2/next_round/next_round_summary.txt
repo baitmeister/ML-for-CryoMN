@@ -25,7 +25,7 @@ Wet-lab instructions:
 1. Make every formulation listed below.
 2. Fill viability_percent and intact_patch_formation_pass in next_round_candidates.csv.
 3. For rows marked mechanical_test_recommended=true and intact_patch_formation_pass=true, run Instron or enter raw critical load.
-4. Run 03_record_results/update_from_results.py after the CSV is filled.
+4. Run 03_run_round/run_round.py after the CSV is filled.
 
 Candidates:
 - #1; candidate_id=cand_001465; formulation_id=v2_237544a25f30; recommendation_type=screening_candidate; mechanical_test=True; predicted_viability=71.0%; intact_probability=1.00

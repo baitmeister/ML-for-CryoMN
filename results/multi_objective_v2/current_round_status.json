@@ -1,0 +1,20 @@
+{
+  "status_version": 1,
+  "source_of_truth": "observations_csv",
+  "source_observations_path": "/Users/bait/Documents/ML-for-CryoMN/data/processed_v2/observations.csv",
+  "generated_at_utc": "2026-06-10T06:22:49.896568+00:00",
+  "latest_observed_round_id": "",
+  "latest_observed_round_number": null,
+  "next_round_id": "ROUND_001",
+  "observed_round_count": 0,
+  "observed_round_ids": [],
+  "non_round_batch_ids": [
+    "legacy_literature",
+    "legacy_wetlab"
+  ],
+  "active_phase": "screening_only",
+  "phase_reason": "auto-selected screening_only: paired_observations=0/8, distinct_formulations=0/6, batches=0/2",
+  "proposed_batch_id": "",
+  "proposed_batch_override_used": false,
+  "proposed_batch_matches_next_round": null
+}

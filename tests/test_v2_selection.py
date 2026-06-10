@@ -63,7 +63,7 @@ def _annotated_candidates() -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def test_cold_start_mechanical_selection_restricts_to_predicted_intact_pass() -> None:
+def test_screening_phase_disables_mechanical_selection() -> None:
     registry = load_registry()
     config = load_optimization_config()
     selected, metadata = select_mechanical_tests(
@@ -74,9 +74,9 @@ def test_cold_start_mechanical_selection_restricts_to_predicted_intact_pass() ->
         _phase(PHASE_SCREENING),
         n=4,
     )
-    assert metadata["mechanical_selection_mode"] == "screening_data_collection"
-    assert len(selected) == 4
-    assert (selected["intact_patch_pass_probability"] >= 0.5).all()
+    assert metadata["mechanical_selection_mode"] == "disabled_screening_only"
+    assert metadata["active_phase"] == PHASE_SCREENING
+    assert len(selected) == 0
 
 
 def test_seeded_mechanical_selection_switches_to_qlognehvi_path() -> None:

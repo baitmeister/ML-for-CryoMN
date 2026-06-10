@@ -28,7 +28,9 @@ from helper.paths import (
 )
 from helper.config import load_optimization_config, nested_get
 from helper.feedback import ingest_feedback
+from helper.phase import resolve_phase_mode
 from helper.registry import load_registry
+from helper.status import write_current_round_status
 from helper.visualization import generate_visualization_artifacts
 
 
@@ -196,6 +198,23 @@ def main() -> None:
     print(f"Updated formulations: {Path(args.formulations).resolve()} ({len(formulations)} rows)")
     print(f"Updated observations: {Path(args.observations).resolve()} ({len(observations)} rows)")
 
+    status_path = Path(args.output_dir).parent / "current_round_status.json"
+    if args.skip_generate:
+        phase_resolution = resolve_phase_mode(
+            formulations,
+            observations,
+            registry,
+            optimization_config,
+            requested_phase_mode=args.phase_mode,
+        )
+        status_path = write_current_round_status(
+            status_path,
+            observations=observations,
+            source_observations_path=args.observations,
+            active_phase=phase_resolution.active_phase,
+            phase_reason=phase_resolution.reason,
+        )
+
     if not args.skip_generate:
         select_args = [
             "--formulations",
@@ -217,6 +236,7 @@ def main() -> None:
             select_args.extend(["--phase-mode", args.phase_mode])
         _run(select_script, select_args)
 
+    print(f"Round status: {status_path.resolve()}")
     print("Round progression complete.")
 
 

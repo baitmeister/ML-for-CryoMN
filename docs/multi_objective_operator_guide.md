@@ -12,6 +12,7 @@ The main persistent database files are:
 - [data/processed_v2/observations.csv](/Users/bait/Documents/ML-for-CryoMN/data/processed_v2/observations.csv)
 
 The main working-round files are:
+- [results/multi_objective_v2/current_round_status.json](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/current_round_status.json)
 - [results/multi_objective_v2/next_round/next_round_candidates.csv](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_candidates.csv)
 - [results/multi_objective_v2/next_round/next_round_summary.txt](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_summary.txt)
 - [results/multi_objective_v2/total_candidate_pool.csv](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/total_candidate_pool.csv)
@@ -42,6 +43,7 @@ The main working-round files are:
 
 ### Current round outputs
 
+- [results/multi_objective_v2/current_round_status.json](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/current_round_status.json)
 - [results/multi_objective_v2/total_candidate_pool.csv](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/total_candidate_pool.csv)
 - [results/multi_objective_v2/next_round/next_round_candidates.csv](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_candidates.csv)
 - [results/multi_objective_v2/next_round/next_round_summary.txt](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_summary.txt)
@@ -91,7 +93,7 @@ What it does:
   - `mechanics_enabled`
 - Scores the full candidate pool.
 - Builds the 12-row wet-lab slate.
-- Marks mechanical follow-up rows.
+- Marks mechanical follow-up rows only in `mechanics_enabled`.
 - Can add `retest_priority` rows when existing formulations look unstable or
   off-trend.
 
@@ -103,6 +105,7 @@ Inputs:
 - [config_v2/availability.yaml](/Users/bait/Documents/ML-for-CryoMN/config_v2/availability.yaml)
 
 Outputs:
+- [results/multi_objective_v2/current_round_status.json](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/current_round_status.json)
 - [results/multi_objective_v2/total_candidate_pool.csv](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/total_candidate_pool.csv)
 - [results/multi_objective_v2/next_round/next_round_candidates.csv](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_candidates.csv)
 - [results/multi_objective_v2/next_round/next_round_summary.txt](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_summary.txt)
@@ -112,6 +115,7 @@ What the user needs to check before running:
 - [config_v2/optimization.yaml](/Users/bait/Documents/ML-for-CryoMN/config_v2/optimization.yaml)
 
 What the user needs to check after running:
+- [results/multi_objective_v2/current_round_status.json](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/current_round_status.json)
 - [results/multi_objective_v2/next_round/next_round_summary.txt](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_summary.txt)
 - [results/multi_objective_v2/next_round/next_round_candidates.csv](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_candidates.csv)
 - [results/multi_objective_v2/total_candidate_pool.csv](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/total_candidate_pool.csv)
@@ -244,7 +248,7 @@ Look for:
 - the active phase
 - why that phase was chosen
 - which 12 formulations to make
-- which rows are mechanical follow-up
+- which rows are mechanical follow-up, if the phase is `mechanics_enabled`
 - which rows are `retest_priority`
 
 ### Step 2. Perform the wet-lab work
@@ -252,8 +256,8 @@ Look for:
 Make the listed formulations and measure:
 - viability
 - intact microneedle formation
-- mechanical properties if that row is selected for follow-up or if you decide
-  to test it
+- mechanical properties only after the selector has entered
+  `mechanics_enabled`, or if you explicitly choose to test them anyway
 
 ### Step 3. Fill the candidate results sheet
 
