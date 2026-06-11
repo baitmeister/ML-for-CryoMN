@@ -149,7 +149,7 @@ ingredients:
     active: true
     molecular_weight_g_mol: 131.13
     lower_bound: 0.0
-    upper_bound: 0.50
+    upper_bound: 0.03
     penalize_single_over_500mM: true
     synonyms: []
   - canonical_name: acetamide
@@ -229,7 +229,7 @@ ingredients:
     active: true
     molecular_weight_g_mol:
     lower_bound: 0.0
-    upper_bound: 5.0
+    upper_bound: 1.0
     penalize_single_over_500mM: false
     synonyms: [ha]
   - canonical_name: fbs

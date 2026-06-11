@@ -62,6 +62,28 @@ def filter_available_candidate_pool(
     return candidates.loc[mask].reset_index(drop=True).copy()
 
 
+def filter_candidate_pool_to_registry_bounds(
+    candidates: pd.DataFrame,
+    registry: IngredientRegistry,
+    tolerance: float = 1e-12,
+) -> pd.DataFrame:
+    """Drop candidate rows that violate active ingredient lower/upper bounds."""
+    if candidates.empty:
+        return candidates.copy()
+    filtered = candidates.copy()
+    mask = pd.Series(True, index=filtered.index)
+    for ingredient in registry.active_ingredients():
+        if ingredient.feature_name not in filtered.columns:
+            continue
+        values = pd.to_numeric(filtered[ingredient.feature_name], errors="coerce").fillna(0.0)
+        within_bounds = (
+            (values >= (ingredient.lower_bound - tolerance))
+            & (values <= (ingredient.upper_bound + tolerance))
+        )
+        mask &= within_bounds
+    return filtered.loc[mask].reset_index(drop=True).copy()
+
+
 def filter_nonzero_active_candidate_pool(
     candidates: pd.DataFrame,
     registry: IngredientRegistry,

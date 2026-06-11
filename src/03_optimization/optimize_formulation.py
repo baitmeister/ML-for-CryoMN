@@ -134,9 +134,15 @@ class FormulationOptimizer:
             elif any(x in name_lower for x in ['proline', 'betaine', 'ectoin', 'taurine', 'isoleucine']):
                 # Amino acids: 0 to 0.5 M
                 bounds.append((0.0, 0.5))
+            elif 'creatine' in name_lower:
+                # Creatine: cap at 30 mM for practical solubility
+                bounds.append((0.0, 0.03))
             elif any(x in name_lower for x in ['fbs', 'human_serum']):
                 # Sera: 0 to 90% (normalized value)
                 bounds.append((0.0, 90.0))
+            elif 'hyaluronic_acid' in name_lower:
+                # Hyaluronic acid: cap at 1%
+                bounds.append((0.0, 1.0))
             else:
                 # Other: 0 to 10 (generic bound)
                 bounds.append((0.0, 10.0))

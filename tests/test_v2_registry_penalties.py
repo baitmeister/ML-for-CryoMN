@@ -5,6 +5,7 @@ import pytest
 
 from helper.candidates import (
     filter_available_candidate_pool,
+    filter_candidate_pool_to_registry_bounds,
     filter_nonzero_active_candidate_pool,
     generate_random_candidate_pool,
     unavailable_features_from_config,
@@ -31,6 +32,12 @@ def test_unacquirable_literature_ingredients_are_inactive() -> None:
     features = set(registry.feature_names)
     assert "ficoll_pct" not in features
     assert "hes_pct" not in features
+
+
+def test_registry_bound_caps_include_creatine_and_hyaluronic_acid_limits() -> None:
+    registry = load_registry()
+    assert registry.get_by_feature("creatine_M").upper_bound == 0.03
+    assert registry.get_by_feature("hyaluronic_acid_pct").upper_bound == 1.0
 
 
 def test_registry_rejects_media_variables() -> None:
@@ -100,3 +107,33 @@ def test_zero_active_candidates_are_removed_at_candidate_pool_entry() -> None:
 
     assert "zero_row" not in set(filtered["candidate_id"])
     assert (filtered["active_ingredient_count"] > 0).all()
+
+
+def test_candidate_pool_rows_outside_registry_bounds_are_removed() -> None:
+    registry = load_registry()
+    valid = {feature_name: 0.0 for feature_name in registry.feature_names}
+    valid.update(
+        {
+            "candidate_id": "valid",
+            "formulation_id": "v2_valid",
+            "creatine_M": 0.03,
+            "hyaluronic_acid_pct": 1.0,
+        }
+    )
+    invalid_creatine = valid | {
+        "candidate_id": "invalid_creatine",
+        "formulation_id": "v2_invalid_creatine",
+        "creatine_M": 0.031,
+    }
+    invalid_ha = valid | {
+        "candidate_id": "invalid_ha",
+        "formulation_id": "v2_invalid_ha",
+        "hyaluronic_acid_pct": 1.1,
+    }
+
+    filtered = filter_candidate_pool_to_registry_bounds(
+        pd.DataFrame([valid, invalid_creatine, invalid_ha]),
+        registry,
+    )
+
+    assert list(filtered["candidate_id"]) == ["valid"]

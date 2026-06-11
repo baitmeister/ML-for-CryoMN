@@ -15,6 +15,7 @@ if str(V2_ROOT) not in sys.path:
 
 from helper.candidates import (
     filter_available_candidate_pool,
+    filter_candidate_pool_to_registry_bounds,
     filter_nonzero_active_candidate_pool,
     generate_random_candidate_pool,
     load_candidate_pool,
@@ -95,12 +96,14 @@ def main() -> None:
     if args.candidate_pool:
         candidate_pool = load_candidate_pool(args.candidate_pool, registry)
         before_filter = len(candidate_pool)
+        candidate_pool = filter_candidate_pool_to_registry_bounds(candidate_pool, registry)
+        bounds_filtered_count = before_filter - len(candidate_pool)
         candidate_pool = filter_available_candidate_pool(candidate_pool, unavailable_features)
         if candidate_pool.empty:
             raise SystemExit(
-                "Candidate pool is empty after applying temporary availability restrictions."
+                "Candidate pool is empty after applying registry bounds and temporary availability restrictions."
             )
-        filtered_count = before_filter - len(candidate_pool)
+        filtered_count = before_filter - bounds_filtered_count - len(candidate_pool)
     else:
         pool_size = args.pool_size or int(
             nested_get(optimization_config, "selection.generated_candidate_pool_size", 2000)
@@ -112,6 +115,7 @@ def main() -> None:
             random_seed=seed,
             unavailable_feature_names=unavailable_features,
         )
+        bounds_filtered_count = 0
         filtered_count = 0
 
     before_zero_active_filter = len(candidate_pool)
@@ -132,6 +136,7 @@ def main() -> None:
     )
     batch_id = args.batch_id or _next_round_id(args.observations)
     result.metadata["temporary_unavailable_features"] = unavailable_features
+    result.metadata["candidate_pool_rows_filtered_by_bounds"] = bounds_filtered_count
     result.metadata["candidate_pool_rows_filtered_by_availability"] = filtered_count
     result.metadata["candidate_pool_rows_filtered_zero_active_at_entry"] = zero_active_filtered_count
     write_selection_result(
@@ -157,6 +162,8 @@ def main() -> None:
     print(f"Mechanical selection mode: {result.metadata['mechanical_policy']['mechanical_selection_mode']}")
     if unavailable_features:
         print("Temporary ingredient restrictions: " + ", ".join(unavailable_features))
+    if bounds_filtered_count:
+        print(f"Filtered {bounds_filtered_count} externally supplied candidate-pool rows by registry bounds.")
     if filtered_count:
         print(f"Filtered {filtered_count} externally supplied candidate-pool rows by availability.")
     if zero_active_filtered_count:

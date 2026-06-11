@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import combinations
 from pathlib import Path
 from typing import Mapping
 
@@ -14,7 +15,7 @@ from .config import nested_get
 from .models import EndpointModels, train_endpoint_models
 from .phase import PHASE_MECHANICS, PHASE_SCREENING, PhaseResolution, resolve_phase_mode
 from .penalties import constraint_report, count_active_ingredients
-from .registry import IngredientRegistry
+from .registry import IngredientRegistry, presence_threshold
 from .retest import build_retest_candidates
 
 
@@ -48,6 +49,117 @@ def _drop_zero_active_candidates(frame: pd.DataFrame, registry: IngredientRegist
     mask = pd.to_numeric(filtered["active_ingredient_count"], errors="coerce").fillna(0).astype(int) > 0
     removed = int((~mask).sum())
     return filtered.loc[mask].reset_index(drop=True).copy(), removed
+
+
+def _single_active_feature(row: pd.Series, registry: IngredientRegistry) -> tuple[str, float] | None:
+    active: list[tuple[str, float]] = []
+    for feature_name in registry.feature_names:
+        value = pd.to_numeric(row.get(feature_name, 0.0), errors="coerce")
+        if pd.isna(value):
+            continue
+        magnitude = abs(float(value))
+        if magnitude >= presence_threshold(feature_name):
+            active.append((feature_name, magnitude))
+            if len(active) > 1:
+                return None
+    if len(active) != 1:
+        return None
+    return active[0]
+
+
+def _single_ingredient_spacing_conflicts(
+    frame: pd.DataFrame,
+    registry: IngredientRegistry,
+    min_relative_difference: float,
+) -> list[tuple[str, str, str]]:
+    singles_by_feature: dict[str, list[tuple[str, float]]] = {}
+    for _, row in frame.iterrows():
+        candidate_id = str(row.get("candidate_id", ""))
+        single = _single_active_feature(row, registry)
+        if single is None or not candidate_id:
+            continue
+        feature_name, concentration = single
+        singles_by_feature.setdefault(feature_name, []).append((candidate_id, concentration))
+
+    conflicts: list[tuple[str, str, str]] = []
+    for feature_name, entries in singles_by_feature.items():
+        for (left_id, left_conc), (right_id, right_conc) in combinations(entries, 2):
+            baseline = min(left_conc, right_conc)
+            if baseline <= 0.0:
+                continue
+            relative_difference = abs(left_conc - right_conc) / baseline
+            if relative_difference + 1e-12 < min_relative_difference:
+                conflicts.append((feature_name, left_id, right_id))
+    return conflicts
+
+
+def _enforce_single_ingredient_spacing(
+    selected: pd.DataFrame,
+    candidate_pool: pd.DataFrame,
+    registry: IngredientRegistry,
+    optimization_config: Mapping,
+    score_column: str,
+) -> pd.DataFrame:
+    if selected.empty:
+        return selected.copy()
+
+    min_relative_difference = float(
+        nested_get(
+            optimization_config,
+            "selection.single_ingredient_min_relative_difference",
+            0.50,
+        )
+    )
+    rng = np.random.default_rng(int(optimization_config.get("random_seed", 42)))
+    adjusted = selected.copy().reset_index(drop=True)
+    ranked_pool = candidate_pool.sort_values(
+        [score_column, "candidate_id"],
+        ascending=[False, True],
+        kind="mergesort",
+    ).reset_index(drop=True)
+    rejected_candidate_ids: set[str] = set()
+
+    while True:
+        conflicts = _single_ingredient_spacing_conflicts(adjusted, registry, min_relative_difference)
+        if not conflicts:
+            break
+
+        _, left_id, right_id = conflicts[0]
+        loser_id = str(rng.choice([left_id, right_id]))
+        loser_mask = adjusted["candidate_id"].astype(str) == loser_id
+        loser_positions = np.flatnonzero(loser_mask.to_numpy())
+        if len(loser_positions) == 0:
+            break
+        loser_position = int(loser_positions[0])
+        loser_row = adjusted.iloc[[loser_position]].copy()
+        adjusted = adjusted.loc[~loser_mask].reset_index(drop=True)
+        rejected_candidate_ids.add(loser_id)
+
+        selected_ids = set(adjusted["candidate_id"].astype(str))
+        replacement_row: pd.DataFrame | None = None
+        for _, candidate in ranked_pool.iterrows():
+            candidate_id = str(candidate.get("candidate_id", ""))
+            if not candidate_id or candidate_id in selected_ids or candidate_id in rejected_candidate_ids:
+                continue
+            trial = pd.concat([adjusted, pd.DataFrame([candidate])], ignore_index=True)
+            if _single_ingredient_spacing_conflicts(trial, registry, min_relative_difference):
+                continue
+            replacement_row = pd.DataFrame([candidate])
+            break
+
+        if replacement_row is None:
+            adjusted = pd.concat(
+                [adjusted.iloc[:loser_position], loser_row, adjusted.iloc[loser_position:]],
+                ignore_index=True,
+            )
+            break
+
+        adjusted = pd.concat(
+            [adjusted.iloc[:loser_position], replacement_row, adjusted.iloc[loser_position:]],
+            ignore_index=True,
+        )
+
+    return adjusted
 
 
 def _greedy_diverse_pick(frame: pd.DataFrame, score: np.ndarray, feature_names: list[str], n: int) -> list[int]:
@@ -230,6 +342,13 @@ def _select_round_slate(
     else:
         selected = annotated.head(0).copy()
 
+    selected = _enforce_single_ingredient_spacing(
+        selected,
+        annotated,
+        registry,
+        optimization_config,
+        score_column=score_column,
+    )
     selected["recommendation_type"] = selected["recommendation_type"].replace("", pd.NA).fillna(default_recommendation_type)
     selected.insert(0, "selection_rank", range(1, len(selected) + 1))
     selected["selection_role"] = "round_candidate"
