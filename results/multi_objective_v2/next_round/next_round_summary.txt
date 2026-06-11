@@ -29,7 +29,7 @@ Wet-lab instructions:
 
 Candidates:
 - #1; candidate_id=cand_001465; formulation_id=v2_237544a25f30; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=71.0%; intact_probability=1.00
-  formulation: 304mM ectoin + 1.95M ethylene glycol + 9.32% HSA + 1.45M single_molar_excess_total_M
+  formulation: 304mM ectoin + 1.95M ethylene glycol + 9.32% HSA
 - #2; candidate_id=cand_000754; formulation_id=v2_c82ed328620b; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
   formulation: 94.5mM trehalose + 466mM betaine + 413mM glucose + 6.81% dextran + 17.6% PVP + 4.17% hyaluronic acid + 7.13% FBS
 - #3; candidate_id=cand_001471; formulation_id=v2_21a3a498433e; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=61.1%; intact_probability=1.00

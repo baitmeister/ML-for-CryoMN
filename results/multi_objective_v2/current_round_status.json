@@ -2,7 +2,7 @@
   "status_version": 1,
   "source_of_truth": "observations_csv",
   "source_observations_path": "/Users/bait/Documents/ML-for-CryoMN/data/processed_v2/observations.csv",
-  "generated_at_utc": "2026-06-10T06:25:25.330688+00:00",
+  "generated_at_utc": "2026-06-11T10:16:37.250496+00:00",
   "latest_observed_round_id": "",
   "latest_observed_round_number": null,
   "next_round_id": "ROUND_001",

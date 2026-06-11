@@ -378,12 +378,13 @@ def select_next_round(
 
 def _format_candidate_line(row: pd.Series, registry: IngredientRegistry) -> str:
     ingredients = []
-    for column, value in row.items():
-        if not (column.endswith("_M") or column.endswith("_pct")):
+    for column in registry.feature_names:
+        if column not in row.index:
             continue
+        value = row.get(column)
         if pd.isna(value) or float(value) <= 0.0:
             continue
-        display_name = registry.get_by_feature(column).display_name if column in registry.feature_names else column
+        display_name = registry.get_by_feature(column).display_name
         if column.endswith("_pct"):
             ingredients.append(f"{float(value):.3g}% {display_name}")
         elif float(value) >= 1.0:

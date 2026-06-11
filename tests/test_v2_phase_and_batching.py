@@ -7,6 +7,7 @@ from helper.models import build_training_frame, train_endpoint_models
 from helper.phase import PHASE_MECHANICS, PHASE_SCREENING, resolve_phase_mode
 from helper.registry import load_registry
 from helper.retest import build_retest_candidates
+from helper.selection import _format_candidate_line
 
 
 def _formulations() -> pd.DataFrame:
@@ -221,6 +222,23 @@ def test_retest_candidates_flag_offtrend_batches() -> None:
     )
     assert "v2_form_0" in set(retests["formulation_id"])
     assert (retests["recommendation_type"] == "retest_priority").all()
+
+
+def test_candidate_summary_formatter_ignores_diagnostic_molar_columns() -> None:
+    registry = load_registry()
+    row = pd.Series(
+        {
+            "ectoin_M": 0.30351491607730674,
+            "ethylene_glycol_M": 1.947808827250884,
+            "hsa_pct": 9.316828139709228,
+            "single_molar_excess_total_M": 1.447808827250884,
+        }
+    )
+
+    formatted = _format_candidate_line(row, registry)
+
+    assert formatted == "304mM ectoin + 1.95M ethylene glycol + 9.32% HSA"
+    assert "single_molar_excess_total_M" not in formatted
 
 
 def test_retest_candidates_exclude_zero_active_and_legacy_only_rows() -> None:
