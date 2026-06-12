@@ -50,27 +50,35 @@ the 12 selected wet-lab formulations and blank result columns.
 
 ## Selection Logic
 
-1. Generate `selection.generated_candidate_pool_size` candidates. The default is
-   `2000`.
-2. Exclude temporary unavailable ingredients listed in
+1. Resolve the proposed `ROUND_###`. ROUND_001 retains the original generator;
+   ROUND_002+ activates `round2_candidate_feasibility_v1`.
+2. Generate `selection.generated_candidate_pool_size` candidates. The default
+   is `2000`. ROUND_002+ uses 40% local perturbation, 35% sparse exploration,
+   and 25% support-boundary exploration. Local shortfall is reassigned to
+   sparse exploration; an unfillable boundary quota stops generation with a
+   diagnostic rather than silently changing the policy.
+3. Exclude temporary unavailable ingredients listed in
    `config_v2/availability.yaml`.
-3. Train v2 surrogate models from `formulations.csv` and `observations.csv`,
+4. Apply ROUND_002+ hard formulation guardrails and retain rejected attempts in
+   the audit pool with explicit reasons.
+5. Train v2 surrogate models from `formulations.csv` and `observations.csv`,
    preserving separate validation batches instead of collapsing everything to
    one formulation-wide mean.
-4. Resolve the active selection phase automatically:
+6. Resolve the active selection phase automatically:
    - `screening_only` while real paired viability + mechanical data are still sparse
    - `mechanics_enabled` once the configured evidence thresholds are met
-5. Score the full candidate pool with the active phase policy, then build the
+7. Score the feasible pool with the active phase policy, then build the
    12-row wet-lab slate directly from that full-pool ranking.
-6. Add any `retest_priority` formulations separately when the latest batch for
+8. Add any `retest_priority` formulations separately when the latest batch for
    an existing formulation appears off-trend or unstable.
-7. If the active phase is `mechanics_enabled`, select 3-4 mechanical follow-up
-   rows from the final slate.
+9. If `mechanics_enabled`, attempt continuous constrained qLogNEHVI and fall
+   back to the constrained finite pool when unavailable or unsuccessful.
 
-The pool generation step is random. The final 12-candidate selection is model
-scored and diversity-aware, not random. During `screening_only`, the selector
-does not emit any mechanical-test recommendations. The mechanical recommender
-only turns on after the phase transitions to `mechanics_enabled`.
+ROUND_001 pool generation is random. ROUND_002+ generation is support-aware and
+chemically constrained. The final 12-candidate selection remains model-scored
+and diversity-aware. During `screening_only`, the selector does not emit any
+mechanical-test recommendations. The mechanical recommender and continuous
+qLogNEHVI path turn on after the phase transitions to `mechanics_enabled`.
 
 ## Batch ID
 

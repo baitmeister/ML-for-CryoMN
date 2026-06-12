@@ -222,3 +222,135 @@ def test_feedback_rejects_out_of_range_viability(tmp_path: Path) -> None:
             registry,
             batch_id="ROUND_TEST",
         )
+
+
+def test_optional_preparation_feedback_is_manual_and_structured(tmp_path: Path) -> None:
+    registry = load_registry()
+    candidate = {feature_name: 0.0 for feature_name in registry.feature_names}
+    candidate.update({"formulation_id": "v2_prep", "candidate_id": "cand_prep", "pvp_pct": 5.0})
+    candidate_file = tmp_path / "candidates.csv"
+    pd.DataFrame([candidate]).to_csv(candidate_file, index=False)
+    feedback = tmp_path / "feedback.csv"
+    pd.DataFrame(
+        [
+            {
+                "candidate_id": "cand_prep",
+                "preparation_feasibility_pass": "no",
+                "homogeneous_solution_pass": "no",
+                "fillability_pass": "",
+                "preparation_failure_reason": "excessive_viscosity",
+            }
+        ]
+    ).to_csv(feedback, index=False)
+
+    _formulations, observations = ingest_feedback(
+        feedback,
+        [candidate_file],
+        pd.DataFrame(),
+        pd.DataFrame(),
+        registry,
+        batch_id="ROUND_002",
+    )
+
+    assert set(observations["endpoint"]) == {
+        "preparation_feasibility_pass",
+        "homogeneous_solution_pass",
+        "preparation_failure_reason:excessive_viscosity",
+    }
+    assert "fillability_pass" not in set(observations["endpoint"])
+
+
+def test_preparation_failure_rejects_mechanical_data(tmp_path: Path) -> None:
+    registry = load_registry()
+    candidate = {feature_name: 0.0 for feature_name in registry.feature_names}
+    candidate.update({"formulation_id": "v2_prep", "candidate_id": "cand_prep", "pvp_pct": 5.0})
+    candidate_file = tmp_path / "candidates.csv"
+    pd.DataFrame([candidate]).to_csv(candidate_file, index=False)
+    feedback = tmp_path / "feedback.csv"
+    pd.DataFrame(
+        [
+            {
+                "candidate_id": "cand_prep",
+                "preparation_feasibility_pass": "no",
+                "critical_axial_load_N_per_needle": 0.2,
+            }
+        ]
+    ).to_csv(feedback, index=False)
+
+    with pytest.raises(ValueError, match="preparation-failed"):
+        ingest_feedback(
+            feedback,
+            [candidate_file],
+            pd.DataFrame(),
+            pd.DataFrame(),
+            registry,
+            batch_id="ROUND_002",
+        )
+
+
+@pytest.mark.parametrize(
+    "failure_field,failure_value",
+    [
+        ("homogeneous_solution_pass", "no"),
+        ("fillability_pass", "no"),
+        ("preparation_failure_reason", "phase_separated"),
+    ],
+)
+def test_any_explicit_preparation_failure_blocks_mechanics(
+    tmp_path: Path,
+    failure_field: str,
+    failure_value: str,
+) -> None:
+    registry = load_registry()
+    candidate = {feature_name: 0.0 for feature_name in registry.feature_names}
+    candidate.update(
+        {
+            "formulation_id": "v2_prep",
+            "candidate_id": "cand_prep",
+            "pvp_pct": 5.0,
+        }
+    )
+    candidate_file = tmp_path / "candidates.csv"
+    pd.DataFrame([candidate]).to_csv(candidate_file, index=False)
+    feedback = tmp_path / "feedback.csv"
+    pd.DataFrame(
+        [
+            {
+                "candidate_id": "cand_prep",
+                failure_field: failure_value,
+                "critical_axial_load_N_per_needle": 0.2,
+            }
+        ]
+    ).to_csv(feedback, index=False)
+
+    with pytest.raises(ValueError, match="preparation-failed"):
+        ingest_feedback(
+            feedback,
+            [candidate_file],
+            pd.DataFrame(),
+            pd.DataFrame(),
+            registry,
+            batch_id="ROUND_002",
+        )
+
+
+def test_invalid_preparation_reason_is_rejected(tmp_path: Path) -> None:
+    registry = load_registry()
+    candidate = {feature_name: 0.0 for feature_name in registry.feature_names}
+    candidate.update({"formulation_id": "v2_prep", "candidate_id": "cand_prep", "pvp_pct": 5.0})
+    candidate_file = tmp_path / "candidates.csv"
+    pd.DataFrame([candidate]).to_csv(candidate_file, index=False)
+    feedback = tmp_path / "feedback.csv"
+    pd.DataFrame(
+        [{"candidate_id": "cand_prep", "preparation_failure_reason": "sticky"}]
+    ).to_csv(feedback, index=False)
+
+    with pytest.raises(ValueError, match="preparation_failure_reason"):
+        ingest_feedback(
+            feedback,
+            [candidate_file],
+            pd.DataFrame(),
+            pd.DataFrame(),
+            registry,
+            batch_id="ROUND_002",
+        )

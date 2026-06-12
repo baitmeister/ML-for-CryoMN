@@ -15,6 +15,15 @@ from .registry import IngredientRegistry
 from .transfer import FORMULATION_BASE_COLUMNS, OBSERVATION_COLUMNS
 
 
+PREPARATION_FAILURE_REASONS = {
+    "insoluble_or_precipitated",
+    "phase_separated",
+    "excessive_viscosity",
+    "incomplete_polymer_hydration",
+    "other_preparation_failure",
+}
+
+
 def _blank(value: object) -> bool:
     return value is None or pd.isna(value) or str(value).strip() == ""
 
@@ -186,6 +195,65 @@ def ingest_feedback(
         observation_prefix = f"obs_{_safe_id(batch_id, 'batch')}_{_safe_id(formulation_id, 'formulation')}_{replicate_id}"
         notes = "" if _blank(row.get("notes")) else str(row.get("notes"))
 
+        preparation_values: dict[str, bool] = {}
+        for column in [
+            "preparation_feasibility_pass",
+            "homogeneous_solution_pass",
+            "fillability_pass",
+        ]:
+            if _blank(row.get(column)):
+                continue
+            parsed = parse_bool(row.get(column))
+            if parsed is None:
+                raise ValueError(
+                    f"Row {row_number} {column} must be yes/no, true/false, pass/fail, or 1/0."
+                )
+            preparation_values[column] = parsed
+            new_observations.append(
+                _observation_row(
+                    f"{observation_prefix}_{column}",
+                    formulation_id,
+                    batch_id,
+                    replicate_id,
+                    column,
+                    1.0 if parsed else 0.0,
+                    "binary",
+                    "wetlab_feedback",
+                    str(feedback_path),
+                    notes=notes,
+                )
+            )
+
+        preparation_reason = (
+            ""
+            if _blank(row.get("preparation_failure_reason"))
+            else str(row.get("preparation_failure_reason")).strip().lower()
+        )
+        if preparation_reason and preparation_reason not in PREPARATION_FAILURE_REASONS:
+            raise ValueError(
+                f"Row {row_number} preparation_failure_reason must be one of "
+                f"{sorted(PREPARATION_FAILURE_REASONS)}."
+            )
+        if preparation_reason:
+            new_observations.append(
+                _observation_row(
+                    f"{observation_prefix}_preparation_reason_{preparation_reason}",
+                    formulation_id,
+                    batch_id,
+                    replicate_id,
+                    f"preparation_failure_reason:{preparation_reason}",
+                    1.0,
+                    "categorical_indicator",
+                    "wetlab_feedback",
+                    str(feedback_path),
+                    notes=notes,
+                )
+            )
+        preparation_failed = (
+            any(value is False for value in preparation_values.values())
+            or bool(preparation_reason)
+        )
+
         viability = _safe_float(row.get("viability_percent"))
         _require_range(viability, "viability_percent", row_number, minimum=0.0, maximum=100.0)
         if viability is not None:
@@ -250,6 +318,11 @@ def ingest_feedback(
                 "initial_stiffness_N_per_mm_per_needle",
             ]
         )
+        if has_mechanical and preparation_failed:
+            raise ValueError(
+                f"Row {row_number} supplies mechanical data for preparation-failed formulation "
+                f"{formulation_id}."
+            )
         if has_mechanical and intact is False:
             raise ValueError(
                 f"Row {row_number} supplies mechanical data for non-intact formulation {formulation_id}."

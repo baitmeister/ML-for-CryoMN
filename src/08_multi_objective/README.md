@@ -30,6 +30,21 @@ Temporary ingredient availability is controlled by
 `config_v2/availability.yaml`. These restrictions only affect stage 02 candidate
 selection; they do not delete historical observations or change result imports.
 
+## ROUND_002+ candidate-feasibility policy
+
+The executed `ROUND_001` slate and all transferred records remain unchanged.
+Beginning with candidate generation for `ROUND_002`, Stage 02 applies versioned
+formulation guardrails, support-aware `40/35/25` screening generation,
+uncertainty controls, and at most one support-boundary candidate per slate.
+
+After the mechanics activation threshold, the workflow attempts continuous
+constrained qLogNEHVI inside feasible sparse ingredient masks and falls back to
+the constrained finite pool if BoTorch is unavailable or optimization fails.
+
+See [Round 2 Candidate-Failure Prevention](../../docs/round2_candidate_failure_prevention.md)
+for the failure analysis, evidence behind each limit, preparation-label
+semantics, and optimizer details.
+
 ## Numbered Stages
 
 | Stage | Purpose | Program |
@@ -46,6 +61,8 @@ Stage 02 writes:
 - `results/multi_objective_v2/current_round_status.json`
 - `results/multi_objective_v2/next_round/next_round_candidates.csv`
 - `results/multi_objective_v2/next_round/next_round_summary.txt`
+- `results/multi_objective_v2/next_round/next_round_metadata.json` for
+  `ROUND_002+`
 
 `total_candidate_pool.csv` is the full generated/scored pool after temporary
 availability filtering. It includes model predictions, penalties, selection
@@ -66,6 +83,10 @@ columns to fill. Those mechanical flags stay off until the selector reaches
 the batch ID, which formulations to make, which rows are recommended for
 Instron testing once mechanics is enabled, and what command to run after
 results are filled.
+
+`next_round_metadata.json` records the active policy version, activation round,
+support radius, optimizer mode, fallback status, and detailed qLogNEHVI
+diagnostics for reproducibility.
 
 To lift the current temporary restriction on an ingredient, remove its
 `feature_name` from `config_v2/availability.yaml` and rerun stage 02.

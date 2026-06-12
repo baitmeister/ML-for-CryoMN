@@ -8,6 +8,21 @@ screening_gate:
     Filled and demolded CryoMN patch remains intact, shows no slurry or collapse,
     and meets the minimum visually intact tip count after handling.
 
+preparation_constraints:
+  - name: preparation_feasibility_pass
+    type: binary
+    modeled_after_minimum_labels: 8
+    description: >
+      Optional manually entered upstream preparation label. Blank values are not
+      inferred from patch formation, slurry, collapse, or notes. Modeling starts
+      only after the minimum label count includes both pass and fail classes.
+  - name: homogeneous_solution_pass
+    type: binary
+    description: Optional manual indication that the formulation was homogeneous.
+  - name: fillability_pass
+    type: binary
+    description: Optional manual indication that the formulation could fill the mold.
+
 primary_objectives:
   - name: viability_percent
     direction: maximize

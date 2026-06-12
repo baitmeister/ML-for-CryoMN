@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import replace
 import sys
 from pathlib import Path
 
@@ -18,10 +19,17 @@ from helper.candidates import (
     filter_candidate_pool_to_registry_bounds,
     filter_nonzero_active_candidate_pool,
     generate_random_candidate_pool,
+    generate_support_aware_candidate_pool,
     load_candidate_pool,
     unavailable_features_from_config,
 )
 from helper.config import load_availability_config, load_optimization_config, nested_get
+from helper.feasibility import (
+    annotate_feasibility,
+    annotate_support,
+    build_support_context,
+    policy_activation,
+)
 from helper.paths import (
     AVAILABILITY_CONFIG,
     CURRENT_ROUND_STATUS_PATH,
@@ -33,6 +41,7 @@ from helper.paths import (
 from helper.registry import load_registry
 from helper.selection import select_next_round, write_selection_result
 from helper.status import derive_round_tracker, write_current_round_status
+from helper.status import parse_round_number
 
 
 def parse_args() -> argparse.Namespace:
@@ -87,6 +96,13 @@ def main() -> None:
     unavailable_features = unavailable_features_from_config(availability_config, registry)
     formulations = _read_or_empty(args.formulations)
     observations = _read_or_empty(args.observations)
+    batch_id = args.batch_id or _next_round_id(args.observations)
+    target_round_number = parse_round_number(batch_id)
+    policy_active, policy_version, policy_start_round = policy_activation(
+        optimization_config,
+        target_round_number,
+    )
+    support_context = build_support_context(formulations, registry, optimization_config)
 
     if formulations.empty:
         raise SystemExit(
@@ -109,14 +125,48 @@ def main() -> None:
             nested_get(optimization_config, "selection.generated_candidate_pool_size", 2000)
         )
         seed = args.seed if args.seed is not None else int(optimization_config.get("random_seed", 42))
-        candidate_pool = generate_random_candidate_pool(
-            registry,
-            n_candidates=pool_size,
-            random_seed=seed,
-            unavailable_feature_names=unavailable_features,
-        )
+        if policy_active:
+            candidate_pool = generate_support_aware_candidate_pool(
+                registry,
+                formulations=formulations,
+                optimization_config=optimization_config,
+                support=support_context,
+                n_candidates=pool_size,
+                random_seed=seed,
+                unavailable_feature_names=unavailable_features,
+            )
+        else:
+            candidate_pool = generate_random_candidate_pool(
+                registry,
+                n_candidates=pool_size,
+                random_seed=seed,
+                unavailable_feature_names=unavailable_features,
+            )
         bounds_filtered_count = 0
         filtered_count = 0
+
+    if policy_active:
+        candidate_pool = annotate_feasibility(
+            candidate_pool,
+            registry,
+            optimization_config,
+            policy_active=True,
+        )
+        candidate_pool = annotate_support(candidate_pool, registry, support_context)
+        if "candidate_origin" not in candidate_pool.columns:
+            candidate_pool["candidate_origin"] = "finite_pool_fallback"
+        rejected_candidates = candidate_pool.loc[
+            ~candidate_pool["feasibility_pass"].astype(bool)
+        ].copy()
+        candidate_pool = candidate_pool.loc[
+            candidate_pool["feasibility_pass"].astype(bool)
+        ].reset_index(drop=True)
+        if candidate_pool.empty:
+            raise SystemExit(
+                "Candidate pool is empty after applying formulation-feasibility rules."
+            )
+    else:
+        rejected_candidates = candidate_pool.head(0).copy()
 
     before_zero_active_filter = len(candidate_pool)
     candidate_pool = filter_nonzero_active_candidate_pool(candidate_pool, registry)
@@ -133,8 +183,29 @@ def main() -> None:
         registry=registry,
         optimization_config=optimization_config,
         requested_phase_mode=args.phase_mode,
+        target_round_number=target_round_number,
+        policy_active=policy_active,
     )
-    batch_id = args.batch_id or _next_round_id(args.observations)
+    if not rejected_candidates.empty:
+        rejected_candidates["selected_for_viability_screen"] = False
+        rejected_candidates["selected_for_mechanical_test"] = False
+        rejected_candidates["selection_rank"] = ""
+        rejected_candidates["mechanics_phase_score"] = float("nan")
+        rejected_candidates["screening_phase_score"] = float("nan")
+        result = replace(
+            result,
+            candidate_pool=pd.concat(
+                [result.candidate_pool, rejected_candidates],
+                ignore_index=True,
+                sort=False,
+            ),
+        )
+    result.metadata["formulation_feasibility_policy_active"] = policy_active
+    result.metadata["formulation_feasibility_policy_version"] = policy_version
+    result.metadata["formulation_feasibility_policy_start_round"] = policy_start_round
+    result.metadata["target_round_number"] = target_round_number
+    result.metadata["support_radius"] = support_context.radius
+    result.metadata["candidate_pool_rows_rejected_by_feasibility"] = int(len(rejected_candidates))
     result.metadata["temporary_unavailable_features"] = unavailable_features
     result.metadata["candidate_pool_rows_filtered_by_bounds"] = bounds_filtered_count
     result.metadata["candidate_pool_rows_filtered_by_availability"] = filtered_count
@@ -159,6 +230,10 @@ def main() -> None:
     print(f"Selected {len(result.mechanical_tests)} mechanical-test candidates.")
     print(f"Batch ID: {batch_id}")
     print(f"Active phase: {result.metadata['active_phase']}")
+    print(
+        "Formulation feasibility policy: "
+        f"{policy_version} ({'active' if policy_active else 'inactive'}, starts ROUND_{policy_start_round:03d})"
+    )
     print(f"Mechanical selection mode: {result.metadata['mechanical_policy']['mechanical_selection_mode']}")
     if unavailable_features:
         print("Temporary ingredient restrictions: " + ", ".join(unavailable_features))

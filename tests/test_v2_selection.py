@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from helper.config import load_optimization_config
-from helper.models import EndpointModels
+from helper.models import EndpointModels, RegressionPrediction
 from helper.phase import PHASE_MECHANICS, PHASE_SCREENING, PhaseResolution
 from helper.registry import load_registry
-from helper.selection import _enforce_single_ingredient_spacing, select_mechanical_tests
+from helper.selection import (
+    _enforce_single_ingredient_spacing,
+    _greedy_diverse_pick,
+    annotate_candidates,
+    select_mechanical_tests,
+)
 
 
 def _dummy_models(mechanical_count: int) -> EndpointModels:
@@ -28,6 +34,7 @@ def _dummy_models(mechanical_count: int) -> EndpointModels:
         critical_load=None,
         initial_stiffness=None,
         intact=None,
+        preparation=None,
         training_frame=frame,
     )
 
@@ -133,3 +140,79 @@ def test_single_ingredient_same_feature_candidates_are_spaced_or_replaced() -> N
     assert len(adjusted) == 2
     assert "cand_c" in selected_ids
     assert not {"cand_a", "cand_b"}.issubset(selected_ids)
+
+
+class _FixedRegression:
+    fitted = True
+
+    def __init__(self, mean: list[float], std: list[float]):
+        self._mean = np.asarray(mean, dtype=float)
+        self._std = np.asarray(std, dtype=float)
+
+    def predict(self, _x: np.ndarray) -> RegressionPrediction:
+        return RegressionPrediction(self._mean, self._std)
+
+
+class _FixedProbability:
+    def __init__(self, probability: float, fitted: bool):
+        self.default_probability = probability
+        self.fitted = fitted
+
+    def predict_proba(self, x: np.ndarray) -> np.ndarray:
+        return np.full(len(x), self.default_probability)
+
+
+def test_out_of_support_uncertainty_is_capped_for_both_objectives() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    rows = []
+    for index, support_status in enumerate(["in_support", "in_support", "boundary"]):
+        row = {feature: 0.0 for feature in registry.feature_names}
+        row.update(
+            {
+                "candidate_id": f"candidate_{index}",
+                "dmso_M": 0.01 * (index + 1),
+                "support_status": support_status,
+            }
+        )
+        rows.append(row)
+    models = EndpointModels(
+        feature_names=registry.feature_names,
+        viability=_FixedRegression([60.0] * 3, [1.0, 2.0, 100.0]),
+        critical_load=_FixedRegression([0.2] * 3, [0.1, 0.2, 10.0]),
+        initial_stiffness=_FixedRegression([1.0] * 3, [0.1] * 3),
+        intact=_FixedProbability(0.75, fitted=False),
+        preparation=_FixedProbability(0.75, fitted=False),
+        training_frame=pd.DataFrame(),
+    )
+
+    annotated = annotate_candidates(
+        pd.DataFrame(rows),
+        models,
+        registry,
+        config,
+        policy_active=True,
+    )
+
+    assert annotated.loc[2, "viability_std"] == pytest.approx(1.9)
+    assert annotated.loc[2, "critical_axial_load_std"] == pytest.approx(0.19)
+
+
+def test_diversity_cannot_select_outside_the_competitive_utility_band() -> None:
+    registry = load_registry()
+    frame = pd.DataFrame(
+        [
+            {**{feature: 0.0 for feature in registry.feature_names}, "dmso_M": 0.01},
+            {**{feature: 0.0 for feature in registry.feature_names}, "dmso_M": 0.02},
+            {**{feature: 0.0 for feature in registry.feature_names}, "pvp_pct": 10.0},
+        ]
+    )
+    selected = _greedy_diverse_pick(
+        frame,
+        np.array([1.0, 0.9, 0.1]),
+        registry.feature_names,
+        n=2,
+        diversity_weight=0.05,
+        competitive_utility_band=0.15,
+    )
+    assert selected == [0, 1]

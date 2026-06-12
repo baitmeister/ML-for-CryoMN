@@ -4,14 +4,28 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from itertools import combinations
+import json
 from pathlib import Path
 from typing import Mapping
 
 import numpy as np
 import pandas as pd
 
-from .acquisition import botorch_available, minmax, qlognehvi_proxy_scores, try_botorch_qlognehvi_scores
+from .acquisition import (
+    botorch_available,
+    minmax,
+    qlognehvi_proxy_scores,
+    try_botorch_optimize_qlognehvi,
+    try_botorch_qlognehvi_scores,
+)
+from .candidates import stable_formulation_id
 from .config import nested_get
+from .feasibility import (
+    annotate_feasibility,
+    annotate_support,
+    build_support_context,
+    feasibility_report,
+)
 from .models import EndpointModels, train_endpoint_models
 from .phase import PHASE_MECHANICS, PHASE_SCREENING, PhaseResolution, resolve_phase_mode
 from .penalties import constraint_report, count_active_ingredients
@@ -162,7 +176,15 @@ def _enforce_single_ingredient_spacing(
     return adjusted
 
 
-def _greedy_diverse_pick(frame: pd.DataFrame, score: np.ndarray, feature_names: list[str], n: int) -> list[int]:
+def _greedy_diverse_pick(
+    frame: pd.DataFrame,
+    score: np.ndarray,
+    feature_names: list[str],
+    n: int,
+    diversity_weight: float = 0.10,
+    competitive_utility_band: float | None = None,
+    max_boundary_candidates: int | None = None,
+) -> list[int]:
     if frame.empty or n <= 0:
         return []
     n = min(n, len(frame))
@@ -170,9 +192,31 @@ def _greedy_diverse_pick(frame: pd.DataFrame, score: np.ndarray, feature_names: 
     selected = [int(np.nanargmax(score))]
     while len(selected) < n:
         remaining = [index for index in range(len(frame)) if index not in selected]
+        if max_boundary_candidates is not None and "support_status" in frame.columns:
+            selected_boundary = sum(
+                str(frame.iloc[index].get("support_status", "")) == "boundary"
+                for index in selected
+            )
+            if selected_boundary >= max_boundary_candidates:
+                remaining = [
+                    index
+                    for index in remaining
+                    if str(frame.iloc[index].get("support_status", "")) != "boundary"
+                ]
+        if not remaining:
+            break
+        if competitive_utility_band is not None:
+            best_remaining = float(np.nanmax(score[remaining]))
+            competitive = [
+                index
+                for index in remaining
+                if float(score[index]) >= best_remaining - competitive_utility_band
+            ]
+            if competitive:
+                remaining = competitive
         distances = np.linalg.norm(matrix[remaining, None, :] - matrix[selected][None, :, :], axis=2)
         min_distances = np.min(distances, axis=1)
-        combined = minmax(score[remaining]) + 0.10 * minmax(min_distances)
+        combined = minmax(score[remaining]) + diversity_weight * minmax(min_distances)
         next_index = remaining[int(np.nanargmax(combined))]
         selected.append(int(next_index))
     return selected
@@ -197,6 +241,7 @@ def annotate_candidates(
     models: EndpointModels,
     registry: IngredientRegistry,
     optimization_config: Mapping,
+    policy_active: bool = False,
 ) -> pd.DataFrame:
     annotated = candidates.copy()
     x = _feature_matrix(annotated, registry.feature_names)
@@ -205,19 +250,61 @@ def annotate_candidates(
     critical_load = models.critical_load.predict(x)
     stiffness = models.initial_stiffness.predict(x)
     intact_probability = models.intact.predict_proba(x)
+    if not policy_active and not models.intact.fitted:
+        # Preserve the already-executed ROUND_001 scoring path exactly.
+        intact_probability = np.ones(x.shape[0], dtype=float)
 
     kappa_v = float(nested_get(optimization_config, "selection.viability_ucb_kappa", 0.35))
     kappa_m = float(nested_get(optimization_config, "selection.mechanical_ucb_kappa", 0.50))
 
     annotated["predicted_viability_percent"] = viability.mean
-    annotated["viability_std"] = viability.std
-    annotated["viability_ucb"] = viability.mean + kappa_v * viability.std
+    viability_std = np.asarray(viability.std, dtype=float)
+    in_support = np.ones(len(annotated), dtype=bool)
+    cap_percentile = float(
+        nested_get(
+            optimization_config,
+            "support_policy.uncertainty_cap_percentile",
+            90.0,
+        )
+    )
+    if policy_active and "support_status" in annotated.columns:
+        in_support = annotated["support_status"].astype(str).eq("in_support").to_numpy()
+        if np.any(in_support):
+            viability_cap = float(
+                np.percentile(viability_std[in_support], cap_percentile)
+            )
+            viability_std = np.where(
+                in_support,
+                viability_std,
+                np.minimum(viability_std, viability_cap),
+            )
+    annotated["viability_std"] = viability_std
+    annotated["viability_ucb"] = viability.mean + kappa_v * viability_std
     annotated["predicted_critical_axial_load_N_per_needle"] = critical_load.mean
-    annotated["critical_axial_load_std"] = critical_load.std
-    annotated["critical_axial_load_ucb"] = critical_load.mean + kappa_m * critical_load.std
+    critical_load_std = np.asarray(critical_load.std, dtype=float)
+    if policy_active and np.any(in_support):
+        critical_load_cap = float(
+            np.percentile(critical_load_std[in_support], cap_percentile)
+        )
+        critical_load_std = np.where(
+            in_support,
+            critical_load_std,
+            np.minimum(critical_load_std, critical_load_cap),
+        )
+    annotated["critical_axial_load_std"] = critical_load_std
+    annotated["critical_axial_load_ucb"] = (
+        critical_load.mean + kappa_m * critical_load_std
+    )
     annotated["predicted_initial_stiffness_N_per_mm_per_needle"] = stiffness.mean
     annotated["initial_stiffness_std"] = stiffness.std
     annotated["intact_patch_pass_probability"] = np.clip(intact_probability, 0.0, 1.0)
+    if policy_active:
+        preparation_probability = models.preparation.predict_proba(x)
+        annotated["preparation_feasibility_probability"] = np.clip(
+            preparation_probability,
+            0.0,
+            1.0,
+        )
 
     reports = [
         constraint_report(
@@ -233,11 +320,35 @@ def annotate_candidates(
         annotated[column] = report_frame[column].to_numpy()
 
     viability_weight = float(nested_get(optimization_config, "screening_phase.viability_weight", 0.75))
-    intact_weight = float(nested_get(optimization_config, "screening_phase.intact_weight", 0.25))
+    if policy_active and not models.intact.fitted:
+        intact_weight = 0.0
+        viability_weight = 1.0
+    else:
+        viability_weight = float(
+            nested_get(optimization_config, "screening_phase.viability_weight", 0.75)
+        )
+        intact_weight = float(
+            nested_get(optimization_config, "screening_phase.intact_weight", 0.25)
+        )
+    support_penalty = np.zeros(len(annotated), dtype=float)
+    if policy_active and "support_status" in annotated.columns:
+        penalty_value = float(
+            nested_get(
+                optimization_config,
+                "support_policy.out_of_support_score_penalty",
+                0.20,
+            )
+        )
+        support_penalty = np.where(
+            annotated["support_status"].astype(str).eq("boundary"),
+            penalty_value,
+            0.0,
+        )
     annotated["screening_phase_score"] = (
         viability_weight * minmax(annotated["viability_ucb"].to_numpy(dtype=float))
         + intact_weight * minmax(annotated["intact_patch_pass_probability"].to_numpy(dtype=float))
         - annotated["acquisition_penalty"].to_numpy(dtype=float)
+        - support_penalty
     )
     if "recommendation_type" not in annotated.columns:
         annotated["recommendation_type"] = ""
@@ -302,12 +413,170 @@ def _mechanics_phase_scores(
     return np.asarray(score, dtype=float), metadata
 
 
+def _candidate_masks(
+    candidate_pool: pd.DataFrame,
+    registry: IngredientRegistry,
+    optimization_config: Mapping,
+) -> list[tuple[int, ...]]:
+    max_size = int(
+        nested_get(
+            optimization_config,
+            "continuous_qlognehvi.max_sparse_mask_size",
+            4,
+        )
+    )
+    max_masks = int(
+        nested_get(optimization_config, "continuous_qlognehvi.max_masks", 16)
+    )
+    masks: set[tuple[int, ...]] = set()
+    for _, row in candidate_pool.iterrows():
+        active = tuple(
+            index
+            for index, feature in enumerate(registry.feature_names)
+            if abs(float(pd.to_numeric(row.get(feature, 0.0), errors="coerce") or 0.0))
+            >= presence_threshold(feature)
+        )
+        if 0 < len(active) <= max_size:
+            masks.add(active)
+    return sorted(masks, key=lambda mask: (len(mask), mask))[:max_masks]
+
+
+def _continuous_mechanics_candidates(
+    candidate_pool: pd.DataFrame,
+    formulations: pd.DataFrame,
+    models: EndpointModels,
+    registry: IngredientRegistry,
+    optimization_config: Mapping,
+    policy_active: bool,
+) -> tuple[pd.DataFrame, dict]:
+    metadata: dict = {
+        "continuous_optimizer_enabled": False,
+        "continuous_optimizer_used": False,
+        "continuous_optimizer_fallback": True,
+    }
+    if not policy_active or not bool(
+        nested_get(optimization_config, "continuous_qlognehvi.enabled", True)
+    ):
+        metadata["continuous_optimizer_reason"] = "policy inactive or optimizer disabled"
+        return candidate_pool.head(0).copy(), metadata
+
+    train_frame = models.training_frame.copy()
+    paired = train_frame[
+        train_frame.get("viability_percent", pd.Series(index=train_frame.index, dtype=float)).notna()
+        & train_frame.get(
+            "critical_axial_load_N_per_needle",
+            pd.Series(index=train_frame.index, dtype=float),
+        ).notna()
+    ].copy()
+    if len(paired) < 2:
+        metadata["continuous_optimizer_reason"] = "insufficient paired objective rows"
+        return candidate_pool.head(0).copy(), metadata
+
+    ingredients = registry.active_ingredients()
+    lower = np.array([ingredient.lower_bound for ingredient in ingredients], dtype=float)
+    campaign_caps = (
+        nested_get(optimization_config, "formulation_feasibility.ingredient_caps", {})
+        or {}
+    )
+    upper = np.array(
+        [
+            min(
+                ingredient.upper_bound,
+                float(campaign_caps.get(ingredient.feature_name, ingredient.upper_bound)),
+            )
+            for ingredient in ingredients
+        ],
+        dtype=float,
+    )
+    masks = _candidate_masks(candidate_pool, registry, optimization_config)
+    support = build_support_context(formulations, registry, optimization_config)
+    preparation_threshold = float(
+        nested_get(optimization_config, "preparation_model.probability_threshold", 0.50)
+    )
+
+    def feasible(vector: np.ndarray) -> bool:
+        row = dict(zip(registry.feature_names, vector))
+        report = feasibility_report(
+            row,
+            registry,
+            optimization_config,
+            policy_active=True,
+        )
+        if not bool(report["feasibility_pass"]):
+            return False
+        if models.preparation.fitted:
+            probability = float(models.preparation.predict_proba(vector.reshape(1, -1))[0])
+            if probability < preparation_threshold:
+                return False
+        return True
+
+    ref_cfg = nested_get(optimization_config, "selection.reference_point", {})
+    reference_point = (
+        float(ref_cfg.get("viability_percent", 0.0)),
+        float(ref_cfg.get("critical_axial_load_N_per_needle", 0.0)),
+    )
+    target = int(
+        nested_get(
+            optimization_config,
+            "continuous_qlognehvi.generated_candidate_target",
+            24,
+        )
+    )
+    optimized, botorch_metadata = try_botorch_optimize_qlognehvi(
+        train_x=_feature_matrix(paired, registry.feature_names),
+        train_y=paired[
+            ["viability_percent", "critical_axial_load_N_per_needle"]
+        ].to_numpy(dtype=float),
+        lower_bounds=lower,
+        upper_bounds=upper,
+        active_masks=masks,
+        reference_point=reference_point,
+        n_candidates=target,
+        feasibility_callback=feasible,
+        random_seed=int(optimization_config.get("random_seed", 42)),
+    )
+    metadata.update(botorch_metadata)
+    metadata["continuous_optimizer_enabled"] = True
+    if optimized is None or len(optimized) == 0:
+        metadata["continuous_optimizer_reason"] = botorch_metadata.get(
+            "botorch_error",
+            "continuous optimization failed",
+        )
+        return candidate_pool.head(0).copy(), metadata
+
+    rows = []
+    for index, vector in enumerate(optimized):
+        row = dict(zip(registry.feature_names, vector))
+        row.update(
+            {
+                "candidate_id": f"qlognehvi_{index + 1:04d}",
+                "formulation_id": stable_formulation_id(row, registry),
+                "active_ingredient_count": count_active_ingredients(row, registry),
+                "candidate_origin": "continuous_qlognehvi",
+            }
+        )
+        rows.append(row)
+    generated = pd.DataFrame(rows).drop_duplicates("formulation_id", keep="first")
+    generated = annotate_feasibility(
+        generated,
+        registry,
+        optimization_config,
+        policy_active=True,
+    )
+    generated = annotate_support(generated, registry, support)
+    generated = generated.loc[generated["feasibility_pass"].astype(bool)].reset_index(drop=True)
+    metadata["continuous_optimizer_used"] = not generated.empty
+    metadata["continuous_optimizer_fallback"] = generated.empty
+    return generated, metadata
+
+
 def _select_round_slate(
     annotated: pd.DataFrame,
     registry: IngredientRegistry,
     optimization_config: Mapping,
     phase_resolution: PhaseResolution,
     n: int,
+    policy_active: bool = False,
 ) -> pd.DataFrame:
     if phase_resolution.active_phase == PHASE_MECHANICS:
         score_column = "mechanics_phase_score"
@@ -328,11 +597,41 @@ def _select_round_slate(
     remaining = annotated.loc[~annotated["candidate_id"].astype(str).isin(selected_ids)].reset_index(drop=True)
     remaining_n = max(n - sum(len(part) for part in selected_parts), 0)
     if remaining_n > 0 and not remaining.empty:
+        diversity_weight = (
+            float(nested_get(optimization_config, "support_policy.diversity_weight", 0.05))
+            if policy_active
+            else 0.10
+        )
+        competitive_band = (
+            float(
+                nested_get(
+                    optimization_config,
+                    "support_policy.competitive_utility_band",
+                    0.15,
+                )
+            )
+            if policy_active
+            else None
+        )
+        max_boundary = (
+            int(
+                nested_get(
+                    optimization_config,
+                    "support_policy.max_boundary_candidates_per_slate",
+                    1,
+                )
+            )
+            if policy_active
+            else None
+        )
         selected_indices = _greedy_diverse_pick(
             remaining,
             remaining[score_column].to_numpy(dtype=float),
             registry.feature_names,
             n=remaining_n,
+            diversity_weight=diversity_weight,
+            competitive_utility_band=competitive_band,
+            max_boundary_candidates=max_boundary,
         )
         if selected_indices:
             selected_parts.append(remaining.iloc[selected_indices].copy())
@@ -414,8 +713,15 @@ def select_next_round(
     registry: IngredientRegistry,
     optimization_config: Mapping,
     requested_phase_mode: str | None = None,
+    target_round_number: int | None = None,
+    policy_active: bool = False,
 ) -> SelectionResult:
-    models = train_endpoint_models(formulations, observations, registry)
+    models = train_endpoint_models(
+        formulations,
+        observations,
+        registry,
+        optimization_config=dict(optimization_config),
+    )
     phase_resolution = resolve_phase_mode(
         formulations,
         observations,
@@ -423,6 +729,34 @@ def select_next_round(
         optimization_config,
         requested_phase_mode=requested_phase_mode,
     )
+    continuous_metadata = {
+        "continuous_optimizer_enabled": False,
+        "continuous_optimizer_used": False,
+        "continuous_optimizer_fallback": True,
+        "continuous_optimizer_reason": "screening_only phase",
+    }
+    if phase_resolution.active_phase == PHASE_MECHANICS:
+        if "candidate_origin" in candidate_pool.columns:
+            boundary_mask = candidate_pool["candidate_origin"].astype(str).eq(
+                "boundary_probe"
+            )
+            candidate_pool.loc[~boundary_mask, "candidate_origin"] = (
+                "finite_pool_fallback"
+            )
+        continuous_candidates, continuous_metadata = _continuous_mechanics_candidates(
+            candidate_pool,
+            formulations,
+            models,
+            registry,
+            optimization_config,
+            policy_active=policy_active,
+        )
+        if not continuous_candidates.empty:
+            candidate_pool = pd.concat(
+                [continuous_candidates, candidate_pool],
+                ignore_index=True,
+                sort=False,
+            ).drop_duplicates("formulation_id", keep="first")
     retest_candidates = build_retest_candidates(
         formulations,
         observations,
@@ -430,12 +764,31 @@ def select_next_round(
         registry,
         optimization_config,
     )
+    if policy_active and not retest_candidates.empty:
+        retest_candidates["candidate_origin"] = "retest"
     combined_pool = candidate_pool.copy()
     if not retest_candidates.empty:
         combined_pool = pd.concat([combined_pool, retest_candidates], ignore_index=True, sort=False)
         combined_pool = combined_pool.drop_duplicates("candidate_id", keep="first")
     combined_pool, zero_active_filtered_count = _drop_zero_active_candidates(combined_pool, registry)
-    annotated = annotate_candidates(combined_pool, models, registry, optimization_config)
+    annotated = annotate_candidates(
+        combined_pool,
+        models,
+        registry,
+        optimization_config,
+        policy_active=policy_active,
+    )
+    if policy_active and models.preparation.fitted:
+        preparation_threshold = float(
+            nested_get(
+                optimization_config,
+                "preparation_model.probability_threshold",
+                0.50,
+            )
+        )
+        annotated = annotated.loc[
+            annotated["preparation_feasibility_probability"] >= preparation_threshold
+        ].reset_index(drop=True)
     pool_selection_metadata = {"pool_selection_mode": "screening_phase"}
     if phase_resolution.active_phase == PHASE_MECHANICS:
         mechanics_scores, pool_selection_metadata = _mechanics_phase_scores(
@@ -457,6 +810,7 @@ def select_next_round(
         optimization_config,
         phase_resolution,
         n=n_viability,
+        policy_active=policy_active,
     )
     mechanical_tests, mechanical_metadata = select_mechanical_tests(
         viability_screen,
@@ -466,6 +820,19 @@ def select_next_round(
         phase_resolution,
         n=n_mechanical,
     )
+    if phase_resolution.active_phase == PHASE_SCREENING:
+        optimizer_mode = (
+            "support_aware_finite_pool_screening"
+            if policy_active
+            else "legacy_uniform_finite_pool_screening"
+        )
+        optimizer_fallback_status = "not_applicable"
+    elif continuous_metadata.get("continuous_optimizer_used", False):
+        optimizer_mode = "continuous_qlognehvi"
+        optimizer_fallback_status = "not_used"
+    else:
+        optimizer_mode = "finite_pool_fallback"
+        optimizer_fallback_status = "used"
     metadata = {
         "viability_screen_count": int(len(viability_screen)),
         "mechanical_test_count": int(len(mechanical_tests)),
@@ -484,8 +851,14 @@ def select_next_round(
             "override_used": phase_resolution.override_used,
         },
         "pool_selection_policy": pool_selection_metadata,
+        "continuous_qlognehvi": continuous_metadata,
+        "optimizer_mode": optimizer_mode,
+        "optimizer_fallback_status": optimizer_fallback_status,
         "retest_candidate_count": int((annotated["recommendation_type"] == "retest_priority").sum()),
         "zero_active_candidate_count_filtered": zero_active_filtered_count,
+        "target_round_number": target_round_number,
+        "preparation_model_fitted": bool(models.preparation.fitted),
+        "preparation_observation_count": models.preparation_observation_count,
     }
     return SelectionResult(
         viability_screen=viability_screen,
@@ -559,6 +932,20 @@ def _write_summary(
         "",
         "Candidates:",
     ]
+    if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
+        policy_lines = [
+            "Forward-only formulation policy:",
+            f"- Version: {result.metadata.get('formulation_feasibility_policy_version', '')}",
+            f"- Activation round: ROUND_{int(result.metadata.get('formulation_feasibility_policy_start_round', 2)):03d}",
+            f"- Support radius: {float(result.metadata.get('support_radius', float('nan'))):.4g}",
+            f"- Rejected pool rows: {int(result.metadata.get('candidate_pool_rows_rejected_by_feasibility', 0))}",
+            f"- Optimizer mode: {result.metadata.get('optimizer_mode', '')}",
+            f"- Fallback status: {result.metadata.get('optimizer_fallback_status', '')}",
+            f"- Fallback reason: {result.metadata.get('continuous_qlognehvi', {}).get('continuous_optimizer_reason', 'not applicable')}",
+            "",
+        ]
+        insertion_index = lines.index("Wet-lab instructions:")
+        lines[insertion_index:insertion_index] = policy_lines
     if zero_active_filtered:
         warning_lines = [
             "Warnings:",
@@ -589,6 +976,13 @@ def _write_summary(
             f"predicted_viability={float(row['predicted_viability_percent']):.1f}%",
             f"intact_probability={float(row['intact_patch_pass_probability']):.2f}",
         ]
+        if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
+            parts.extend(
+                [
+                    f"origin={row.get('candidate_origin', 'finite_pool_fallback')}",
+                    f"support={row.get('support_status', 'not_evaluated')}",
+                ]
+            )
         if result.metadata["mechanical_policy"]["mechanical_observation_count"] > 0 and "predicted_critical_axial_load_N_per_needle" in row and pd.notna(
             row["predicted_critical_axial_load_N_per_needle"]
         ):
@@ -650,6 +1044,15 @@ def write_selection_result(
         "initial_stiffness_N_per_mm_per_needle",
         "notes",
     ]
+    if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
+        preparation_columns = [
+            "preparation_feasibility_pass",
+            "homogeneous_solution_pass",
+            "fillability_pass",
+            "preparation_failure_reason",
+        ]
+        notes_index = wetlab_result_columns.index("notes")
+        wetlab_result_columns[notes_index:notes_index] = preparation_columns
     selected["batch_id"] = batch_id
     selected["replicate_id"] = ""
     for column in wetlab_result_columns:
@@ -664,6 +1067,21 @@ def write_selection_result(
     total_pool = result.candidate_pool.copy()
     total_pool["batch_id"] = batch_id
     total_pool["active_phase"] = result.metadata.get("active_phase", PHASE_SCREENING)
+    if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
+        total_pool["formulation_feasibility_policy_active"] = True
+        total_pool["formulation_feasibility_policy_version"] = result.metadata.get(
+            "formulation_feasibility_policy_version",
+            "",
+        )
+        total_pool["formulation_feasibility_policy_start_round"] = result.metadata.get(
+            "formulation_feasibility_policy_start_round",
+            "",
+        )
+        total_pool["optimizer_mode"] = result.metadata.get("optimizer_mode", "")
+        total_pool["optimizer_fallback_status"] = result.metadata.get(
+            "optimizer_fallback_status",
+            "",
+        )
     total_pool["selected_for_viability_screen"] = total_pool["candidate_id"].isin(
         set(result.viability_screen["candidate_id"])
     )
@@ -695,3 +1113,14 @@ def write_selection_result(
     total_pool_output.parent.mkdir(parents=True, exist_ok=True)
     total_pool.to_csv(total_pool_output, index=False)
     _write_summary(result, selected, output / "next_round_summary.txt", registry=registry)
+    if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
+        metadata_path = output / "next_round_metadata.json"
+        metadata_path.write_text(
+            json.dumps(
+                result.metadata,
+                indent=2,
+                default=lambda value: value.item() if hasattr(value, "item") else str(value),
+            )
+            + "\n",
+            encoding="utf-8",
+        )

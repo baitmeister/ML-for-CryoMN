@@ -238,6 +238,33 @@ Then check:
 
 ## Repeated Wet-Lab Round Workflow
 
+### ROUND_002+ feasibility policy
+
+Policy `round2_candidate_feasibility_v1` starts when Stage 02 proposes
+`ROUND_002`. It does not change transferred data or the executed `ROUND_001`
+slate.
+
+For ROUND_002 and later, review these columns in
+`total_candidate_pool.csv`:
+
+- `feasibility_pass` and `feasibility_reasons`
+- polymer, serum/protein, sugar, and osmolyte totals
+- `estimated_small_solute_g_L`
+- `nearest_support_distance` and `support_status`
+- `candidate_origin`
+- policy version and activation round
+- `optimizer_mode` and `optimizer_fallback_status`
+
+Rejected generation attempts remain in the audit pool but cannot enter the
+wet-lab sheet. A final slate may contain at most one `boundary_probe`.
+`next_round_summary.txt` and `next_round_metadata.json` identify whether
+continuous qLogNEHVI or the constrained finite-pool fallback was used.
+In the JSON, read `optimizer_mode`, `optimizer_fallback_status`, and
+`continuous_qlognehvi.continuous_optimizer_reason` for the detailed status.
+
+The complete rationale is in
+[round2_candidate_failure_prevention.md](round2_candidate_failure_prevention.md).
+
 ### Step 1. Review the current proposed slate
 
 Check:
@@ -281,6 +308,27 @@ Fill these fields as appropriate:
 - optionally:
   - `replicate_id`
   - `notes`
+
+Starting with ROUND_002 sheets, these manually entered preparation fields are
+also optional:
+
+- `preparation_feasibility_pass`
+- `homogeneous_solution_pass`
+- `fillability_pass`
+- `preparation_failure_reason`
+
+Allowed reasons are:
+
+- `insoluble_or_precipitated`
+- `phase_separated`
+- `excessive_viscosity`
+- `incomplete_polymer_hydration`
+- `other_preparation_failure`
+
+Leave unknown fields blank. The importer does not infer preparation outcomes
+from intact-patch, slurry, collapse, or notes. Explicit preparation failure may
+be submitted without viability, but mechanical values must not be supplied for
+that replicate.
 
 Important:
 - Do not enter wet-lab results into

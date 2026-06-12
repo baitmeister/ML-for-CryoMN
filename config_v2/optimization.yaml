@@ -1,5 +1,75 @@
 random_seed: 42
 
+formulation_feasibility:
+  policy_version: round2_candidate_feasibility_v1
+  start_round: 2
+  max_active_polymers: 1
+  max_total_polymer_pct: 10.0
+  max_total_serum_protein_pct: 10.0
+  max_total_polymer_serum_pct: 15.0
+  max_sugar_M_with_polymer: 0.50
+  max_nonpermeating_M_with_polymer: 0.75
+  ingredient_caps:
+    pvp_pct: 10.0
+    dextran_pct: 5.0
+    hyaluronic_acid_pct: 1.0
+  polymer_features:
+    - pvp_pct
+    - dextran_pct
+    - hyaluronic_acid_pct
+    - methylcellulose_pct
+  serum_protein_features:
+    - fbs_pct
+    - hsa_pct
+    - human_serum_pct
+  sugar_features:
+    - trehalose_M
+    - sucrose_M
+    - glucose_M
+    - raffinose_M
+  nonpermeating_osmolyte_features:
+    - ectoin_M
+    - trehalose_M
+    - sucrose_M
+    - raffinose_M
+    - taurine_M
+    - myo_inositol_M
+    - methoxyphenyl_beta_d_glucopyranoside_M
+    - betaine_M
+    - proline_M
+    - glucose_M
+    - creatine_M
+    - acetamide_M
+
+candidate_generation:
+  local_fraction: 0.40
+  sparse_fraction: 0.35
+  boundary_fraction: 0.25
+  local_relative_std: 0.20
+  local_max_active_ingredients: 6
+  sparse_max_active_ingredients: 2
+  boundary_max_active_ingredients: 4
+  max_attempt_multiplier: 100
+
+support_policy:
+  radius_percentile: 95.0
+  radius_multiplier: 1.25
+  uncertainty_cap_percentile: 90.0
+  max_boundary_candidates_per_slate: 1
+  out_of_support_score_penalty: 0.20
+  competitive_utility_band: 0.15
+  diversity_weight: 0.05
+
+preparation_model:
+  min_labels: 8
+  probability_threshold: 0.50
+
+continuous_qlognehvi:
+  enabled: true
+  generated_candidate_target: 24
+  max_sparse_mask_size: 4
+  max_masks: 16
+
 phase_mode: auto
 
 phase_transition:

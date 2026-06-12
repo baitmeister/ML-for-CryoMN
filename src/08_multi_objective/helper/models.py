@@ -58,6 +58,8 @@ class ProbabilitySurrogate:
         self.default_probability = float(default_probability)
 
     def predict_proba(self, x: np.ndarray) -> np.ndarray:
+        if not self.fitted:
+            return np.full(x.shape[0], self.default_probability, dtype=float)
         if hasattr(self.model, "predict_proba"):
             proba = self.model.predict_proba(x)
             if proba.shape[1] == 1:
@@ -76,6 +78,7 @@ class EndpointModels:
     critical_load: RegressionSurrogate
     initial_stiffness: RegressionSurrogate
     intact: ProbabilitySurrogate
+    preparation: ProbabilitySurrogate
     training_frame: pd.DataFrame
 
     @property
@@ -83,6 +86,12 @@ class EndpointModels:
         if "critical_axial_load_N_per_needle" not in self.training_frame.columns:
             return 0
         return int(self.training_frame["critical_axial_load_N_per_needle"].notna().sum())
+
+    @property
+    def preparation_observation_count(self) -> int:
+        if "preparation_feasibility_pass" not in self.training_frame.columns:
+            return 0
+        return int(self.training_frame["preparation_feasibility_pass"].notna().sum())
 
 
 def _pivot_observations(formulations: pd.DataFrame, observations: pd.DataFrame) -> pd.DataFrame:
@@ -190,9 +199,14 @@ def _fit_regression(
     )
 
 
-def _fit_classifier(x: np.ndarray, y: pd.Series) -> ProbabilitySurrogate:
+def _fit_classifier(
+    x: np.ndarray,
+    y: pd.Series,
+    min_samples: int = 4,
+    require_both_classes: bool = False,
+) -> ProbabilitySurrogate:
     valid = pd.to_numeric(y, errors="coerce").notna().to_numpy()
-    if np.sum(valid) < 4:
+    if np.sum(valid) < min_samples:
         default = float(np.nanmean(pd.to_numeric(y, errors="coerce"))) if np.sum(valid) else 0.75
         model = DummyClassifier(strategy="constant", constant=int(default >= 0.5))
         model.fit(np.zeros((1, x.shape[1])), [int(default >= 0.5)])
@@ -204,7 +218,11 @@ def _fit_classifier(x: np.ndarray, y: pd.Series) -> ProbabilitySurrogate:
         default = float(y_valid[0])
         model = DummyClassifier(strategy="constant", constant=int(y_valid[0]))
         model.fit(x_valid, y_valid)
-        return ProbabilitySurrogate(model, fitted=True, default_probability=default)
+        return ProbabilitySurrogate(
+            model,
+            fitted=not require_both_classes,
+            default_probability=default,
+        )
 
     model = make_pipeline(StandardScaler(), LogisticRegression(max_iter=1000, random_state=42))
     model.fit(x_valid, y_valid)
@@ -215,6 +233,7 @@ def train_endpoint_models(
     formulations: pd.DataFrame,
     observations: pd.DataFrame,
     registry: IngredientRegistry,
+    optimization_config: dict | None = None,
 ) -> EndpointModels:
     """Train lightweight surrogates for selection and screening."""
     frame = build_training_frame(formulations, observations, registry)
@@ -245,6 +264,15 @@ def train_endpoint_models(
         ),
     )
     intact = _fit_classifier(x, frame.get("intact_patch_formation_pass", pd.Series(dtype=float)))
+    preparation_min_labels = int(
+        ((optimization_config or {}).get("preparation_model") or {}).get("min_labels", 8)
+    )
+    preparation = _fit_classifier(
+        x,
+        frame.get("preparation_feasibility_pass", pd.Series(dtype=float)),
+        min_samples=preparation_min_labels,
+        require_both_classes=True,
+    )
 
     return EndpointModels(
         feature_names=registry.feature_names,
@@ -252,5 +280,6 @@ def train_endpoint_models(
         critical_load=critical_load,
         initial_stiffness=initial_stiffness,
         intact=intact,
+        preparation=preparation,
         training_frame=frame,
     )
