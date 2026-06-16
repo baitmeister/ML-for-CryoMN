@@ -45,6 +45,27 @@ See [Round 2 Candidate-Failure Prevention](../../docs/round2_candidate_failure_p
 for the failure analysis, evidence behind each limit, preparation-label
 semantics, and optimizer details.
 
+### Screening score and slate diversity controls
+
+During `screening_only`, `screening_phase_score` is purely viability-based;
+predicted intact-formation probability does not gate or score screening
+candidates. Intact-formation risk is instead addressed by capped
+`rescue_dilution` candidates (dilutions of high-viability formulations that
+previously failed intact-patch formation) and, once `mechanics_enabled`, by
+mechanics-phase scoring (`penalties.intact_failure_weight`,
+`round_policy.intact_probability_threshold`).
+
+Before the 12-row slate is finalized, Stage 02 applies two diversity
+controls: an origin-quota that bounds how much any one candidate-origin
+bucket (`local_perturbation`, `sparse_exploration`, `boundary_probe`,
+`rescue_dilution`, `retest`, `continuous_qlognehvi`, `finite_pool_fallback`)
+can contribute, and an ingredient-combination cap that limits how many
+candidates may share the exact same active-ingredient set (pairs allowed up
+to `selection.max_candidates_per_ingredient_combination`, default `3`;
+3+-ingredient combinations capped at `selection.max_candidates_per_larger_ingredient_combination`,
+default `1`). See [Stage 02](02_select_candidates/README.md#selection-logic)
+for the full mechanism.
+
 ## Numbered Stages
 
 | Stage | Purpose | Program |

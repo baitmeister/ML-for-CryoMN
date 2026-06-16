@@ -77,16 +77,40 @@ the 12 selected wet-lab formulations and blank result columns.
 6. Resolve the active selection phase automatically:
    - `screening_only` while real paired viability + mechanical data are still sparse
    - `mechanics_enabled` once the configured evidence thresholds are met
-7. Score the feasible pool with the active phase policy, then build the
-   12-row wet-lab slate directly from that full-pool ranking.
-8. Add any `retest_priority` formulations separately when the latest batch for
+7. Score the feasible pool with the active phase policy. During
+   `screening_only`, `screening_phase_score` is purely viability-based;
+   predicted intact-formation probability does not gate or score screening
+   candidates. Intact-formation risk is instead handled by the
+   `rescue_dilution` candidates from step 2 and, once `mechanics_enabled`,
+   by mechanics-phase scoring (`penalties.intact_failure_weight`,
+   `round_policy.intact_probability_threshold`).
+8. Build the 12-row wet-lab slate from that full-pool ranking, then apply two
+   diversity controls before finalizing:
+   - **Origin quota** — each candidate-origin bucket (`local_perturbation`,
+     `sparse_exploration`, `boundary_probe`, `rescue_dilution`, `retest`,
+     `continuous_qlognehvi`, `finite_pool_fallback`) contributes at most a
+     bounded share of the slate, so one bucket's high scores can't crowd out
+     the others.
+   - **Ingredient-combination cap** — caps how many selected candidates may
+     share the exact same active-ingredient set (using the registry's
+     authoritative feature list, not a column-suffix heuristic). Exact pairs
+     use the looser `selection.max_candidates_per_ingredient_combination`
+     cap (default `3`); any exact combination of 3+ ingredients (trio,
+     four-a-kind, etc.) is far more specific and is capped at `1` per round
+     by default via `selection.max_candidates_per_larger_ingredient_combination`.
+     Both caps are enforced by swapping the lowest-scoring offender for the
+     best-scoring eligible pool candidate not already at its own cap; the
+     slate is never shrunk, and an over-cap combination is left in place if
+     no eligible replacement exists.
+9. Add any `retest_priority` formulations separately when the latest batch for
    an existing formulation appears off-trend or unstable.
-9. If `mechanics_enabled`, attempt continuous constrained qLogNEHVI and fall
-   back to the constrained finite pool when unavailable or unsuccessful.
+10. If `mechanics_enabled`, attempt continuous constrained qLogNEHVI and fall
+    back to the constrained finite pool when unavailable or unsuccessful.
 
 ROUND_001 pool generation is random. ROUND_002+ generation is support-aware and
 chemically constrained. The final 12-candidate selection remains model-scored
-and diversity-aware. During `screening_only`, the selector does not emit any
+and diversity-aware, subject to the origin-quota and ingredient-combination
+controls in step 8. During `screening_only`, the selector does not emit any
 mechanical-test recommendations. The mechanical recommender and continuous
 qLogNEHVI path turn on after the phase transitions to `mechanics_enabled`.
 

@@ -38,6 +38,16 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
 - Default behavior uses the automatic phase selector.
 - The command ingests wet-lab results directly; there is no separate updater
   stage anymore.
+- The command detects whether the round has actually progressed before doing
+  anything destructive: it checks `next_round_candidates.csv` for any filled
+  result column (`viability_percent`, `intact_patch_formation_pass`,
+  `instron_file`, etc.). A `viability_percent` that was only pre-filled as
+  carried-over context on a `retest_priority` row does not count as a new
+  result. If no new results are found, the command skips the round-review
+  snapshot and the formulations/observations ingest entirely (so reruns
+  against an unfilled or already-ingested CSV are safe and non-destructive),
+  but still regenerates candidates from the current data unless
+  `--skip-generate` is also passed.
 - The command creates one pre-update review snapshot before any new wet-lab
   observations are appended.
 - The command also refreshes `results/multi_objective_v2/current_round_status.json`
