@@ -489,7 +489,12 @@ def _continuous_mechanics_candidates(
         dtype=float,
     )
     masks = _candidate_masks(candidate_pool, registry, optimization_config)
-    support = build_support_context(formulations, registry, optimization_config)
+    support = build_support_context(
+        formulations,
+        registry,
+        optimization_config,
+        observations,
+    )
     preparation_threshold = float(
         nested_get(optimization_config, "preparation_model.probability_threshold", 0.50)
     )
@@ -587,6 +592,17 @@ def _select_round_slate(
 
     retest_limit = int(nested_get(optimization_config, "retest.max_candidates_per_round", 2))
     retests = annotated[annotated["recommendation_type"] == "retest_priority"].copy()
+    if policy_active and not retests.empty and "intact_patch_pass_probability" in retests.columns:
+        intact_threshold = float(
+            nested_get(
+                optimization_config,
+                "round_policy.intact_probability_threshold",
+                0.50,
+            )
+        )
+        retests = retests.loc[
+            retests["intact_patch_pass_probability"] >= intact_threshold
+        ].copy()
     selected_parts: list[pd.DataFrame] = []
     selected_ids: set[str] = set()
     if not retests.empty and retest_limit > 0:
@@ -594,8 +610,48 @@ def _select_round_slate(
         selected_parts.append(selected_retests)
         selected_ids = set(selected_retests["candidate_id"].astype(str))
 
+    rescue_limit = (
+        int(nested_get(optimization_config, "candidate_generation.rescue_candidates_per_round", 2))
+        if policy_active and phase_resolution.active_phase == PHASE_SCREENING
+        else 0
+    )
+    if rescue_limit > 0:
+        rescue_candidates = annotated.loc[
+            annotated.get("candidate_origin", pd.Series("", index=annotated.index)).astype(str).eq("rescue_dilution")
+            & ~annotated["candidate_id"].astype(str).isin(selected_ids)
+        ].copy()
+        if not rescue_candidates.empty:
+            remaining_capacity = max(n - sum(len(part) for part in selected_parts), 0)
+            if "rescue_scale_factor" not in rescue_candidates.columns:
+                rescue_candidates["rescue_scale_factor"] = 1.0
+            selected_rescue = rescue_candidates.sort_values(
+                ["rescue_scale_factor", "viability_ucb"],
+                ascending=[True, False],
+            ).head(min(rescue_limit, remaining_capacity)).copy()
+            if not selected_rescue.empty:
+                selected_parts.append(selected_rescue)
+                selected_ids.update(selected_rescue["candidate_id"].astype(str))
+
     remaining = annotated.loc[~annotated["candidate_id"].astype(str).isin(selected_ids)].reset_index(drop=True)
     remaining_n = max(n - sum(len(part) for part in selected_parts), 0)
+    if (
+        policy_active
+        and phase_resolution.active_phase == PHASE_SCREENING
+        and remaining_n > 0
+        and "intact_patch_pass_probability" in remaining.columns
+    ):
+        intact_threshold = float(
+            nested_get(
+                optimization_config,
+                "round_policy.intact_probability_threshold",
+                0.50,
+            )
+        )
+        intact_pass = remaining.loc[
+            remaining["intact_patch_pass_probability"] >= intact_threshold
+        ].reset_index(drop=True)
+        if len(intact_pass) >= remaining_n:
+            remaining = intact_pass
     if remaining_n > 0 and not remaining.empty:
         diversity_weight = (
             float(nested_get(optimization_config, "support_policy.diversity_weight", 0.05))
@@ -764,7 +820,27 @@ def select_next_round(
         registry,
         optimization_config,
     )
+    retest_candidates_rejected_by_feasibility = 0
     if policy_active and not retest_candidates.empty:
+        support = build_support_context(
+            formulations,
+            registry,
+            optimization_config,
+            observations,
+        )
+        retest_candidates = annotate_feasibility(
+            retest_candidates,
+            registry,
+            optimization_config,
+            policy_active=True,
+        )
+        retest_candidates = annotate_support(retest_candidates, registry, support)
+        retest_candidates_rejected_by_feasibility = int(
+            (~retest_candidates["feasibility_pass"].astype(bool)).sum()
+        )
+        retest_candidates = retest_candidates.loc[
+            retest_candidates["feasibility_pass"].astype(bool)
+        ].reset_index(drop=True)
         retest_candidates["candidate_origin"] = "retest"
     combined_pool = candidate_pool.copy()
     if not retest_candidates.empty:
@@ -855,6 +931,7 @@ def select_next_round(
         "optimizer_mode": optimizer_mode,
         "optimizer_fallback_status": optimizer_fallback_status,
         "retest_candidate_count": int((annotated["recommendation_type"] == "retest_priority").sum()),
+        "retest_candidate_count_rejected_by_feasibility": retest_candidates_rejected_by_feasibility,
         "zero_active_candidate_count_filtered": zero_active_filtered_count,
         "target_round_number": target_round_number,
         "preparation_model_fitted": bool(models.preparation.fitted),

@@ -11,7 +11,9 @@ from helper.registry import load_registry
 from helper.selection import (
     _enforce_single_ingredient_spacing,
     _greedy_diverse_pick,
+    _select_round_slate,
     annotate_candidates,
+    select_next_round,
     select_mechanical_tests,
 )
 
@@ -216,3 +218,244 @@ def test_diversity_cannot_select_outside_the_competitive_utility_band() -> None:
         competitive_utility_band=0.15,
     )
     assert selected == [0, 1]
+
+
+def test_screening_slate_prefers_intact_gate_when_pool_can_fill_round() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    rows = []
+    for candidate_id, betaine, score, intact in [
+        ("low_intact_best_score", 0.10, 1.00, 0.10),
+        ("pass_a", 0.20, 0.90, 0.60),
+        ("pass_b", 0.30, 0.80, 0.70),
+    ]:
+        row = {feature: 0.0 for feature in registry.feature_names}
+        row.update(
+            {
+                "candidate_id": candidate_id,
+                "formulation_id": candidate_id,
+                "betaine_M": betaine,
+                "screening_phase_score": score,
+                "recommendation_type": "screening_candidate",
+                "selection_explanation": "",
+                "intact_patch_pass_probability": intact,
+            }
+        )
+        rows.append(row)
+
+    selected = _select_round_slate(
+        pd.DataFrame(rows),
+        registry,
+        config,
+        _phase(PHASE_SCREENING),
+        n=2,
+        policy_active=True,
+    )
+
+    assert set(selected["candidate_id"]) == {"pass_a", "pass_b"}
+
+
+def test_screening_slate_reserves_capped_rescue_dilution_candidates() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    config["candidate_generation"]["rescue_candidates_per_round"] = 1
+    rows = []
+    for candidate_id, origin, betaine, score, intact, ucb in [
+        ("rescue_a", "rescue_dilution", 0.10, -1.00, 0.10, 100.0),
+        ("rescue_b", "rescue_dilution", 0.15, -1.00, 0.10, 90.0),
+        ("pass_a", "sparse_exploration", 0.20, 0.90, 0.60, 80.0),
+        ("pass_b", "sparse_exploration", 0.30, 0.80, 0.70, 70.0),
+    ]:
+        row = {feature: 0.0 for feature in registry.feature_names}
+        row.update(
+            {
+                "candidate_id": candidate_id,
+                "formulation_id": candidate_id,
+                "candidate_origin": origin,
+                "betaine_M": betaine,
+                "screening_phase_score": score,
+                "viability_ucb": ucb,
+                "recommendation_type": "rescue_candidate" if origin == "rescue_dilution" else "screening_candidate",
+                "selection_explanation": "",
+                "intact_patch_pass_probability": intact,
+            }
+        )
+        rows.append(row)
+
+    selected = _select_round_slate(
+        pd.DataFrame(rows),
+        registry,
+        config,
+        _phase(PHASE_SCREENING),
+        n=3,
+        policy_active=True,
+    )
+
+    assert "rescue_a" in set(selected["candidate_id"])
+    assert "rescue_b" not in set(selected["candidate_id"])
+
+
+def test_policy_active_retests_must_pass_formulation_feasibility() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    config["round_policy"]["viability_screens_per_round"] = 4
+
+    bad_retest = {feature: 0.0 for feature in registry.feature_names}
+    bad_retest.update(
+        {
+            "formulation_id": "v2_bad_retest",
+            "source": "wetlab_feedback:ROUND_001",
+            "source_row_id": "cand_bad_retest",
+            "formulation_label": "bad retest",
+            "pvp_pct": 11.0,
+            "active_ingredient_count": 1,
+        }
+    )
+    formulations = pd.DataFrame([bad_retest])
+    observations = pd.DataFrame(
+        [
+            {
+                "observation_id": "obs_bad_retest_legacy_viability",
+                "formulation_id": "v2_bad_retest",
+                "batch_id": "legacy_wetlab",
+                "replicate_id": "rep_001",
+                "endpoint": "viability_percent",
+                "value": 80.0,
+                "unit": "percent",
+                "observation_noise": 5.0,
+                "source_type": "legacy_wetlab",
+                "source_file": "test",
+                "notes": "",
+            },
+            {
+                "observation_id": "obs_bad_retest_viability",
+                "formulation_id": "v2_bad_retest",
+                "batch_id": "ROUND_001",
+                "replicate_id": "rep_001",
+                "endpoint": "viability_percent",
+                "value": 25.0,
+                "unit": "percent",
+                "observation_noise": 1.0,
+                "source_type": "wetlab_feedback",
+                "source_file": "test",
+                "notes": "",
+            }
+        ]
+    )
+    candidate_rows = []
+    for index, betaine in enumerate([0.20, 0.30, 0.40, 0.50], start=1):
+        row = {feature: 0.0 for feature in registry.feature_names}
+        row.update(
+            {
+                "candidate_id": f"cand_{index}",
+                "formulation_id": f"v2_candidate_{index}",
+                "betaine_M": betaine,
+                "active_ingredient_count": 1,
+                "feasibility_pass": True,
+                "support_status": "in_support",
+                "candidate_origin": "sparse_exploration",
+            }
+        )
+        candidate_rows.append(row)
+
+    result = select_next_round(
+        formulations=formulations,
+        observations=observations,
+        candidate_pool=pd.DataFrame(candidate_rows),
+        registry=registry,
+        optimization_config=config,
+        target_round_number=2,
+        policy_active=True,
+    )
+
+    assert "retest_priority" not in set(result.viability_screen["recommendation_type"].astype(str))
+    assert result.metadata["retest_candidate_count_rejected_by_feasibility"] == 1
+
+
+def test_policy_active_retests_must_pass_intact_screening_gate() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    config["round_policy"]["viability_screens_per_round"] = 4
+
+    retest = {feature: 0.0 for feature in registry.feature_names}
+    retest.update(
+        {
+            "formulation_id": "v2_failed_intact_retest",
+            "source": "wetlab_feedback:ROUND_001",
+            "source_row_id": "cand_failed_intact",
+            "formulation_label": "failed intact retest",
+            "pvp_pct": 5.0,
+            "active_ingredient_count": 1,
+        }
+    )
+    formulations = pd.DataFrame([retest])
+    observations = pd.DataFrame(
+        [
+            {
+                "observation_id": "obs_failed_intact_legacy_viability",
+                "formulation_id": "v2_failed_intact_retest",
+                "batch_id": "legacy_wetlab",
+                "replicate_id": "rep_001",
+                "endpoint": "viability_percent",
+                "value": 80.0,
+                "unit": "percent",
+                "observation_noise": 5.0,
+                "source_type": "legacy_wetlab",
+                "source_file": "test",
+                "notes": "",
+            },
+            {
+                "observation_id": "obs_failed_intact_viability",
+                "formulation_id": "v2_failed_intact_retest",
+                "batch_id": "ROUND_001",
+                "replicate_id": "rep_001",
+                "endpoint": "viability_percent",
+                "value": 25.0,
+                "unit": "percent",
+                "observation_noise": 1.0,
+                "source_type": "wetlab_feedback",
+                "source_file": "test",
+                "notes": "",
+            },
+            {
+                "observation_id": "obs_failed_intact_gate",
+                "formulation_id": "v2_failed_intact_retest",
+                "batch_id": "ROUND_001",
+                "replicate_id": "rep_001",
+                "endpoint": "intact_patch_formation_pass",
+                "value": 0.0,
+                "unit": "binary",
+                "observation_noise": "",
+                "source_type": "wetlab_feedback",
+                "source_file": "test",
+                "notes": "",
+            },
+        ]
+    )
+    candidate_rows = []
+    for index, betaine in enumerate([0.20, 0.30, 0.40, 0.50], start=1):
+        row = {feature: 0.0 for feature in registry.feature_names}
+        row.update(
+            {
+                "candidate_id": f"cand_gate_{index}",
+                "formulation_id": f"v2_gate_candidate_{index}",
+                "betaine_M": betaine,
+                "active_ingredient_count": 1,
+                "feasibility_pass": True,
+                "support_status": "in_support",
+                "candidate_origin": "sparse_exploration",
+            }
+        )
+        candidate_rows.append(row)
+
+    result = select_next_round(
+        formulations=formulations,
+        observations=observations,
+        candidate_pool=pd.DataFrame(candidate_rows),
+        registry=registry,
+        optimization_config=config,
+        target_round_number=2,
+        policy_active=True,
+    )
+
+    assert "retest_priority" not in set(result.viability_screen["recommendation_type"].astype(str))

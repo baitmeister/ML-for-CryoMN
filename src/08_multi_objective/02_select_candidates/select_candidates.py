@@ -19,6 +19,7 @@ from helper.candidates import (
     filter_candidate_pool_to_registry_bounds,
     filter_nonzero_active_candidate_pool,
     generate_random_candidate_pool,
+    generate_rescue_candidate_pool,
     generate_support_aware_candidate_pool,
     load_candidate_pool,
     unavailable_features_from_config,
@@ -102,7 +103,12 @@ def main() -> None:
         optimization_config,
         target_round_number,
     )
-    support_context = build_support_context(formulations, registry, optimization_config)
+    support_context = build_support_context(
+        formulations,
+        registry,
+        optimization_config,
+        observations=observations,
+    )
 
     if formulations.empty:
         raise SystemExit(
@@ -125,6 +131,7 @@ def main() -> None:
             nested_get(optimization_config, "selection.generated_candidate_pool_size", 2000)
         )
         seed = args.seed if args.seed is not None else int(optimization_config.get("random_seed", 42))
+        rescue_candidate_count = 0
         if policy_active:
             candidate_pool = generate_support_aware_candidate_pool(
                 registry,
@@ -135,6 +142,21 @@ def main() -> None:
                 random_seed=seed,
                 unavailable_feature_names=unavailable_features,
             )
+            rescue_candidates = generate_rescue_candidate_pool(
+                registry,
+                formulations=formulations,
+                observations=observations,
+                optimization_config=optimization_config,
+                support=support_context,
+                unavailable_feature_names=unavailable_features,
+            )
+            rescue_candidate_count = int(len(rescue_candidates))
+            if not rescue_candidates.empty:
+                candidate_pool = pd.concat(
+                    [rescue_candidates, candidate_pool],
+                    ignore_index=True,
+                    sort=False,
+                ).drop_duplicates("formulation_id", keep="first")
         else:
             candidate_pool = generate_random_candidate_pool(
                 registry,
@@ -144,6 +166,8 @@ def main() -> None:
             )
         bounds_filtered_count = 0
         filtered_count = 0
+    if args.candidate_pool:
+        rescue_candidate_count = 0
 
     if policy_active:
         candidate_pool = annotate_feasibility(
@@ -206,6 +230,7 @@ def main() -> None:
     result.metadata["target_round_number"] = target_round_number
     result.metadata["support_radius"] = support_context.radius
     result.metadata["candidate_pool_rows_rejected_by_feasibility"] = int(len(rejected_candidates))
+    result.metadata["rescue_candidate_count"] = int(rescue_candidate_count)
     result.metadata["temporary_unavailable_features"] = unavailable_features
     result.metadata["candidate_pool_rows_filtered_by_bounds"] = bounds_filtered_count
     result.metadata["candidate_pool_rows_filtered_by_availability"] = filtered_count

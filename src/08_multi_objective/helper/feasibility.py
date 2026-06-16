@@ -185,19 +185,47 @@ def annotate_feasibility(
     return annotated
 
 
+def _support_source_formulations(
+    formulations: pd.DataFrame,
+    observations: pd.DataFrame | None,
+) -> pd.DataFrame:
+    if formulations.empty or observations is None or observations.empty:
+        return formulations
+    if "formulation_id" not in formulations.columns or "formulation_id" not in observations.columns:
+        return formulations
+    observed_ids = (
+        observations["formulation_id"]
+        .dropna()
+        .astype(str)
+        .str.strip()
+    )
+    observed_ids = set(observed_ids[observed_ids != ""].unique().tolist())
+    if not observed_ids:
+        return formulations
+
+    support_formulations = formulations[
+        formulations["formulation_id"].astype(str).isin(observed_ids)
+    ].copy()
+    if support_formulations.empty:
+        return formulations
+    return support_formulations.drop_duplicates("formulation_id", keep="last")
+
+
 def build_support_context(
     formulations: pd.DataFrame,
     registry: IngredientRegistry,
     optimization_config: Mapping[str, Any],
+    observations: pd.DataFrame | None = None,
 ) -> SupportContext:
     ingredients = registry.active_ingredients()
     lower = np.array([ingredient.lower_bound for ingredient in ingredients], dtype=float)
     upper = np.array([ingredient.upper_bound for ingredient in ingredients], dtype=float)
     ranges = np.maximum(upper - lower, 1e-12)
-    if formulations.empty:
+    support_formulations = _support_source_formulations(formulations, observations)
+    if support_formulations.empty:
         return SupportContext(np.empty((0, len(ingredients))), lower, ranges, np.inf)
     matrix = (
-        formulations[registry.feature_names]
+        support_formulations[registry.feature_names]
         .apply(pd.to_numeric, errors="coerce")
         .fillna(0.0)
         .to_numpy(dtype=float)

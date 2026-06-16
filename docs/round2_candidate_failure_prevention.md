@@ -137,17 +137,27 @@ During `screening_only`, the finite pool is generated as:
 
 - 40% local perturbations around transferred or newly validated formulations
 - 35% sparse single-ingredient and pairwise exploration
-- 25% chemically feasible support-boundary exploration
+- 25% chemically feasible boundary-style exploration
 
 Local work is capped at 40%. Duplicate or infeasible local shortfall is moved
-to sparse exploration. The boundary quota is not silently reassigned:
-generation stops with a diagnostic error if ingredient availability and hard
-constraints make the configured 25% allocation impossible within the bounded
-attempt budget.
+to sparse exploration. The boundary-style quota is not silently reassigned:
+generation stops with a diagnostic error if ingredient availability, duplicate
+avoidance, and hard constraints make the configured 25% allocation impossible
+within the bounded attempt budget. The quota is a sampling-mode allocation, not
+a requirement that every boundary-style row be outside the observed support
+radius.
 
 The split preserves useful local learning without allowing narrow historical
 support to dominate, produces interpretable sparse effects, and reserves
 meaningful capacity for discovery.
+
+High-viability formulations that fail intact-patch formation also seed a small
+`rescue_dilution` set. These candidates scale down every active ingredient in
+the failed formulation, then pass through the same campaign feasibility checks.
+At most a configured number can enter a screening slate, so the workflow can
+test concentration-reduction rescue hypotheses without overwhelming the
+standard model-ranked slate. Rescue rows are ordered by strongest dilution
+first, with predicted viability as a tie-breaker.
 
 Representative configuration:
 
@@ -170,6 +180,9 @@ candidate_generation:
   local_fraction: 0.40
   sparse_fraction: 0.35
   boundary_fraction: 0.25
+  rescue_min_viability_percent: 50.0
+  rescue_scale_factors: [0.25, 0.50, 0.75]
+  rescue_candidates_per_round: 2
 
 support_policy:
   radius_percentile: 95.0
@@ -183,6 +196,13 @@ Features are normalized by configured ranges. The support radius is the 95th
 percentile of observed nearest-neighbor distances multiplied by 1.25. The
 percentile retains almost all observed geometry while reducing sensitivity to
 extreme outliers; the multiplier supplies controlled exploration slack.
+The support set is derived from formulation IDs that have actual entries in
+`observations.csv`, so unobserved candidate rows do not expand support merely
+by being written into `formulations.csv`. Legacy literature, legacy wet-lab,
+and new wet-lab observations remain support evidence regardless of outcome.
+Failed round results still define where the campaign has evidence; feasibility
+rules and endpoint models decide whether nearby lower-concentration candidates
+are worth selecting.
 
 Only one boundary candidate may enter a 12-row slate. Outside-support
 uncertainty is capped at the 90th percentile of in-support uncertainty.

@@ -50,6 +50,12 @@ candidate_generation:
   sparse_max_active_ingredients: 2
   boundary_max_active_ingredients: 4
   max_attempt_multiplier: 100
+  rescue_min_viability_percent: 50.0
+  rescue_scale_factors:
+    - 0.25
+    - 0.50
+    - 0.75
+  rescue_candidates_per_round: 2
 
 support_policy:
   radius_percentile: 95.0

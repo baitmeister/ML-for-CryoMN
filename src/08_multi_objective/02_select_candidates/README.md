@@ -54,9 +54,19 @@ the 12 selected wet-lab formulations and blank result columns.
    ROUND_002+ activates `round2_candidate_feasibility_v1`.
 2. Generate `selection.generated_candidate_pool_size` candidates. The default
    is `2000`. ROUND_002+ uses 40% local perturbation, 35% sparse exploration,
-   and 25% support-boundary exploration. Local shortfall is reassigned to
-   sparse exploration; an unfillable boundary quota stops generation with a
-   diagnostic rather than silently changing the policy.
+   and 25% boundary-style exploration. Local shortfall is reassigned to
+   sparse exploration; an unfillable boundary-style quota stops generation with
+   a diagnostic rather than silently changing the policy.
+   Support is measured against the evidence subset implied by
+   `observations.csv`, not against every formulation row ever written into
+   `formulations.csv`. Legacy literature, legacy wet-lab, and new wet-lab
+   observations all remain support evidence. Boundary-style generation samples
+   chemically feasible upper-range probes; those probes may still be classified
+   as `in_support` when the observed support radius is broad.
+   ROUND_002+ also adds capped `rescue_dilution` candidates by scaling down
+   high-viability formulations that failed intact-patch formation. These rows
+   test whether concentration reduction can preserve viability while restoring
+   patch formation, without letting rescue hypotheses dominate the slate.
 3. Exclude temporary unavailable ingredients listed in
    `config_v2/availability.yaml`.
 4. Apply ROUND_002+ hard formulation guardrails and retain rejected attempts in

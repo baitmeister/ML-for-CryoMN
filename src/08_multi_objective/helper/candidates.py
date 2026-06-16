@@ -162,6 +162,9 @@ def _finalize_generated_rows(
                 "candidate_origin": str(row.get("candidate_origin", "finite_pool_fallback")),
             }
         )
+        for key, value in row.items():
+            if key not in payload and key not in {"candidate_id", "formulation_id", "active_ingredient_count"}:
+                payload[key] = value
         finalized.append(payload)
     return pd.DataFrame(finalized)
 
@@ -330,14 +333,14 @@ def generate_support_aware_candidate_pool(
                 low + fraction * (high - low)
             )
         row["candidate_origin"] = "boundary_probe"
-        if acceptable(row, required_support="boundary"):
+        if acceptable(row):
             boundary_rows.append(row)
     if len(boundary_rows) < boundary_target:
         raise ValueError(
-            "Unable to fill the configured support-boundary exploration quota "
+            "Unable to fill the configured support-boundary-style exploration quota "
             f"({len(boundary_rows)}/{boundary_target}) after "
             f"{boundary_attempt_limit} attempts. Review ingredient availability, "
-            "hard feasibility limits, or the support-radius policy."
+            "hard feasibility limits, or the boundary-probe sampling policy."
         )
     rows.extend(boundary_rows)
 
@@ -380,6 +383,126 @@ def generate_support_aware_candidate_pool(
         rejected_pool["candidate_origin"] = "rejected_generation_attempt"
         return pd.concat([accepted_pool, rejected_pool], ignore_index=True, sort=False)
     return accepted_pool
+
+
+def generate_rescue_candidate_pool(
+    registry: IngredientRegistry,
+    formulations: pd.DataFrame,
+    observations: pd.DataFrame,
+    optimization_config: Mapping,
+    support: SupportContext,
+    unavailable_feature_names: Iterable[str] = (),
+) -> pd.DataFrame:
+    """Generate dilution variants of high-viability formulations that failed formation."""
+    if formulations.empty or observations.empty:
+        return pd.DataFrame()
+    required = {"formulation_id", "batch_id", "endpoint", "value"}
+    if not required.issubset(observations.columns) or "formulation_id" not in formulations.columns:
+        return pd.DataFrame()
+
+    obs = observations.copy()
+    obs["value"] = pd.to_numeric(obs["value"], errors="coerce")
+    obs["endpoint"] = obs["endpoint"].fillna("").astype(str)
+    obs["batch_id"] = obs["batch_id"].fillna("").astype(str)
+    pivot = (
+        obs[obs["endpoint"].isin(["viability_percent", "intact_patch_formation_pass"])]
+        .pivot_table(
+            index=["formulation_id", "batch_id"],
+            columns="endpoint",
+            values="value",
+            aggfunc="mean",
+        )
+        .reset_index()
+    )
+    if pivot.empty or "viability_percent" not in pivot.columns or "intact_patch_formation_pass" not in pivot.columns:
+        return pd.DataFrame()
+
+    min_viability = float(
+        nested_get(
+            optimization_config,
+            "candidate_generation.rescue_min_viability_percent",
+            50.0,
+        )
+    )
+    scale_factors = list(
+        nested_get(
+            optimization_config,
+            "candidate_generation.rescue_scale_factors",
+            [0.25, 0.50, 0.75],
+        )
+        or []
+    )
+    scale_factors = sorted(
+        {
+            float(scale)
+            for scale in scale_factors
+            if pd.notna(scale) and 0.0 < float(scale) < 1.0
+        }
+    )
+    if not scale_factors:
+        return pd.DataFrame()
+
+    failed_high_viability = pivot[
+        (pivot["viability_percent"] >= min_viability)
+        & (pivot["intact_patch_formation_pass"] < 0.5)
+    ].copy()
+    if failed_high_viability.empty:
+        return pd.DataFrame()
+
+    unavailable = set(unavailable_feature_names)
+    candidate_formulations = formulations.copy()
+    for feature in registry.feature_names:
+        if feature not in candidate_formulations.columns:
+            candidate_formulations[feature] = 0.0
+    anchors = failed_high_viability.merge(
+        candidate_formulations[["formulation_id", *registry.feature_names]],
+        on="formulation_id",
+        how="inner",
+    )
+    if anchors.empty:
+        return pd.DataFrame()
+
+    rows: list[dict] = []
+    seen: set[str] = set()
+    for _, anchor in anchors.iterrows():
+        active_features = [
+            feature
+            for feature in registry.feature_names
+            if feature not in unavailable
+            and float(pd.to_numeric(anchor.get(feature, 0.0), errors="coerce") or 0.0) > 1e-12
+        ]
+        if not active_features:
+            continue
+        for scale in scale_factors:
+            row = {feature: 0.0 for feature in registry.feature_names}
+            for feature in active_features:
+                value = pd.to_numeric(anchor.get(feature, 0.0), errors="coerce")
+                row[feature] = 0.0 if pd.isna(value) else float(value) * scale
+            row["candidate_origin"] = "rescue_dilution"
+            row["rescue_scale_factor"] = float(scale)
+            row["rescue_anchor_formulation_id"] = str(anchor["formulation_id"])
+            row["rescue_anchor_viability_percent"] = float(anchor["viability_percent"])
+            formulation_id = stable_formulation_id(row, registry)
+            if formulation_id in seen:
+                continue
+            seen.add(formulation_id)
+            rows.append(row)
+
+    if not rows:
+        return pd.DataFrame()
+    rescue = _finalize_generated_rows(rows, registry, candidate_id_prefix="rescue")
+    rescue = annotate_feasibility(rescue, registry, optimization_config, policy_active=True)
+    rescue = annotate_support(rescue, registry, support)
+    rescue = rescue.loc[
+        rescue["feasibility_pass"].astype(bool)
+        & (rescue["active_ingredient_count"].astype(int) > 0)
+    ].reset_index(drop=True)
+    if not rescue.empty:
+        rescue["recommendation_type"] = "rescue_candidate"
+        rescue["selection_explanation"] = (
+            "rescue_dilution: scaled down a high-viability failed-patch formulation"
+        )
+    return rescue
 
 
 def load_candidate_pool(path: str, registry: IngredientRegistry) -> pd.DataFrame:

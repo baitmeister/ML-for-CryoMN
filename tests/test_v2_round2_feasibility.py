@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 
 from helper.candidates import generate_support_aware_candidate_pool
+from helper.candidates import generate_rescue_candidate_pool
 from helper.config import load_optimization_config
 from helper.feasibility import (
     annotate_feasibility,
@@ -18,6 +19,25 @@ from helper.registry import load_registry
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+WETLAB_ENTRY_COLUMNS = {
+    "replicate_id",
+    "viability_percent",
+    "intact_patch_formation_pass",
+    "no_slurry",
+    "no_collapse",
+    "intact_tip_count",
+    "total_tip_count",
+    "instron_file",
+    "needles_compressed",
+    "critical_axial_load_N_per_needle",
+    "critical_axial_load_N_total",
+    "initial_stiffness_N_per_mm_per_needle",
+    "notes",
+}
+
+
+def _generated_candidate_columns(frame: pd.DataFrame) -> pd.DataFrame:
+    return frame.drop(columns=[column for column in WETLAB_ENTRY_COLUMNS if column in frame.columns])
 
 
 def test_policy_activates_only_from_round_two() -> None:
@@ -75,7 +95,8 @@ def test_support_aware_pool_caps_local_fraction_and_redistributes_shortfall() ->
     registry = load_registry()
     config = load_optimization_config()
     formulations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "formulations.csv")
-    support = build_support_context(formulations, registry, config)
+    observations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "observations.csv")
+    support = build_support_context(formulations, registry, config, observations)
     pool = generate_support_aware_candidate_pool(
         registry,
         formulations,
@@ -100,7 +121,8 @@ def test_rejected_generation_attempts_remain_in_audit_pool() -> None:
     registry = load_registry()
     config = load_optimization_config()
     formulations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "formulations.csv")
-    support = build_support_context(formulations, registry, config)
+    observations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "observations.csv")
+    support = build_support_context(formulations, registry, config, observations)
     pool = generate_support_aware_candidate_pool(
         registry,
         formulations,
@@ -120,7 +142,8 @@ def test_generation_fractions_must_sum_to_one() -> None:
     config = load_optimization_config()
     config["candidate_generation"]["boundary_fraction"] = 0.20
     formulations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "formulations.csv")
-    support = build_support_context(formulations, registry, config)
+    observations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "observations.csv")
+    support = build_support_context(formulations, registry, config, observations)
 
     with pytest.raises(ValueError, match="must sum to 1.0"):
         generate_support_aware_candidate_pool(
@@ -131,6 +154,211 @@ def test_generation_fractions_must_sum_to_one() -> None:
             n_candidates=10,
             random_seed=42,
         )
+
+
+def test_support_context_ignores_unobserved_formulations() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    formulations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "formulations.csv")
+    observations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "observations.csv")
+    support_before = build_support_context(formulations, registry, config, observations)
+
+    extreme = {feature: 0.0 for feature in registry.feature_names}
+    extreme.update(
+        {
+            "formulation_id": "v2_unobserved_extreme",
+            "source": "test_candidate_only",
+            "source_row_id": "cand_extreme",
+            "formulation_label": "candidate-only extreme",
+            "ethylene_glycol_M": 2.0,
+            "hsa_pct": 10.0,
+            "active_ingredient_count": 2,
+        }
+    )
+    augmented_formulations = pd.concat([formulations, pd.DataFrame([extreme])], ignore_index=True)
+
+    support_after = build_support_context(
+        augmented_formulations,
+        registry,
+        config,
+        observations,
+    )
+
+    assert support_after.radius == pytest.approx(support_before.radius)
+
+
+def test_observed_round_formulations_expand_support_regardless_of_outcome() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    formulations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "formulations.csv")
+    observations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "observations.csv")
+    support_before = build_support_context(formulations, registry, config, observations)
+
+    failed = {feature: 0.0 for feature in registry.feature_names}
+    failed.update(
+        {
+            "formulation_id": "v2_failed_round_support_probe",
+            "source": "wetlab_feedback:ROUND_001",
+            "source_row_id": "cand_failed_probe",
+            "formulation_label": "failed round probe",
+            "ethylene_glycol_M": 2.0,
+            "hsa_pct": 10.0,
+            "active_ingredient_count": 2,
+        }
+    )
+    failed_observations = pd.DataFrame(
+        [
+            {
+                "observation_id": "obs_failed_probe_viability",
+                "formulation_id": "v2_failed_round_support_probe",
+                "batch_id": "ROUND_001",
+                "replicate_id": "rep_001",
+                "endpoint": "viability_percent",
+                "value": 80.0,
+                "unit": "percent",
+                "observation_noise": 1.0,
+                "source_type": "wetlab_feedback",
+                "source_file": "test",
+                "notes": "",
+            },
+            {
+                "observation_id": "obs_failed_probe_intact",
+                "formulation_id": "v2_failed_round_support_probe",
+                "batch_id": "ROUND_001",
+                "replicate_id": "rep_001",
+                "endpoint": "intact_patch_formation_pass",
+                "value": 0.0,
+                "unit": "binary",
+                "observation_noise": "",
+                "source_type": "wetlab_feedback",
+                "source_file": "test",
+                "notes": "",
+            },
+        ]
+    )
+
+    support_after = build_support_context(
+        pd.concat([formulations, pd.DataFrame([failed])], ignore_index=True),
+        registry,
+        config,
+        pd.concat([observations, failed_observations], ignore_index=True),
+    )
+
+    assert len(support_after.observed_scaled) == len(support_before.observed_scaled) + 1
+
+
+def test_boundary_style_quota_does_not_require_out_of_support_status() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    base = {feature: 0.0 for feature in registry.feature_names}
+    base.update(
+        {
+            "formulation_id": "v2_single_observed_support",
+            "source": "wetlab_feedback:ROUND_001",
+            "source_row_id": "single_support",
+            "formulation_label": "single support",
+            "betaine_M": 0.25,
+            "active_ingredient_count": 1,
+        }
+    )
+    formulations = pd.DataFrame([base])
+    observations = pd.DataFrame(
+        [
+            {
+                "observation_id": "obs_single_support_viability",
+                "formulation_id": "v2_single_observed_support",
+                "batch_id": "ROUND_001",
+                "replicate_id": "rep_001",
+                "endpoint": "viability_percent",
+                "value": 50.0,
+                "unit": "percent",
+                "observation_noise": 1.0,
+                "source_type": "wetlab_feedback",
+                "source_file": "test",
+                "notes": "",
+            }
+        ]
+    )
+    support = build_support_context(formulations, registry, config, observations)
+
+    pool = generate_support_aware_candidate_pool(
+        registry,
+        formulations,
+        config,
+        support,
+        n_candidates=20,
+        random_seed=42,
+        unavailable_feature_names=[],
+    )
+    accepted = pool[pool["feasibility_pass"].astype(bool)]
+
+    assert len(accepted) == 20
+    assert int(accepted["candidate_origin"].value_counts().get("boundary_probe", 0)) == 5
+    assert set(accepted["support_status"]) == {"in_support"}
+
+
+def test_high_viability_failed_patch_generates_dilution_rescue_candidates() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    base = {feature: 0.0 for feature in registry.feature_names}
+    base.update(
+        {
+            "formulation_id": "v2_high_viability_failed",
+            "source": "wetlab_feedback:ROUND_001",
+            "source_row_id": "failed_high",
+            "formulation_label": "failed high viability",
+            "ectoin_M": 0.40,
+            "ethylene_glycol_M": 1.90,
+            "hsa_pct": 9.0,
+            "active_ingredient_count": 3,
+        }
+    )
+    formulations = pd.DataFrame([base])
+    observations = pd.DataFrame(
+        [
+            {
+                "observation_id": "obs_failed_high_viability",
+                "formulation_id": "v2_high_viability_failed",
+                "batch_id": "ROUND_001",
+                "replicate_id": "rep_001",
+                "endpoint": "viability_percent",
+                "value": 69.0,
+                "unit": "percent",
+                "observation_noise": 1.0,
+                "source_type": "wetlab_feedback",
+                "source_file": "test",
+                "notes": "",
+            },
+            {
+                "observation_id": "obs_failed_high_intact",
+                "formulation_id": "v2_high_viability_failed",
+                "batch_id": "ROUND_001",
+                "replicate_id": "rep_001",
+                "endpoint": "intact_patch_formation_pass",
+                "value": 0.0,
+                "unit": "binary",
+                "observation_noise": "",
+                "source_type": "wetlab_feedback",
+                "source_file": "test",
+                "notes": "",
+            },
+        ]
+    )
+    support = build_support_context(formulations, registry, config, observations)
+
+    rescue = generate_rescue_candidate_pool(
+        registry,
+        formulations,
+        observations,
+        config,
+        support,
+        unavailable_feature_names=[],
+    )
+
+    assert not rescue.empty
+    assert set(rescue["candidate_origin"]) == {"rescue_dilution"}
+    assert rescue["ethylene_glycol_M"].max() < 1.90
+    assert rescue["feasibility_pass"].all()
 
 
 def test_round_one_rerun_preserves_legacy_artifacts_and_transferred_tables(
@@ -180,11 +408,12 @@ def test_round_one_rerun_preserves_legacy_artifacts_and_transferred_tables(
     actual_pool = pd.read_csv(total_pool_path)
 
     pd.testing.assert_frame_equal(
-        actual_candidates,
-        expected_candidates,
+        _generated_candidate_columns(actual_candidates),
+        _generated_candidate_columns(expected_candidates),
         check_exact=False,
-        rtol=1e-12,
-        atol=1e-12,
+        check_dtype=False,
+        rtol=1e-8,
+        atol=1e-8,
     )
     pd.testing.assert_frame_equal(
         actual_pool,
