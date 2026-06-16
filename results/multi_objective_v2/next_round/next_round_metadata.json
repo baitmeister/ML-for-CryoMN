@@ -1,0 +1,66 @@
+{
+  "viability_screen_count": 12,
+  "mechanical_test_count": 0,
+  "mechanical_policy": {
+    "mechanical_selection_mode": "disabled_screening_only",
+    "mechanical_selection_reason": "mechanical recommendations stay off until the selector enters mechanics_enabled",
+    "mechanical_observation_count": 0,
+    "intact_probability_threshold": 0.5,
+    "pass_pool_size": 0,
+    "botorch_available": true,
+    "active_phase": "screening_only"
+  },
+  "objective_endpoints": [
+    "viability_percent",
+    "critical_axial_load_N_per_needle"
+  ],
+  "secondary_endpoint": "initial_stiffness_N_per_mm_per_needle",
+  "screening_gate": "intact_patch_formation_pass",
+  "active_phase": "screening_only",
+  "phase_resolution": {
+    "requested_phase_mode": "auto",
+    "active_phase": "screening_only",
+    "paired_observation_count": 0,
+    "distinct_formulation_count": 0,
+    "batch_count": 0,
+    "reason": "auto-selected screening_only: paired_observations=0/8, distinct_formulations=0/6, batches=0/2",
+    "override_used": false
+  },
+  "pool_selection_policy": {
+    "pool_selection_mode": "screening_phase"
+  },
+  "continuous_qlognehvi": {
+    "continuous_optimizer_enabled": false,
+    "continuous_optimizer_used": false,
+    "continuous_optimizer_fallback": true,
+    "continuous_optimizer_reason": "screening_only phase"
+  },
+  "optimizer_mode": "support_aware_finite_pool_screening",
+  "optimizer_fallback_status": "not_applicable",
+  "retest_candidate_count": 1,
+  "retest_candidate_count_rejected_by_feasibility": 1,
+  "zero_active_candidate_count_filtered": 0,
+  "target_round_number": 2,
+  "preparation_model_fitted": false,
+  "preparation_observation_count": 0,
+  "formulation_feasibility_policy_active": true,
+  "formulation_feasibility_policy_version": "round2_candidate_feasibility_v1",
+  "formulation_feasibility_policy_start_round": 2,
+  "support_radius": 1.7643209870259036,
+  "candidate_pool_rows_rejected_by_feasibility": 235,
+  "rescue_candidate_count": 4,
+  "temporary_unavailable_features": [
+    "acetamide_M",
+    "human_serum_pct",
+    "methoxyphenyl_beta_d_glucopyranoside_M",
+    "methylcellulose_pct",
+    "myo_inositol_M",
+    "raffinose_M",
+    "sericin_pct",
+    "taurine_M"
+  ],
+  "candidate_pool_rows_filtered_by_bounds": 0,
+  "candidate_pool_rows_filtered_by_availability": 0,
+  "candidate_pool_rows_filtered_zero_active_at_entry": 0,
+  "batch_id": "ROUND_002"
+}

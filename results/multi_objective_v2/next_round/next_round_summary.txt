@@ -1,14 +1,14 @@
 CryoMN v2 Next-Round Candidate Summary
 ==========================================
 
-Batch ID: ROUND_001
+Batch ID: ROUND_002
 Active phase: screening_only
 Phase reason: auto-selected screening_only: paired_observations=0/8, distinct_formulations=0/6, batches=0/2
 Candidates to make: 12
 Mechanical tests requested: 0
 Mechanical selection mode: disabled_screening_only
 Mechanical observations in database: 0
-Retest-priority formulations in slate: 0
+Retest-priority formulations in slate: 1
 
 Main database used by selector:
 - data/processed_v2/formulations.csv
@@ -17,9 +17,14 @@ Main database used by selector:
 Temporary selection restrictions:
 - acetamide_M, human_serum_pct, methoxyphenyl_beta_d_glucopyranoside_M, methylcellulose_pct, myo_inositol_M, raffinose_M, sericin_pct, taurine_M
 
-Warnings:
-- 2 zero-active candidate-pool rows were removed before scoring.
-- Review the supplied candidate pool or upstream candidate-generation logic.
+Forward-only formulation policy:
+- Version: round2_candidate_feasibility_v1
+- Activation round: ROUND_002
+- Support radius: 1.764
+- Rejected pool rows: 235
+- Optimizer mode: support_aware_finite_pool_screening
+- Fallback status: not_applicable
+- Fallback reason: screening_only phase
 
 Wet-lab instructions:
 1. Make every formulation listed below.
@@ -28,27 +33,39 @@ Wet-lab instructions:
 4. Run 03_run_round/run_round.py after the CSV is filled.
 
 Candidates:
-- #1; candidate_id=cand_001465; formulation_id=v2_237544a25f30; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=71.0%; intact_probability=1.00
-  formulation: 304mM ectoin + 1.95M ethylene glycol + 9.32% HSA
-- #2; candidate_id=cand_000754; formulation_id=v2_da5df4899b60; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
-  formulation: 94.5mM trehalose + 466mM betaine + 413mM glucose + 6.81% dextran + 17.6% PVP + 0.834% hyaluronic acid + 7.13% FBS
-- #3; candidate_id=cand_001471; formulation_id=v2_21a3a498433e; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=61.1%; intact_probability=1.00
-  formulation: 491mM betaine
-- #4; candidate_id=cand_001389; formulation_id=v2_e0e6b16a3f20; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
+- #1; candidate_id=retest_v2_e0e6b16a3f20; formulation_id=v2_e0e6b16a3f20; recommendation_type=retest_priority; mechanical_test=False; predicted_viability=53.6%; intact_probability=0.02; origin=retest; support=in_support
   formulation: 396mM ectoin + 402mM trehalose + 332mM sucrose + 23.7mM creatine + 9.29% FBS
-- #5; candidate_id=cand_000440; formulation_id=v2_19eed4dca0d3; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
-  formulation: 91.6mM DMSO + 154mM ectoin + 483mM trehalose + 19.7mM creatine + 5.85% dextran + 17.4% PVP + 0.998% hyaluronic acid
-- #6; candidate_id=cand_001027; formulation_id=v2_2eead01c8392; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
-  formulation: 361mM ectoin + 185mM glycerol + 17.5mM betaine + 443mM proline + 66.1mM glucose + 4.77mM creatine + 8.35% dextran + 0.848% hyaluronic acid
-- #7; candidate_id=cand_001486; formulation_id=v2_4a0cb1ead8d1; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
-  formulation: 51.4mM DMSO + 375mM ethylene glycol + 352mM trehalose + 319mM sucrose + 79.4mM proline + 451mM glucose + 7.21% dextran + 0.0542% hyaluronic acid
-- #8; candidate_id=cand_001227; formulation_id=v2_6b7389efb1b5; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
-  formulation: 99.3mM DMSO + 394mM ectoin + 152mM propylene glycol + 265mM betaine + 484mM glucose + 0.927% hyaluronic acid + 1.18% FBS
-- #9; candidate_id=cand_000585; formulation_id=v2_a803deb82ca6; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
-  formulation: 97.4mM DMSO + 379mM ectoin + 127mM sucrose + 367mM proline + 26.7mM creatine + 4.65% dextran + 6.59% FBS + 8.68% HSA
-- #10; candidate_id=cand_000280; formulation_id=v2_49123b81735d; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=61.1%; intact_probability=1.00
-  formulation: 2.06mM propylene glycol + 12% PVP
-- #11; candidate_id=cand_001920; formulation_id=v2_b9ae21107fa4; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
-  formulation: 421mM trehalose + 474mM sucrose + 13mM creatine + 15.7% PVP + 0.987% hyaluronic acid + 4.58% FBS + 6.53% HSA
-- #12; candidate_id=cand_001369; formulation_id=v2_a2b4c2d7b0b6; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=59.8%; intact_probability=1.00
-  formulation: 329mM ethylene glycol + 157mM trehalose + 328mM proline + 442mM glucose + 23.1mM creatine + 7.45% HSA
+  note: retest_priority: batch_disagreement=0.0, local_residual=44.4, viability_std=58.9
+- #2; candidate_id=rescue_000007; formulation_id=v2_75d69addc009; recommendation_type=rescue_candidate; mechanical_test=False; predicted_viability=58.1%; intact_probability=0.11; origin=rescue_dilution; support=in_support
+  formulation: 12.9mM DMSO + 93.9mM ethylene glycol + 88mM trehalose + 79.7mM sucrose + 19.8mM proline + 113mM glucose + 1.8% dextran + 0.0136% hyaluronic acid
+  note: rescue_dilution: scaled down a high-viability failed-patch formulation
+- #3; candidate_id=rescue_000001; formulation_id=v2_42188f45e98a; recommendation_type=rescue_candidate; mechanical_test=False; predicted_viability=51.5%; intact_probability=0.13; origin=rescue_dilution; support=in_support
+  formulation: 75.9mM ectoin + 487mM ethylene glycol + 2.33% HSA
+  note: rescue_dilution: scaled down a high-viability failed-patch formulation
+- #4; candidate_id=cand_000738; formulation_id=v2_a3cd6cc2afa7; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=74.6%; intact_probability=0.05; origin=local_perturbation; support=in_support
+  formulation: 10mM DMSO + 288mM ectoin + 1.67M ethylene glycol + 4.72% FBS
+  note: nan
+- #5; candidate_id=cand_000100; formulation_id=v2_655729013931; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=71.7%; intact_probability=0.06; origin=local_perturbation; support=in_support
+  formulation: 286mM ectoin + 1.56M ethylene glycol + 154mM glycerol
+  note: nan
+- #6; candidate_id=cand_000175; formulation_id=v2_34d667ff4762; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=75.0%; intact_probability=0.05; origin=local_perturbation; support=in_support
+  formulation: 296mM ectoin + 1.75M ethylene glycol + 3.61% FBS + 0.62% HSA
+  note: nan
+- #7; candidate_id=cand_000544; formulation_id=v2_db8935ce2c34; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=70.9%; intact_probability=0.07; origin=local_perturbation; support=in_support
+  formulation: 11.7mM DMSO + 304mM ectoin + 1.4M ethylene glycol
+  note: nan
+- #8; candidate_id=cand_001951; formulation_id=v2_fc5b4c04eee9; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=73.3%; intact_probability=0.03; origin=boundary_probe; support=in_support
+  formulation: 328mM ectoin + 2.05M ethylene glycol + 8.12% FBS
+  note: nan
+- #9; candidate_id=cand_001221; formulation_id=v2_3e8ef993abba; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=64.6%; intact_probability=0.09; origin=sparse_exploration; support=in_support
+  formulation: 240mM ectoin + 1.07M ethylene glycol
+  note: nan
+- #10; candidate_id=cand_000917; formulation_id=v2_8a721b7d8f1c; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=61.9%; intact_probability=0.08; origin=sparse_exploration; support=in_support
+  formulation: 385mM ectoin + 791mM ethylene glycol
+  note: nan
+- #11; candidate_id=cand_001243; formulation_id=v2_384020959c42; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=60.0%; intact_probability=0.16; origin=sparse_exploration; support=in_support
+  formulation: 0.24% hyaluronic acid
+  note: nan
+- #12; candidate_id=cand_001783; formulation_id=v2_b2c883db5caf; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=59.7%; intact_probability=0.04; origin=boundary_probe; support=in_support
+  formulation: 417mM ectoin + 368mM proline + 8.97% FBS
+  note: nan
