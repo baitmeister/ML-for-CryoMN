@@ -36,7 +36,15 @@ from helper.visualization import generate_visualization_artifacts
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("candidates_csv", help="Filled next_round_candidates.csv.")
+    parser.add_argument(
+        "candidates_csv",
+        nargs="?",
+        default=str(NEXT_ROUND_CANDIDATES_PATH),
+        help=(
+            "Filled next_round_candidates.csv. Defaults to "
+            f"{NEXT_ROUND_CANDIDATES_PATH} if omitted."
+        ),
+    )
     parser.add_argument("--batch-id", default=None, help="Optional batch/round override.")
     parser.add_argument("--batch-date", default="", help="Optional batch date.")
     parser.add_argument("--candidate-file", action="append", default=None, help="Candidate CSV lookup(s).")
