@@ -88,6 +88,18 @@ def constraint_report(
     optimization_config: Mapping[str, Any],
     intact_failure_probability: float = 0.0,
 ) -> dict[str, Any]:
+    """Build the per-candidate constraint/penalty report.
+
+    Returns both the full acquisition penalty (used by mechanics-phase
+    scoring, which legitimately weighs intact-formation risk against the
+    viability/mechanical objectives) and a screening-phase variant with the
+    intact-failure term zeroed out. Screening exists to find viable
+    formulations; intact-needle formation is evaluated later, in the
+    mechanics phase, once enough paired data exists. Screening-phase
+    rescue candidates (see generate_rescue_candidate_pool) remain the only
+    place intact-failure observations feed back into candidate generation
+    during screening.
+    """
     soft_limit = int(nested_get(optimization_config, "penalties.active_ingredient_soft_limit", 8))
     molar_limit = float(nested_get(optimization_config, "penalties.single_molar_ingredient_limit_M", 0.5))
     count = count_active_ingredients(row, registry)
@@ -103,5 +115,11 @@ def constraint_report(
             registry,
             optimization_config,
             intact_failure_probability=intact_failure_probability,
+        ),
+        "screening_acquisition_penalty": acquisition_penalty(
+            row,
+            registry,
+            optimization_config,
+            intact_failure_probability=0.0,
         ),
     }

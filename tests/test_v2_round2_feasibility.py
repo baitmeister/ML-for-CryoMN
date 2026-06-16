@@ -361,73 +361,91 @@ def test_high_viability_failed_patch_generates_dilution_rescue_candidates() -> N
     assert rescue["feasibility_pass"].all()
 
 
-def test_round_one_rerun_preserves_legacy_artifacts_and_transferred_tables(
+def test_round_one_rerun_is_deterministic_and_preserves_legacy_artifacts(
     tmp_path: Path,
 ) -> None:
+    """select_candidates.py must be deterministic and side-effect-free on
+    formulations/observations, run twice from identical inputs.
+
+    This intentionally does NOT compare against the committed
+    results/multi_objective_v2/next_round/next_round_candidates.csv: that
+    file is round 1's real, already-completed wet-lab results (viability_percent,
+    intact_patch_formation_pass, etc. filled in by hand) -- not a regenerable
+    template. Round 1 is finished and is not retroactively changed by the
+    screening-phase intact-gating fix (see helper/selection.py
+    annotate_candidates); only round 2+ candidate generation is affected.
+    Pinning a byte-for-byte comparison against round 1's historical slate
+    would just re-encode the old (now intentionally removed) intact-gating
+    behavior as a regression target.
+    """
     formulations_path = PROJECT_ROOT / "data" / "processed_v2" / "formulations.csv"
     observations_path = PROJECT_ROOT / "data" / "processed_v2" / "observations.csv"
     formulations_before = formulations_path.read_bytes()
     observations_before = observations_path.read_bytes()
-    output_dir = tmp_path / "next_round"
-    total_pool_path = tmp_path / "total_candidate_pool.csv"
 
-    subprocess.run(
-        [
-            sys.executable,
-            str(
-                PROJECT_ROOT
-                / "src"
-                / "08_multi_objective"
-                / "02_select_candidates"
-                / "select_candidates.py"
-            ),
-            "--batch-id",
-            "ROUND_001",
-            "--output-dir",
-            str(output_dir),
-            "--total-candidate-pool",
-            str(total_pool_path),
-        ],
-        cwd=PROJECT_ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    def _run_select(output_dir: Path, total_pool_path: Path) -> None:
+        subprocess.run(
+            [
+                sys.executable,
+                str(
+                    PROJECT_ROOT
+                    / "src"
+                    / "08_multi_objective"
+                    / "02_select_candidates"
+                    / "select_candidates.py"
+                ),
+                "--batch-id",
+                "ROUND_001",
+                "--output-dir",
+                str(output_dir),
+                "--total-candidate-pool",
+                str(total_pool_path),
+                "--seed",
+                "42",
+            ],
+            cwd=PROJECT_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
 
-    expected_candidates = pd.read_csv(
-        PROJECT_ROOT
-        / "results"
-        / "multi_objective_v2"
-        / "next_round"
-        / "next_round_candidates.csv"
-    )
-    actual_candidates = pd.read_csv(output_dir / "next_round_candidates.csv")
-    expected_pool = pd.read_csv(
-        PROJECT_ROOT / "results" / "multi_objective_v2" / "total_candidate_pool.csv"
-    )
-    actual_pool = pd.read_csv(total_pool_path)
+    output_dir_a = tmp_path / "run_a" / "next_round"
+    total_pool_a = tmp_path / "run_a" / "total_candidate_pool.csv"
+    _run_select(output_dir_a, total_pool_a)
+
+    output_dir_b = tmp_path / "run_b" / "next_round"
+    total_pool_b = tmp_path / "run_b" / "total_candidate_pool.csv"
+    _run_select(output_dir_b, total_pool_b)
+
+    candidates_a = pd.read_csv(output_dir_a / "next_round_candidates.csv")
+    candidates_b = pd.read_csv(output_dir_b / "next_round_candidates.csv")
+    pool_a = pd.read_csv(total_pool_a)
+    pool_b = pd.read_csv(total_pool_b)
 
     pd.testing.assert_frame_equal(
-        _generated_candidate_columns(actual_candidates),
-        _generated_candidate_columns(expected_candidates),
+        _generated_candidate_columns(candidates_a),
+        _generated_candidate_columns(candidates_b),
         check_exact=False,
         check_dtype=False,
         rtol=1e-8,
         atol=1e-8,
     )
     pd.testing.assert_frame_equal(
-        actual_pool,
-        expected_pool,
+        pool_a,
+        pool_b,
         check_exact=False,
         rtol=1e-12,
         atol=1e-12,
     )
-    assert (output_dir / "next_round_summary.txt").read_bytes() == (
-        PROJECT_ROOT
-        / "results"
-        / "multi_objective_v2"
-        / "next_round"
-        / "next_round_summary.txt"
+    assert (output_dir_a / "next_round_summary.txt").read_bytes() == (
+        output_dir_b / "next_round_summary.txt"
     ).read_bytes()
+
+    # The currently screening-phase slate is now scored purely on predicted
+    # viability (see annotate_candidates); intact-formation probability must
+    # not influence which candidates are selected during screening.
+    assert len(candidates_a) == 12
+    assert candidates_a["recommendation_type"].eq("screening_candidate").all()
+
     assert formulations_path.read_bytes() == formulations_before
     assert observations_path.read_bytes() == observations_before

@@ -81,6 +81,167 @@ def _single_active_feature(row: pd.Series, registry: IngredientRegistry) -> tupl
     return active[0]
 
 
+def _active_ingredient_set(row: pd.Series, registry: IngredientRegistry) -> frozenset[str]:
+    """Return the exact set of registry-recognized ingredients active in `row`.
+
+    Uses `registry.feature_names` (the authoritative ingredient list, same
+    one `count_active_ingredients`/`_single_active_feature` use) rather than
+    any `_M`/`_pct`-suffix heuristic, so derived/aggregate columns like
+    `total_polymer_pct` or `total_nonpermeating_solute_M` are never mistaken
+    for selectable ingredients.
+    """
+    active: list[str] = []
+    for feature_name in registry.feature_names:
+        value = pd.to_numeric(row.get(feature_name, 0.0), errors="coerce")
+        if pd.isna(value):
+            continue
+        if abs(float(value)) >= presence_threshold(feature_name):
+            active.append(feature_name)
+    return frozenset(active)
+
+
+def _combination_cap_for_size(optimization_config: Mapping, combo_size: int) -> int:
+    """Combination occurrence cap, with pairs allowed more repeats than
+    larger combinations.
+
+    Pairs (size 2) use `selection.max_candidates_per_ingredient_combination`
+    (default 3) -- the original, looser cap. Any exact combination of size 3
+    or larger (trio, four-a-kind, etc.) is far more specific and far less
+    likely to be a coincidence, so it defaults to a much tighter cap of 1 via
+    `selection.max_candidates_per_larger_ingredient_combination`: at most
+    one candidate per round may carry any *exact* size-3+ active-ingredient
+    set.
+    """
+    if combo_size <= 2:
+        return int(
+            nested_get(
+                optimization_config,
+                "selection.max_candidates_per_ingredient_combination",
+                3,
+            )
+        )
+    return int(
+        nested_get(
+            optimization_config,
+            "selection.max_candidates_per_larger_ingredient_combination",
+            1,
+        )
+    )
+
+
+def _enforce_ingredient_combination_cap(
+    selected: pd.DataFrame,
+    candidate_pool: pd.DataFrame,
+    registry: IngredientRegistry,
+    optimization_config: Mapping,
+    score_column: str,
+) -> pd.DataFrame:
+    """Cap how many selected candidates may share the exact same active-
+    ingredient set, regardless of how many ingredients are in that set.
+
+    A pure-viability score can collapse the slate onto repeats of one
+    high-scoring combination (e.g. ectoin + ethylene_glycol), even after
+    origin-bucket diversity is enforced, because every bucket independently
+    re-discovers the same favored combination. This swaps out the lowest-
+    scoring offender past the cap for the best-scoring pool candidate whose
+    own combination is not already at the cap, mirroring
+    `_enforce_single_ingredient_spacing`'s swap approach but keyed on the
+    candidate's full active-ingredient set (size 2+) instead of a single
+    feature.
+
+    The cap is size-dependent (see `_combination_cap_for_size`): pairs get a
+    looser cap, exact trios/quadruples/etc. get a much tighter one (1 by
+    default), since an exact match on 3+ ingredients simultaneously is a much
+    stronger signal of redundant exploration than a repeated pair.
+    Combinations of size 0-1 are left uncapped here: an empty or
+    single-ingredient formulation isn't the "ectoin+EG cluster" failure mode
+    this guards against, and size-1 spacing is already handled separately by
+    `_enforce_single_ingredient_spacing`.
+    """
+    if selected.empty:
+        return selected.copy()
+
+    adjusted = selected.copy().reset_index(drop=True)
+    ranked_pool = candidate_pool.sort_values(
+        [score_column, "candidate_id"],
+        ascending=[False, True],
+        kind="mergesort",
+    ).reset_index(drop=True)
+
+    def combo_of(row: pd.Series) -> frozenset[str]:
+        return _active_ingredient_set(row, registry)
+
+    while True:
+        combos = [combo_of(row) for _, row in adjusted.iterrows()]
+        counts: dict[frozenset[str], int] = {}
+        for combo in combos:
+            if len(combo) < 2:
+                continue
+            counts[combo] = counts.get(combo, 0) + 1
+        over_cap = {
+            combo: count
+            for combo, count in counts.items()
+            if count > _combination_cap_for_size(optimization_config, len(combo))
+        }
+        if not over_cap:
+            break
+
+        # Pick the most-over-cap combination (relative to its own size's
+        # cap), then within it the lowest-scoring candidate as the swap-out
+        # target.
+        worst_combo = max(
+            over_cap,
+            key=lambda combo: over_cap[combo] - _combination_cap_for_size(optimization_config, len(combo)),
+        )
+        worst_cap = _combination_cap_for_size(optimization_config, len(worst_combo))
+        offender_positions = [
+            position
+            for position, combo in enumerate(combos)
+            if combo == worst_combo
+        ]
+        offender_positions.sort(
+            key=lambda position: float(
+                pd.to_numeric(adjusted.iloc[position].get(score_column, 0.0), errors="coerce") or 0.0
+            )
+        )
+        loser_position = offender_positions[0]
+        loser_id = str(adjusted.iloc[loser_position]["candidate_id"])
+
+        selected_ids = set(adjusted["candidate_id"].astype(str))
+        replacement_row: pd.DataFrame | None = None
+        for _, candidate in ranked_pool.iterrows():
+            candidate_id = str(candidate.get("candidate_id", ""))
+            if not candidate_id or candidate_id == loser_id or candidate_id in selected_ids:
+                continue
+            candidate_combo = combo_of(candidate)
+            if candidate_combo == worst_combo:
+                continue
+            if len(candidate_combo) >= 2:
+                candidate_cap = _combination_cap_for_size(optimization_config, len(candidate_combo))
+                if counts.get(candidate_combo, 0) >= candidate_cap:
+                    continue
+            replacement_row = pd.DataFrame([candidate])
+            break
+
+        if replacement_row is None:
+            # No eligible replacement exists in the pool; leave this
+            # over-cap combination as-is rather than shrinking the slate.
+            break
+
+        loser_row = adjusted.iloc[[loser_position]]
+        adjusted = pd.concat(
+            [
+                adjusted.iloc[:loser_position],
+                replacement_row,
+                adjusted.iloc[loser_position + 1 :],
+            ],
+            ignore_index=True,
+        )
+        del loser_row, worst_cap
+
+    return adjusted
+
+
 def _single_ingredient_spacing_conflicts(
     frame: pd.DataFrame,
     registry: IngredientRegistry,
@@ -319,17 +480,13 @@ def annotate_candidates(
     for column in report_frame.columns:
         annotated[column] = report_frame[column].to_numpy()
 
-    viability_weight = float(nested_get(optimization_config, "screening_phase.viability_weight", 0.75))
-    if policy_active and not models.intact.fitted:
-        intact_weight = 0.0
-        viability_weight = 1.0
-    else:
-        viability_weight = float(
-            nested_get(optimization_config, "screening_phase.viability_weight", 0.75)
-        )
-        intact_weight = float(
-            nested_get(optimization_config, "screening_phase.intact_weight", 0.25)
-        )
+    # Screening exists to find viable formulations; intact-needle formation
+    # is a mechanics-phase concern (see _mechanics_phase_scores, which uses
+    # the full acquisition_penalty including intact-failure risk). Screening
+    # therefore scores purely on predicted viability, net of non-intact
+    # soft-constraint penalties. The intact gate is preserved for rescue
+    # candidate generation (generate_rescue_candidate_pool), not for
+    # filtering or scoring the general screening pool.
     support_penalty = np.zeros(len(annotated), dtype=float)
     if policy_active and "support_status" in annotated.columns:
         penalty_value = float(
@@ -345,9 +502,8 @@ def annotate_candidates(
             0.0,
         )
     annotated["screening_phase_score"] = (
-        viability_weight * minmax(annotated["viability_ucb"].to_numpy(dtype=float))
-        + intact_weight * minmax(annotated["intact_patch_pass_probability"].to_numpy(dtype=float))
-        - annotated["acquisition_penalty"].to_numpy(dtype=float)
+        minmax(annotated["viability_ucb"].to_numpy(dtype=float))
+        - annotated["screening_acquisition_penalty"].to_numpy(dtype=float)
         - support_penalty
     )
     if "recommendation_type" not in annotated.columns:
@@ -444,6 +600,7 @@ def _candidate_masks(
 def _continuous_mechanics_candidates(
     candidate_pool: pd.DataFrame,
     formulations: pd.DataFrame,
+    observations: pd.DataFrame,
     models: EndpointModels,
     registry: IngredientRegistry,
     optimization_config: Mapping,
@@ -575,6 +732,134 @@ def _continuous_mechanics_candidates(
     return generated, metadata
 
 
+def _allocate_screening_origin_quota(
+    remaining: pd.DataFrame,
+    score: np.ndarray,
+    registry: IngredientRegistry,
+    n: int,
+    local_quota: int,
+    explore_probe_quota: int,
+    explore_probe_per_category_cap: int,
+    diversity_weight: float,
+    competitive_utility_band: float | None,
+) -> list[int]:
+    """Pick `n` screening-pool indices using a fixed local/explore/probe mix.
+
+    Pure top-score selection collapses onto whichever origin currently has
+    the best-scoring cluster (e.g. local_perturbation candidates seeded near
+    a legacy high-viability formulation), starving sparse_exploration and
+    boundary_probe even though the pool was generated with a deliberate
+    40/35/25 local/sparse/boundary mix. This reproduces that intent at the
+    selection stage: `local_quota` slots go to the best local_perturbation
+    candidates, and `explore_probe_quota` slots are split between
+    sparse_exploration and boundary_probe by score, with each category
+    capped at `explore_probe_per_category_cap` so neither one can take all
+    of the explore/probe slots.
+
+    Within each bucket the existing greedy diversity pick is reused so
+    candidates are still spaced out, not just top-K by raw score.
+    """
+    if remaining.empty or n <= 0:
+        return []
+
+    origin = (
+        remaining["candidate_origin"].astype(str)
+        if "candidate_origin" in remaining.columns
+        else pd.Series("", index=remaining.index)
+    )
+
+    def _bucket_pick(mask: pd.Series, count: int, exclude: set[int]) -> list[int]:
+        if count <= 0:
+            return []
+        positions = [
+            position
+            for position, keep in enumerate(mask.to_numpy())
+            if keep and position not in exclude
+        ]
+        if not positions:
+            return []
+        bucket_frame = remaining.iloc[positions].reset_index(drop=True)
+        bucket_score = score[positions]
+        local_indices = _greedy_diverse_pick(
+            bucket_frame,
+            bucket_score,
+            registry.feature_names,
+            n=min(count, len(positions)),
+            diversity_weight=diversity_weight,
+            competitive_utility_band=competitive_utility_band,
+        )
+        return [positions[index] for index in local_indices]
+
+    selected: list[int] = []
+    selected_set: set[int] = set()
+
+    local_mask = origin.eq("local_perturbation")
+    local_picks = _bucket_pick(local_mask, local_quota, selected_set)
+    selected.extend(local_picks)
+    selected_set.update(local_picks)
+
+    sparse_mask = origin.eq("sparse_exploration")
+    boundary_mask = origin.eq("boundary_probe")
+
+    sparse_cap = min(explore_probe_per_category_cap, explore_probe_quota)
+    boundary_cap = min(explore_probe_per_category_cap, explore_probe_quota)
+
+    sparse_positions = [
+        position for position, keep in enumerate(sparse_mask.to_numpy()) if keep
+    ]
+    boundary_positions = [
+        position for position, keep in enumerate(boundary_mask.to_numpy()) if keep
+    ]
+
+    # Score-weighted split: rank each category's best available score, then
+    # fill greedily by score across both categories together (so a category
+    # with no competitive candidates yields its slots to the other), while
+    # respecting the per-category cap.
+    explore_probe_filled = 0
+    sparse_taken = 0
+    boundary_taken = 0
+    sparse_remaining = [position for position in sparse_positions if position not in selected_set]
+    boundary_remaining = [position for position in boundary_positions if position not in selected_set]
+
+    while explore_probe_filled < explore_probe_quota and (sparse_remaining or boundary_remaining):
+        candidates: list[tuple[float, str, int]] = []
+        if sparse_remaining and sparse_taken < sparse_cap:
+            best = max(sparse_remaining, key=lambda position: score[position])
+            candidates.append((float(score[best]), "sparse", best))
+        if boundary_remaining and boundary_taken < boundary_cap:
+            best = max(boundary_remaining, key=lambda position: score[position])
+            candidates.append((float(score[best]), "boundary", best))
+        if not candidates:
+            break
+        candidates.sort(key=lambda item: item[0], reverse=True)
+        _, category, position = candidates[0]
+        selected.append(position)
+        selected_set.add(position)
+        explore_probe_filled += 1
+        if category == "sparse":
+            sparse_taken += 1
+            sparse_remaining.remove(position)
+        else:
+            boundary_taken += 1
+            boundary_remaining.remove(position)
+
+    # Backfill: if local/sparse/boundary buckets together couldn't fill `n`
+    # (e.g. a thin pool), fall back to best-remaining-score across all
+    # origins so the slate still reaches its target size.
+    if len(selected) < n:
+        fallback_positions = [
+            position for position in range(len(remaining)) if position not in selected_set
+        ]
+        fallback_positions.sort(key=lambda position: score[position], reverse=True)
+        for position in fallback_positions:
+            if len(selected) >= n:
+                break
+            selected.append(position)
+            selected_set.add(position)
+
+    return selected[:n]
+
+
 def _select_round_slate(
     annotated: pd.DataFrame,
     registry: IngredientRegistry,
@@ -590,19 +875,15 @@ def _select_round_slate(
         score_column = "screening_phase_score"
         default_recommendation_type = "screening_candidate"
 
+    # Retests are flagged purely on viability disagreement/uncertainty
+    # (see helper/retest.py retest_priority_score: replicate range, local
+    # neighbor residual, viability std). They are intentionally not filtered
+    # by intact-formation prediction here: a formulation whose viability
+    # results disagree needs re-testing regardless of what the intact model
+    # predicts, otherwise the most uncertain candidates could be silently
+    # dropped from the retest slate.
     retest_limit = int(nested_get(optimization_config, "retest.max_candidates_per_round", 2))
     retests = annotated[annotated["recommendation_type"] == "retest_priority"].copy()
-    if policy_active and not retests.empty and "intact_patch_pass_probability" in retests.columns:
-        intact_threshold = float(
-            nested_get(
-                optimization_config,
-                "round_policy.intact_probability_threshold",
-                0.50,
-            )
-        )
-        retests = retests.loc[
-            retests["intact_patch_pass_probability"] >= intact_threshold
-        ].copy()
     selected_parts: list[pd.DataFrame] = []
     selected_ids: set[str] = set()
     if not retests.empty and retest_limit > 0:
@@ -632,26 +913,26 @@ def _select_round_slate(
                 selected_parts.append(selected_rescue)
                 selected_ids.update(selected_rescue["candidate_id"].astype(str))
 
+    # The retest + rescue mechanisms are reserved a combined budget of
+    # (retest_limit + rescue_limit) slots. Any of that reserved budget left
+    # unused this round (e.g. no retest-eligible formulation, or fewer
+    # rescue candidates than the cap) is backfilled with the best-scoring
+    # local_perturbation candidates rather than silently shrinking the
+    # slate, so the round always gets a full n candidates.
+    rescue_retest_reserve = retest_limit + rescue_limit
+    rescue_retest_filled = sum(len(part) for part in selected_parts)
+    rescue_retest_unused = max(rescue_retest_reserve - rescue_retest_filled, 0)
+
+    # Screening-phase candidate selection (the `remaining` pool below) is no
+    # longer narrowed by predicted intact-formation probability. Screening
+    # is solely about predicted viability; intact-needle formation is
+    # assessed once the selector enters the mechanics phase (mechanics_phase_score
+    # already accounts for intact-failure risk via acquisition_penalty).
+    # The intact gate during screening now only acts through rescue
+    # candidates (handled above) and select_mechanical_tests, which stays
+    # disabled in the screening phase regardless.
     remaining = annotated.loc[~annotated["candidate_id"].astype(str).isin(selected_ids)].reset_index(drop=True)
-    remaining_n = max(n - sum(len(part) for part in selected_parts), 0)
-    if (
-        policy_active
-        and phase_resolution.active_phase == PHASE_SCREENING
-        and remaining_n > 0
-        and "intact_patch_pass_probability" in remaining.columns
-    ):
-        intact_threshold = float(
-            nested_get(
-                optimization_config,
-                "round_policy.intact_probability_threshold",
-                0.50,
-            )
-        )
-        intact_pass = remaining.loc[
-            remaining["intact_patch_pass_probability"] >= intact_threshold
-        ].reset_index(drop=True)
-        if len(intact_pass) >= remaining_n:
-            remaining = intact_pass
+    remaining_n = max(n - rescue_retest_filled, 0)
     if remaining_n > 0 and not remaining.empty:
         diversity_weight = (
             float(nested_get(optimization_config, "support_policy.diversity_weight", 0.05))
@@ -680,15 +961,48 @@ def _select_round_slate(
             if policy_active
             else None
         )
-        selected_indices = _greedy_diverse_pick(
-            remaining,
-            remaining[score_column].to_numpy(dtype=float),
-            registry.feature_names,
-            n=remaining_n,
-            diversity_weight=diversity_weight,
-            competitive_utility_band=competitive_band,
-            max_boundary_candidates=max_boundary,
-        )
+        score = remaining[score_column].to_numpy(dtype=float)
+        if policy_active and phase_resolution.active_phase == PHASE_SCREENING:
+            # Fixed origin mix instead of pure top-score selection: otherwise
+            # a tight high-viability local_perturbation cluster (often an
+            # echo of legacy-transfer formulations) crowds out
+            # sparse_exploration/boundary_probe entirely, even though the
+            # pool was deliberately generated with a 40/35/25 mix. The
+            # backfill slots from an unused retest/rescue reserve are
+            # treated as additional local_perturbation budget.
+            base_local_quota = int(
+                nested_get(optimization_config, "round_policy.screening_local_quota", 3)
+            )
+            explore_probe_quota = max(remaining_n - base_local_quota - rescue_retest_unused, 0)
+            local_quota = remaining_n - explore_probe_quota
+            explore_probe_cap = int(
+                nested_get(
+                    optimization_config,
+                    "round_policy.screening_explore_probe_category_cap",
+                    3,
+                )
+            )
+            selected_indices = _allocate_screening_origin_quota(
+                remaining,
+                score,
+                registry,
+                n=remaining_n,
+                local_quota=local_quota,
+                explore_probe_quota=explore_probe_quota,
+                explore_probe_per_category_cap=explore_probe_cap,
+                diversity_weight=diversity_weight,
+                competitive_utility_band=competitive_band,
+            )
+        else:
+            selected_indices = _greedy_diverse_pick(
+                remaining,
+                score,
+                registry.feature_names,
+                n=remaining_n,
+                diversity_weight=diversity_weight,
+                competitive_utility_band=competitive_band,
+                max_boundary_candidates=max_boundary,
+            )
         if selected_indices:
             selected_parts.append(remaining.iloc[selected_indices].copy())
 
@@ -698,6 +1012,13 @@ def _select_round_slate(
         selected = annotated.head(0).copy()
 
     selected = _enforce_single_ingredient_spacing(
+        selected,
+        annotated,
+        registry,
+        optimization_config,
+        score_column=score_column,
+    )
+    selected = _enforce_ingredient_combination_cap(
         selected,
         annotated,
         registry,
@@ -802,6 +1123,7 @@ def select_next_round(
         continuous_candidates, continuous_metadata = _continuous_mechanics_candidates(
             candidate_pool,
             formulations,
+            observations,
             models,
             registry,
             optimization_config,

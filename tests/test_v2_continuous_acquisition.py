@@ -74,6 +74,7 @@ def test_mechanics_continuous_path_applies_caps_before_finite_pool_fallback(
     generated, metadata = selection._continuous_mechanics_candidates(
         candidate_pool,
         training,
+        pd.DataFrame(),
         models,
         registry,
         config,

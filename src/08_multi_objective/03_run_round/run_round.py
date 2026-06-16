@@ -78,6 +78,70 @@ def _read_or_empty(path: str | Path) -> pd.DataFrame:
     return pd.DataFrame()
 
 
+# Columns that helper.feedback.ingest_feedback reads to produce new
+# observation rows. If none of these are filled in across every row of the
+# feedback CSV, the round has not actually progressed yet (no new wet-lab
+# results were recorded) -- see helper/feedback.py for the parsing logic
+# that consumes each of these.
+RESULT_COLUMNS = (
+    "viability_percent",
+    "intact_patch_formation_pass",
+    "intact_tip_count",
+    "preparation_feasibility_pass",
+    "homogeneous_solution_pass",
+    "fillability_pass",
+    "preparation_failure_reason",
+    "instron_file",
+    "critical_axial_load_N_per_needle",
+    "critical_axial_load_N_total",
+    "initial_stiffness_N_per_mm_per_needle",
+)
+
+# viability_percent is the one result column that next_round_candidates.csv
+# can legitimately pre-fill on generation: retest_priority rows carry the
+# formulation's prior observed viability forward as context for the person
+# re-running the test (see helper/retest.py). That carried-over value is not
+# a new wet-lab result, so it must not by itself count as round progress.
+_CARRIED_OVER_RECOMMENDATION_TYPES = ("retest_priority",)
+
+
+def _round_has_new_results(feedback_path: str | Path) -> bool:
+    """Check whether the feedback CSV has any filled-in result columns.
+
+    Returns False (round not progressed) if the file is missing/empty, has
+    none of the known result columns, or every result column is blank in
+    every row -- after discounting viability_percent values that
+    next_round_candidates.csv pre-fills for retest_priority rows as
+    historical context rather than as a new observation. In that case
+    run_round.py should not snapshot or ingest, but should still regenerate
+    candidates from the current state.
+    """
+    path = Path(feedback_path)
+    if not path.exists() or path.stat().st_size == 0:
+        return False
+    feedback = pd.read_csv(path)
+    present_columns = [column for column in RESULT_COLUMNS if column in feedback.columns]
+    if not present_columns:
+        return False
+
+    is_carried_over_row = (
+        feedback["recommendation_type"].isin(_CARRIED_OVER_RECOMMENDATION_TYPES)
+        if "recommendation_type" in feedback.columns
+        else pd.Series(False, index=feedback.index)
+    )
+
+    for column in present_columns:
+        blank_mask = feedback[column].map(_is_blank)
+        if column == "viability_percent":
+            # A filled viability_percent on a retest_priority row is just the
+            # carried-over historical value, not a new result; only count it
+            # as "filled" for rows that are not retest_priority.
+            blank_mask = blank_mask | is_carried_over_row
+        if not blank_mask.all():
+            return True
+    return False
+
+
 def _copy_if_present(source: str | Path, destination: str | Path) -> None:
     source_path = Path(source)
     if not source_path.exists() or source_path.stat().st_size == 0:
@@ -156,7 +220,16 @@ def main() -> None:
     current_formulations = _read_or_empty(args.formulations)
     current_observations = _read_or_empty(args.observations)
 
-    if not args.skip_review:
+    round_progressed = _round_has_new_results(args.candidates_csv)
+    if not round_progressed:
+        print(
+            f"No new wet-lab results found in {Path(args.candidates_csv).resolve()}; "
+            "round has not progressed. Skipping round-review snapshot and "
+            "formulations/observations ingest. Candidates will still be regenerated "
+            "from the current data."
+        )
+
+    if round_progressed and not args.skip_review:
         review_dir = ROUND_REVIEW_DIR / batch_id
         pre_paths = generate_visualization_artifacts(
             current_formulations,
@@ -180,23 +253,26 @@ def main() -> None:
         )
         print(f"Generated {len(pre_paths)} round review file(s): {review_dir.resolve()}")
 
-    formulations, observations = ingest_feedback(
-        feedback_path=args.candidates_csv,
-        candidate_files=candidate_files,
-        formulations=current_formulations,
-        observations=current_observations,
-        registry=registry,
-        batch_id=batch_id,
-        batch_date=args.batch_date,
-        default_needles_compressed=args.default_needles_compressed,
-        viability_noise=_resolve_viability_noise(optimization_config, args.viability_noise),
-    )
+    if round_progressed:
+        formulations, observations = ingest_feedback(
+            feedback_path=args.candidates_csv,
+            candidate_files=candidate_files,
+            formulations=current_formulations,
+            observations=current_observations,
+            registry=registry,
+            batch_id=batch_id,
+            batch_date=args.batch_date,
+            default_needles_compressed=args.default_needles_compressed,
+            viability_noise=_resolve_viability_noise(optimization_config, args.viability_noise),
+        )
 
-    Path(args.formulations).parent.mkdir(parents=True, exist_ok=True)
-    formulations.to_csv(args.formulations, index=False)
-    observations.to_csv(args.observations, index=False)
-    print(f"Updated formulations: {Path(args.formulations).resolve()} ({len(formulations)} rows)")
-    print(f"Updated observations: {Path(args.observations).resolve()} ({len(observations)} rows)")
+        Path(args.formulations).parent.mkdir(parents=True, exist_ok=True)
+        formulations.to_csv(args.formulations, index=False)
+        observations.to_csv(args.observations, index=False)
+        print(f"Updated formulations: {Path(args.formulations).resolve()} ({len(formulations)} rows)")
+        print(f"Updated observations: {Path(args.observations).resolve()} ({len(observations)} rows)")
+    else:
+        formulations, observations = current_formulations, current_observations
 
     status_path = Path(args.output_dir).parent / "current_round_status.json"
     if args.skip_generate:

@@ -112,10 +112,30 @@ selection:
   mechanical_ucb_kappa: 0.50
   diversity_weight: 0.10
   novelty_exception_probability_floor: 0.25
+  # Max number of selected candidates in a round that may share the exact
+  # same *pair* (2-ingredient) active-ingredient set. Prevents the slate
+  # from being dominated by repeats of one high-viability-scoring pair
+  # (e.g. ectoin + ethylene_glycol) once origin-bucket diversity alone isn't
+  # enough, since every origin bucket can independently re-discover the
+  # same favored pair. See _enforce_ingredient_combination_cap.
+  max_candidates_per_ingredient_combination: 3
+  # Max number of selected candidates in a round that may share the exact
+  # same *3-or-more-ingredient* active-ingredient set (trio, four-a-kind,
+  # etc.). An exact match across 3+ ingredients simultaneously is a much
+  # stronger redundancy signal than a repeated pair, so this is much
+  # tighter by default: at most 1 candidate per round per exact larger
+  # combination.
+  max_candidates_per_larger_ingredient_combination: 1
   reference_point:
     viability_percent: 0.0
     critical_axial_load_N_per_needle: 0.0
 
+# NOTE: screening_phase_score is now purely viability-based (see
+# helper/selection.py annotate_candidates). viability_weight/intact_weight
+# below are unused by the screening path and kept only as a record of the
+# pre-fix weighting; the intact gate now only acts via rescue-candidate
+# generation (candidate_generation.rescue_*) and mechanics-phase scoring
+# (penalties.intact_failure_weight, round_policy.intact_probability_threshold).
 screening_phase:
   viability_weight: 0.75
   intact_weight: 0.25
