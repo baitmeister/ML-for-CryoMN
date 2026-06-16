@@ -118,7 +118,7 @@ selection:
   # (e.g. ectoin + ethylene_glycol) once origin-bucket diversity alone isn't
   # enough, since every origin bucket can independently re-discover the
   # same favored pair. See _enforce_ingredient_combination_cap.
-  max_candidates_per_ingredient_combination: 3
+  max_candidates_per_ingredient_combination: 2
   # Max number of selected candidates in a round that may share the exact
   # same *3-or-more-ingredient* active-ingredient set (trio, four-a-kind,
   # etc.). An exact match across 3+ ingredients simultaneously is a much

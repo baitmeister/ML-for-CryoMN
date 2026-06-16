@@ -95,7 +95,7 @@ the 12 selected wet-lab formulations and blank result columns.
      share the exact same active-ingredient set (using the registry's
      authoritative feature list, not a column-suffix heuristic). Exact pairs
      use the looser `selection.max_candidates_per_ingredient_combination`
-     cap (default `3`); any exact combination of 3+ ingredients (trio,
+     cap (default `2`); any exact combination of 3+ ingredients (trio,
      four-a-kind, etc.) is far more specific and is capped at `1` per round
      by default via `selection.max_candidates_per_larger_ingredient_combination`.
      Both caps are enforced by swapping the lowest-scoring offender for the

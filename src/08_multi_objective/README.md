@@ -61,7 +61,7 @@ bucket (`local_perturbation`, `sparse_exploration`, `boundary_probe`,
 `rescue_dilution`, `retest`, `continuous_qlognehvi`, `finite_pool_fallback`)
 can contribute, and an ingredient-combination cap that limits how many
 candidates may share the exact same active-ingredient set (pairs allowed up
-to `selection.max_candidates_per_ingredient_combination`, default `3`;
+to `selection.max_candidates_per_ingredient_combination`, default `2`;
 3+-ingredient combinations capped at `selection.max_candidates_per_larger_ingredient_combination`,
 default `1`). See [Stage 02](02_select_candidates/README.md#selection-logic)
 for the full mechanism.

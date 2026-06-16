@@ -105,7 +105,7 @@ def _combination_cap_for_size(optimization_config: Mapping, combo_size: int) -> 
     larger combinations.
 
     Pairs (size 2) use `selection.max_candidates_per_ingredient_combination`
-    (default 3) -- the original, looser cap. Any exact combination of size 3
+    (default 2) -- the original, looser cap. Any exact combination of size 3
     or larger (trio, four-a-kind, etc.) is far more specific and far less
     likely to be a coincidence, so it defaults to a much tighter cap of 1 via
     `selection.max_candidates_per_larger_ingredient_combination`: at most
@@ -117,7 +117,7 @@ def _combination_cap_for_size(optimization_config: Mapping, combo_size: int) -> 
             nested_get(
                 optimization_config,
                 "selection.max_candidates_per_ingredient_combination",
-                3,
+                2,
             )
         )
     return int(

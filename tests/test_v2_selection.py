@@ -232,14 +232,14 @@ def test_ingredient_combination_cap_swaps_out_overcap_pair_for_pool_replacement(
 def test_ingredient_combination_cap_limits_trio_to_one_by_default() -> None:
     """Exact 3-ingredient (and larger) combinations get a much tighter cap
     than pairs: at most 1 candidate per round may carry any given exact
-    trio/four-a-kind/etc., even though the per-pair cap (3 by default)
+    trio/four-a-kind/etc., even though the per-pair cap (2 by default)
     would otherwise let several through.
     """
     registry = load_registry()
     config = load_optimization_config()
     # Leave max_candidates_per_ingredient_combination (pair cap) and
     # max_candidates_per_larger_ingredient_combination (trio+ cap) at their
-    # defaults: 3 and 1 respectively.
+    # defaults: 2 and 1 respectively.
 
     def _trio_row(candidate_id: str, score: float) -> dict[str, float | str]:
         row = {name: 0.0 for name in registry.feature_names}
