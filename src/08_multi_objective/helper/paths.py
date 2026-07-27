@@ -28,6 +28,7 @@ INGREDIENTS_CONFIG = CONFIG_DIR / "ingredients.yaml"
 ENDPOINTS_CONFIG = CONFIG_DIR / "endpoints.yaml"
 OPTIMIZATION_CONFIG = CONFIG_DIR / "optimization.yaml"
 AVAILABILITY_CONFIG = CONFIG_DIR / "availability.yaml"
+EVALUATION_CONFIG = CONFIG_DIR / "evaluation.yaml"
 
 FORMULATIONS_PATH = PROCESSED_V2_DIR / "formulations.csv"
 OBSERVATIONS_PATH = PROCESSED_V2_DIR / "observations.csv"

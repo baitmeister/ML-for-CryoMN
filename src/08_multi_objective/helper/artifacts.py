@@ -287,6 +287,48 @@ def validate_completed_against_proposal(
     }
 
 
+def validate_no_unconfirmed_carried_results(
+    completed_csv: str | Path,
+    proposal_csv: str | Path,
+) -> None:
+    """Reject a proposal-carried result unless the operator confirms it is new.
+
+    Historical viability can be present on legacy retest proposals as context.
+    Leaving that value unchanged with a blank replicate ID is ambiguous and
+    must not silently create a new observation.
+    """
+    proposal = pd.read_csv(proposal_csv)
+    completed = pd.read_csv(completed_csv)
+    if "candidate_id" not in proposal.columns or "candidate_id" not in completed.columns:
+        return
+    proposal_by_id = proposal.assign(
+        candidate_id=proposal["candidate_id"].astype(str)
+    ).set_index("candidate_id", drop=False)
+    carried_result_columns = ["viability_percent"]
+    for row_index, completed_row in completed.iterrows():
+        candidate_id = str(completed_row["candidate_id"])
+        if candidate_id not in proposal_by_id.index:
+            continue
+        proposal_row = proposal_by_id.loc[candidate_id]
+        if str(proposal_row.get("recommendation_type", "")).strip() != "retest_priority":
+            continue
+        if not _is_blank(completed_row.get("replicate_id")):
+            continue
+        for column in carried_result_columns:
+            proposal_value = proposal_row.get(column)
+            completed_value = completed_row.get(column)
+            if _is_blank(proposal_value) or _is_blank(completed_value):
+                continue
+            if _values_equivalent(proposal_value, completed_value):
+                raise ProposalValidationError(
+                    f"Completed row {row_index + 1} retains proposal-carried "
+                    f"{column}={completed_value!r} for retest candidate "
+                    f"{candidate_id!r} with no replicate_id. Replace it with "
+                    "the new measurement, clear it if the retest was not run, "
+                    "or set replicate_id to confirm an identical new result."
+                )
+
+
 def assert_completed_archive_compatible(
     completed_source: str | Path,
     completed_destination: str | Path,

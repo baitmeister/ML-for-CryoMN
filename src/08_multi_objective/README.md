@@ -73,6 +73,7 @@ for the full mechanism.
 | 01 | Build the v2 database from legacy viability evidence. | [`01_build_database`](01_build_database/README.md) |
 | 02 | Select the next wet-lab candidate set and freeze its proposal artifacts. | [`02_select_candidates`](02_select_candidates/README.md) |
 | 03 | Validate and archive the completed worksheet, ingest results, generate round reports, and roll over to the next slate. | [`03_run_round`](03_run_round/README.md) |
+| 04 | Regenerate read-only round or cumulative prospective reports on demand. | [`04_report_campaign`](04_report_campaign/README.md) |
 
 ## Selector Outputs
 
@@ -135,8 +136,18 @@ diagnostics may not. Row reordering and duplicated rows for technical
 replicates are allowed, but all proposed candidates must remain present.
 
 The top-level `results/multi_objective_v2/reports/` directory is reserved for
-cumulative campaign reports. The top-level `total_candidate_pool.csv` is only
+cumulative campaign reports. Proposal-time prospective reports are stored
+under `reports/prospective/`. The top-level `total_candidate_pool.csv` is only
 the latest full debug pool and is overwritten on each selection run.
+
+The existing `model_evaluation_overview.png` and
+`model_evaluation_table.csv` are cross-validated model diagnostics: they fit
+from the current database and estimate within-dataset generalization. They are
+not prospective hold-out results. Prospective evaluation instead reads means
+and uncertainties only from frozen proposal CSVs, then compares them with
+later observations without retraining. Round 1 is reconstructed, Round 2 is
+supplementary because it was migration-frozen, and the locked primary metric
+is pooled viability MAE for the formal Round 3+ cohort.
 
 To lift the current temporary restriction on an ingredient, remove its
 `feature_name` from `config_v2/availability.yaml` and rerun stage 02.
@@ -150,12 +161,6 @@ python3 src/08_multi_objective/01_build_database/build_database.py
 python3 src/08_multi_objective/02_select_candidates/select_candidates.py
 ```
 
-Later rounds:
-
-```bash
-python3 src/08_multi_objective/02_select_candidates/select_candidates.py
-```
-
 Supported round-progression entry point:
 
 ```bash
@@ -163,12 +168,16 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv
 ```
 
-The batch ID is generated as `ROUND_###` from `observations.csv`. After Stage 03
-ingests `ROUND_001`, the next Stage 02 run emits `ROUND_002`. If you rerun Stage
-02 before ingesting results, it will still emit the same next unused round ID.
-`current_round_status.json` is regenerated alongside that process for redundant,
-human-readable tracking. An identical rerun leaves the frozen proposal
-unchanged; Stage 02 refuses to replace a different proposal for the same round.
+For every normal iteration, fill the active worksheet and run Stage 03 once.
+Do not run Stage 02 separately: Stage 03 performs validation, ingestion,
+archival, descriptive/cross-validation reporting, prospective reporting and
+then invokes Stage 02 to freeze the next round. Stage 01 is initial setup only.
+
+The batch ID is generated as `ROUND_###` from `observations.csv`.
+`current_round_status.json` is regenerated alongside selection for redundant,
+human-readable tracking. An identical selector rerun leaves the frozen
+proposal unchanged; Stage 02 refuses to replace a different proposal for the
+same round.
 
 ## What To Fill In The CSV
 
@@ -241,6 +250,7 @@ flowchart TD
     F --> G["03 Run round<br/>validate + ingest"]
     Q --> G
     G --> H["Exact completed sheet<br/>rounds/ROUND_N/completed/"]
-    G --> I["Post-ingest reports<br/>rounds/ROUND_N/reports/"]
+    G --> I["Descriptive, cross-validation + prospective reports<br/>rounds/ROUND_N/reports/"]
+    G --> J["Cumulative prospective report<br/>reports/prospective/"]
     G --> B
 ```

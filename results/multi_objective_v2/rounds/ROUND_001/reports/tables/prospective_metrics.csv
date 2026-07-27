@@ -1,0 +1,4 @@
+scope,round_id,provenance_class,formal_cohort,endpoint,endpoint_role,n_proposed,n_evaluated,completion_rate,mae,rmse,bias,r2,interval_95_coverage,brier_score,accuracy
+round,ROUND_001,reconstructed,False,critical_axial_load_N_per_needle,mechanical_secondary,12,0,0.0,,,,,,,
+round,ROUND_001,reconstructed,False,intact_patch_formation_pass,gate_secondary,12,12,1.0,,,,,,0.9166666666666666,0.08333333333333333
+round,ROUND_001,reconstructed,False,viability_percent,primary,12,12,1.0,21.38945887553776,25.38100200741181,21.18889174686328,-1.6853063968116513,1.0,,

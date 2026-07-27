@@ -17,6 +17,7 @@ from helper.selection import (
     annotate_candidates,
     select_next_round,
     select_mechanical_tests,
+    write_selection_result,
 )
 
 
@@ -933,7 +934,9 @@ def test_policy_active_retests_must_pass_formulation_feasibility() -> None:
     assert result.metadata["retest_candidate_count_rejected_by_feasibility"] == 1
 
 
-def test_policy_active_retests_are_not_excluded_by_intact_prediction() -> None:
+def test_policy_active_retests_are_not_excluded_by_intact_prediction(
+    tmp_path,
+) -> None:
     """A formulation flagged for retest due to viability disagreement must
     stay in the retest slate even if it failed intact-patch formation.
 
@@ -1028,3 +1031,13 @@ def test_policy_active_retests_are_not_excluded_by_intact_prediction() -> None:
     )
 
     assert "retest_priority" in set(result.viability_screen["recommendation_type"].astype(str))
+    write_selection_result(
+        result,
+        tmp_path,
+        batch_id="ROUND_003",
+        registry=registry,
+    )
+    written = pd.read_csv(tmp_path / "next_round_candidates.csv")
+    retest_rows = written[written["recommendation_type"] == "retest_priority"]
+    assert retest_rows["viability_percent"].isna().all()
+    assert retest_rows["replicate_id"].isna().all()

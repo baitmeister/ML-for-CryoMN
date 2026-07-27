@@ -202,7 +202,10 @@ def test_run_round_archives_exact_completed_sheet_and_writes_round_reports(
             str(output_dir),
             "--total-candidate-pool",
             str(results_root / "total_candidate_pool.csv"),
-            "--skip-generate",
+            "--pool-size",
+            "200",
+            "--seed",
+            "7",
         ],
         cwd=Path(__file__).resolve().parents[1],
         check=True,
@@ -215,6 +218,25 @@ def test_run_round_archives_exact_completed_sheet_and_writes_round_reports(
     assert (artifacts.reports_dir / "best_performers_summary.txt").exists()
     assert (artifacts.reports_dir / "report_summary.txt").exists()
     assert (artifacts.report_plots_dir / "endpoint_observation_counts.png").exists()
+    assert (
+        artifacts.reports_dir / "tables" / "prospective_evaluation_table.csv"
+    ).exists()
+    assert (
+        results_root
+        / "reports"
+        / "prospective"
+        / "tables"
+        / "prospective_metrics.csv"
+    ).exists()
+    round_three = round_artifact_paths("ROUND_003", results_root)
+    assert round_three.proposal_csv.exists()
+    assert (
+        output_dir / "next_round_candidates.csv"
+    ).read_bytes() == round_three.proposal_csv.read_bytes()
+    round_three_working = pd.read_csv(output_dir / "next_round_candidates.csv")
+    assert len(round_three_working) == 12
+    assert round_three_working["batch_id"].astype(str).eq("ROUND_003").all()
+    assert round_three_working["viability_percent"].isna().all()
     observations = pd.read_csv(observations_path)
     assert set(observations["endpoint"]) == {
         "viability_percent",

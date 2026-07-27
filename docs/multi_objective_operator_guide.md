@@ -9,7 +9,8 @@ This is the practical runbook for `src/08_multi_objective`.
 - Stage 02 selects the next 12-row slate and freezes its pre-bench proposal.
 - The operator edits only the active worksheet under `next_round/`.
 - Stage 03 validates, ingests, archives the completed worksheet, creates the
-  completed-round reports, and then selects the next slate.
+  completed-round reports, refreshes the cumulative prospective evaluation,
+  and then selects the next slate.
 
 This artifact reorganization does not alter candidate allocation, the CSV
 schema, the early viability-plus-intact input, the mechanical phase transition,
@@ -66,8 +67,10 @@ Never edit archived proposal or completed files.
 results/multi_objective_v2/reports/
 ```
 
-This top-level directory is only for cumulative campaign reports generated on
-demand. It is separate from each completed round's reports.
+This top-level directory contains cumulative campaign reports and is separate
+from each completed round's reports. Stage 03 refreshes
+`reports/prospective/` automatically; Stage 04 can regenerate it on demand
+without changing campaign state.
 
 ### Latest-only artifacts
 
@@ -208,11 +211,14 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
 The order is deliberate:
 
 1. validate the worksheet against the frozen proposal
-2. ingest observations and formulations
-3. archive the exact source bytes as `completed/completed.csv`
-4. generate post-ingest reports in the completed round folder
-5. generate and freeze the next proposal
-6. replace the active workspace with the next editable slate
+2. reject any unconfirmed carried-over Round 2 retest result
+3. ingest observations and formulations
+4. archive the exact source bytes as `completed/completed.csv`
+5. generate descriptive and cross-validated reports
+6. evaluate the round's frozen proposal-time predictions
+7. refresh the cumulative prospective report
+8. generate and freeze the next proposal
+9. replace the active workspace with the next editable slate
 
 The next slate is generated only after reporting succeeds. If reporting fails,
 the database update and completed worksheet remain preserved and the command
@@ -270,6 +276,30 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
 Successful ingestion creates `ROUND_002/completed/completed.csv`, creates the
 Round 2 reports, freezes the Round 3 proposal, and leaves the editable Round 3
 slate in `next_round/`.
+
+Before ingestion, resolve the existing `retest_priority` row's prefilled
+viability `26.53`: replace it with the new result, add `replicate_id` if a real
+new result is coincidentally identical, or clear it if the retest was not run.
+
+Do not run Stage 01 or Stage 02 for Round 2 or later normal iterations. Fill the
+active file, optionally run `helper/instron.py`, then run Stage 03 once.
+
+## Prospective Versus Cross-Validated Evaluation
+
+The existing `model_evaluation_*` outputs are cross-validated diagnostics
+trained from the current database. The `prospective_*` outputs compare frozen
+proposal-time predictions with later measurements without model retraining.
+Round 1 is explicitly reconstructed, Round 2 is
+`migration_frozen_supplementary`, and pooled Round 3+ viability MAE is the
+locked primary prospective metric. Missing measurements remain visible as
+ineligible audit rows.
+
+To refresh reports without ingesting data or selecting candidates:
+
+```bash
+python3 src/08_multi_objective/04_report_campaign/report_campaign.py \
+  --all-rounds
+```
 
 ## Historical Round 1
 

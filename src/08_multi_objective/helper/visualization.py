@@ -695,8 +695,20 @@ def _save_model_evaluation_overview(
     fig.patch.set_facecolor(PAGE_BG)
     ax_viability, ax_load, ax_intact, ax_scorecard = axes.flatten()
 
-    viability_metrics = _plot_parity_axis(ax_viability, viability_cv, "Viability model fit", "viability (%)", BLUE)
-    load_metrics = _plot_parity_axis(ax_load, load_cv, "Mechanical model fit", "critical load (N/needle)", GOLD)
+    viability_metrics = _plot_parity_axis(
+        ax_viability,
+        viability_cv,
+        "Cross-validated viability fit",
+        "viability (%)",
+        BLUE,
+    )
+    load_metrics = _plot_parity_axis(
+        ax_load,
+        load_cv,
+        "Cross-validated mechanical fit",
+        "critical load (N/needle)",
+        GOLD,
+    )
     intact_metrics = _plot_probability_axis(ax_intact, intact_cv)
 
     ax_scorecard.axis("off")
@@ -727,7 +739,7 @@ def _save_model_evaluation_overview(
         fontsize=11,
         bbox={"boxstyle": "round,pad=0.5", "facecolor": AX_BG, "edgecolor": GRID},
     )
-    fig.suptitle("V2 model evaluation overview", fontsize=16, y=0.98)
+    fig.suptitle("V2 cross-validated model evaluation overview", fontsize=16, y=0.98)
     fig.tight_layout(rect=[0, 0, 1, 0.97])
 
     path = _artifact_path(output_dir, "model_evaluation_overview", ".png", artifact_prefix)

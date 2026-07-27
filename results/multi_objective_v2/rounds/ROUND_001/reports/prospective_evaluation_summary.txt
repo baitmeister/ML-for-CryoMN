@@ -1,0 +1,20 @@
+CryoMN v2 Prospective Evaluation
+=================================
+
+Policy version: prospective_evaluation_v1
+Formal prospective cohort starts: ROUND_003
+Prediction source: archived proposal-time means and uncertainties
+Technical replicate handling: mean within candidate and round
+
+Round: ROUND_001
+Provenance classification: reconstructed
+Formal cohort: no
+
+- critical_axial_load_N_per_needle: n=0/12, MAE=n/a
+- intact_patch_formation_pass: n=12/12, Brier=0.917
+- viability_percent: n=12/12, MAE=21.389
+
+Interpretation:
+- Reconstructed and migration-frozen rounds are reported separately from the formal pooled metric.
+- Cross-validation reports retrain models and answer a different question.
+- Missing measurements remain visible as ineligible audit rows; they are not imputed.

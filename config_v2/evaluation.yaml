@@ -1,0 +1,29 @@
+policy_version: prospective_evaluation_v1
+formal_start_round: 3
+replicate_aggregation: mean
+prediction_interval:
+  confidence: 0.95
+  z_value: 1.96
+
+round_provenance:
+  ROUND_001: reconstructed
+  ROUND_002: migration_frozen_supplementary
+  default: formal_frozen
+
+endpoints:
+  viability_percent:
+    prediction_mean_column: predicted_viability_percent
+    prediction_std_column: viability_std
+    metric_type: continuous
+    role: primary
+  intact_patch_formation_pass:
+    prediction_mean_column: intact_patch_pass_probability
+    metric_type: binary
+    role: gate_secondary
+    classification_threshold: 0.5
+  critical_axial_load_N_per_needle:
+    prediction_mean_column: predicted_critical_axial_load_N_per_needle
+    prediction_std_column: critical_axial_load_std
+    metric_type: continuous
+    role: mechanical_secondary
+    formal_phase: mechanics_enabled

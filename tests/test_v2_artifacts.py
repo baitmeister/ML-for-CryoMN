@@ -15,6 +15,7 @@ from helper.artifacts import (
     round_artifact_paths,
     sha256_file,
     validate_completed_against_proposal,
+    validate_no_unconfirmed_carried_results,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -199,6 +200,42 @@ def test_archive_completed_preserves_exact_source_bytes(tmp_path: Path) -> None:
     ).completed_csv
     assert archived == expected
     assert archived.read_bytes() == completed_source.read_bytes()
+
+
+def test_carried_retest_result_requires_change_clear_or_replicate_id(
+    tmp_path: Path,
+) -> None:
+    proposal = pd.DataFrame(
+        [
+            {
+                **_proposal_rows()[0],
+                "recommendation_type": "retest_priority",
+                "viability_percent": 26.53,
+            }
+        ]
+    )
+    proposal_path = tmp_path / "proposal.csv"
+    completed_path = tmp_path / "completed.csv"
+    proposal.to_csv(proposal_path, index=False)
+    proposal.to_csv(completed_path, index=False)
+
+    with pytest.raises(ProposalValidationError, match="proposal-carried"):
+        validate_no_unconfirmed_carried_results(completed_path, proposal_path)
+
+    changed = proposal.copy()
+    changed.loc[0, "viability_percent"] = 31.2
+    changed.to_csv(completed_path, index=False)
+    validate_no_unconfirmed_carried_results(completed_path, proposal_path)
+
+    confirmed_identical = proposal.copy()
+    confirmed_identical.loc[0, "replicate_id"] = "rep_002"
+    confirmed_identical.to_csv(completed_path, index=False)
+    validate_no_unconfirmed_carried_results(completed_path, proposal_path)
+
+    cleared = proposal.copy()
+    cleared.loc[0, "viability_percent"] = float("nan")
+    cleared.to_csv(completed_path, index=False)
+    validate_no_unconfirmed_carried_results(completed_path, proposal_path)
 
 
 def test_reconstruct_proposal_blanks_only_wetlab_editable_fields(

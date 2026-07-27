@@ -54,7 +54,10 @@ python3 src/08_multi_objective/02_select_candidates/select_candidates.py \
 wet-lab input.
 
 `next_round_candidates.csv` is the file to fill after validation. It contains
-the 12 selected wet-lab formulations and blank result columns.
+the 12 selected wet-lab formulations and blank result columns. Beginning with
+newly generated Round 3 proposals, every editable result field is blank,
+including for `retest_priority` rows; prior measurements remain in the
+database rather than being carried into the operator worksheet.
 
 The files under `rounds/ROUND_###/proposal/` are the frozen record of what the
 model proposed before bench work. Do not edit them. An identical selector rerun

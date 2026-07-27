@@ -7,7 +7,13 @@ from typing import Any, Mapping
 
 import yaml
 
-from .paths import AVAILABILITY_CONFIG, ENDPOINTS_CONFIG, INGREDIENTS_CONFIG, OPTIMIZATION_CONFIG
+from .paths import (
+    AVAILABILITY_CONFIG,
+    ENDPOINTS_CONFIG,
+    EVALUATION_CONFIG,
+    INGREDIENTS_CONFIG,
+    OPTIMIZATION_CONFIG,
+)
 
 
 def load_yaml(path: str | Path) -> dict[str, Any]:
@@ -33,6 +39,10 @@ def load_availability_config(path: str | Path = AVAILABILITY_CONFIG) -> dict[str
     path = Path(path)
     if not path.exists():
         return {}
+    return load_yaml(path)
+
+
+def load_evaluation_config(path: str | Path = EVALUATION_CONFIG) -> dict[str, Any]:
     return load_yaml(path)
 
 

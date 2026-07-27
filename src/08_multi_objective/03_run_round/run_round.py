@@ -17,6 +17,7 @@ if str(V2_ROOT) not in sys.path:
 
 from helper.paths import (
     AVAILABILITY_CONFIG,
+    EVALUATION_CONFIG,
     FORMULATIONS_PATH,
     OBSERVATIONS_PATH,
     NEXT_ROUND_CANDIDATES_PATH,
@@ -29,10 +30,19 @@ from helper.artifacts import (
     assert_completed_archive_compatible,
     round_artifact_paths,
     validate_completed_against_proposal,
+    validate_no_unconfirmed_carried_results,
 )
-from helper.config import load_optimization_config, nested_get
+from helper.config import (
+    load_evaluation_config,
+    load_optimization_config,
+    nested_get,
+)
 from helper.feedback import ingest_feedback
 from helper.phase import resolve_phase_mode
+from helper.prospective_evaluation import (
+    generate_campaign_prospective_artifacts,
+    generate_round_prospective_artifacts,
+)
 from helper.registry import load_registry
 from helper.status import write_current_round_status
 from helper.visualization import generate_completed_round_artifacts
@@ -57,6 +67,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--default-needles-compressed", type=int, default=None)
     parser.add_argument("--viability-noise", type=float, default=None)
     parser.add_argument("--availability-config", default=str(AVAILABILITY_CONFIG))
+    parser.add_argument("--evaluation-config", default=str(EVALUATION_CONFIG))
     parser.add_argument("--output-dir", default=str(RESULTS_V2_DIR / "next_round"))
     parser.add_argument("--total-candidate-pool", default=str(TOTAL_CANDIDATE_POOL_PATH))
     parser.add_argument("--pool-size", type=int, default=None)
@@ -217,6 +228,7 @@ def main() -> None:
     select_script = V2_ROOT / "02_select_candidates" / "select_candidates.py"
     registry = load_registry()
     optimization_config = load_optimization_config()
+    evaluation_config = load_evaluation_config(args.evaluation_config)
     batch_id = _resolve_batch_id(args.candidates_csv, args.batch_id)
     candidate_files = args.candidate_file or [str(args.candidates_csv or NEXT_ROUND_CANDIDATES_PATH)]
     current_candidates = _read_or_empty(args.candidates_csv)
@@ -236,6 +248,10 @@ def main() -> None:
 
     if round_progressed:
         validation = validate_completed_against_proposal(
+            args.candidates_csv,
+            round_paths.proposal_csv,
+        )
+        validate_no_unconfirmed_carried_results(
             args.candidates_csv,
             round_paths.proposal_csv,
         )
@@ -284,6 +300,26 @@ def main() -> None:
             print(
                 f"Generated {len(report_paths)} completed-round report file(s): "
                 f"{round_paths.reports_dir.resolve()}"
+            )
+            round_prospective_paths = generate_round_prospective_artifacts(
+                batch_id,
+                observations,
+                results_root=results_root,
+                evaluation_config=evaluation_config,
+            )
+            print(
+                f"Generated {len(round_prospective_paths)} round prospective "
+                f"evaluation file(s): {round_paths.reports_dir.resolve()}"
+            )
+            campaign_prospective_paths = generate_campaign_prospective_artifacts(
+                observations,
+                results_root=results_root,
+                evaluation_config=evaluation_config,
+            )
+            print(
+                f"Generated {len(campaign_prospective_paths)} campaign prospective "
+                f"evaluation file(s): "
+                f"{(results_root / 'reports' / 'prospective').resolve()}"
             )
     else:
         formulations, observations = current_formulations, current_observations

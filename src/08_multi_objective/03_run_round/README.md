@@ -8,8 +8,10 @@ artifacts:
 1. validate the filled working sheet against the frozen pre-bench proposal
 2. ingest the wet-lab results
 3. archive the exact filled worksheet bytes
-4. generate reports from the updated database
-5. generate and freeze the next proposal
+4. generate descriptive and cross-validated reports from the updated database
+5. evaluate the archived proposal-time predictions for the completed round
+6. refresh the cumulative prospective report
+7. generate and freeze the next proposal
 
 This is the supported entry point for normal round progression.
 
@@ -31,6 +33,13 @@ Do not edit the frozen proposal. In the working file, fill the existing
 viability and intact-patch fields, optional intact-patch detail fields,
 optional mechanical fields when measured, and `replicate_id` or `notes` when
 needed. The CSV schema and automatic endpoint phase progression are unchanged.
+
+The migration-frozen Round 2 proposal has one `retest_priority` row with a
+carried viability value of `26.53`. Replace it with the new measurement if the
+retest was run. If a genuine new result is coincidentally also `26.53`, add a
+`replicate_id`. Clear it if the retest was not run. Stage 03 rejects an
+unchanged carried value with no replicate ID so it cannot be mistaken for new
+evidence.
 
 Then run:
 
@@ -94,16 +103,28 @@ results/multi_objective_v2/rounds/ROUND_###/
 └── reports/
     ├── report_summary.txt
     ├── best_performers_summary.txt
-    ├── tables/model_evaluation_table.csv
+    ├── prospective_evaluation_summary.txt
+    ├── tables/
+    │   ├── model_evaluation_table.csv
+    │   ├── prospective_evaluation_table.csv
+    │   └── prospective_metrics.csv
     └── plots/
         ├── endpoint_observation_counts.png
         ├── model_evaluation_overview.png
-        └── observed_performance_landscape.png
+        ├── observed_performance_landscape.png
+        ├── prospective_prediction_vs_observed.png
+        └── prospective_gate_calibration.png
 ```
 
 Reports that need more observations are omitted until the data support them.
 `completed/completed.csv` is an exact byte-for-byte archive of the successfully
 ingested working worksheet.
+
+`model_evaluation_*` is explicitly cross-validated and may retrain from the
+current database. `prospective_*` uses only archived proposal-time predictions
+and never retrains. Round 1 is reconstructed, Round 2 is supplementary, and
+Round 3+ supplies the formal pooled viability MAE. The cumulative bundle is
+written under `results/multi_objective_v2/reports/prospective/`.
 
 Only after completed-round reporting succeeds does Stage 02 replace the active
 `next_round/` files and freeze the following round proposal. If report
@@ -117,3 +138,6 @@ protection remains active.
 
 The command also refreshes
 `results/multi_objective_v2/current_round_status.json`.
+
+Read-only backfill or refresh commands are documented under
+[`04_report_campaign`](../04_report_campaign/README.md).

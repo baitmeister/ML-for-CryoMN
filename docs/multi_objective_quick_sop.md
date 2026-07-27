@@ -26,6 +26,10 @@ Fill the existing fields as applicable:
 - optional mechanical/Instron fields, if measured
 - `replicate_id` and `notes`, if needed
 
+For the existing Round 2 `retest_priority` row, replace the prefilled `26.53`
+with the new result, add `replicate_id` if the new result is coincidentally
+identical, or clear it if the retest was not performed.
+
 The early-round input remains viability plus the intact gate. Mechanical fields
 remain optional until the automatic paired-data phase transition enables
 mechanics.
@@ -40,12 +44,18 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
 The command:
 
 1. validates the working sheet against the frozen proposal
-2. updates `formulations.csv` and `observations.csv`
-3. archives the exact filled sheet as
+2. validates that a carried Round 2 retest value is not silently re-ingested
+3. updates `formulations.csv` and `observations.csv`
+4. archives the exact filled sheet as
    `rounds/ROUND_###/completed/completed.csv`
-4. generates post-ingest reports under `rounds/ROUND_###/reports/`
-5. generates and freezes the next proposal
-6. replaces `next_round/` with the next editable slate
+5. generates descriptive and cross-validated reports
+6. generates the completed round's prospective report
+7. refreshes `reports/prospective/`
+8. generates and freezes the next proposal
+9. replaces `next_round/` with the next editable slate
+
+Do not run Stage 01 or Stage 02 during a normal iteration. Stage 03 runs Stage
+02 only after all reporting succeeds.
 
 Use `--skip-generate` to stop after ingest, archive and reporting:
 
@@ -65,6 +75,7 @@ results/multi_objective_v2/rounds/ROUND_###/reports/report_summary.txt
 results/multi_objective_v2/rounds/ROUND_###/reports/best_performers_summary.txt
 results/multi_objective_v2/rounds/ROUND_###/reports/tables/
 results/multi_objective_v2/rounds/ROUND_###/reports/plots/
+results/multi_objective_v2/reports/prospective/
 ```
 
 For the next round, review:
@@ -82,6 +93,8 @@ results/multi_objective_v2/rounds/ROUND_###/proposal/
 - Do not enter results in `total_candidate_pool.csv`; it is a latest-only debug
   pool.
 - Top-level `reports/` is for cumulative campaign reports.
+- `model_evaluation_*` is cross-validated; `prospective_*` uses frozen
+  proposal-time predictions. The formal prospective cohort begins at Round 3.
 - The selector stays at 12 rows and retains its existing allocation policy.
 - The phase remains automatic: early `screening_only`, later
   `mechanics_enabled`.

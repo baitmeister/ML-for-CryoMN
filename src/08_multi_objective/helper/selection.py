@@ -18,6 +18,7 @@ from .acquisition import (
     try_botorch_optimize_qlognehvi,
     try_botorch_qlognehvi_scores,
 )
+from .artifacts import EDITABLE_WETLAB_COLUMNS
 from .candidates import stable_formulation_id
 from .config import nested_get
 from .feasibility import (
@@ -1453,9 +1454,11 @@ def write_selection_result(
         notes_index = wetlab_result_columns.index("notes")
         wetlab_result_columns[notes_index:notes_index] = preparation_columns
     selected["batch_id"] = batch_id
-    selected["replicate_id"] = ""
     for column in wetlab_result_columns:
         if column not in selected.columns:
+            selected[column] = ""
+    for column in EDITABLE_WETLAB_COLUMNS:
+        if column in selected.columns:
             selected[column] = ""
     result.metadata["batch_id"] = batch_id
     csv_columns = wetlab_result_columns + [
