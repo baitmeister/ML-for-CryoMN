@@ -43,6 +43,12 @@ from helper.paths import (
 )
 from helper.registry import load_registry
 from helper.selection import select_next_round, write_selection_result
+from helper.similarity import (
+    SimilarityAudit,
+    build_history_similarity_index,
+    filter_frame_by_similarity,
+    resolve_similarity_policy,
+)
 from helper.status import derive_round_tracker, write_current_round_status
 from helper.status import parse_round_number
 from helper.visualization import generate_proposal_artifacts
@@ -117,6 +123,20 @@ def main() -> None:
         raise SystemExit(
             "No v2 formulations were found. Run: python3 src/08_multi_objective/01_build_database/build_database.py"
         )
+    similarity_policy = resolve_similarity_policy(
+        optimization_config,
+        target_round_number,
+    )
+    similarity_index = build_history_similarity_index(
+        formulations,
+        observations,
+        registry,
+        similarity_policy,
+    )
+    similarity_audit = SimilarityAudit(
+        similarity_policy,
+        history_reference_count=len(similarity_index),
+    )
 
     if args.candidate_pool:
         candidate_pool = load_candidate_pool(args.candidate_pool, registry)
@@ -136,6 +156,17 @@ def main() -> None:
         seed = args.seed if args.seed is not None else int(optimization_config.get("random_seed", 42))
         rescue_candidate_count = 0
         if policy_active:
+            rescue_candidates = generate_rescue_candidate_pool(
+                registry,
+                formulations=formulations,
+                observations=observations,
+                optimization_config=optimization_config,
+                support=support_context,
+                unavailable_feature_names=unavailable_features,
+                similarity_index=similarity_index,
+                similarity_audit=similarity_audit,
+            )
+            rescue_candidate_count = int(len(rescue_candidates))
             candidate_pool = generate_support_aware_candidate_pool(
                 registry,
                 formulations=formulations,
@@ -144,16 +175,9 @@ def main() -> None:
                 n_candidates=pool_size,
                 random_seed=seed,
                 unavailable_feature_names=unavailable_features,
+                similarity_index=similarity_index,
+                similarity_audit=similarity_audit,
             )
-            rescue_candidates = generate_rescue_candidate_pool(
-                registry,
-                formulations=formulations,
-                observations=observations,
-                optimization_config=optimization_config,
-                support=support_context,
-                unavailable_feature_names=unavailable_features,
-            )
-            rescue_candidate_count = int(len(rescue_candidates))
             if not rescue_candidates.empty:
                 candidate_pool = pd.concat(
                     [rescue_candidates, candidate_pool],
@@ -202,6 +226,17 @@ def main() -> None:
         raise SystemExit(
             "Candidate pool is empty after removing zero-active formulations."
         )
+    if args.candidate_pool and similarity_policy.active:
+        candidate_pool, _ = filter_frame_by_similarity(
+            candidate_pool,
+            similarity_index,
+            similarity_audit,
+            accepted_reference_kind="generated_pool",
+        )
+        if candidate_pool.empty:
+            raise SystemExit(
+                "Candidate pool is empty after applying formulation-similarity rules."
+            )
 
     result = select_next_round(
         formulations=formulations,
@@ -212,6 +247,7 @@ def main() -> None:
         requested_phase_mode=args.phase_mode,
         target_round_number=target_round_number,
         policy_active=policy_active,
+        similarity_audit=similarity_audit,
     )
     if not rejected_candidates.empty:
         rejected_candidates["selected_for_viability_screen"] = False
@@ -292,6 +328,12 @@ def main() -> None:
     print(
         "Formulation feasibility policy: "
         f"{policy_version} ({'active' if policy_active else 'inactive'}, starts ROUND_{policy_start_round:03d})"
+    )
+    print(
+        "Formulation similarity policy: "
+        f"{similarity_policy.version} "
+        f"({'active' if similarity_policy.active else 'inactive'}, "
+        f"starts ROUND_{similarity_policy.start_round:03d})"
     )
     print(f"Mechanical selection mode: {result.metadata['mechanical_policy']['mechanical_selection_mode']}")
     if unavailable_features:

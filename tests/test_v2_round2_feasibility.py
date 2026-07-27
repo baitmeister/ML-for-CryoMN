@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import subprocess
 import sys
 
@@ -16,6 +17,11 @@ from helper.feasibility import (
     policy_activation,
 )
 from helper.registry import load_registry
+from helper.similarity import (
+    SimilarityAudit,
+    build_history_similarity_index,
+    resolve_similarity_policy,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -117,6 +123,83 @@ def test_support_aware_pool_caps_local_fraction_and_redistributes_shortfall() ->
     assert set(accepted["candidate_origin"]).issubset(
         {"local_perturbation", "sparse_exploration", "boundary_probe"}
     )
+
+
+def test_round_three_similarity_resampling_preserves_full_origin_targets() -> None:
+    """The active gate rejects and resamples; it does not shrink the 2,000 rows."""
+    registry = load_registry()
+    config = load_optimization_config()
+    formulations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "formulations.csv")
+    observations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "observations.csv")
+    support = build_support_context(formulations, registry, config, observations)
+    policy = resolve_similarity_policy(config, 3)
+    index = build_history_similarity_index(
+        formulations,
+        observations,
+        registry,
+        policy,
+    )
+    audit = SimilarityAudit(policy, history_reference_count=len(index))
+
+    pool = generate_support_aware_candidate_pool(
+        registry,
+        formulations,
+        config,
+        support,
+        n_candidates=2000,
+        random_seed=42,
+        unavailable_feature_names=[],
+        similarity_index=index,
+        similarity_audit=audit,
+    )
+    accepted = pool[pool["feasibility_pass"].astype(bool)]
+    origins = accepted["candidate_origin"].value_counts()
+
+    assert len(accepted) == 2000
+    assert int(origins.get("local_perturbation", 0)) == 800
+    assert int(origins.get("sparse_exploration", 0)) == 700
+    assert int(origins.get("boundary_probe", 0)) == 500
+    assert audit.rejection_count > 0
+    assert set(audit.rejections_by_reference_kind).issubset(
+        {"history", "generated_pool"}
+    )
+
+
+def test_round_three_similarity_resampling_is_deterministic_under_seed_42() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    formulations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "formulations.csv")
+    observations = pd.read_csv(PROJECT_ROOT / "data" / "processed_v2" / "observations.csv")
+    support = build_support_context(formulations, registry, config, observations)
+    policy = resolve_similarity_policy(config, 3)
+
+    generated: list[pd.DataFrame] = []
+    audits: list[dict] = []
+    for _ in range(2):
+        index = build_history_similarity_index(
+            formulations,
+            observations,
+            registry,
+            policy,
+        )
+        audit = SimilarityAudit(policy, history_reference_count=len(index))
+        pool = generate_support_aware_candidate_pool(
+            registry,
+            formulations,
+            config,
+            support,
+            n_candidates=100,
+            random_seed=42,
+            unavailable_feature_names=[],
+            similarity_index=index,
+            similarity_audit=audit,
+        )
+        generated.append(pool[pool["feasibility_pass"].astype(bool)].reset_index(drop=True))
+        audits.append(audit.to_metadata())
+
+    pd.testing.assert_frame_equal(generated[0], generated[1])
+    assert audits[0] == audits[1]
+    assert audits[0]["rejection_count"] > 0
 
 
 def test_rejected_generation_attempts_remain_in_audit_pool() -> None:
@@ -363,6 +446,84 @@ def test_high_viability_failed_patch_generates_dilution_rescue_candidates() -> N
     assert rescue["feasibility_pass"].all()
 
 
+def test_round_three_similarity_filters_rescue_candidates_without_exception() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    base = {feature: 0.0 for feature in registry.feature_names}
+    base.update(
+        {
+            "formulation_id": "v2_single_ectoin_failed",
+            "source": "wetlab_feedback:ROUND_002",
+            "source_row_id": "single_failed",
+            "formulation_label": "single ectoin failed",
+            "ectoin_M": 0.10,
+            "active_ingredient_count": 1,
+        }
+    )
+    formulations = pd.DataFrame([base])
+    observations = pd.DataFrame(
+        [
+            {
+                "observation_id": "obs_single_failed_viability",
+                "formulation_id": "v2_single_ectoin_failed",
+                "batch_id": "ROUND_002",
+                "replicate_id": "rep_001",
+                "endpoint": "viability_percent",
+                "value": 70.0,
+                "unit": "percent",
+                "observation_noise": 1.0,
+                "source_type": "wetlab_feedback",
+                "source_file": "test",
+                "notes": "",
+            },
+            {
+                "observation_id": "obs_single_failed_intact",
+                "formulation_id": "v2_single_ectoin_failed",
+                "batch_id": "ROUND_002",
+                "replicate_id": "rep_001",
+                "endpoint": "intact_patch_formation_pass",
+                "value": 0.0,
+                "unit": "binary",
+                "observation_noise": "",
+                "source_type": "wetlab_feedback",
+                "source_file": "test",
+                "notes": "",
+            },
+        ]
+    )
+    support = build_support_context(formulations, registry, config, observations)
+    policy = resolve_similarity_policy(config, 3)
+    index = build_history_similarity_index(
+        formulations,
+        observations,
+        registry,
+        policy,
+    )
+    audit = SimilarityAudit(policy, history_reference_count=len(index))
+
+    rescue = generate_rescue_candidate_pool(
+        registry,
+        formulations,
+        observations,
+        config,
+        support,
+        unavailable_feature_names=[],
+        similarity_index=index,
+        similarity_audit=audit,
+    )
+
+    # The 0.75 dilution is exactly 0.05 from history. The 0.50 dilution is
+    # exactly 0.05 from the already accepted 0.25 rescue, so within-pool
+    # filtering rejects that row as well.
+    assert set(rescue["rescue_scale_factor"]) == {0.25}
+    assert audit.rejection_count == 2
+    assert audit.rejections_by_origin["rescue_dilution"] == 2
+    assert audit.rejections_by_reference_kind == {
+        "generated_pool": 1,
+        "history": 1,
+    }
+
+
 def test_round_one_rerun_is_deterministic_and_preserves_legacy_artifacts(
     tmp_path: Path,
 ) -> None:
@@ -451,3 +612,67 @@ def test_round_one_rerun_is_deterministic_and_preserves_legacy_artifacts(
 
     assert formulations_path.read_bytes() == formulations_before
     assert observations_path.read_bytes() == observations_before
+
+
+def test_round_three_selector_keeps_twelve_rows_and_operator_schema(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "round_three" / "next_round"
+    total_pool = tmp_path / "round_three" / "total_candidate_pool.csv"
+    subprocess.run(
+        [
+            sys.executable,
+            str(
+                PROJECT_ROOT
+                / "src"
+                / "08_multi_objective"
+                / "02_select_candidates"
+                / "select_candidates.py"
+            ),
+            "--batch-id",
+            "ROUND_003",
+            "--output-dir",
+            str(output_dir),
+            "--total-candidate-pool",
+            str(total_pool),
+            "--pool-size",
+            "200",
+            "--seed",
+            "42",
+        ],
+        cwd=PROJECT_ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    round_three = pd.read_csv(output_dir / "next_round_candidates.csv")
+    round_two_schema = pd.read_csv(
+        PROJECT_ROOT
+        / "results"
+        / "multi_objective_v2"
+        / "rounds"
+        / "ROUND_002"
+        / "proposal"
+        / "proposal.csv",
+        nrows=0,
+    ).columns.tolist()
+    metadata = json.loads(
+        (output_dir / "next_round_metadata.json").read_text(encoding="utf-8")
+    )
+
+    assert len(round_three) == 12
+    assert round_three.columns.tolist() == round_two_schema
+    assert metadata["formulation_similarity"]["active"] is True
+    assert metadata["formulation_similarity"]["start_round"] == 3
+    assert (
+        metadata["formulation_similarity"]["final_validation"][
+            "selected_non_retest_count"
+        ]
+        == int(
+            (
+                round_three["recommendation_type"].astype(str)
+                != "retest_priority"
+            ).sum()
+        )
+    )

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from itertools import combinations
 import json
 from pathlib import Path
 from typing import Mapping
@@ -32,6 +31,14 @@ from .phase import PHASE_MECHANICS, PHASE_SCREENING, PhaseResolution, resolve_ph
 from .penalties import constraint_report, count_active_ingredients
 from .registry import IngredientRegistry, presence_threshold
 from .retest import build_retest_candidates
+from .similarity import (
+    SimilarityAudit,
+    build_history_similarity_index,
+    filter_frame_by_similarity,
+    resolve_similarity_policy,
+    similarity_priority_order,
+    validate_selected_similarity,
+)
 
 
 @dataclass(frozen=True)
@@ -66,27 +73,11 @@ def _drop_zero_active_candidates(frame: pd.DataFrame, registry: IngredientRegist
     return filtered.loc[mask].reset_index(drop=True).copy(), removed
 
 
-def _single_active_feature(row: pd.Series, registry: IngredientRegistry) -> tuple[str, float] | None:
-    active: list[tuple[str, float]] = []
-    for feature_name in registry.feature_names:
-        value = pd.to_numeric(row.get(feature_name, 0.0), errors="coerce")
-        if pd.isna(value):
-            continue
-        magnitude = abs(float(value))
-        if magnitude >= presence_threshold(feature_name):
-            active.append((feature_name, magnitude))
-            if len(active) > 1:
-                return None
-    if len(active) != 1:
-        return None
-    return active[0]
-
-
 def _active_ingredient_set(row: pd.Series, registry: IngredientRegistry) -> frozenset[str]:
     """Return the exact set of registry-recognized ingredients active in `row`.
 
     Uses `registry.feature_names` (the authoritative ingredient list, same
-    one `count_active_ingredients`/`_single_active_feature` use) rather than
+    one `count_active_ingredients` uses) rather than
     any `_M`/`_pct`-suffix heuristic, so derived/aggregate columns like
     `total_polymer_pct` or `total_nonpermeating_solute_M` are never mistaken
     for selectable ingredients.
@@ -146,9 +137,7 @@ def _enforce_ingredient_combination_cap(
     re-discovers the same favored combination. This swaps out the lowest-
     scoring offender past the cap for the best-scoring pool candidate whose
     own combination is not already at the cap, mirroring
-    `_enforce_single_ingredient_spacing`'s swap approach but keyed on the
-    candidate's full active-ingredient set (size 2+) instead of a single
-    feature.
+    the candidate's full active-ingredient set (size 2+).
 
     The cap is size-dependent (see `_combination_cap_for_size`): pairs get a
     looser cap, exact trios/quadruples/etc. get a much tighter one (1 by
@@ -156,8 +145,8 @@ def _enforce_ingredient_combination_cap(
     stronger signal of redundant exploration than a repeated pair.
     Combinations of size 0-1 are left uncapped here: an empty or
     single-ingredient formulation isn't the "ectoin+EG cluster" failure mode
-    this guards against, and size-1 spacing is already handled separately by
-    `_enforce_single_ingredient_spacing`.
+    this guards against. Size-1 spacing is enforced by the unified formulation
+    similarity policy before selection.
     """
     if selected.empty:
         return selected.copy()
@@ -239,101 +228,6 @@ def _enforce_ingredient_combination_cap(
             ignore_index=True,
         )
         del loser_row, worst_cap
-
-    return adjusted
-
-
-def _single_ingredient_spacing_conflicts(
-    frame: pd.DataFrame,
-    registry: IngredientRegistry,
-    min_relative_difference: float,
-) -> list[tuple[str, str, str]]:
-    singles_by_feature: dict[str, list[tuple[str, float]]] = {}
-    for _, row in frame.iterrows():
-        candidate_id = str(row.get("candidate_id", ""))
-        single = _single_active_feature(row, registry)
-        if single is None or not candidate_id:
-            continue
-        feature_name, concentration = single
-        singles_by_feature.setdefault(feature_name, []).append((candidate_id, concentration))
-
-    conflicts: list[tuple[str, str, str]] = []
-    for feature_name, entries in singles_by_feature.items():
-        for (left_id, left_conc), (right_id, right_conc) in combinations(entries, 2):
-            baseline = min(left_conc, right_conc)
-            if baseline <= 0.0:
-                continue
-            relative_difference = abs(left_conc - right_conc) / baseline
-            if relative_difference + 1e-12 < min_relative_difference:
-                conflicts.append((feature_name, left_id, right_id))
-    return conflicts
-
-
-def _enforce_single_ingredient_spacing(
-    selected: pd.DataFrame,
-    candidate_pool: pd.DataFrame,
-    registry: IngredientRegistry,
-    optimization_config: Mapping,
-    score_column: str,
-) -> pd.DataFrame:
-    if selected.empty:
-        return selected.copy()
-
-    min_relative_difference = float(
-        nested_get(
-            optimization_config,
-            "selection.single_ingredient_min_relative_difference",
-            0.50,
-        )
-    )
-    rng = np.random.default_rng(int(optimization_config.get("random_seed", 42)))
-    adjusted = selected.copy().reset_index(drop=True)
-    ranked_pool = candidate_pool.sort_values(
-        [score_column, "candidate_id"],
-        ascending=[False, True],
-        kind="mergesort",
-    ).reset_index(drop=True)
-    rejected_candidate_ids: set[str] = set()
-
-    while True:
-        conflicts = _single_ingredient_spacing_conflicts(adjusted, registry, min_relative_difference)
-        if not conflicts:
-            break
-
-        _, left_id, right_id = conflicts[0]
-        loser_id = str(rng.choice([left_id, right_id]))
-        loser_mask = adjusted["candidate_id"].astype(str) == loser_id
-        loser_positions = np.flatnonzero(loser_mask.to_numpy())
-        if len(loser_positions) == 0:
-            break
-        loser_position = int(loser_positions[0])
-        loser_row = adjusted.iloc[[loser_position]].copy()
-        adjusted = adjusted.loc[~loser_mask].reset_index(drop=True)
-        rejected_candidate_ids.add(loser_id)
-
-        selected_ids = set(adjusted["candidate_id"].astype(str))
-        replacement_row: pd.DataFrame | None = None
-        for _, candidate in ranked_pool.iterrows():
-            candidate_id = str(candidate.get("candidate_id", ""))
-            if not candidate_id or candidate_id in selected_ids or candidate_id in rejected_candidate_ids:
-                continue
-            trial = pd.concat([adjusted, pd.DataFrame([candidate])], ignore_index=True)
-            if _single_ingredient_spacing_conflicts(trial, registry, min_relative_difference):
-                continue
-            replacement_row = pd.DataFrame([candidate])
-            break
-
-        if replacement_row is None:
-            adjusted = pd.concat(
-                [adjusted.iloc[:loser_position], loser_row, adjusted.iloc[loser_position:]],
-                ignore_index=True,
-            )
-            break
-
-        adjusted = pd.concat(
-            [adjusted.iloc[:loser_position], replacement_row, adjusted.iloc[loser_position:]],
-            ignore_index=True,
-        )
 
     return adjusted
 
@@ -1012,13 +906,6 @@ def _select_round_slate(
     else:
         selected = annotated.head(0).copy()
 
-    selected = _enforce_single_ingredient_spacing(
-        selected,
-        annotated,
-        registry,
-        optimization_config,
-        score_column=score_column,
-    )
     selected = _enforce_ingredient_combination_cap(
         selected,
         annotated,
@@ -1093,6 +980,7 @@ def select_next_round(
     requested_phase_mode: str | None = None,
     target_round_number: int | None = None,
     policy_active: bool = False,
+    similarity_audit: SimilarityAudit | None = None,
 ) -> SelectionResult:
     models = train_endpoint_models(
         formulations,
@@ -1107,6 +995,12 @@ def select_next_round(
         optimization_config,
         requested_phase_mode=requested_phase_mode,
     )
+    similarity_policy = resolve_similarity_policy(
+        optimization_config,
+        target_round_number,
+    )
+    if similarity_audit is None:
+        similarity_audit = SimilarityAudit(similarity_policy)
     continuous_metadata = {
         "continuous_optimizer_enabled": False,
         "continuous_optimizer_used": False,
@@ -1115,10 +1009,10 @@ def select_next_round(
     }
     if phase_resolution.active_phase == PHASE_MECHANICS:
         if "candidate_origin" in candidate_pool.columns:
-            boundary_mask = candidate_pool["candidate_origin"].astype(str).eq(
-                "boundary_probe"
+            preserved_origin_mask = candidate_pool["candidate_origin"].astype(str).isin(
+                ["boundary_probe", "rescue_dilution"]
             )
-            candidate_pool.loc[~boundary_mask, "candidate_origin"] = (
+            candidate_pool.loc[~preserved_origin_mask, "candidate_origin"] = (
                 "finite_pool_fallback"
             )
         continuous_candidates, continuous_metadata = _continuous_mechanics_candidates(
@@ -1136,6 +1030,39 @@ def select_next_round(
                 ignore_index=True,
                 sort=False,
             ).drop_duplicates("formulation_id", keep="first")
+    if similarity_policy.active:
+        similarity_index = build_history_similarity_index(
+            formulations,
+            observations,
+            registry,
+            similarity_policy,
+        )
+        if similarity_audit.history_reference_count == 0:
+            similarity_audit.history_reference_count = len(similarity_index)
+        candidate_pool, _ = filter_frame_by_similarity(
+            similarity_priority_order(candidate_pool),
+            similarity_index,
+            similarity_audit,
+            accepted_reference_kind="generated_pool",
+        )
+        continuous_survivors = int(
+            (
+                candidate_pool.get(
+                    "candidate_origin",
+                    pd.Series("", index=candidate_pool.index),
+                ).astype(str)
+                == "continuous_qlognehvi"
+            ).sum()
+        )
+        if bool(continuous_metadata.get("continuous_optimizer_used", False)):
+            continuous_metadata["similarity_survivor_count"] = continuous_survivors
+            if continuous_survivors == 0:
+                continuous_metadata["continuous_optimizer_used"] = False
+                continuous_metadata["continuous_optimizer_fallback"] = True
+                continuous_metadata["continuous_optimizer_reason"] = (
+                    "all continuous candidates were rejected by the active "
+                    "formulation-similarity policy"
+                )
     retest_candidates = build_retest_candidates(
         formulations,
         observations,
@@ -1202,6 +1129,11 @@ def select_next_round(
 
     n_viability = int(nested_get(optimization_config, "round_policy.viability_screens_per_round", 12))
     n_mechanical = int(nested_get(optimization_config, "round_policy.mechanical_tests_per_round", 4))
+    if len(annotated) < n_viability:
+        raise ValueError(
+            "Candidate pool contains fewer rows than the required viability slate "
+            f"after active filters: {len(annotated)}/{n_viability}."
+        )
 
     viability_screen = _select_round_slate(
         annotated,
@@ -1218,6 +1150,13 @@ def select_next_round(
         optimization_config,
         phase_resolution,
         n=n_mechanical,
+    )
+    similarity_validation = validate_selected_similarity(
+        viability_screen,
+        formulations,
+        observations,
+        registry,
+        similarity_policy,
     )
     if phase_resolution.active_phase == PHASE_SCREENING:
         optimizer_mode = (
@@ -1259,6 +1198,10 @@ def select_next_round(
         "target_round_number": target_round_number,
         "preparation_model_fitted": bool(models.preparation.fitted),
         "preparation_observation_count": models.preparation_observation_count,
+        "formulation_similarity": {
+            **similarity_audit.to_metadata(),
+            "final_validation": similarity_validation,
+        },
     }
     return SelectionResult(
         viability_screen=viability_screen,
@@ -1346,6 +1289,27 @@ def _write_summary(
         ]
         insertion_index = lines.index("Wet-lab instructions:")
         lines[insertion_index:insertion_index] = policy_lines
+    similarity_metadata = result.metadata.get("formulation_similarity", {})
+    if bool(similarity_metadata.get("enabled", False)):
+        final_validation = similarity_metadata.get("final_validation", {})
+        similarity_lines = [
+            "Formulation similarity policy:",
+            f"- Version: {similarity_metadata.get('policy_version', '')}",
+            f"- Status: {'active' if similarity_metadata.get('active', False) else 'inactive'}",
+            f"- Activation round: ROUND_{int(similarity_metadata.get('start_round', 3)):03d}",
+            f"- Bounds-normalized distance threshold: {float(similarity_metadata.get('distance_threshold', 0.05)):.4g}",
+            "- Same-single-ingredient minimum relative difference: "
+            f"{float(similarity_metadata.get('single_ingredient_min_relative_difference', 0.50)):.0%}",
+            f"- Historical references: {int(similarity_metadata.get('history_reference_count', 0))}",
+            f"- Rejected generation/pool rows: {int(similarity_metadata.get('rejection_count', 0))}",
+            "- Final minimum history distance: "
+            f"{final_validation.get('minimum_history_distance')}",
+            "- Final minimum within-slate distance: "
+            f"{final_validation.get('minimum_within_slate_distance')}",
+            "",
+        ]
+        insertion_index = lines.index("Wet-lab instructions:")
+        lines[insertion_index:insertion_index] = similarity_lines
     if zero_active_filtered:
         warning_lines = [
             "Warnings:",

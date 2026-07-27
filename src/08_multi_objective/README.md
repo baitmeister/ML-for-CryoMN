@@ -45,6 +45,25 @@ See [Round 2 Candidate-Failure Prevention](../../docs/round2_candidate_failure_p
 for the failure analysis, evidence behind each limit, preparation-label
 semantics, and optimizer details.
 
+## ROUND_003+ formulation-similarity policy
+
+Round 3 introduces one unified history-and-pool similarity gate without
+changing the 12-row slate size or its origin-allocation rules. After practical
+trace concentrations are treated as zero, candidates must be more than `0.05`
+apart in Euclidean distance across the complete registry-bounds-normalized
+formulation vector. When both formulations contain the same single active
+ingredient, they must also differ by at least 50% relative to the lower
+concentration.
+
+The historical reference set contains only unique formulations with actual
+`legacy_wetlab` or `wetlab_feedback` observations; literature-only rows are
+excluded. Accepted candidates are also compared with one another during pool
+generation. Rescue dilutions are subject to the rule, while intentional
+`retest_priority` rows are exempt. The generator rejects and resamples instead
+of post-filtering a fixed pool, preserving the configured 40/35/25 origin
+targets where feasible. Round 1 and the already-generated Round 2 proposal are
+unaffected.
+
 ### Screening score and slate diversity controls
 
 During `screening_only`, `screening_phase_score` is purely viability-based;
@@ -55,8 +74,9 @@ previously failed intact-patch formation) and, once `mechanics_enabled`, by
 mechanics-phase scoring (`penalties.intact_failure_weight`,
 `round_policy.intact_probability_threshold`).
 
-Before the 12-row slate is finalized, Stage 02 applies two diversity
-controls: an origin-quota that bounds how much any one candidate-origin
+Before the 12-row slate is finalized, Stage 02 applies the ROUND_003+
+similarity gate plus two slate-level diversity controls: an origin-quota that
+bounds how much any one candidate-origin
 bucket (`local_perturbation`, `sparse_exploration`, `boundary_probe`,
 `rescue_dilution`, `retest`, `continuous_qlognehvi`, `finite_pool_fallback`)
 can contribute, and an ingredient-combination cap that limits how many

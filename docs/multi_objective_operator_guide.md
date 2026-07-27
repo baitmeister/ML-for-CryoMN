@@ -12,9 +12,10 @@ This is the practical runbook for `src/08_multi_objective`.
   completed-round reports, refreshes the cumulative prospective evaluation,
   and then selects the next slate.
 
-This artifact reorganization does not alter candidate allocation, the CSV
-schema, the early viability-plus-intact input, the mechanical phase transition,
-or any Round 1/2 observations.
+The artifact organization does not alter the CSV schema, the early
+viability-plus-intact input, the mechanical phase transition, or any Round 1/2
+observations. Beginning with Round 3, candidate generation adds a similarity
+gate while retaining the 12-row slate and existing origin-allocation policy.
 
 ## Files To Know
 
@@ -105,6 +106,8 @@ Stage 02:
 - applies the current ingredient availability rules
 - resolves `screening_only` or `mechanics_enabled` automatically
 - retains the existing support-aware pool generation and 12-row allocation
+- from Round 3, rejects candidates too similar to actual wet-lab history or an
+  already accepted new-pool candidate and resamples to preserve origin targets
 - writes the active `next_round/` files
 - freezes exact proposal copies under `rounds/ROUND_###/proposal/`
 - generates the proposal candidate-screen plot
@@ -112,6 +115,14 @@ Stage 02:
 
 An identical selector rerun is idempotent. Stage 02 refuses to replace a
 different frozen proposal for the same round.
+
+The Round 3+ similarity rule treats sub-threshold trace concentrations as zero
+and requires a registry-bounds-normalized Euclidean distance greater than
+`0.05`. The same-single-ingredient case also requires at least a 50% relative
+concentration difference. Literature-only formulations are not references;
+rescue dilutions are checked; deliberate `retest_priority` rows are exempt.
+The proposal metadata contains the thresholds, history count, rejection audit
+and minimum final-slate distances. No operator-input columns are added.
 
 Review after selection:
 

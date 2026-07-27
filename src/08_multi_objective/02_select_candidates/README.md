@@ -91,20 +91,32 @@ overwritten. It is not copied into every round.
    `config_v2/availability.yaml`.
 4. Apply ROUND_002+ hard formulation guardrails and retain rejected attempts in
    the audit pool with explicit reasons.
-5. Train v2 surrogate models from `formulations.csv` and `observations.csv`,
+5. Beginning with ROUND_003, apply one unified formulation-similarity policy
+   before model scoring. Concentrations below the existing practical-presence
+   thresholds are treated as zero, then every ingredient is scaled by its
+   registry range. Ordinary candidates must have bounds-normalized Euclidean
+   distance greater than `0.05` from every actual wet-lab formulation and every
+   candidate already accepted into the new pool. Two formulations containing
+   the same single ingredient must also differ by at least 50% relative to the
+   lower concentration. Rescue dilutions receive no exception; intentional
+   `retest_priority` rows are exempt. Literature-only formulations are not
+   similarity references. Rejected generated rows are replaced by continued
+   sampling so the configured 40/35/25 pool targets remain intact where
+   feasible.
+6. Train v2 surrogate models from `formulations.csv` and `observations.csv`,
    preserving separate validation batches instead of collapsing everything to
    one formulation-wide mean.
-6. Resolve the active selection phase automatically:
+7. Resolve the active selection phase automatically:
    - `screening_only` while real paired viability + mechanical data are still sparse
    - `mechanics_enabled` once the configured evidence thresholds are met
-7. Score the feasible pool with the active phase policy. During
+8. Score the feasible pool with the active phase policy. During
    `screening_only`, `screening_phase_score` is purely viability-based;
    predicted intact-formation probability does not gate or score screening
    candidates. Intact-formation risk is instead handled by the
    `rescue_dilution` candidates from step 2 and, once `mechanics_enabled`,
    by mechanics-phase scoring (`penalties.intact_failure_weight`,
    `round_policy.intact_probability_threshold`).
-8. Build the 12-row wet-lab slate from that full-pool ranking, then apply two
+9. Build the 12-row wet-lab slate from that full-pool ranking, then apply two
    diversity controls before finalizing:
    - **Origin quota** — each candidate-origin bucket (`local_perturbation`,
      `sparse_exploration`, `boundary_probe`, `rescue_dilution`, `retest`,
@@ -122,17 +134,24 @@ overwritten. It is not copied into every round.
      best-scoring eligible pool candidate not already at its own cap; the
      slate is never shrunk, and an over-cap combination is left in place if
      no eligible replacement exists.
-9. Add any `retest_priority` formulations separately when the latest batch for
+10. Add any `retest_priority` formulations separately when the latest batch for
    an existing formulation appears off-trend or unstable.
-10. If `mechanics_enabled`, attempt continuous constrained qLogNEHVI and fall
+11. If `mechanics_enabled`, attempt continuous constrained qLogNEHVI and fall
     back to the constrained finite pool when unavailable or unsuccessful.
 
 ROUND_001 pool generation is random. ROUND_002+ generation is support-aware and
 chemically constrained. The final 12-candidate selection remains model-scored
 and diversity-aware, subject to the origin-quota and ingredient-combination
-controls in step 8. During `screening_only`, the selector does not emit any
+controls in step 9 and the ROUND_003+ similarity gate in step 5. During
+`screening_only`, the selector does not emit any
 mechanical-test recommendations. The mechanical recommender and continuous
 qLogNEHVI path turn on after the phase transitions to `mechanics_enabled`.
+
+The similarity rule is configured under `formulation_similarity` in
+`config_v2/optimization.yaml`. Selection metadata records its activation round,
+thresholds, wet-lab history count, rejection counts by origin/reference type,
+bounded conflict examples, and the final slate's minimum history and pairwise
+distances. It does not add any columns to the operator worksheet.
 
 ## Batch ID
 

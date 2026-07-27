@@ -11,7 +11,6 @@ from helper.registry import load_registry
 from helper.selection import (
     _allocate_screening_origin_quota,
     _enforce_ingredient_combination_cap,
-    _enforce_single_ingredient_spacing,
     _greedy_diverse_pick,
     _select_round_slate,
     annotate_candidates,
@@ -104,47 +103,6 @@ def test_seeded_mechanical_selection_switches_to_qlognehvi_path() -> None:
     )
     assert len(selected) == 3
     assert metadata["mechanical_selection_mode"].startswith("qlognehvi")
-
-
-def test_single_ingredient_same_feature_candidates_are_spaced_or_replaced() -> None:
-    registry = load_registry()
-    config = load_optimization_config()
-
-    def _row(candidate_id: str, feature_name: str, value: float, score: float) -> dict[str, float | str]:
-        row = {name: 0.0 for name in registry.feature_names}
-        row.update(
-            {
-                "candidate_id": candidate_id,
-                feature_name: value,
-                "screening_phase_score": score,
-                "recommendation_type": "screening_candidate",
-                "selection_explanation": "",
-            }
-        )
-        return row
-
-    candidate_pool = pd.DataFrame(
-        [
-            _row("cand_a", "trehalose_M", 0.10, 0.99),
-            _row("cand_b", "trehalose_M", 0.11, 0.98),
-            _row("cand_c", "glucose_M", 0.20, 0.97),
-            _row("cand_d", "trehalose_M", 0.13, 0.96),
-        ]
-    )
-    selected = candidate_pool.iloc[:2].copy()
-
-    adjusted = _enforce_single_ingredient_spacing(
-        selected,
-        candidate_pool,
-        registry,
-        config,
-        score_column="screening_phase_score",
-    )
-
-    selected_ids = set(adjusted["candidate_id"])
-    assert len(adjusted) == 2
-    assert "cand_c" in selected_ids
-    assert not {"cand_a", "cand_b"}.issubset(selected_ids)
 
 
 def test_ingredient_combination_cap_swaps_out_overcap_pair_for_pool_replacement() -> None:
@@ -312,8 +270,8 @@ def test_ingredient_combination_cap_limits_trio_to_one_by_default() -> None:
 
 def test_ingredient_combination_cap_ignores_single_ingredient_candidates() -> None:
     """Combinations of size 0-1 are out of scope for this cap -- a single
-    active ingredient repeated across candidates is governed separately by
-    _enforce_single_ingredient_spacing, not this combination-size-2+ cap.
+    active ingredient repeated across candidates is governed by the unified
+    formulation-similarity policy, not this combination-size-2+ cap.
     """
     registry = load_registry()
     config = load_optimization_config()

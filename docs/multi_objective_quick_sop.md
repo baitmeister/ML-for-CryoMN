@@ -95,6 +95,10 @@ results/multi_objective_v2/rounds/ROUND_###/proposal/
 - Top-level `reports/` is for cumulative campaign reports.
 - `model_evaluation_*` is cross-validated; `prospective_*` uses frozen
   proposal-time predictions. The formal prospective cohort begins at Round 3.
-- The selector stays at 12 rows and retains its existing allocation policy.
+- The selector stays at 12 rows and retains its existing origin allocation.
+  From Round 3, ordinary and rescue candidates are similarity-gated against
+  actual wet-lab history and candidates already accepted into the new pool;
+  intentional retests remain exempt. Rejected generated candidates are
+  resampled instead of reducing an origin quota.
 - The phase remains automatic: early `screening_only`, later
   `mechanics_enabled`.

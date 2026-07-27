@@ -1,5 +1,16 @@
 random_seed: 42
 
+formulation_similarity:
+  enabled: true
+  start_round: 3
+  metric: registry_bounds_euclidean
+  distance_threshold: 0.05
+  single_ingredient_min_relative_difference: 0.50
+  compare_within_generated_pool: true
+  history_source_types:
+    - legacy_wetlab
+    - wetlab_feedback
+
 formulation_feasibility:
   policy_version: round2_candidate_feasibility_v1
   start_round: 2

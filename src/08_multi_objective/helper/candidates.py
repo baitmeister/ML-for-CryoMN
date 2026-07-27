@@ -12,6 +12,11 @@ from .config import nested_get
 from .feasibility import SupportContext, annotate_feasibility, annotate_support
 from .penalties import count_active_ingredients
 from .registry import IngredientRegistry
+from .similarity import (
+    SimilarityAudit,
+    SimilarityIndex,
+    filter_frame_by_similarity,
+)
 
 
 def formulation_fingerprint(row: pd.Series | dict, registry: IngredientRegistry) -> str:
@@ -177,6 +182,8 @@ def generate_support_aware_candidate_pool(
     n_candidates: int,
     random_seed: int = 42,
     unavailable_feature_names: Iterable[str] = (),
+    similarity_index: SimilarityIndex | None = None,
+    similarity_audit: SimilarityAudit | None = None,
 ) -> pd.DataFrame:
     """Generate the ROUND_002+ finite pool with a 40/35/25 policy."""
     rng = np.random.default_rng(random_seed)
@@ -262,7 +269,26 @@ def generate_support_aware_candidate_pool(
         formulation_id = stable_formulation_id(row, registry)
         if formulation_id in accepted_formulation_ids:
             return False
+        if similarity_index is not None and similarity_index.policy.active:
+            match = similarity_index.find_conflict(row)
+            if match is not None:
+                if similarity_audit is not None:
+                    audit_row = dict(row)
+                    audit_row["formulation_id"] = formulation_id
+                    similarity_audit.record(audit_row, match)
+                return False
         accepted_formulation_ids.add(formulation_id)
+        if (
+            similarity_index is not None
+            and similarity_index.policy.active
+            and similarity_index.policy.compare_within_generated_pool
+        ):
+            similarity_index.add(
+                row,
+                reference_id=formulation_id,
+                reference_kind="generated_pool",
+                reference_origin=str(row.get("candidate_origin", "")),
+            )
         return True
 
     rows: list[dict] = []
@@ -392,6 +418,8 @@ def generate_rescue_candidate_pool(
     optimization_config: Mapping,
     support: SupportContext,
     unavailable_feature_names: Iterable[str] = (),
+    similarity_index: SimilarityIndex | None = None,
+    similarity_audit: SimilarityAudit | None = None,
 ) -> pd.DataFrame:
     """Generate dilution variants of high-viability formulations that failed formation."""
     if formulations.empty or observations.empty:
@@ -497,6 +525,18 @@ def generate_rescue_candidate_pool(
         rescue["feasibility_pass"].astype(bool)
         & (rescue["active_ingredient_count"].astype(int) > 0)
     ].reset_index(drop=True)
+    if (
+        not rescue.empty
+        and similarity_index is not None
+        and similarity_index.policy.active
+    ):
+        audit = similarity_audit or SimilarityAudit(similarity_index.policy)
+        rescue, _ = filter_frame_by_similarity(
+            rescue,
+            similarity_index,
+            audit,
+            accepted_reference_kind="generated_pool",
+        )
     if not rescue.empty:
         rescue["recommendation_type"] = "rescue_candidate"
         rescue["selection_explanation"] = (
