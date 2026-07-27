@@ -1,76 +1,87 @@
 # Multi-Objective Quick SOP
 
-Use this when you just need the shortest correct workflow.
+Use this for the shortest correct workflow.
 
-## First-Time Setup
+## Round 2: Enter Results Here
 
-```bash
-src/08_multi_objective/01_build_database/build_database.py
-src/08_multi_objective/02_select_candidates/select_candidates.py
+Edit only:
+
+```text
+results/multi_objective_v2/next_round/next_round_candidates.csv
 ```
 
-Then review:
-- [results/multi_objective_v2/next_round/next_round_summary.txt](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_summary.txt)
-- [results/multi_objective_v2/next_round/next_round_candidates.csv](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_candidates.csv)
+The Round 2 proposal is already frozen at:
 
-## Every Wet-Lab Round
-
-1. Open and fill:
-   - [results/multi_objective_v2/next_round/next_round_candidates.csv](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_candidates.csv)
-2. Enter:
-   - `viability_percent`
-   - `intact_patch_formation_pass`
-   - mechanical values if available
-3. If using Instron CSVs, optionally import them:
-
-```bash
-src/08_multi_objective/helper/instron.py \
-  data/raw/instron/ROUND_001/example.csv \
-  --formulation-id v2_example \
-  --batch-id ROUND_001 \
-  --replicate-id rep_001 \
-  --needles-compressed 100
+```text
+results/multi_objective_v2/rounds/ROUND_002/proposal/proposal.csv
 ```
 
-4. Advance the round:
+Do not edit anything under `rounds/ROUND_002/proposal/`.
 
-Preferred one-command path:
+Fill the existing fields as applicable:
+
+- `viability_percent`
+- `intact_patch_formation_pass`
+- optional intact-patch detail fields
+- optional mechanical/Instron fields, if measured
+- `replicate_id` and `notes`, if needed
+
+The early-round input remains viability plus the intact gate. Mechanical fields
+remain optional until the automatic paired-data phase transition enables
+mechanics.
+
+## Advance a Round
 
 ```bash
-src/08_multi_objective/03_run_round/run_round.py \
+python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv
 ```
 
-What this command does internally, in order:
-- writes one review snapshot for the state that produced the current slate
-- ingests the filled `next_round_candidates.csv`
-- runs `02_select_candidates/select_candidates.py`
+The command:
 
-If you want to inspect the updated state before allowing the next slate to be
-created, run:
+1. validates the working sheet against the frozen proposal
+2. updates `formulations.csv` and `observations.csv`
+3. archives the exact filled sheet as
+   `rounds/ROUND_###/completed/completed.csv`
+4. generates post-ingest reports under `rounds/ROUND_###/reports/`
+5. generates and freezes the next proposal
+6. replaces `next_round/` with the next editable slate
+
+Use `--skip-generate` to stop after ingest, archive and reporting:
 
 ```bash
-src/08_multi_objective/03_run_round/run_round.py \
+python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv \
   --skip-generate
 ```
 
-5. Review:
-   - [results/multi_objective_v2/next_round/next_round_summary.txt](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_summary.txt)
-   - [results/multi_objective_v2/round_review/ROUND_001/ROUND_001_visualization_summary.txt](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/round_review/ROUND_001/ROUND_001_visualization_summary.txt)
-   - [results/multi_objective_v2/round_review/ROUND_001/ROUND_001_best_performers_summary.txt](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/round_review/ROUND_001/ROUND_001_best_performers_summary.txt)
-   - `results/multi_objective_v2/round_review/ROUND_###/ROUND_###_next_round_candidates.csv`
-   - `results/multi_objective_v2/round_review/ROUND_###/ROUND_###_next_round_summary.txt`
-   - `results/multi_objective_v2/round_review/ROUND_###/ROUND_###_total_candidate_pool.csv`
-   - `results/multi_objective_v2/round_review/ROUND_###/ROUND_###_model_evaluation_table.csv`
+## Review After Ingestion
 
-## Important Reminders
+For the round just completed, review:
 
-- Only fill wet-lab results in:
-  - [results/multi_objective_v2/next_round/next_round_candidates.csv](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/next_round/next_round_candidates.csv)
-- Do not type wet-lab results into:
-  - [results/multi_objective_v2/total_candidate_pool.csv](/Users/bait/Documents/ML-for-CryoMN/results/multi_objective_v2/total_candidate_pool.csv)
-- The program now switches phase automatically:
-  - early rounds: `screening_only`
-  - later rounds: `mechanics_enabled`
-- Watch for rows labeled `retest_priority`
+```text
+results/multi_objective_v2/rounds/ROUND_###/completed/completed.csv
+results/multi_objective_v2/rounds/ROUND_###/reports/report_summary.txt
+results/multi_objective_v2/rounds/ROUND_###/reports/best_performers_summary.txt
+results/multi_objective_v2/rounds/ROUND_###/reports/tables/
+results/multi_objective_v2/rounds/ROUND_###/reports/plots/
+```
+
+For the next round, review:
+
+```text
+results/multi_objective_v2/next_round/next_round_summary.txt
+results/multi_objective_v2/next_round/next_round_candidates.csv
+results/multi_objective_v2/rounds/ROUND_###/proposal/
+```
+
+## Rules
+
+- Enter results only in `next_round/next_round_candidates.csv`.
+- Never edit archived `proposal/` or `completed/` files.
+- Do not enter results in `total_candidate_pool.csv`; it is a latest-only debug
+  pool.
+- Top-level `reports/` is for cumulative campaign reports.
+- The selector stays at 12 rows and retains its existing allocation policy.
+- The phase remains automatic: early `screening_only`, later
+  `mechanics_enabled`.

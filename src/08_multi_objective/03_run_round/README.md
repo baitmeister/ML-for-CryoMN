@@ -2,24 +2,44 @@
 
 ## Purpose
 
-Advance one real wet-lab round while preserving the one review state that
-matters for slate provenance:
+Advance one real wet-lab round with a provenance check and round-scoped
+artifacts:
 
-1. generate a pre-update review snapshot of the exact database state that
-   produced the current slate
-2. ingest the filled wet-lab results
-3. generate the next candidate slate
+1. validate the filled working sheet against the frozen pre-bench proposal
+2. ingest the wet-lab results
+3. archive the exact filled worksheet bytes
+4. generate reports from the updated database
+5. generate and freeze the next proposal
 
 This is the supported entry point for normal round progression.
 
-## Command
+## Round 2 Result Entry
+
+Enter Round 2 results only in:
+
+```text
+results/multi_objective_v2/next_round/next_round_candidates.csv
+```
+
+The corresponding frozen source record is:
+
+```text
+results/multi_objective_v2/rounds/ROUND_002/proposal/proposal.csv
+```
+
+Do not edit the frozen proposal. In the working file, fill the existing
+viability and intact-patch fields, optional intact-patch detail fields,
+optional mechanical fields when measured, and `replicate_id` or `notes` when
+needed. The CSV schema and automatic endpoint phase progression are unchanged.
+
+Then run:
 
 ```bash
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv
 ```
 
-Useful options:
+## Options
 
 ```bash
 # Override the automatic selection phase for auditing/debugging
@@ -27,37 +47,73 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv \
   --phase-mode mechanics_enabled
 
-# Ingest only, without generating the next round
+# Ingest, archive and report, but do not generate the next round
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv \
   --skip-generate
 ```
 
-## Notes
+`--skip-review` is available for advanced debugging, but the normal workflow
+always generates completed-round reports.
 
-- Default behavior uses the automatic phase selector.
-- The command ingests wet-lab results directly; there is no separate updater
-  stage anymore.
-- The command detects whether the round has actually progressed before doing
-  anything destructive: it checks `next_round_candidates.csv` for any filled
-  result column (`viability_percent`, `intact_patch_formation_pass`,
-  `instron_file`, etc.). A `viability_percent` that was only pre-filled as
-  carried-over context on a `retest_priority` row does not count as a new
-  result. If no new results are found, the command skips the round-review
-  snapshot and the formulations/observations ingest entirely (so reruns
-  against an unfilled or already-ingested CSV are safe and non-destructive),
-  but still regenerates candidates from the current data unless
-  `--skip-generate` is also passed.
-- The command creates one pre-update review snapshot before any new wet-lab
-  observations are appended.
-- The command also refreshes `results/multi_objective_v2/current_round_status.json`
-  so the current/latest round and next round remain visible outside the CSVs.
-- That review output is archived per batch under:
-  - `results/multi_objective_v2/round_review/ROUND_###`
-- Each round archive also stores:
-  - `ROUND_###_next_round_candidates.csv`
-  - `ROUND_###_next_round_summary.txt`
-  - `ROUND_###_total_candidate_pool.csv`
-  - `ROUND_###_model_evaluation_table.csv`
-- The command fails if ingestion or review generation fails.
-- Candidate generation only runs after ingestion succeeds.
+## Validation Rules
+
+Before changing the database, Stage 03 requires the working sheet to match the
+frozen proposal.
+
+Allowed changes:
+
+- existing wet-lab result fields
+- existing optional preparation and mechanical fields
+- `replicate_id` and `notes`
+- row reordering
+- row duplication for technical replicates
+
+Rejected changes:
+
+- unknown or missing proposal candidates
+- changed formulation or candidate identity
+- changed composition
+- changed model predictions or uncertainties
+- changed selection ranks, recommendation types or diagnostics
+- added or removed CSV columns
+
+## Outputs
+
+After a successful `ROUND_###` ingestion:
+
+```text
+results/multi_objective_v2/rounds/ROUND_###/
+├── proposal/
+│   ├── proposal.csv
+│   ├── summary.txt
+│   ├── selection_metadata.json
+│   └── plots/next_round_candidate_screen.png
+├── completed/
+│   └── completed.csv
+└── reports/
+    ├── report_summary.txt
+    ├── best_performers_summary.txt
+    ├── tables/model_evaluation_table.csv
+    └── plots/
+        ├── endpoint_observation_counts.png
+        ├── model_evaluation_overview.png
+        └── observed_performance_landscape.png
+```
+
+Reports that need more observations are omitted until the data support them.
+`completed/completed.csv` is an exact byte-for-byte archive of the successfully
+ingested working worksheet.
+
+Only after completed-round reporting succeeds does Stage 02 replace the active
+`next_round/` files and freeze the following round proposal. If report
+generation fails, the database update and completed archive are retained, the
+next slate is not generated, and the same command can be rerun safely.
+
+If no new result fields are filled, Stage 03 skips ingestion, completed
+archival and completed-round reporting. Unless `--skip-generate` is supplied,
+it still attempts to regenerate the current proposal; frozen-proposal conflict
+protection remains active.
+
+The command also refreshes
+`results/multi_objective_v2/current_round_status.json`.

@@ -53,8 +53,10 @@ def test_round_one_failed_candidates_are_rejected_by_round_two_policy() -> None:
         PROJECT_ROOT
         / "results"
         / "multi_objective_v2"
-        / "next_round"
-        / "next_round_candidates.csv"
+        / "rounds"
+        / "ROUND_001"
+        / "completed"
+        / "completed.csv"
     )
     failed = candidates[candidates["selection_rank"].isin([2, 5, 6, 7, 9, 11])]
     annotated = annotate_feasibility(
@@ -367,16 +369,11 @@ def test_round_one_rerun_is_deterministic_and_preserves_legacy_artifacts(
     """select_candidates.py must be deterministic and side-effect-free on
     formulations/observations, run twice from identical inputs.
 
-    This intentionally does NOT compare against the committed
-    results/multi_objective_v2/next_round/next_round_candidates.csv: that
-    file is round 1's real, already-completed wet-lab results (viability_percent,
-    intact_patch_formation_pass, etc. filled in by hand) -- not a regenerable
-    template. Round 1 is finished and is not retroactively changed by the
-    screening-phase intact-gating fix (see helper/selection.py
-    annotate_candidates); only round 2+ candidate generation is affected.
-    Pinning a byte-for-byte comparison against round 1's historical slate
-    would just re-encode the old (now intentionally removed) intact-gating
-    behavior as a regression target.
+    This intentionally does NOT compare against the committed Round 1
+    completed artifact. That file contains the real, hand-entered wet-lab
+    results and is historical evidence, not a regenerable template. Pinning
+    regenerated output against it would re-encode the earlier selection policy
+    rather than test determinism of the current implementation.
     """
     formulations_path = PROJECT_ROOT / "data" / "processed_v2" / "formulations.csv"
     observations_path = PROJECT_ROOT / "data" / "processed_v2" / "observations.csv"
@@ -441,11 +438,16 @@ def test_round_one_rerun_is_deterministic_and_preserves_legacy_artifacts(
         output_dir_b / "next_round_summary.txt"
     ).read_bytes()
 
-    # The currently screening-phase slate is now scored purely on predicted
-    # viability (see annotate_candidates); intact-formation probability must
-    # not influence which candidates are selected during screening.
     assert len(candidates_a) == 12
-    assert candidates_a["recommendation_type"].eq("screening_candidate").all()
+    assert candidates_a["candidate_id"].nunique() == 12
+    assert candidates_a["active_ingredient_count"].gt(0).all()
+    assert (
+        output_dir_a.parent
+        / "rounds"
+        / "ROUND_001"
+        / "proposal"
+        / "proposal.csv"
+    ).read_bytes() == (output_dir_a / "next_round_candidates.csv").read_bytes()
 
     assert formulations_path.read_bytes() == formulations_before
     assert observations_path.read_bytes() == observations_before

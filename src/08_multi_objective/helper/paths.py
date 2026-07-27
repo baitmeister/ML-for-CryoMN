@@ -13,8 +13,12 @@ PROCESSED_V2_DIR = DATA_DIR / "processed_v2"
 RESULTS_DIR = PROJECT_ROOT / "results"
 RESULTS_V2_DIR = RESULTS_DIR / "multi_objective_v2"
 NEXT_ROUND_DIR = RESULTS_V2_DIR / "next_round"
-ROUND_REVIEW_DIR = RESULTS_V2_DIR / "round_review"
-VISUALIZATIONS_DIR = RESULTS_V2_DIR / "visualizations"
+ROUNDS_DIR = RESULTS_V2_DIR / "rounds"
+REPORTS_DIR = RESULTS_V2_DIR / "reports"
+# Backward-compatible name for the visualization CLI. New round-specific
+# reports are written beneath ROUNDS_DIR; this path is reserved for cumulative
+# campaign reports.
+VISUALIZATIONS_DIR = REPORTS_DIR
 CURRENT_ROUND_STATUS_PATH = RESULTS_V2_DIR / "current_round_status.json"
 NEXT_ROUND_CANDIDATES_PATH = NEXT_ROUND_DIR / "next_round_candidates.csv"
 NEXT_ROUND_SUMMARY_PATH = NEXT_ROUND_DIR / "next_round_summary.txt"

@@ -196,6 +196,7 @@ def _write_best_performers_summary(
     output_dir: Path,
     registry: IngredientRegistry,
     artifact_prefix: str = "",
+    candidate_heading: str = "Current leading next-round candidates:",
 ) -> Path:
     observed = _observed_endpoint_frame(formulations, observations)
     top_candidates = _top_candidate_frame(candidates).head(5)
@@ -292,7 +293,7 @@ def _write_best_performers_summary(
             lines.append(f"  formulation: {_format_formulation(row, registry)}")
     lines.append("")
 
-    lines.append("Current leading next-round candidates:")
+    lines.append(candidate_heading)
     if top_candidates.empty:
         lines.append("- none; run Stage 02 to generate a candidate slate")
     else:
@@ -1106,6 +1107,7 @@ def _write_visualization_summary(
     output_dir: Path,
     review_label: str = "",
     artifact_prefix: str = "",
+    base_name: str = "visualization_summary",
 ) -> Path:
     observed = _observed_endpoint_frame(formulations, observations)
     summary = [
@@ -1129,7 +1131,7 @@ def _write_visualization_summary(
     summary.append("")
     summary.append("Reader note:")
     summary.append("This review snapshot captures one specific state of the round workflow.")
-    output_path = _artifact_path(output_dir, "visualization_summary", ".txt", artifact_prefix)
+    output_path = _artifact_path(output_dir, base_name, ".txt", artifact_prefix)
     output_path.write_text("\n".join(summary) + "\n", encoding="utf-8")
     return output_path
 
@@ -1191,6 +1193,82 @@ def generate_visualization_artifacts(
             output_dir,
             review_label=review_label,
             artifact_prefix=artifact_prefix,
+        )
+    )
+    return generated
+
+
+def generate_proposal_artifacts(
+    candidates: pd.DataFrame,
+    proposal_dir: str | Path,
+) -> list[Path]:
+    """Generate the proposal-only graphics beneath one round directory."""
+    _apply_plot_style()
+    proposal_dir = Path(proposal_dir)
+    plots_dir = proposal_dir / "plots"
+    plots_dir.mkdir(parents=True, exist_ok=True)
+    candidate_plot = _save_candidate_plot(candidates, plots_dir)
+    return [candidate_plot] if candidate_plot is not None else []
+
+
+def generate_completed_round_artifacts(
+    formulations: pd.DataFrame,
+    observations: pd.DataFrame,
+    completed_candidates: pd.DataFrame,
+    reports_dir: str | Path,
+    batch_id: str,
+) -> list[Path]:
+    """Generate one post-ingestion report bundle for a completed round."""
+    _apply_plot_style()
+    reports_dir = Path(reports_dir)
+    tables_dir = reports_dir / "tables"
+    plots_dir = reports_dir / "plots"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    tables_dir.mkdir(parents=True, exist_ok=True)
+    plots_dir.mkdir(parents=True, exist_ok=True)
+    registry = load_registry()
+    evaluation_frames = _build_model_evaluation_frames(
+        formulations,
+        observations,
+        registry,
+    )
+
+    generated = [
+        path
+        for path in [
+            _write_best_performers_summary(
+                formulations,
+                observations,
+                completed_candidates,
+                reports_dir,
+                registry,
+                candidate_heading=f"{batch_id} completed-round candidates:",
+            ),
+            _save_endpoint_counts(observations, plots_dir),
+            _save_observed_performance_landscape(
+                formulations,
+                observations,
+                plots_dir,
+            ),
+            _write_model_evaluation_table(evaluation_frames, tables_dir),
+            _save_model_evaluation_overview(
+                formulations,
+                observations,
+                plots_dir,
+                registry,
+            ),
+        ]
+        if path is not None
+    ]
+    generated.append(
+        _write_visualization_summary(
+            formulations,
+            observations,
+            completed_candidates,
+            generated,
+            reports_dir,
+            review_label=f"state_after_ingest_{batch_id}",
+            base_name="report_summary",
         )
     )
     return generated

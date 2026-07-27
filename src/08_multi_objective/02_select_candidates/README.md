@@ -2,7 +2,8 @@
 
 ## Purpose
 
-Generate and score a candidate pool, then export the next wet-lab slate.
+Generate and score a candidate pool, export the next wet-lab slate, and freeze
+an exact pre-bench proposal for that round.
 
 This is where optimization happens in the current v2 workflow. The candidate
 pool is generated randomly or loaded from a CSV, scored by the surrogate models,
@@ -41,12 +42,28 @@ python3 src/08_multi_objective/02_select_candidates/select_candidates.py \
 - `results/multi_objective_v2/total_candidate_pool.csv`
 - `results/multi_objective_v2/next_round/next_round_candidates.csv`
 - `results/multi_objective_v2/next_round/next_round_summary.txt`
+- `results/multi_objective_v2/next_round/next_round_metadata.json` for
+  `ROUND_002+`
+- `results/multi_objective_v2/rounds/ROUND_###/proposal/proposal.csv`
+- `results/multi_objective_v2/rounds/ROUND_###/proposal/summary.txt`
+- `results/multi_objective_v2/rounds/ROUND_###/proposal/selection_metadata.json`
+  when metadata is available
+- `results/multi_objective_v2/rounds/ROUND_###/proposal/plots/next_round_candidate_screen.png`
 
 `total_candidate_pool.csv` is the full generated/scored audit pool. It is not
 wet-lab input.
 
 `next_round_candidates.csv` is the file to fill after validation. It contains
 the 12 selected wet-lab formulations and blank result columns.
+
+The files under `rounds/ROUND_###/proposal/` are the frozen record of what the
+model proposed before bench work. Do not edit them. An identical selector rerun
+is allowed; a rerun that would replace the same round with different proposal
+bytes is rejected. The active `next_round/` files are promoted only after the
+proposal has been frozen successfully.
+
+`total_candidate_pool.csv` remains a latest-only debug artifact and is
+overwritten. It is not copied into every round.
 
 ## Selection Logic
 
@@ -118,4 +135,5 @@ qLogNEHVI path turn on after the phase transitions to `mechanics_enabled`.
 
 The batch ID is generated as `ROUND_###` from `observations.csv`. After `03_run_round/run_round.py`
 ingests `ROUND_001`, the next Stage 02 run emits `ROUND_002`. If you rerun Stage
-02 before ingesting results, it will emit the same next unused round ID.
+02 before ingesting results, it will emit the same next unused round ID and
+must match the existing frozen proposal.

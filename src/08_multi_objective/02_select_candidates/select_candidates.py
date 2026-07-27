@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import replace
 import sys
+import tempfile
 from pathlib import Path
 
 import pandas as pd
@@ -25,6 +26,7 @@ from helper.candidates import (
     unavailable_features_from_config,
 )
 from helper.config import load_availability_config, load_optimization_config, nested_get
+from helper.artifacts import copy_working, freeze_proposal
 from helper.feasibility import (
     annotate_feasibility,
     annotate_support,
@@ -43,6 +45,7 @@ from helper.registry import load_registry
 from helper.selection import select_next_round, write_selection_result
 from helper.status import derive_round_tracker, write_current_round_status
 from helper.status import parse_round_number
+from helper.visualization import generate_proposal_artifacts
 
 
 def parse_args() -> argparse.Namespace:
@@ -235,13 +238,44 @@ def main() -> None:
     result.metadata["candidate_pool_rows_filtered_by_bounds"] = bounds_filtered_count
     result.metadata["candidate_pool_rows_filtered_by_availability"] = filtered_count
     result.metadata["candidate_pool_rows_filtered_zero_active_at_entry"] = zero_active_filtered_count
-    write_selection_result(
-        result,
-        args.output_dir,
-        batch_id=batch_id,
-        total_candidate_pool_path=args.total_candidate_pool,
-        registry=registry,
-    )
+    output_dir = Path(args.output_dir)
+    results_root = output_dir.parent
+    results_root.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(
+        prefix=f".{batch_id}_selection_",
+        dir=results_root,
+    ) as staging_name:
+        staging_root = Path(staging_name)
+        staging_output = staging_root / "next_round"
+        staging_pool = staging_root / "total_candidate_pool.csv"
+        write_selection_result(
+            result,
+            staging_output,
+            batch_id=batch_id,
+            total_candidate_pool_path=staging_pool,
+            registry=registry,
+        )
+        staged_candidates = staging_output / "next_round_candidates.csv"
+        staged_summary = staging_output / "next_round_summary.txt"
+        staged_metadata = staging_output / "next_round_metadata.json"
+        round_paths = freeze_proposal(
+            batch_id,
+            staged_candidates,
+            summary_path=staged_summary,
+            metadata_path=staged_metadata if staged_metadata.exists() else None,
+            results_root=results_root,
+        )
+        generate_proposal_artifacts(
+            pd.read_csv(staged_candidates),
+            round_paths.proposal_dir,
+        )
+
+        copy_working(staged_candidates, output_dir / "next_round_candidates.csv")
+        copy_working(staged_summary, output_dir / "next_round_summary.txt")
+        if staged_metadata.exists():
+            copy_working(staged_metadata, output_dir / "next_round_metadata.json")
+        copy_working(staging_pool, args.total_candidate_pool)
+
     status_path = write_current_round_status(
         Path(args.output_dir).parent / CURRENT_ROUND_STATUS_PATH.name,
         observations=observations,

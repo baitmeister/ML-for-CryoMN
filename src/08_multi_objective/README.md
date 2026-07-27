@@ -71,8 +71,8 @@ for the full mechanism.
 | Stage | Purpose | Program |
 |-------|---------|---------|
 | 01 | Build the v2 database from legacy viability evidence. | [`01_build_database`](01_build_database/README.md) |
-| 02 | Select the next wet-lab candidate set. | [`02_select_candidates`](02_select_candidates/README.md) |
-| 03 | Archive one pre-update review of the current slate state, ingest wet-lab results, and generate the next slate. | [`03_run_round`](03_run_round/README.md) |
+| 02 | Select the next wet-lab candidate set and freeze its proposal artifacts. | [`02_select_candidates`](02_select_candidates/README.md) |
+| 03 | Validate and archive the completed worksheet, ingest results, generate round reports, and roll over to the next slate. | [`03_run_round`](03_run_round/README.md) |
 
 ## Selector Outputs
 
@@ -84,6 +84,11 @@ Stage 02 writes:
 - `results/multi_objective_v2/next_round/next_round_summary.txt`
 - `results/multi_objective_v2/next_round/next_round_metadata.json` for
   `ROUND_002+`
+- `results/multi_objective_v2/rounds/ROUND_###/proposal/proposal.csv`
+- `results/multi_objective_v2/rounds/ROUND_###/proposal/summary.txt`
+- `results/multi_objective_v2/rounds/ROUND_###/proposal/selection_metadata.json`
+  when metadata is available
+- `results/multi_objective_v2/rounds/ROUND_###/proposal/plots/next_round_candidate_screen.png`
 
 `total_candidate_pool.csv` is the full generated/scored pool after temporary
 availability filtering. It includes model predictions, penalties, selection
@@ -108,6 +113,30 @@ results are filled.
 `next_round_metadata.json` records the active policy version, activation round,
 support radius, optimizer mode, fallback status, and detailed qLogNEHVI
 diagnostics for reproducibility.
+
+## Round-Scoped Artifacts
+
+`results/multi_objective_v2/next_round/` is the active operator workspace.
+Only `next_round/next_round_candidates.csv` is edited during a wet-lab round.
+
+Each round also has a read-only-by-convention archive:
+
+```text
+results/multi_objective_v2/rounds/ROUND_###/
+├── proposal/     # Exact pre-bench slate, selection metadata, summary and plot
+├── completed/    # Exact successfully ingested worksheet bytes
+└── reports/      # Reports generated from the database after this round's ingest
+```
+
+Do not edit files under `rounds/`. Stage 03 validates the working worksheet
+against `proposal/proposal.csv`: result, replicate and note fields may change;
+candidate identity, chemistry, predictions, uncertainties, ranks and selection
+diagnostics may not. Row reordering and duplicated rows for technical
+replicates are allowed, but all proposed candidates must remain present.
+
+The top-level `results/multi_objective_v2/reports/` directory is reserved for
+cumulative campaign reports. The top-level `total_candidate_pool.csv` is only
+the latest full debug pool and is overwritten on each selection run.
 
 To lift the current temporary restriction on an ingredient, remove its
 `feature_name` from `config_v2/availability.yaml` and rerun stage 02.
@@ -138,11 +167,15 @@ The batch ID is generated as `ROUND_###` from `observations.csv`. After Stage 03
 ingests `ROUND_001`, the next Stage 02 run emits `ROUND_002`. If you rerun Stage
 02 before ingesting results, it will still emit the same next unused round ID.
 `current_round_status.json` is regenerated alongside that process for redundant,
-human-readable tracking.
+human-readable tracking. An identical rerun leaves the frozen proposal
+unchanged; Stage 02 refuses to replace a different proposal for the same round.
 
 ## What To Fill In The CSV
 
-Do not edit `formulation_id` or `candidate_id`.
+Fill only
+`results/multi_objective_v2/next_round/next_round_candidates.csv`. Do not edit
+archived proposal or completed files, and do not edit `formulation_id` or
+`candidate_id`.
 
 | Column | Type / range | Notes |
 |--------|--------------|-------|
@@ -201,10 +234,13 @@ flowchart TD
     A["01 Build database<br/>build_database.py"] --> B["Main database<br/>formulations.csv + observations.csv"]
     B --> C["02 Select candidates<br/>select_candidates.py"]
     C --> P["Full scored pool<br/>total_candidate_pool.csv"]
-    C --> D["Wet-lab sheet<br/>next_round_candidates.csv"]
+    C --> Q["Frozen proposal<br/>rounds/ROUND_N/proposal/"]
+    C --> D["Editable wet-lab sheet<br/>next_round/next_round_candidates.csv"]
     C --> E["Human summary<br/>next_round_summary.txt"]
     D --> F["Wet lab fills results<br/>viability, intact patch, Instron/raw load"]
-    C --> R["Pre-update round review archive"]
-    F --> G["03 Run round<br/>run_round.py"]
+    F --> G["03 Run round<br/>validate + ingest"]
+    Q --> G
+    G --> H["Exact completed sheet<br/>rounds/ROUND_N/completed/"]
+    G --> I["Post-ingest reports<br/>rounds/ROUND_N/reports/"]
     G --> B
 ```

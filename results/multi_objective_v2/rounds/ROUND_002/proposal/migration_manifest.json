@@ -1,0 +1,30 @@
+{
+  "migration_version": 1,
+  "round_id": "ROUND_002",
+  "migrated_at_utc": "2026-07-24T17:48:23.142293+00:00",
+  "proposal_status": "migration_frozen_from_existing_active_slate",
+  "active_workspace_left_unchanged": true,
+  "proposal_artifacts": [
+    {
+      "source": "results/multi_objective_v2/next_round/next_round_candidates.csv",
+      "destination": "results/multi_objective_v2/rounds/ROUND_002/proposal/proposal.csv",
+      "sha256": "baeb6f805826f3bc45887978dceb7d53a1d041ffc391d6824ea3ba80f5af359b"
+    },
+    {
+      "source": "results/multi_objective_v2/next_round/next_round_summary.txt",
+      "destination": "results/multi_objective_v2/rounds/ROUND_002/proposal/summary.txt",
+      "sha256": "56a114b249b761fac22b5d5453aa6240d7c9d6a07191dfbe7e58d67b8c82ee51"
+    },
+    {
+      "source": "results/multi_objective_v2/next_round/next_round_metadata.json",
+      "destination": "results/multi_objective_v2/rounds/ROUND_002/proposal/selection_metadata.json",
+      "sha256": "6142ea95cd967b3f88e31f99aceda6261d795d8836e1ceb69cde78c54652b157"
+    }
+  ],
+  "generated_during_migration": [
+    {
+      "path": "results/multi_objective_v2/rounds/ROUND_002/proposal/plots/next_round_candidate_screen.png",
+      "sha256": "1d681f626eb162d3251917b7e65949d004c19570460643fb736dd70bbfc639e7"
+    }
+  ]
+}

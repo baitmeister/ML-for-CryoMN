@@ -1,0 +1,102 @@
+{
+  "migration_version": 1,
+  "round_id": "ROUND_001",
+  "migrated_at_utc": "2026-07-24T17:48:23.140976+00:00",
+  "proposal_status": "reconstructed_from_completed_after_round",
+  "completed_status": "exact_archived_filled_worksheet",
+  "reconstructed_proposal": {
+    "path": "results/multi_objective_v2/rounds/ROUND_001/proposal/proposal_reconstructed.csv",
+    "sha256": "823accdc9da2e9590f4ef0b07ea19046898f24877eac531c3be36bbb7b6d1eda",
+    "blanked_columns": [
+      "critical_axial_load_N_per_needle",
+      "critical_axial_load_N_total",
+      "fillability_pass",
+      "homogeneous_solution_pass",
+      "initial_stiffness_N_per_mm_per_needle",
+      "instron_file",
+      "intact_patch_formation_pass",
+      "intact_tip_count",
+      "needles_compressed",
+      "no_collapse",
+      "no_slurry",
+      "notes",
+      "preparation_failure_reason",
+      "preparation_feasibility_pass",
+      "replicate_id",
+      "total_tip_count",
+      "viability_percent"
+    ]
+  },
+  "moved_artifacts": [
+    {
+      "source": "results/multi_objective_v2/round_review/ROUND_001/ROUND_001_next_round_candidates.csv",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/completed/completed.csv",
+      "sha256": "bdfbdf8c9e0ee42be4ce319c0530b065fde7262900d80e6d0e936569f0319d55"
+    },
+    {
+      "source": "results/multi_objective_v2/round_review/ROUND_001/ROUND_001_next_round_summary.txt",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/proposal/summary.txt",
+      "sha256": "e8414698b9f4d3d5ea54c71ae604a5f1a76af7a0aeba4f8d5bae628cff6dc6d0"
+    },
+    {
+      "source": "results/multi_objective_v2/round_review/ROUND_001/ROUND_001_total_candidate_pool.csv",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/legacy/total_candidate_pool.csv",
+      "sha256": "ecec885c99c21633edbb48f49e728170053455e6494c007eec92989f806e5d93"
+    },
+    {
+      "source": "results/multi_objective_v2/round_review/ROUND_001/ROUND_001_best_performers_summary.txt",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/reports/legacy_pre_ingest/ROUND_001_best_performers_summary.txt",
+      "sha256": "93a50113e6deea4b8df7f83a762dded198a6467dff1814a0e7c15f87cb422d43"
+    },
+    {
+      "source": "results/multi_objective_v2/round_review/ROUND_001/ROUND_001_endpoint_observation_counts.png",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/reports/legacy_pre_ingest/ROUND_001_endpoint_observation_counts.png",
+      "sha256": "7f1a1e223e63f521e7dc8924fb9846aed01808e566a8c0c360b2b112e321fd48"
+    },
+    {
+      "source": "results/multi_objective_v2/round_review/ROUND_001/ROUND_001_model_evaluation_overview.png",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/reports/legacy_pre_ingest/ROUND_001_model_evaluation_overview.png",
+      "sha256": "0470dcbfb584cd19a71b3583a3b8e07d9a48b29754a6e18a6e7c5853495ca913"
+    },
+    {
+      "source": "results/multi_objective_v2/round_review/ROUND_001/ROUND_001_model_evaluation_table.csv",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/reports/legacy_pre_ingest/ROUND_001_model_evaluation_table.csv",
+      "sha256": "056bae967bbbe4b47a8fc9752ee4259b8c62cccba3d219db8d7df6693ef4ad4f"
+    },
+    {
+      "source": "results/multi_objective_v2/round_review/ROUND_001/ROUND_001_next_round_candidate_screen.png",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/reports/legacy_pre_ingest/ROUND_001_next_round_candidate_screen.png",
+      "sha256": "3f0f775f8e45211d6615981cd260267ff74cfb8d72835c1002aae132598c23eb"
+    },
+    {
+      "source": "results/multi_objective_v2/round_review/ROUND_001/ROUND_001_visualization_summary.txt",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/reports/legacy_pre_ingest/ROUND_001_visualization_summary.txt",
+      "sha256": "2cc37d3de0de3de08a025e2014c85f97b48b475919f8a4af501928f1c5da237d"
+    },
+    {
+      "source": "results/multi_objective_v2/visualizations/best_performers_summary.txt",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/legacy/earlier_visualizations/best_performers_summary.txt",
+      "sha256": "681b5761c4a71b363237a5f58285ced3db36a0c7adf5a8fb5283aa191ceba01b"
+    },
+    {
+      "source": "results/multi_objective_v2/visualizations/endpoint_observation_counts.png",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/legacy/earlier_visualizations/endpoint_observation_counts.png",
+      "sha256": "8cbfd951f82a1a8e9e35f1caeccf81fac154d94604392fce6ff0abf2b908a514"
+    },
+    {
+      "source": "results/multi_objective_v2/visualizations/model_evaluation_overview.png",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/legacy/earlier_visualizations/model_evaluation_overview.png",
+      "sha256": "1b099c51d9b1ba3963b964d24e87dbf1c215f435e43fb7b01bdcfa12f1196df2"
+    },
+    {
+      "source": "results/multi_objective_v2/visualizations/next_round_candidate_screen.png",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/legacy/earlier_visualizations/next_round_candidate_screen.png",
+      "sha256": "c571ec5d497d34355a1f8c81b7948ae686a7fc84d2de03113d29589dcdd123ff"
+    },
+    {
+      "source": "results/multi_objective_v2/visualizations/visualization_summary.txt",
+      "destination": "results/multi_objective_v2/rounds/ROUND_001/legacy/earlier_visualizations/visualization_summary.txt",
+      "sha256": "7a46ba2b9fb374f1ecb9cda599b17779c5adea65bdd110e86ee967eec0e23384"
+    }
+  ]
+}

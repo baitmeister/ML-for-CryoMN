@@ -7,7 +7,9 @@ import pandas as pd
 from helper.registry import load_registry
 from helper.visualization import (
     _apply_plot_style,
+    generate_completed_round_artifacts,
     generate_multiobjective_evaluation_artifacts,
+    generate_proposal_artifacts,
     generate_visualization_artifacts,
     _save_candidate_plot,
     _save_model_evaluation_overview,
@@ -196,3 +198,32 @@ def test_generate_multiobjective_evaluation_artifacts_writes_unified_graph_set(t
     metrics = pd.read_csv(tmp_path / "ROUND_004_multiobjective_round_metrics.csv")
     assert list(metrics["batch_id"]) == ["ROUND_001", "ROUND_002", "ROUND_003", "ROUND_004"]
     assert {"normalized_hypervolume", "igd", "pareto_points_cumulative"}.issubset(set(metrics.columns))
+
+
+def test_round_scoped_proposal_and_completed_reports_use_separate_directories(
+    tmp_path: Path,
+) -> None:
+    proposal_dir = tmp_path / "ROUND_004" / "proposal"
+    proposal_paths = generate_proposal_artifacts(_candidates(), proposal_dir)
+
+    reports_dir = tmp_path / "ROUND_004" / "reports"
+    report_paths = generate_completed_round_artifacts(
+        _formulations(),
+        _observations(),
+        _candidates(),
+        reports_dir,
+        batch_id="ROUND_004",
+    )
+
+    assert {path.relative_to(proposal_dir).as_posix() for path in proposal_paths} == {
+        "plots/next_round_candidate_screen.png"
+    }
+    report_relative_paths = {
+        path.relative_to(reports_dir).as_posix()
+        for path in report_paths
+    }
+    assert "best_performers_summary.txt" in report_relative_paths
+    assert "report_summary.txt" in report_relative_paths
+    assert "tables/model_evaluation_table.csv" in report_relative_paths
+    assert "plots/model_evaluation_overview.png" in report_relative_paths
+    assert "plots/next_round_candidate_screen.png" not in report_relative_paths
