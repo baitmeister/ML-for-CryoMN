@@ -1,5 +1,10 @@
 random_seed: 42
 
+surrogate_model:
+  policy_version: round3_surrogate_uncertainty_v2
+  start_round: 3
+  regression_kernel: matern_2p5_explicit_observation_noise
+
 formulation_similarity:
   enabled: true
   start_round: 3
@@ -137,6 +142,14 @@ selection:
   # tighter by default: at most 1 candidate per round per exact larger
   # combination.
   max_candidates_per_larger_ingredient_combination: 1
+  max_candidates_per_shared_ingredient_pair: 5
+  # Round 3+ marginal-frequency invariant: each registry ingredient may
+  # appear above its practical presence threshold in at most five of the
+  # twelve selected rows. Retests and rescues count but are protected from
+  # removal; ordinary replacements preserve candidate origin.
+  max_candidates_per_ingredient: 5
+  ingredient_frequency_policy_version: round3_marginal_ingredient_diversity_v1
+  ingredient_frequency_start_round: 3
   reference_point:
     viability_percent: 0.0
     critical_axial_load_N_per_needle: 0.0
@@ -153,8 +166,11 @@ screening_phase:
 
 retest:
   enabled: true
+  policy_version: campaign_observed_instability_v2
   max_candidates_per_round: 2
   formulation_disagreement_threshold_percent: 15.0
   local_residual_threshold_percent: 20.0
-  uncertainty_percent_threshold: 12.0
+  within_batch_std_threshold_percent: 8.0
+  within_batch_min_replicates: 3
+  one_time_anomaly_confirmation: true
   nearest_neighbor_count: 3

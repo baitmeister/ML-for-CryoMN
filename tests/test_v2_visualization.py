@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
 from helper.registry import load_registry
 from helper.visualization import (
+    _aggregate_completed_candidates,
     _apply_plot_style,
+    _cross_validated_predictions,
     generate_completed_round_artifacts,
     generate_multiobjective_evaluation_artifacts,
     generate_proposal_artifacts,
@@ -24,7 +27,7 @@ def _formulations() -> pd.DataFrame:
     for index in range(4):
         row = {feature_name: 0.0 for feature_name in registry.feature_names}
         row["formulation_id"] = f"v2_test_{index}"
-        row["source"] = "wet_lab"
+        row["source"] = f"wetlab_feedback:ROUND_{index + 1:03d}"
         row["source_row_id"] = index
         row["formulation_label"] = f"test formulation {index}"
         row["active_ingredient_count"] = 2
@@ -52,7 +55,7 @@ def _observations() -> pd.DataFrame:
                     "value": viability[index],
                     "unit": "percent",
                     "observation_noise": 1.0,
-                    "source_type": "wet_lab",
+                    "source_type": "wetlab_feedback",
                     "source_file": "test.csv",
                     "notes": "",
                 },
@@ -65,7 +68,7 @@ def _observations() -> pd.DataFrame:
                     "value": intact[index],
                     "unit": "bool",
                     "observation_noise": 0.0,
-                    "source_type": "wet_lab",
+                    "source_type": "wetlab_feedback",
                     "source_file": "test.csv",
                     "notes": "",
                 },
@@ -78,7 +81,7 @@ def _observations() -> pd.DataFrame:
                     "value": critical[index],
                     "unit": "N_per_needle",
                     "observation_noise": 0.02,
-                    "source_type": "wet_lab",
+                    "source_type": "wetlab_feedback",
                     "source_file": "test.csv",
                     "notes": "",
                 },
@@ -132,6 +135,76 @@ def test_best_performers_summary_includes_observed_and_candidate_sections(tmp_pa
     assert "Balanced multi-objective leaders:" in text
     assert "Current leading next-round candidates:" in text
     assert "40mM DMSO + 400mM ectoin" in text
+
+
+def test_completed_report_collapses_48_rows_to_12_candidates(tmp_path: Path) -> None:
+    registry = load_registry()
+    completed_rows = []
+    for candidate_number in range(1, 13):
+        for replicate_number, value in enumerate(
+            [40.0, 42.0, 44.0, 46.0],
+            start=1,
+        ):
+            row = {feature: 0.0 for feature in registry.feature_names}
+            row.update(
+                {
+                    "candidate_id": f"candidate_{candidate_number:02d}",
+                    "formulation_id": f"formulation_{candidate_number:02d}",
+                    "selection_rank": candidate_number,
+                    "replicate_id": f"rep_{replicate_number:03d}",
+                    "viability_percent": value + candidate_number,
+                    "intact_patch_formation_pass": (
+                        1.0 if replicate_number == 1 else np.nan
+                    ),
+                    "predicted_viability_percent": 50.0,
+                    "intact_patch_pass_probability": 0.8,
+                    "mechanical_test_recommended": False,
+                    "recommendation_type": "screening_candidate",
+                    "dmso_M": 0.01 * candidate_number,
+                }
+            )
+            completed_rows.append(row)
+    completed = pd.DataFrame(completed_rows)
+    aggregated = _aggregate_completed_candidates(completed)
+    assert len(aggregated) == 12
+    assert set(aggregated["completed_viability_replicate_count"]) == {4}
+
+    path = _write_best_performers_summary(
+        _formulations(),
+        _observations(),
+        completed,
+        tmp_path,
+        registry,
+        candidate_heading="ROUND_002 completed-round candidates:",
+    )
+    text = path.read_text(encoding="utf-8")
+    assert "- Candidate formulations shown: 12" in text
+    assert text.count("completed result: viability") == 12
+
+
+def test_grouped_cross_validation_keeps_all_batches_of_formulation_together() -> None:
+    registry = load_registry()
+    observations = _observations()
+    duplicate = observations[
+        (observations["formulation_id"] == "v2_test_0")
+        & (observations["endpoint"] == "viability_percent")
+    ].copy()
+    duplicate["observation_id"] = "v2_test_0_viability_round_099"
+    duplicate["batch_id"] = "ROUND_099"
+    duplicate["value"] = 45.0
+    observations = pd.concat([observations, duplicate], ignore_index=True)
+
+    predictions = _cross_validated_predictions(
+        _formulations(),
+        observations,
+        registry,
+        "viability_percent",
+    )
+    assert not predictions.empty
+    assert (
+        predictions.groupby("formulation_id")["cv_fold"].nunique().max()
+        == 1
+    )
 
 
 def test_visualization_plots_are_created_with_small_complete_dataset(tmp_path: Path) -> None:

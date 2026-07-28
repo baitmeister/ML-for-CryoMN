@@ -8,7 +8,8 @@ artifacts:
 1. validate the filled working sheet against the frozen pre-bench proposal
 2. ingest the wet-lab results
 3. archive the exact filled worksheet bytes
-4. generate descriptive and cross-validated reports from the updated database
+4. generate replicate-aggregated descriptive reports and
+   formulation-grouped cross-validation reports from the updated database
 5. evaluate the archived proposal-time predictions for the completed round
 6. refresh the cumulative prospective report
 7. generate and freeze the next proposal
@@ -120,11 +121,19 @@ Reports that need more observations are omitted until the data support them.
 `completed/completed.csv` is an exact byte-for-byte archive of the successfully
 ingested working worksheet.
 
-`model_evaluation_*` is explicitly cross-validated and may retrain from the
-current database. `prospective_*` uses only archived proposal-time predictions
-and never retrains. Round 1 is reconstructed, Round 2 is supplementary, and
-Round 3+ supplies the formal pooled viability MAE. The cumulative bundle is
-written under `results/multi_objective_v2/reports/prospective/`.
+`best_performers_summary.txt` collapses technical replicates to one row per
+candidate and selection rank, reporting viability mean, sample SD, replicate
+count and intact outcome. Its main campaign rankings use feasible
+`wetlab_feedback` formulations; literature leaders appear separately as
+historical references.
+
+`model_evaluation_*` uses formulation-grouped cross-validation, so every batch
+of the same chemistry stays in one fold, and may retrain from the current
+database. `prospective_*` uses only archived proposal-time predictions and
+never retrains. Round 1 is reconstructed, Round 2 is supplementary, and Round
+3+ supplies the formal pooled viability MAE. Coverage is reported with
+interval width. The cumulative bundle is written under
+`results/multi_objective_v2/reports/prospective/`.
 
 Only after completed-round reporting succeeds does Stage 02 replace the active
 `next_round/` files and freeze the following round proposal. If report

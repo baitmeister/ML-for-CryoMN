@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern, WhiteKernel
+from sklearn.gaussian_process.kernels import Matern
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -174,7 +174,11 @@ def _fit_regression(
         model.fit(x_valid, y_valid)
         return RegressionSurrogate(model, residual_std=1.0, fitted=True, fallback_mean=float(y_valid[0]))
 
-    kernel = Matern(length_scale=np.ones(x_valid.shape[1]), nu=2.5) + WhiteKernel(noise_level=5.0)
+    # Observation uncertainty is already supplied through the per-row
+    # heteroscedastic `alpha` values above. A fixed WhiteKernel(5.0) in
+    # normalized-target space duplicated that noise and forced nearly every
+    # viability posterior SD into the 55-59 percentage-point range.
+    kernel = Matern(length_scale=np.ones(x_valid.shape[1]), nu=2.5)
     model = make_pipeline(
         StandardScaler(),
         GaussianProcessRegressor(

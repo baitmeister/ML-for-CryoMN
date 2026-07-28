@@ -11,7 +11,11 @@ from helper.registry import load_registry
 from helper.selection import (
     _allocate_screening_origin_quota,
     _enforce_ingredient_combination_cap,
+    _enforce_ingredient_frequency_cap,
+    _enforce_shared_ingredient_pair_cap,
     _greedy_diverse_pick,
+    _ingredient_appearance_counts,
+    _shared_pair_counts,
     _select_round_slate,
     annotate_candidates,
     select_next_round,
@@ -353,6 +357,381 @@ def test_ingredient_combination_cap_leaves_overcap_in_place_when_pool_has_no_rep
 
     assert len(adjusted) == 2
     assert set(adjusted["candidate_id"]) == {"pair_a", "pair_b"}
+
+
+def test_exact_combination_cap_prefers_same_origin_rescue_replacement() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    config["selection"]["max_candidates_per_larger_ingredient_combination"] = 1
+
+    def rescue_row(
+        candidate_id: str,
+        score: float,
+        *,
+        alternate: bool = False,
+    ) -> dict[str, float | str]:
+        row = {feature: 0.0 for feature in registry.feature_names}
+        row.update(
+            {
+                "candidate_id": candidate_id,
+                "formulation_id": candidate_id,
+                "candidate_origin": "rescue_dilution",
+                "recommendation_type": "rescue_candidate",
+                "screening_phase_score": score,
+                "ectoin_M": 0.2,
+                "ethylene_glycol_M": 0.4,
+                "fbs_pct": 5.0,
+            }
+        )
+        if alternate:
+            row["fbs_pct"] = 0.0
+            row["hsa_pct"] = 5.0
+        return row
+
+    selected = pd.DataFrame(
+        [
+            rescue_row("rescue_high", 10.0),
+            rescue_row("rescue_low", 9.0),
+        ]
+    )
+    ordinary = rescue_row("ordinary_high", 100.0, alternate=True)
+    ordinary["candidate_origin"] = "local_perturbation"
+    candidate_pool = pd.DataFrame(
+        [
+            *selected.to_dict("records"),
+            ordinary,
+            rescue_row("rescue_alternative", 8.0, alternate=True),
+        ]
+    )
+
+    adjusted = _enforce_ingredient_combination_cap(
+        selected,
+        candidate_pool,
+        registry,
+        config,
+        score_column="screening_phase_score",
+    )
+
+    assert len(adjusted) == 2
+    assert set(adjusted["candidate_origin"]) == {"rescue_dilution"}
+    assert "rescue_alternative" in set(adjusted["candidate_id"])
+
+
+def test_shared_core_pair_cap_counts_extra_ingredients_and_exempts_retests() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    config["selection"]["max_candidates_per_shared_ingredient_pair"] = 5
+    extra_features = [
+        "dmso_M",
+        "glycerol_M",
+        "propylene_glycol_M",
+        "trehalose_M",
+        "sucrose_M",
+        "fbs_pct",
+    ]
+    rows = []
+    for index, extra_feature in enumerate(extra_features):
+        row = {feature: 0.0 for feature in registry.feature_names}
+        row.update(
+            {
+                "candidate_id": f"core_{index}",
+                "formulation_id": f"core_{index}",
+                "candidate_origin": (
+                    "rescue_dilution" if index == 0 else "local_perturbation"
+                ),
+                "recommendation_type": "screening_candidate",
+                "ectoin_M": 0.10 + index * 0.01,
+                "ethylene_glycol_M": 0.20 + index * 0.01,
+                extra_feature: 1.0 if extra_feature.endswith("_pct") else 0.05,
+                "screening_phase_score": 100.0 - index,
+            }
+        )
+        rows.append(row)
+    retest = rows[0].copy()
+    retest.update(
+        {
+            "candidate_id": "intentional_retest",
+            "formulation_id": "historical_formulation",
+            "candidate_origin": "retest",
+            "recommendation_type": "retest_priority",
+            "screening_phase_score": 0.0,
+        }
+    )
+    alternative = {feature: 0.0 for feature in registry.feature_names}
+    alternative.update(
+        {
+            "candidate_id": "local_alternative",
+            "formulation_id": "local_alternative",
+            "candidate_origin": "local_perturbation",
+            "recommendation_type": "screening_candidate",
+            "betaine_M": 0.25,
+            "proline_M": 0.30,
+            "screening_phase_score": 1.0,
+        }
+    )
+    selected = pd.DataFrame([*rows, retest])
+    candidate_pool = pd.DataFrame([*rows, retest, alternative])
+
+    adjusted = _enforce_shared_ingredient_pair_cap(
+        selected,
+        candidate_pool,
+        registry,
+        config,
+        score_column="screening_phase_score",
+    )
+
+    assert len(adjusted) == len(selected)
+    assert "core_0" in set(adjusted["candidate_id"])
+    assert "intentional_retest" in set(adjusted["candidate_id"])
+    assert "local_alternative" in set(adjusted["candidate_id"])
+    pair_counts = _shared_pair_counts(adjusted, registry)
+    assert pair_counts[("ectoin_M", "ethylene_glycol_M")] == 5
+    assert max(pair_counts.values()) <= 5
+    assert adjusted.attrs["shared_pair_replacement_count"] == 1
+
+
+def test_ingredient_frequency_counts_use_practical_presence_thresholds() -> None:
+    registry = load_registry()
+    below = {feature: 0.0 for feature in registry.feature_names}
+    below.update({"candidate_id": "below", "creatine_M": 0.0009})
+    present = {feature: 0.0 for feature in registry.feature_names}
+    present.update({"candidate_id": "present", "creatine_M": 0.001})
+
+    counts = _ingredient_appearance_counts(
+        pd.DataFrame([below, present]),
+        registry,
+    )
+
+    assert counts == {"creatine_M": 1}
+
+
+def test_ingredient_frequency_cap_reduces_seven_to_five_and_protects_specials() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    config["selection"]["max_candidates_per_ingredient"] = 5
+
+    def row(
+        candidate_id: str,
+        origin: str,
+        score: float,
+        active: dict[str, float],
+        recommendation: str = "screening_candidate",
+        support_status: str = "in_support",
+    ) -> dict[str, object]:
+        result: dict[str, object] = {
+            feature: 0.0 for feature in registry.feature_names
+        }
+        result.update(active)
+        result.update(
+            {
+                "candidate_id": candidate_id,
+                "formulation_id": candidate_id,
+                "candidate_origin": origin,
+                "recommendation_type": recommendation,
+                "screening_phase_score": score,
+                "feasibility_pass": True,
+                "support_status": support_status,
+            }
+        )
+        return result
+
+    selected_rows = [
+        row(
+            "protected_retest",
+            "retest",
+            0.0,
+            {"creatine_M": 0.02},
+            recommendation="retest_priority",
+        ),
+        row(
+            "protected_rescue",
+            "rescue_dilution",
+            0.0,
+            {"creatine_M": 0.03, "fbs_pct": 2.0},
+            recommendation="rescue_candidate",
+        ),
+        row("sparse_low", "sparse_exploration", 1.0, {"creatine_M": 0.04}),
+        row(
+            "sparse_high",
+            "sparse_exploration",
+            8.0,
+            {"creatine_M": 0.05, "pvp_pct": 1.0},
+        ),
+        row(
+            "boundary_low",
+            "boundary_probe",
+            2.0,
+            {"creatine_M": 0.06, "dmso_M": 0.02},
+        ),
+        row(
+            "local_high_a",
+            "local_perturbation",
+            9.0,
+            {"creatine_M": 0.07, "glycerol_M": 0.2},
+        ),
+        row(
+            "local_high_b",
+            "local_perturbation",
+            10.0,
+            {"creatine_M": 0.08, "sucrose_M": 0.2},
+        ),
+        row("filler_1", "local_perturbation", 7.0, {"betaine_M": 0.2}),
+        row("filler_2", "local_perturbation", 6.0, {"proline_M": 0.2}),
+        row("filler_3", "sparse_exploration", 5.0, {"glucose_M": 0.2}),
+        row(
+            "existing_boundary",
+            "boundary_probe",
+            4.0,
+            {"trehalose_M": 0.2},
+            support_status="boundary",
+        ),
+        row("filler_5", "sparse_exploration", 3.0, {"hsa_pct": 2.0}),
+    ]
+    selected = pd.DataFrame(selected_rows)
+    candidate_pool = pd.DataFrame(
+        [
+            *selected_rows,
+            row(
+                "sparse_alternative",
+                "sparse_exploration",
+                0.9,
+                {"betaine_M": 0.25, "proline_M": 0.25},
+            ),
+            row(
+                "boundary_blocked_by_support_cap",
+                "boundary_probe",
+                1.9,
+                {"hyaluronic_acid_pct": 0.2},
+                support_status="boundary",
+            ),
+            row(
+                "boundary_alternative",
+                "boundary_probe",
+                1.8,
+                {"trehalose_M": 0.25, "hsa_pct": 1.0},
+            ),
+        ]
+    )
+    origins_before = selected["candidate_origin"].value_counts().to_dict()
+
+    adjusted = _enforce_ingredient_frequency_cap(
+        selected,
+        candidate_pool,
+        registry,
+        config,
+        score_column="screening_phase_score",
+    )
+
+    assert len(adjusted) == 12
+    assert adjusted["candidate_origin"].value_counts().to_dict() == origins_before
+    assert "protected_retest" in set(adjusted["candidate_id"])
+    assert "protected_rescue" in set(adjusted["candidate_id"])
+    assert "boundary_blocked_by_support_cap" not in set(adjusted["candidate_id"])
+    assert {
+        "sparse_alternative",
+        "boundary_alternative",
+    }.issubset(set(adjusted["candidate_id"]))
+    counts = _ingredient_appearance_counts(adjusted, registry)
+    assert counts["creatine_M"] == 5
+    assert max(counts.values()) <= 5
+    audit = adjusted.attrs["ingredient_frequency_diversity"]
+    assert audit["replacement_count"] == 2
+    assert [item["count_before"] for item in audit["replacement_audit"]] == [
+        7,
+        6,
+    ]
+
+
+def test_ingredient_frequency_cap_resolves_multiple_overrepresented_ingredients() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+
+    def single_row(
+        candidate_id: str,
+        feature_name: str,
+        score: float,
+    ) -> dict[str, object]:
+        row: dict[str, object] = {
+            feature: 0.0 for feature in registry.feature_names
+        }
+        row.update(
+            {
+                "candidate_id": candidate_id,
+                "formulation_id": candidate_id,
+                "candidate_origin": "local_perturbation",
+                "recommendation_type": "screening_candidate",
+                "screening_phase_score": score,
+                "feasibility_pass": True,
+                "support_status": "in_support",
+                feature_name: 0.1,
+            }
+        )
+        return row
+
+    selected_rows = [
+        *[
+            single_row(f"creatine_{index}", "creatine_M", 20.0 + index)
+            for index in range(6)
+        ],
+        *[
+            single_row(f"ectoin_{index}", "ectoin_M", 30.0 + index)
+            for index in range(6)
+        ],
+    ]
+    alternatives = [
+        single_row("alternative_betaine", "betaine_M", 10.0),
+        single_row("alternative_proline", "proline_M", 9.0),
+    ]
+
+    adjusted = _enforce_ingredient_frequency_cap(
+        pd.DataFrame(selected_rows),
+        pd.DataFrame([*selected_rows, *alternatives]),
+        registry,
+        config,
+        score_column="screening_phase_score",
+    )
+
+    counts = _ingredient_appearance_counts(adjusted, registry)
+    assert counts["creatine_M"] == 5
+    assert counts["ectoin_M"] == 5
+    assert max(counts.values()) <= 5
+    assert adjusted.attrs["ingredient_frequency_diversity"][
+        "replacement_count"
+    ] == 2
+
+
+def test_ingredient_frequency_cap_fails_without_same_origin_replacement() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    rows = []
+    for index in range(6):
+        row = {feature: 0.0 for feature in registry.feature_names}
+        row.update(
+            {
+                "candidate_id": f"creatine_{index}",
+                "formulation_id": f"creatine_{index}",
+                "candidate_origin": "sparse_exploration",
+                "recommendation_type": "screening_candidate",
+                "screening_phase_score": float(index),
+                "feasibility_pass": True,
+                "support_status": "in_support",
+                "creatine_M": 0.01 * (index + 1),
+            }
+        )
+        rows.append(row)
+    selected = pd.DataFrame(rows)
+
+    with pytest.raises(
+        ValueError,
+        match="preserving origin allocation",
+    ):
+        _enforce_ingredient_frequency_cap(
+            selected,
+            selected,
+            registry,
+            config,
+            score_column="screening_phase_score",
+        )
 
 
 def test_screening_slate_applies_ingredient_combination_cap_end_to_end() -> None:
@@ -835,15 +1214,15 @@ def test_policy_active_retests_must_pass_formulation_feasibility() -> None:
     observations = pd.DataFrame(
         [
             {
-                "observation_id": "obs_bad_retest_legacy_viability",
-                "formulation_id": "v2_bad_retest",
-                "batch_id": "legacy_wetlab",
-                "replicate_id": "rep_001",
-                "endpoint": "viability_percent",
-                "value": 80.0,
-                "unit": "percent",
-                "observation_noise": 5.0,
-                "source_type": "legacy_wetlab",
+                    "observation_id": "obs_bad_retest_round2_viability",
+                    "formulation_id": "v2_bad_retest",
+                    "batch_id": "ROUND_002",
+                    "replicate_id": "rep_001",
+                    "endpoint": "viability_percent",
+                    "value": 80.0,
+                    "unit": "percent",
+                    "observation_noise": 1.0,
+                    "source_type": "wetlab_feedback",
                 "source_file": "test",
                 "notes": "",
             },
@@ -892,6 +1271,87 @@ def test_policy_active_retests_must_pass_formulation_feasibility() -> None:
     assert result.metadata["retest_candidate_count_rejected_by_feasibility"] == 1
 
 
+def test_retest_feasibility_is_applied_before_two_slot_limit() -> None:
+    registry = load_registry()
+    config = load_optimization_config()
+    config["round_policy"]["viability_screens_per_round"] = 4
+    config["retest"]["max_candidates_per_round"] = 2
+    formulation_rows = []
+    for formulation_id, pvp_pct in [
+        ("infeasible_high_severity", 12.0),
+        ("infeasible_medium_severity", 11.0),
+        ("feasible_lower_severity", 5.0),
+    ]:
+        row = {feature: 0.0 for feature in registry.feature_names}
+        row.update(
+            {
+                "formulation_id": formulation_id,
+                "source": "wetlab_feedback:ROUND_001",
+                "source_row_id": formulation_id,
+                "formulation_label": formulation_id,
+                "pvp_pct": pvp_pct,
+                "active_ingredient_count": 1,
+            }
+        )
+        formulation_rows.append(row)
+    formulations = pd.DataFrame(formulation_rows)
+    observations = []
+    for formulation_id, values in [
+        ("infeasible_high_severity", [0.0, 90.0]),
+        ("infeasible_medium_severity", [0.0, 80.0]),
+        ("feasible_lower_severity", [40.0, 60.0]),
+    ]:
+        for round_number, value in enumerate(values, start=1):
+            observations.append(
+                {
+                    "observation_id": f"{formulation_id}_{round_number}",
+                    "formulation_id": formulation_id,
+                    "batch_id": f"ROUND_{round_number:03d}",
+                    "replicate_id": "rep_001",
+                    "endpoint": "viability_percent",
+                    "value": value,
+                    "unit": "percent",
+                    "observation_noise": 1.0,
+                    "source_type": "wetlab_feedback",
+                    "source_file": "test",
+                    "notes": "",
+                }
+            )
+    candidate_rows = []
+    for index, betaine in enumerate([0.20, 0.30, 0.40, 0.50], start=1):
+        row = {feature: 0.0 for feature in registry.feature_names}
+        row.update(
+            {
+                "candidate_id": f"ordinary_{index}",
+                "formulation_id": f"ordinary_{index}",
+                "betaine_M": betaine,
+                "active_ingredient_count": 1,
+                "feasibility_pass": True,
+                "support_status": "in_support",
+                "candidate_origin": "sparse_exploration",
+            }
+        )
+        candidate_rows.append(row)
+
+    result = select_next_round(
+        formulations=formulations,
+        observations=pd.DataFrame(observations),
+        candidate_pool=pd.DataFrame(candidate_rows),
+        registry=registry,
+        optimization_config=config,
+        target_round_number=2,
+        policy_active=True,
+    )
+
+    selected_retests = result.viability_screen[
+        result.viability_screen["recommendation_type"] == "retest_priority"
+    ]
+    assert list(selected_retests["formulation_id"]) == [
+        "feasible_lower_severity"
+    ]
+    assert result.metadata["retest_candidate_count_rejected_by_feasibility"] == 2
+
+
 def test_policy_active_retests_are_not_excluded_by_intact_prediction(
     tmp_path,
 ) -> None:
@@ -922,15 +1382,15 @@ def test_policy_active_retests_are_not_excluded_by_intact_prediction(
     observations = pd.DataFrame(
         [
             {
-                "observation_id": "obs_failed_intact_legacy_viability",
-                "formulation_id": "v2_failed_intact_retest",
-                "batch_id": "legacy_wetlab",
-                "replicate_id": "rep_001",
-                "endpoint": "viability_percent",
-                "value": 80.0,
-                "unit": "percent",
-                "observation_noise": 5.0,
-                "source_type": "legacy_wetlab",
+                    "observation_id": "obs_failed_intact_round2_viability",
+                    "formulation_id": "v2_failed_intact_retest",
+                    "batch_id": "ROUND_002",
+                    "replicate_id": "rep_001",
+                    "endpoint": "viability_percent",
+                    "value": 80.0,
+                    "unit": "percent",
+                    "observation_noise": 1.0,
+                    "source_type": "wetlab_feedback",
                 "source_file": "test",
                 "notes": "",
             },

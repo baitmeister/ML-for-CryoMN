@@ -105,7 +105,10 @@ overwritten. It is not copied into every round.
    feasible.
 6. Train v2 surrogate models from `formulations.csv` and `observations.csv`,
    preserving separate validation batches instead of collapsing everything to
-   one formulation-wide mean.
+   one formulation-wide mean. From Round 3, each regression uses a fixed
+   Matérn 2.5 kernel and the existing per-observation `alpha` values as its
+   only noise mechanism; the removed fixed `WhiteKernel(5.0)` no longer
+   inflates every candidate's posterior SD.
 7. Resolve the active selection phase automatically:
    - `screening_only` while real paired viability + mechanical data are still sparse
    - `mechanics_enabled` once the configured evidence thresholds are met
@@ -116,7 +119,7 @@ overwritten. It is not copied into every round.
    `rescue_dilution` candidates from step 2 and, once `mechanics_enabled`,
    by mechanics-phase scoring (`penalties.intact_failure_weight`,
    `round_policy.intact_probability_threshold`).
-9. Build the 12-row wet-lab slate from that full-pool ranking, then apply two
+9. Build the 12-row wet-lab slate from that full-pool ranking, then apply four
    diversity controls before finalizing:
    - **Origin quota** — each candidate-origin bucket (`local_perturbation`,
      `sparse_exploration`, `boundary_probe`, `rescue_dilution`, `retest`,
@@ -134,8 +137,27 @@ overwritten. It is not copied into every round.
      best-scoring eligible pool candidate not already at its own cap; the
      slate is never shrunk, and an over-cap combination is left in place if
      no eligible replacement exists.
-10. Add any `retest_priority` formulations separately when the latest batch for
-   an existing formulation appears off-trend or unstable.
+   - **Shared-core-pair cap** — counts every unordered ingredient pair within
+     each non-retest row, including pairs inside three-or-more-ingredient
+     formulations. No pair may occur in more than five non-retest rows.
+     Rescue rows count and are preserved; retests are exempt. Ordinary
+     offenders are replaced from the same origin bucket, and Stage 02 refuses
+     to freeze a still-violating slate.
+   - **Marginal ingredient-frequency cap** — beginning with Round 3, each
+     registry ingredient may occur above its practical presence threshold in
+     at most five of all 12 rows. Retests and rescues count but are protected
+     from removal. The lowest-scoring ordinary offender is replaced by the
+     highest-scoring eligible candidate from the same origin, preserving the
+     slate size, origin allocation and all earlier diversity constraints.
+     Stage 02 refuses to freeze a still-violating slate.
+10. Add at most two feasible `retest_priority` formulations using campaign
+    `wetlab_feedback` evidence only. Eligibility requires a feedback
+    batch-mean range of at least 15 points, a latest-batch sample SD of at
+    least 8 points from at least three replicates, or one anomaly-confirmation
+    opportunity for a single-batch formulation whose viability is at least 20
+    points off its bounds-normalized chemical neighbours. Two agreeing
+    batches suppress further neighbour-driven retesting. Model uncertainty
+    only breaks ties between already eligible rows.
 11. If `mechanics_enabled`, attempt continuous constrained qLogNEHVI and fall
     back to the constrained finite pool when unavailable or unsuccessful.
 
@@ -147,11 +169,19 @@ controls in step 9 and the ROUND_003+ similarity gate in step 5. During
 mechanical-test recommendations. The mechanical recommender and continuous
 qLogNEHVI path turn on after the phase transitions to `mechanics_enabled`.
 
+`support_policy.max_boundary_candidates_per_slate` applies only to selected
+rows classified as `support_status=boundary`. It does not limit the number of
+selected rows whose generation label is `candidate_origin=boundary_probe`;
+proposal metadata records both counts explicitly.
+
 The similarity rule is configured under `formulation_similarity` in
 `config_v2/optimization.yaml`. Selection metadata records its activation round,
 thresholds, wet-lab history count, rejection counts by origin/reference type,
 bounded conflict examples, and the final slate's minimum history and pairwise
-distances. It does not add any columns to the operator worksheet.
+distances. It also records retest evidence, candidate-pool uncertainty,
+selected shared-pair counts, marginal ingredient counts and any
+frequency-driven replacements. None of these diagnostics adds columns to the
+operator worksheet.
 
 ## Batch ID
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import combinations
 import json
 from pathlib import Path
 from typing import Mapping
@@ -35,6 +36,7 @@ from .similarity import (
     SimilarityAudit,
     build_history_similarity_index,
     filter_frame_by_similarity,
+    is_retest_row,
     resolve_similarity_policy,
     similarity_priority_order,
     validate_selected_similarity,
@@ -136,7 +138,9 @@ def _enforce_ingredient_combination_cap(
     origin-bucket diversity is enforced, because every bucket independently
     re-discovers the same favored combination. This swaps out the lowest-
     scoring offender past the cap for the best-scoring pool candidate whose
-    own combination is not already at the cap, mirroring
+    own combination is not already at the cap. A same-origin replacement is
+    preferred so rescue and exploration allocation is retained where the pool
+    permits, while still mirroring
     the candidate's full active-ingredient set (size 2+).
 
     The cap is size-dependent (see `_combination_cap_for_size`): pairs get a
@@ -162,7 +166,10 @@ def _enforce_ingredient_combination_cap(
         return _active_ingredient_set(row, registry)
 
     while True:
-        combos = [combo_of(row) for _, row in adjusted.iterrows()]
+        combos = [
+            frozenset() if is_retest_row(row) else combo_of(row)
+            for _, row in adjusted.iterrows()
+        ]
         counts: dict[frozenset[str], int] = {}
         for combo in combos:
             if len(combo) < 2:
@@ -196,22 +203,41 @@ def _enforce_ingredient_combination_cap(
         )
         loser_position = offender_positions[0]
         loser_id = str(adjusted.iloc[loser_position]["candidate_id"])
+        loser_origin = str(
+            adjusted.iloc[loser_position].get("candidate_origin", "")
+        )
 
         selected_ids = set(adjusted["candidate_id"].astype(str))
         replacement_row: pd.DataFrame | None = None
-        for _, candidate in ranked_pool.iterrows():
-            candidate_id = str(candidate.get("candidate_id", ""))
-            if not candidate_id or candidate_id == loser_id or candidate_id in selected_ids:
-                continue
-            candidate_combo = combo_of(candidate)
-            if candidate_combo == worst_combo:
-                continue
-            if len(candidate_combo) >= 2:
-                candidate_cap = _combination_cap_for_size(optimization_config, len(candidate_combo))
-                if counts.get(candidate_combo, 0) >= candidate_cap:
+        for require_same_origin in (True, False):
+            for _, candidate in ranked_pool.iterrows():
+                candidate_id = str(candidate.get("candidate_id", ""))
+                if (
+                    not candidate_id
+                    or candidate_id == loser_id
+                    or candidate_id in selected_ids
+                    or is_retest_row(candidate)
+                ):
                     continue
-            replacement_row = pd.DataFrame([candidate])
-            break
+                candidate_origin = str(candidate.get("candidate_origin", ""))
+                if require_same_origin and candidate_origin != loser_origin:
+                    continue
+                if not require_same_origin and candidate_origin == loser_origin:
+                    continue
+                candidate_combo = combo_of(candidate)
+                if candidate_combo == worst_combo:
+                    continue
+                if len(candidate_combo) >= 2:
+                    candidate_cap = _combination_cap_for_size(
+                        optimization_config,
+                        len(candidate_combo),
+                    )
+                    if counts.get(candidate_combo, 0) >= candidate_cap:
+                        continue
+                replacement_row = pd.DataFrame([candidate])
+                break
+            if replacement_row is not None:
+                break
 
         if replacement_row is None:
             # No eligible replacement exists in the pool; leave this
@@ -229,6 +255,478 @@ def _enforce_ingredient_combination_cap(
         )
         del loser_row, worst_cap
 
+    return adjusted
+
+
+def _shared_pair_counts(
+    frame: pd.DataFrame,
+    registry: IngredientRegistry,
+) -> dict[tuple[str, str], int]:
+    """Count every active ingredient pair among non-retest rows.
+
+    A row with three active ingredients contributes three pairs, so adding an
+    ingredient does not hide membership in a repeatedly selected core pair.
+    """
+    counts: dict[tuple[str, str], int] = {}
+    for _, row in frame.iterrows():
+        if is_retest_row(row):
+            continue
+        active = sorted(_active_ingredient_set(row, registry))
+        for pair in combinations(active, 2):
+            counts[pair] = counts.get(pair, 0) + 1
+    return counts
+
+
+def _exact_combination_caps_pass(
+    frame: pd.DataFrame,
+    registry: IngredientRegistry,
+    optimization_config: Mapping,
+) -> bool:
+    counts: dict[frozenset[str], int] = {}
+    for _, row in frame.iterrows():
+        if is_retest_row(row):
+            continue
+        active = _active_ingredient_set(row, registry)
+        if len(active) < 2:
+            continue
+        counts[active] = counts.get(active, 0) + 1
+        if counts[active] > _combination_cap_for_size(
+            optimization_config,
+            len(active),
+        ):
+            return False
+    return True
+
+
+def _enforce_shared_ingredient_pair_cap(
+    selected: pd.DataFrame,
+    candidate_pool: pd.DataFrame,
+    registry: IngredientRegistry,
+    optimization_config: Mapping,
+    score_column: str,
+) -> pd.DataFrame:
+    """Replace ordinary rows until every shared core pair is within its cap."""
+    if selected.empty:
+        adjusted = selected.copy()
+        adjusted.attrs["shared_pair_replacement_count"] = 0
+        return adjusted
+
+    cap = int(
+        nested_get(
+            optimization_config,
+            "selection.max_candidates_per_shared_ingredient_pair",
+            5,
+        )
+    )
+    if cap < 1:
+        raise ValueError(
+            "selection.max_candidates_per_shared_ingredient_pair must be at least 1."
+        )
+
+    adjusted = selected.copy().reset_index(drop=True)
+    ranked_pool = candidate_pool.copy()
+    ranked_pool["_pair_score"] = pd.to_numeric(
+        ranked_pool.get(score_column, 0.0),
+        errors="coerce",
+    ).fillna(float("-inf"))
+    ranked_pool = ranked_pool.sort_values(
+        ["_pair_score", "candidate_id"],
+        ascending=[False, True],
+        kind="mergesort",
+    ).drop(columns=["_pair_score"]).reset_index(drop=True)
+    replacement_count = 0
+
+    while True:
+        pair_counts = _shared_pair_counts(adjusted, registry)
+        over_cap = {
+            pair: count for pair, count in pair_counts.items() if count > cap
+        }
+        if not over_cap:
+            break
+        offending_pair = sorted(
+            over_cap,
+            key=lambda pair: (-(over_cap[pair] - cap), pair),
+        )[0]
+
+        offender_positions: list[int] = []
+        for position, (_, row) in enumerate(adjusted.iterrows()):
+            if is_retest_row(row):
+                continue
+            if str(row.get("candidate_origin", "")) == "rescue_dilution":
+                continue
+            active = _active_ingredient_set(row, registry)
+            if set(offending_pair).issubset(active):
+                offender_positions.append(position)
+        offender_positions.sort(
+            key=lambda position: (
+                float(
+                    pd.to_numeric(
+                        adjusted.iloc[position].get(score_column, float("-inf")),
+                        errors="coerce",
+                    )
+                ),
+                str(adjusted.iloc[position].get("candidate_id", "")),
+            )
+        )
+        if not offender_positions:
+            raise ValueError(
+                "Shared ingredient-pair cap cannot be satisfied without "
+                f"removing a protected retest/rescue row: {offending_pair}."
+            )
+
+        replacement_made = False
+        selected_ids = set(adjusted["candidate_id"].astype(str))
+        for loser_position in offender_positions:
+            loser = adjusted.iloc[loser_position]
+            loser_origin = str(loser.get("candidate_origin", ""))
+            for _, candidate in ranked_pool.iterrows():
+                candidate_id = str(candidate.get("candidate_id", ""))
+                if not candidate_id or candidate_id in selected_ids:
+                    continue
+                if is_retest_row(candidate):
+                    continue
+                if str(candidate.get("candidate_origin", "")) != loser_origin:
+                    continue
+                trial = pd.concat(
+                    [
+                        adjusted.iloc[:loser_position],
+                        pd.DataFrame([candidate]),
+                        adjusted.iloc[loser_position + 1 :],
+                    ],
+                    ignore_index=True,
+                )
+                if max(_shared_pair_counts(trial, registry).values(), default=0) > cap:
+                    continue
+                if not _exact_combination_caps_pass(
+                    trial,
+                    registry,
+                    optimization_config,
+                ):
+                    continue
+                adjusted = trial
+                replacement_count += 1
+                replacement_made = True
+                break
+            if replacement_made:
+                break
+        if not replacement_made:
+            raise ValueError(
+                "Shared ingredient-pair cap cannot be satisfied from the "
+                "eligible candidate pool while preserving origin allocation; "
+                f"unresolved pair={offending_pair}, count={over_cap[offending_pair]}, cap={cap}."
+            )
+
+    final_counts = _shared_pair_counts(adjusted, registry)
+    violations = {
+        pair: count for pair, count in final_counts.items() if count > cap
+    }
+    if violations:
+        raise ValueError(
+            "Refusing to freeze a slate that violates the shared ingredient-pair "
+            f"cap: {violations}."
+        )
+    adjusted.attrs["shared_pair_replacement_count"] = replacement_count
+    return adjusted
+
+
+def _ingredient_appearance_counts(
+    frame: pd.DataFrame,
+    registry: IngredientRegistry,
+) -> dict[str, int]:
+    """Count marginal ingredient presence across every selected row."""
+    counts = {feature_name: 0 for feature_name in registry.feature_names}
+    for _, row in frame.iterrows():
+        for feature_name in _active_ingredient_set(row, registry):
+            counts[feature_name] += 1
+    return {feature_name: count for feature_name, count in counts.items() if count}
+
+
+def _is_protected_diversity_row(row: pd.Series) -> bool:
+    """Retests and rescue hypotheses count toward caps but cannot be removed."""
+    return is_retest_row(row) or str(
+        row.get("candidate_origin", "")
+    ).strip() == "rescue_dilution"
+
+
+def _support_boundary_count(frame: pd.DataFrame) -> int:
+    if "support_status" not in frame.columns:
+        return 0
+    return int(frame["support_status"].astype(str).eq("boundary").sum())
+
+
+def _enforce_ingredient_frequency_cap(
+    selected: pd.DataFrame,
+    candidate_pool: pd.DataFrame,
+    registry: IngredientRegistry,
+    optimization_config: Mapping,
+    score_column: str,
+) -> pd.DataFrame:
+    """Hard-cap marginal ingredient appearances while preserving origins."""
+    cap = int(
+        nested_get(
+            optimization_config,
+            "selection.max_candidates_per_ingredient",
+            5,
+        )
+    )
+    if cap < 1:
+        raise ValueError(
+            "selection.max_candidates_per_ingredient must be at least 1."
+        )
+    if selected.empty:
+        adjusted = selected.copy()
+        adjusted.attrs["ingredient_frequency_diversity"] = {
+            "counts_before": {},
+            "counts_after": {},
+            "protected_retest_count": 0,
+            "protected_rescue_count": 0,
+            "replacement_count": 0,
+            "replacement_audit": [],
+            "maximum_ingredient_frequency": 0,
+        }
+        return adjusted
+
+    adjusted = selected.copy().reset_index(drop=True)
+    selected_size = len(adjusted)
+    origin_counts_before = (
+        adjusted.get(
+            "candidate_origin",
+            pd.Series("", index=adjusted.index),
+        )
+        .fillna("")
+        .astype(str)
+        .value_counts()
+        .sort_index()
+        .to_dict()
+    )
+    counts_before = _ingredient_appearance_counts(adjusted, registry)
+    protected_retest_count = int(
+        adjusted.apply(is_retest_row, axis=1).sum()
+    )
+    protected_rescue_count = int(
+        adjusted.get(
+            "candidate_origin",
+            pd.Series("", index=adjusted.index),
+        )
+        .astype(str)
+        .eq("rescue_dilution")
+        .sum()
+    )
+
+    ranked_pool = candidate_pool.copy()
+    ranked_pool["_frequency_score"] = pd.to_numeric(
+        ranked_pool.get(score_column, 0.0),
+        errors="coerce",
+    ).fillna(float("-inf"))
+    ranked_pool = (
+        ranked_pool.sort_values(
+            ["_frequency_score", "candidate_id"],
+            ascending=[False, True],
+            kind="mergesort",
+        )
+        .drop(columns=["_frequency_score"])
+        .reset_index(drop=True)
+    )
+    feature_order = {
+        feature_name: index
+        for index, feature_name in enumerate(registry.feature_names)
+    }
+    shared_pair_cap = int(
+        nested_get(
+            optimization_config,
+            "selection.max_candidates_per_shared_ingredient_pair",
+            5,
+        )
+    )
+    boundary_cap = int(
+        nested_get(
+            optimization_config,
+            "support_policy.max_boundary_candidates_per_slate",
+            1,
+        )
+    )
+    replacement_audit: list[dict[str, object]] = []
+
+    def score_value(row: pd.Series) -> float:
+        value = pd.to_numeric(
+            row.get(score_column, float("-inf")),
+            errors="coerce",
+        )
+        return float(value) if pd.notna(value) else float("-inf")
+
+    while True:
+        current_counts = _ingredient_appearance_counts(adjusted, registry)
+        over_cap = {
+            feature_name: count
+            for feature_name, count in current_counts.items()
+            if count > cap
+        }
+        if not over_cap:
+            break
+        trigger_feature = sorted(
+            over_cap,
+            key=lambda feature_name: (
+                -(over_cap[feature_name] - cap),
+                feature_order[feature_name],
+            ),
+        )[0]
+
+        offender_positions = [
+            position
+            for position, (_, row) in enumerate(adjusted.iterrows())
+            if trigger_feature in _active_ingredient_set(row, registry)
+            and not _is_protected_diversity_row(row)
+        ]
+        offender_positions.sort(
+            key=lambda position: (
+                score_value(adjusted.iloc[position]),
+                str(adjusted.iloc[position].get("candidate_id", "")),
+            )
+        )
+        if not offender_positions:
+            raise ValueError(
+                "Ingredient-frequency cap cannot be satisfied without "
+                "removing protected retest/rescue rows: "
+                f"{trigger_feature} appears {over_cap[trigger_feature]} "
+                f"times, cap={cap}."
+            )
+
+        replacement_made = False
+        selected_ids = set(adjusted["candidate_id"].astype(str))
+        for loser_position in offender_positions:
+            loser = adjusted.iloc[loser_position]
+            loser_origin = str(loser.get("candidate_origin", ""))
+            for _, candidate in ranked_pool.iterrows():
+                candidate_id = str(candidate.get("candidate_id", ""))
+                if not candidate_id or candidate_id in selected_ids:
+                    continue
+                if _is_protected_diversity_row(candidate):
+                    continue
+                if str(candidate.get("candidate_origin", "")) != loser_origin:
+                    continue
+                feasibility_value = candidate.get("feasibility_pass", True)
+                if pd.notna(feasibility_value) and not bool(feasibility_value):
+                    continue
+
+                trial = pd.concat(
+                    [
+                        adjusted.iloc[:loser_position],
+                        pd.DataFrame([candidate]),
+                        adjusted.iloc[loser_position + 1 :],
+                    ],
+                    ignore_index=True,
+                )
+                trial_counts = _ingredient_appearance_counts(trial, registry)
+                if trial_counts.get(trigger_feature, 0) >= current_counts.get(
+                    trigger_feature,
+                    0,
+                ):
+                    continue
+                if any(
+                    trial_counts.get(feature_name, 0)
+                    > max(cap, current_counts.get(feature_name, 0))
+                    for feature_name in registry.feature_names
+                ):
+                    continue
+                if not _exact_combination_caps_pass(
+                    trial,
+                    registry,
+                    optimization_config,
+                ):
+                    continue
+                if max(
+                    _shared_pair_counts(trial, registry).values(),
+                    default=0,
+                ) > shared_pair_cap:
+                    continue
+                if _support_boundary_count(trial) > boundary_cap:
+                    continue
+
+                replacement_audit.append(
+                    {
+                        "trigger_ingredient": trigger_feature,
+                        "count_before": int(
+                            current_counts.get(trigger_feature, 0)
+                        ),
+                        "count_after": int(
+                            trial_counts.get(trigger_feature, 0)
+                        ),
+                        "removed_candidate_id": str(
+                            loser.get("candidate_id", "")
+                        ),
+                        "added_candidate_id": candidate_id,
+                        "candidate_origin": loser_origin,
+                        "removed_score": score_value(loser),
+                        "added_score": score_value(candidate),
+                        "score_change": score_value(candidate)
+                        - score_value(loser),
+                    }
+                )
+                adjusted = trial
+                replacement_made = True
+                break
+            if replacement_made:
+                break
+        if not replacement_made:
+            raise ValueError(
+                "Ingredient-frequency cap cannot be satisfied from the "
+                "eligible candidate pool while preserving origin allocation "
+                "and existing diversity constraints: "
+                f"{trigger_feature} appears {over_cap[trigger_feature]} "
+                f"times, cap={cap}."
+            )
+
+    counts_after = _ingredient_appearance_counts(adjusted, registry)
+    violations = {
+        feature_name: count
+        for feature_name, count in counts_after.items()
+        if count > cap
+    }
+    origin_counts_after = (
+        adjusted.get(
+            "candidate_origin",
+            pd.Series("", index=adjusted.index),
+        )
+        .fillna("")
+        .astype(str)
+        .value_counts()
+        .sort_index()
+        .to_dict()
+    )
+    if violations:
+        raise ValueError(
+            "Refusing to freeze a slate that violates the marginal ingredient "
+            f"frequency cap: {violations}."
+        )
+    if len(adjusted) != selected_size:
+        raise ValueError(
+            "Ingredient-frequency enforcement changed the slate size: "
+            f"{selected_size} -> {len(adjusted)}."
+        )
+    if origin_counts_after != origin_counts_before:
+        raise ValueError(
+            "Ingredient-frequency enforcement changed candidate-origin "
+            f"allocation: before={origin_counts_before}, "
+            f"after={origin_counts_after}."
+        )
+
+    adjusted.attrs["ingredient_frequency_diversity"] = {
+        "counts_before": {
+            feature_name: int(count)
+            for feature_name, count in counts_before.items()
+        },
+        "counts_after": {
+            feature_name: int(count)
+            for feature_name, count in counts_after.items()
+        },
+        "protected_retest_count": protected_retest_count,
+        "protected_rescue_count": protected_rescue_count,
+        "replacement_count": len(replacement_audit),
+        "replacement_audit": replacement_audit,
+        "maximum_ingredient_frequency": int(
+            max(counts_after.values(), default=0)
+        ),
+    }
     return adjusted
 
 
@@ -762,6 +1260,7 @@ def _select_round_slate(
     phase_resolution: PhaseResolution,
     n: int,
     policy_active: bool = False,
+    target_round_number: int | None = None,
 ) -> pd.DataFrame:
     if phase_resolution.active_phase == PHASE_MECHANICS:
         score_column = "mechanics_phase_score"
@@ -770,19 +1269,20 @@ def _select_round_slate(
         score_column = "screening_phase_score"
         default_recommendation_type = "screening_candidate"
 
-    # Retests are flagged purely on viability disagreement/uncertainty
-    # (see helper/retest.py retest_priority_score: replicate range, local
-    # neighbor residual, viability std). They are intentionally not filtered
-    # by intact-formation prediction here: a formulation whose viability
-    # results disagree needs re-testing regardless of what the intact model
-    # predicts, otherwise the most uncertain candidates could be silently
-    # dropped from the retest slate.
+    # Retest eligibility is based only on observed campaign evidence. Model
+    # uncertainty is the second ranking key after evidence severity and
+    # cannot create a retest by itself. Feasibility was applied before this
+    # point, so an infeasible diagnostic row cannot consume either slot.
     retest_limit = int(nested_get(optimization_config, "retest.max_candidates_per_round", 2))
     retests = annotated[annotated["recommendation_type"] == "retest_priority"].copy()
     selected_parts: list[pd.DataFrame] = []
     selected_ids: set[str] = set()
     if not retests.empty and retest_limit > 0:
-        selected_retests = retests.sort_values("retest_priority_score", ascending=False).head(min(retest_limit, n)).copy()
+        selected_retests = retests.sort_values(
+            ["retest_priority_score", "viability_std", "formulation_id"],
+            ascending=[False, False, True],
+            kind="mergesort",
+        ).head(min(retest_limit, n)).copy()
         selected_parts.append(selected_retests)
         selected_ids = set(selected_retests["candidate_id"].astype(str))
 
@@ -913,9 +1413,78 @@ def _select_round_slate(
         optimization_config,
         score_column=score_column,
     )
+    selected = _enforce_shared_ingredient_pair_cap(
+        selected,
+        annotated,
+        registry,
+        optimization_config,
+        score_column=score_column,
+    )
+    shared_pair_replacement_count = int(
+        selected.attrs.get("shared_pair_replacement_count", 0)
+    )
+    ingredient_frequency_start_round = int(
+        nested_get(
+            optimization_config,
+            "selection.ingredient_frequency_start_round",
+            3,
+        )
+    )
+    ingredient_frequency_active = bool(
+        target_round_number is not None
+        and int(target_round_number) >= ingredient_frequency_start_round
+    )
+    if ingredient_frequency_active:
+        selected = _enforce_ingredient_frequency_cap(
+            selected,
+            annotated,
+            registry,
+            optimization_config,
+            score_column=score_column,
+        )
+    ingredient_frequency_metadata = selected.attrs.get(
+        "ingredient_frequency_diversity",
+        {
+            "counts_before": _ingredient_appearance_counts(
+                selected,
+                registry,
+            ),
+            "counts_after": _ingredient_appearance_counts(
+                selected,
+                registry,
+            ),
+            "protected_retest_count": int(
+                selected.apply(is_retest_row, axis=1).sum()
+            ),
+            "protected_rescue_count": int(
+                selected.get(
+                    "candidate_origin",
+                    pd.Series("", index=selected.index),
+                )
+                .astype(str)
+                .eq("rescue_dilution")
+                .sum()
+            ),
+            "replacement_count": 0,
+            "replacement_audit": [],
+            "maximum_ingredient_frequency": int(
+                max(
+                    _ingredient_appearance_counts(
+                        selected,
+                        registry,
+                    ).values(),
+                    default=0,
+                )
+            ),
+        },
+    )
     selected["recommendation_type"] = selected["recommendation_type"].replace("", pd.NA).fillna(default_recommendation_type)
     selected.insert(0, "selection_rank", range(1, len(selected) + 1))
     selected["selection_role"] = "round_candidate"
+    selected.attrs["shared_pair_replacement_count"] = shared_pair_replacement_count
+    selected.attrs["ingredient_frequency_diversity"] = (
+        ingredient_frequency_metadata
+    )
     return selected
 
 
@@ -1070,6 +1639,57 @@ def select_next_round(
         registry,
         optimization_config,
     )
+    retest_policy_metadata = {
+        "policy_version": str(
+            nested_get(
+                optimization_config,
+                "retest.policy_version",
+                "campaign_observed_instability_v2",
+            )
+        ),
+        "eligible_source_types": ["wetlab_feedback"],
+        "max_candidates_per_round": int(
+            nested_get(optimization_config, "retest.max_candidates_per_round", 2)
+        ),
+        "formulation_disagreement_threshold_percent": float(
+            nested_get(
+                optimization_config,
+                "retest.formulation_disagreement_threshold_percent",
+                15.0,
+            )
+        ),
+        "within_batch_std_threshold_percent": float(
+            nested_get(
+                optimization_config,
+                "retest.within_batch_std_threshold_percent",
+                8.0,
+            )
+        ),
+        "within_batch_min_replicates": int(
+            nested_get(
+                optimization_config,
+                "retest.within_batch_min_replicates",
+                3,
+            )
+        ),
+        "local_residual_threshold_percent": float(
+            nested_get(
+                optimization_config,
+                "retest.local_residual_threshold_percent",
+                20.0,
+            )
+        ),
+        "one_time_anomaly_confirmation": bool(
+            nested_get(
+                optimization_config,
+                "retest.one_time_anomaly_confirmation",
+                True,
+            )
+        ),
+        "eligibility_uses_model_uncertainty": False,
+        "eligible_before_feasibility": int(len(retest_candidates)),
+    }
+    retest_audit_rows: list[dict] = []
     retest_candidates_rejected_by_feasibility = 0
     if policy_active and not retest_candidates.empty:
         support = build_support_context(
@@ -1088,10 +1708,127 @@ def select_next_round(
         retest_candidates_rejected_by_feasibility = int(
             (~retest_candidates["feasibility_pass"].astype(bool)).sum()
         )
+        for _, row in retest_candidates.iterrows():
+            retest_audit_rows.append(
+                {
+                    "formulation_id": str(row.get("formulation_id", "")),
+                    "feedback_batch_count": int(
+                        pd.to_numeric(
+                            row.get("feedback_batch_count", 0),
+                            errors="coerce",
+                        )
+                        or 0
+                    ),
+                    "batch_mean_range_percent": float(
+                        pd.to_numeric(
+                            row.get("same_formulation_range", 0.0),
+                            errors="coerce",
+                        )
+                        or 0.0
+                    ),
+                    "latest_batch_replicate_count": int(
+                        pd.to_numeric(
+                            row.get("viability_replicate_count", 0),
+                            errors="coerce",
+                        )
+                        or 0
+                    ),
+                    "latest_batch_replicate_sd_percent": float(
+                        pd.to_numeric(
+                            row.get("viability_replicate_sd", 0.0),
+                            errors="coerce",
+                        )
+                        or 0.0
+                    ),
+                    "nearest_neighbor_residual_percent": float(
+                        pd.to_numeric(
+                            row.get("local_neighbor_residual", 0.0),
+                            errors="coerce",
+                        )
+                        or 0.0
+                    ),
+                    "nearest_neighbor_bounds_normalized_distance": (
+                        None
+                        if pd.isna(row.get("_retest_nearest_neighbor_distance"))
+                        else float(row["_retest_nearest_neighbor_distance"])
+                    ),
+                    "eligibility_reason": str(
+                        row.get("_retest_eligibility_reason", "")
+                    ),
+                    "observed_evidence_severity": float(
+                        pd.to_numeric(
+                            row.get("retest_priority_score", 0.0),
+                            errors="coerce",
+                        )
+                        or 0.0
+                    ),
+                    "model_uncertainty_tiebreak": float(
+                        pd.to_numeric(
+                            row.get("viability_std", 0.0),
+                            errors="coerce",
+                        )
+                        or 0.0
+                    ),
+                    "feasibility_pass": bool(row.get("feasibility_pass", False)),
+                }
+            )
         retest_candidates = retest_candidates.loc[
             retest_candidates["feasibility_pass"].astype(bool)
         ].reset_index(drop=True)
         retest_candidates["candidate_origin"] = "retest"
+    elif not retest_candidates.empty:
+        for _, row in retest_candidates.iterrows():
+            retest_audit_rows.append(
+                {
+                    "formulation_id": str(row.get("formulation_id", "")),
+                    "feedback_batch_count": int(row.get("feedback_batch_count", 0)),
+                    "batch_mean_range_percent": float(
+                        row.get("same_formulation_range", 0.0)
+                    ),
+                    "latest_batch_replicate_count": int(
+                        row.get("viability_replicate_count", 0)
+                    ),
+                    "latest_batch_replicate_sd_percent": float(
+                        row.get("viability_replicate_sd", 0.0)
+                    ),
+                    "nearest_neighbor_residual_percent": float(
+                        row.get("local_neighbor_residual", 0.0)
+                    ),
+                    "eligibility_reason": str(
+                        row.get("_retest_eligibility_reason", "")
+                    ),
+                    "feasibility_pass": None,
+                }
+            )
+    retest_policy_metadata["rejected_by_feasibility"] = (
+        retest_candidates_rejected_by_feasibility
+    )
+    retest_policy_metadata["eligible_after_feasibility"] = int(
+        len(retest_candidates)
+    )
+    retest_policy_metadata["eligible_candidates"] = retest_audit_rows
+
+    # Retest-only audit fields belong in metadata and explanations, not in
+    # the stable operator worksheet schema.
+    retained_retest_columns = set(candidate_pool.columns) | {
+        "candidate_id",
+        "formulation_id",
+        "recommendation_type",
+        "selection_explanation",
+        "active_ingredient_count",
+        "candidate_origin",
+        "same_formulation_range",
+        "local_neighbor_residual",
+        "retest_priority_score",
+        *registry.feature_names,
+    }
+    retest_candidates = retest_candidates[
+        [
+            column
+            for column in retest_candidates.columns
+            if column in retained_retest_columns
+        ]
+    ].copy()
     combined_pool = candidate_pool.copy()
     if not retest_candidates.empty:
         combined_pool = pd.concat([combined_pool, retest_candidates], ignore_index=True, sort=False)
@@ -1142,6 +1879,7 @@ def select_next_round(
         phase_resolution,
         n=n_viability,
         policy_active=policy_active,
+        target_round_number=target_round_number,
     )
     mechanical_tests, mechanical_metadata = select_mechanical_tests(
         viability_screen,
@@ -1158,6 +1896,82 @@ def select_next_round(
         registry,
         similarity_policy,
     )
+    selected_pair_counts = _shared_pair_counts(viability_screen, registry)
+    shared_pair_cap = int(
+        nested_get(
+            optimization_config,
+            "selection.max_candidates_per_shared_ingredient_pair",
+            5,
+        )
+    )
+    ingredient_frequency_cap = int(
+        nested_get(
+            optimization_config,
+            "selection.max_candidates_per_ingredient",
+            5,
+        )
+    )
+    ingredient_frequency_start_round = int(
+        nested_get(
+            optimization_config,
+            "selection.ingredient_frequency_start_round",
+            3,
+        )
+    )
+    ingredient_frequency_active = bool(
+        target_round_number is not None
+        and int(target_round_number) >= ingredient_frequency_start_round
+    )
+    ingredient_frequency_metadata = dict(
+        viability_screen.attrs.get(
+            "ingredient_frequency_diversity",
+            {},
+        )
+    )
+    final_ingredient_counts = _ingredient_appearance_counts(
+        viability_screen,
+        registry,
+    )
+    if ingredient_frequency_active:
+        frequency_violations = {
+            feature_name: count
+            for feature_name, count in final_ingredient_counts.items()
+            if count > ingredient_frequency_cap
+        }
+        if frequency_violations:
+            raise ValueError(
+                "Final selected slate violates the active marginal ingredient "
+                f"frequency policy: {frequency_violations}."
+            )
+    selected_retest_ids = set(
+        viability_screen.loc[
+            viability_screen["recommendation_type"].astype(str)
+            == "retest_priority",
+            "formulation_id",
+        ].astype(str)
+    )
+    retest_policy_metadata["selected_candidates"] = [
+        row
+        for row in retest_audit_rows
+        if str(row.get("formulation_id", "")) in selected_retest_ids
+    ]
+    surrogate_config = (
+        nested_get(optimization_config, "surrogate_model", {}) or {}
+    )
+
+    def uncertainty_summary(column: str) -> dict[str, float | None]:
+        values = pd.to_numeric(
+            annotated.get(column, pd.Series(dtype=float)),
+            errors="coerce",
+        ).dropna()
+        if values.empty:
+            return {"minimum": None, "median": None, "maximum": None}
+        return {
+            "minimum": float(values.min()),
+            "median": float(values.median()),
+            "maximum": float(values.max()),
+        }
+
     if phase_resolution.active_phase == PHASE_SCREENING:
         optimizer_mode = (
             "support_aware_finite_pool_screening"
@@ -1194,6 +2008,115 @@ def select_next_round(
         "optimizer_fallback_status": optimizer_fallback_status,
         "retest_candidate_count": int((annotated["recommendation_type"] == "retest_priority").sum()),
         "retest_candidate_count_rejected_by_feasibility": retest_candidates_rejected_by_feasibility,
+        "retest_policy": retest_policy_metadata,
+        "surrogate_uncertainty": {
+            "policy_version": str(
+                surrogate_config.get(
+                    "policy_version",
+                    "round3_surrogate_uncertainty_v2",
+                )
+            ),
+            "start_round": int(surrogate_config.get("start_round", 3)),
+            "active": bool(
+                target_round_number is not None
+                and int(target_round_number)
+                >= int(surrogate_config.get("start_round", 3))
+            ),
+            "regression_kernel": str(
+                surrogate_config.get(
+                    "regression_kernel",
+                    "matern_2p5_explicit_observation_noise",
+                )
+            ),
+            "observation_noise_mechanism": "per_observation_alpha",
+            "candidate_pool_viability_std": uncertainty_summary(
+                "viability_std"
+            ),
+            "candidate_pool_critical_load_std": uncertainty_summary(
+                "critical_axial_load_std"
+            ),
+            "candidate_pool_initial_stiffness_std": uncertainty_summary(
+                "initial_stiffness_std"
+            ),
+        },
+        "shared_ingredient_pair_diversity": {
+            "definition": (
+                "unordered active registry pair above practical presence "
+                "thresholds; additional ingredients do not change membership"
+            ),
+            "max_non_retest_rows_per_pair": shared_pair_cap,
+            "retests_exempt": True,
+            "rescue_rows_included": True,
+            "replacement_count": int(
+                viability_screen.attrs.get(
+                    "shared_pair_replacement_count",
+                    0,
+                )
+            ),
+            "selected_pair_counts": {
+                " + ".join(pair): int(count)
+                for pair, count in sorted(selected_pair_counts.items())
+            },
+            "maximum_pair_multiplicity": int(
+                max(selected_pair_counts.values(), default=0)
+            ),
+        },
+        "ingredient_frequency_diversity": {
+            "policy_version": str(
+                nested_get(
+                    optimization_config,
+                    "selection.ingredient_frequency_policy_version",
+                    "round3_marginal_ingredient_diversity_v1",
+                )
+            ),
+            "start_round": ingredient_frequency_start_round,
+            "active": ingredient_frequency_active,
+            "max_rows_per_ingredient": ingredient_frequency_cap,
+            "presence_rule": "registry practical presence thresholds",
+            "special_rows_count_toward_cap": True,
+            "retests_protected_from_removal": True,
+            "rescue_rows_protected_from_removal": True,
+            "same_origin_replacement_required": True,
+            **ingredient_frequency_metadata,
+            "counts_after": {
+                feature_name: int(count)
+                for feature_name, count in final_ingredient_counts.items()
+            },
+            "maximum_ingredient_frequency": int(
+                max(final_ingredient_counts.values(), default=0)
+            ),
+        },
+        "boundary_slate_cap": {
+            "max_support_boundary_rows": int(
+                nested_get(
+                    optimization_config,
+                    "support_policy.max_boundary_candidates_per_slate",
+                    1,
+                )
+            ),
+            "selected_support_boundary_rows": int(
+                (
+                    viability_screen.get(
+                        "support_status",
+                        pd.Series("", index=viability_screen.index),
+                    ).astype(str)
+                    == "boundary"
+                ).sum()
+            ),
+            "selected_boundary_probe_origin_rows": int(
+                (
+                    viability_screen.get(
+                        "candidate_origin",
+                        pd.Series("", index=viability_screen.index),
+                    ).astype(str)
+                    == "boundary_probe"
+                ).sum()
+            ),
+            "clarification": (
+                "max_boundary_candidates_per_slate caps support_status=boundary "
+                "rows, not candidate_origin=boundary_probe rows"
+            ),
+        },
         "zero_active_candidate_count_filtered": zero_active_filtered_count,
         "target_round_number": target_round_number,
         "preparation_model_fitted": bool(models.preparation.fitted),
@@ -1310,6 +2233,22 @@ def _write_summary(
         ]
         insertion_index = lines.index("Wet-lab instructions:")
         lines[insertion_index:insertion_index] = similarity_lines
+    ingredient_frequency_metadata = result.metadata.get(
+        "ingredient_frequency_diversity",
+        {},
+    )
+    if bool(ingredient_frequency_metadata.get("active", False)):
+        frequency_lines = [
+            "Marginal ingredient-frequency policy:",
+            f"- Version: {ingredient_frequency_metadata.get('policy_version', '')}",
+            f"- Maximum selected rows per ingredient: {int(ingredient_frequency_metadata.get('max_rows_per_ingredient', 5))}",
+            "- Retest and rescue rows count toward the limit but are protected from removal.",
+            f"- Frequency-driven replacements: {int(ingredient_frequency_metadata.get('replacement_count', 0))}",
+            f"- Final maximum ingredient frequency: {int(ingredient_frequency_metadata.get('maximum_ingredient_frequency', 0))}",
+            "",
+        ]
+        insertion_index = lines.index("Wet-lab instructions:")
+        lines[insertion_index:insertion_index] = frequency_lines
     if zero_active_filtered:
         warning_lines = [
             "Warnings:",
@@ -1425,9 +2364,67 @@ def write_selection_result(
         if column in selected.columns:
             selected[column] = ""
     result.metadata["batch_id"] = batch_id
-    csv_columns = wetlab_result_columns + [
-        column for column in selected.columns if column not in wetlab_result_columns
+    forward_diagnostic_columns = [
+        *registry.feature_names,
+        "active_ingredient_count",
+        "candidate_origin",
+        "rescue_scale_factor",
+        "rescue_anchor_formulation_id",
+        "rescue_anchor_viability_percent",
+        "active_polymer_count",
+        "total_polymer_pct",
+        "total_serum_protein_pct",
+        "total_polymer_serum_pct",
+        "total_sugar_M",
+        "total_nonpermeating_solute_M",
+        "estimated_small_solute_g_L",
+        "feasibility_pass",
+        "feasibility_reasons",
+        "nearest_support_distance",
+        "support_status",
+        "source",
+        "source_row_id",
+        "formulation_label",
+        "source_type",
+        "predicted_viability_percent",
+        "viability_std",
+        "predicted_critical_axial_load_N_per_needle",
+        "critical_axial_load_std",
+        "intact_patch_pass_probability",
+        "same_formulation_range",
+        "local_neighbor_residual",
+        "retest_priority_score",
+        "viability_ucb",
+        "critical_axial_load_ucb",
+        "predicted_initial_stiffness_N_per_mm_per_needle",
+        "initial_stiffness_std",
+        "preparation_feasibility_probability",
+        "active_ingredient_excess_above_8",
+        "single_molar_excess_features",
+        "single_molar_excess_total_M",
+        "intact_failure_probability",
+        "acquisition_penalty",
+        "screening_acquisition_penalty",
+        "screening_phase_score",
+        "mechanics_phase_score",
+        "selection_role",
     ]
+    if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
+        for column in forward_diagnostic_columns:
+            if column not in selected.columns:
+                selected[column] = ""
+        csv_columns = wetlab_result_columns + forward_diagnostic_columns + [
+            column
+            for column in selected.columns
+            if column not in wetlab_result_columns
+            and column not in forward_diagnostic_columns
+        ]
+    else:
+        csv_columns = wetlab_result_columns + [
+            column
+            for column in selected.columns
+            if column not in wetlab_result_columns
+        ]
     selected[csv_columns].to_csv(output / "next_round_candidates.csv", index=False)
 
     total_pool = result.candidate_pool.copy()

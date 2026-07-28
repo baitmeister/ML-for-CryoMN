@@ -87,6 +87,8 @@ METRIC_COLUMNS = [
     "bias",
     "r2",
     "interval_95_coverage",
+    "interval_95_mean_width",
+    "interval_95_median_width",
     "brier_score",
     "accuracy",
 ]
@@ -385,7 +387,7 @@ def _metric_row(
     n_evaluated = int(len(actual))
     n_proposed = int(len(frame))
 
-    mae = rmse = bias = r2 = coverage = brier = accuracy = np.nan
+    mae = rmse = bias = r2 = coverage = mean_width = median_width = brier = accuracy = np.nan
     if n_evaluated:
         errors = predicted.to_numpy(dtype=float) - actual.to_numpy(dtype=float)
         metric_type = str(frame.iloc[0]["metric_type"])
@@ -401,6 +403,18 @@ def _metric_row(
             covered = eligible.loc[valid, "interval_95_covered"].dropna()
             if not covered.empty:
                 coverage = float(covered.astype(bool).mean())
+            interval_lower = pd.to_numeric(
+                eligible.loc[valid, "interval_95_lower"],
+                errors="coerce",
+            )
+            interval_upper = pd.to_numeric(
+                eligible.loc[valid, "interval_95_upper"],
+                errors="coerce",
+            )
+            widths = (interval_upper - interval_lower).dropna()
+            if not widths.empty:
+                mean_width = float(widths.mean())
+                median_width = float(widths.median())
         elif metric_type == "binary":
             brier_values = pd.to_numeric(
                 eligible.loc[valid, "brier_score"],
@@ -427,6 +441,8 @@ def _metric_row(
         "bias": bias,
         "r2": r2,
         "interval_95_coverage": coverage,
+        "interval_95_mean_width": mean_width,
+        "interval_95_median_width": median_width,
         "brier_score": brier,
         "accuracy": accuracy,
     }
@@ -494,6 +510,8 @@ def summarize_prospective_metrics(table: pd.DataFrame) -> pd.DataFrame:
                         "bias": np.nan,
                         "r2": np.nan,
                         "interval_95_coverage": np.nan,
+                        "interval_95_mean_width": np.nan,
+                        "interval_95_median_width": np.nan,
                         "brier_score": np.nan,
                         "accuracy": np.nan,
                     }
@@ -721,6 +739,12 @@ def _summary_text(
                 f"{_format_metric(row['mae'])} percentage points "
                 f"(n={int(row['n_evaluated'])})"
             )
+            lines.append(
+                "Primary pooled formal 95% interval: "
+                f"coverage={_format_metric(row['interval_95_coverage'])}; "
+                f"mean width={_format_metric(row['interval_95_mean_width'])} "
+                "percentage points"
+            )
     else:
         round_id = str(table.iloc[0]["round_id"]) if not table.empty else "unknown"
         provenance = str(table.iloc[0]["provenance_class"]) if not table.empty else "unknown"
@@ -740,6 +764,12 @@ def _summary_text(
                 f"- {row['endpoint']}: n={int(row['n_evaluated'])}/{int(row['n_proposed'])}, "
                 f"{metric_name}={_format_metric(metric_value)}"
             )
+            if str(row.get("endpoint", "")) != "intact_patch_formation_pass":
+                lines.append(
+                    "  95% interval: "
+                    f"coverage={_format_metric(row['interval_95_coverage'])}; "
+                    f"mean width={_format_metric(row['interval_95_mean_width'])}"
+                )
     lines.extend(
         [
             "",

@@ -93,12 +93,25 @@ results/multi_objective_v2/rounds/ROUND_###/proposal/
 - Do not enter results in `total_candidate_pool.csv`; it is a latest-only debug
   pool.
 - Top-level `reports/` is for cumulative campaign reports.
-- `model_evaluation_*` is cross-validated; `prospective_*` uses frozen
-  proposal-time predictions. The formal prospective cohort begins at Round 3.
+- `model_evaluation_*` uses formulation-grouped cross-validation;
+  `prospective_*` uses frozen proposal-time predictions. The formal
+  prospective cohort begins at Round 3, and interval coverage is accompanied
+  by interval width.
+- Completed-round summaries aggregate technical replicates to 12 candidate
+  results with mean, sample SD and replicate count.
 - The selector stays at 12 rows and retains its existing origin allocation.
   From Round 3, ordinary and rescue candidates are similarity-gated against
   actual wet-lab history and candidates already accepted into the new pool;
   intentional retests remain exempt. Rejected generated candidates are
   resampled instead of reducing an origin quota.
+- No non-retest shared ingredient pair may appear in more than five selected
+  rows, even when those rows contain additional ingredients. Rescue rows
+  count; retests are exempt.
+- Each individual registry ingredient may appear in at most five of all 12
+  Round 3+ rows. Retests and rescues count toward this limit but are protected
+  from removal; ordinary replacements retain their candidate origin.
+- Automatic retests are based on campaign batch disagreement, latest-batch
+  replicate SD, or one single-batch neighbour-anomaly confirmation. Model
+  uncertainty alone never requests a retest.
 - The phase remains automatic: early `screening_only`, later
   `mechanics_enabled`.

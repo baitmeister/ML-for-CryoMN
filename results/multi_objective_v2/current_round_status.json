@@ -2,13 +2,14 @@
   "status_version": 1,
   "source_of_truth": "observations_csv",
   "source_observations_path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/processed_v2/observations.csv",
-  "generated_at_utc": "2026-06-16T11:22:37.066709+00:00",
-  "latest_observed_round_id": "ROUND_001",
-  "latest_observed_round_number": 1,
-  "next_round_id": "ROUND_002",
-  "observed_round_count": 1,
+  "generated_at_utc": "2026-07-27T18:03:07.558253+00:00",
+  "latest_observed_round_id": "ROUND_002",
+  "latest_observed_round_number": 2,
+  "next_round_id": "ROUND_003",
+  "observed_round_count": 2,
   "observed_round_ids": [
-    "ROUND_001"
+    "ROUND_001",
+    "ROUND_002"
   ],
   "non_round_batch_ids": [
     "legacy_literature",
@@ -16,7 +17,7 @@
   ],
   "active_phase": "screening_only",
   "phase_reason": "auto-selected screening_only: paired_observations=0/8, distinct_formulations=0/6, batches=0/2",
-  "proposed_batch_id": "ROUND_002",
+  "proposed_batch_id": "ROUND_003",
   "proposed_batch_override_used": false,
   "proposed_batch_matches_next_round": true
 }

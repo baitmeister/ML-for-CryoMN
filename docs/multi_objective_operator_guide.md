@@ -108,6 +108,14 @@ Stage 02:
 - retains the existing support-aware pool generation and 12-row allocation
 - from Round 3, rejects candidates too similar to actual wet-lab history or an
   already accepted new-pool candidate and resamples to preserve origin targets
+- limits every shared active-ingredient pair to five non-retest slate rows,
+  counting rescue rows and pair membership inside larger formulations
+- limits every individual registry ingredient to five of all 12 rows from
+  Round 3 onward; retest and rescue rows count but are protected, and ordinary
+  replacements preserve candidate origin
+- requests retests only from observed campaign disagreement, high latest-batch
+  replicate SD, or one single-batch neighbour-anomaly confirmation; model
+  uncertainty is only a tie-breaker
 - writes the active `next_round/` files
 - freezes exact proposal copies under `rounds/ROUND_###/proposal/`
 - generates the proposal candidate-screen plot
@@ -225,7 +233,8 @@ The order is deliberate:
 2. reject any unconfirmed carried-over Round 2 retest result
 3. ingest observations and formulations
 4. archive the exact source bytes as `completed/completed.csv`
-5. generate descriptive and cross-validated reports
+5. generate replicate-aggregated descriptive and formulation-grouped
+   cross-validation reports
 6. evaluate the round's frozen proposal-time predictions
 7. refresh the cumulative prospective report
 8. generate and freeze the next proposal
@@ -298,8 +307,12 @@ active file, optionally run `helper/instron.py`, then run Stage 03 once.
 ## Prospective Versus Cross-Validated Evaluation
 
 The existing `model_evaluation_*` outputs are cross-validated diagnostics
-trained from the current database. The `prospective_*` outputs compare frozen
-proposal-time predictions with later measurements without model retraining.
+trained from the current database, with all batches of one formulation held in
+the same fold. Completed-round summaries collapse technical replicates to one
+candidate row and show mean, sample SD and replicate count. The
+`prospective_*` outputs compare frozen proposal-time predictions with later
+measurements without model retraining and report interval width alongside
+coverage.
 Round 1 is explicitly reconstructed, Round 2 is
 `migration_frozen_supplementary`, and pooled Round 3+ viability MAE is the
 locked primary prospective metric. Missing measurements remain visible as

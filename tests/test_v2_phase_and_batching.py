@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 from helper.config import load_optimization_config
-from helper.models import build_training_frame, train_endpoint_models
+from helper.models import _fit_regression, build_training_frame, train_endpoint_models
 from helper.phase import PHASE_MECHANICS, PHASE_SCREENING, resolve_phase_mode
 from helper.registry import load_registry
 from helper.retest import build_retest_candidates
@@ -301,7 +302,7 @@ def test_retest_candidates_exclude_zero_active_and_legacy_only_rows() -> None:
     assert "v2_form_1" not in set(retests["formulation_id"])
 
 
-def test_retest_candidates_can_use_transferred_validation_as_neighbor_evidence() -> None:
+def test_retest_candidates_ignore_transferred_validation_as_neighbor_evidence() -> None:
     registry = load_registry()
     formulations = _formulations().head(3).copy()
     base_features = {feature_name: 0.0 for feature_name in registry.feature_names}
@@ -363,5 +364,157 @@ def test_retest_candidates_can_use_transferred_validation_as_neighbor_evidence()
         load_optimization_config(),
     )
     flagged = retests[retests["formulation_id"] == "v2_form_0"]
-    assert not flagged.empty
-    assert float(flagged.iloc[0]["local_neighbor_residual"]) >= 20.0
+    assert flagged.empty
+
+
+def test_retest_uncertainty_alone_never_creates_eligibility() -> None:
+    registry = load_registry()
+    formulations = _formulations().head(1).copy()
+    observations = pd.DataFrame(
+        [
+            {
+                "observation_id": "only_feedback",
+                "formulation_id": "v2_form_0",
+                "batch_id": "ROUND_001",
+                "replicate_id": "rep_001",
+                "endpoint": "viability_percent",
+                "value": 50.0,
+                "unit": "percent",
+                "observation_noise": 1.0,
+                "source_type": "wetlab_feedback",
+                "source_file": "test.csv",
+                "notes": "",
+            }
+        ]
+    )
+    models = train_endpoint_models(formulations, observations, registry)
+
+    class _HighUncertainty:
+        def predict(self, x: np.ndarray):
+            return type(
+                "Prediction",
+                (),
+                {
+                    "mean": np.full(len(x), 50.0),
+                    "std": np.full(len(x), 100.0),
+                },
+            )()
+
+    models.viability = _HighUncertainty()
+    retests = build_retest_candidates(
+        formulations,
+        observations,
+        models,
+        registry,
+        load_optimization_config(),
+    )
+    assert retests.empty
+
+
+def test_two_agreeing_feedback_batches_resolve_neighbor_anomaly() -> None:
+    registry = load_registry()
+    formulations = _formulations().head(3).copy()
+    observations = pd.DataFrame(
+        [
+            {
+                "observation_id": f"obs_{index}",
+                "formulation_id": formulation_id,
+                "batch_id": batch_id,
+                "replicate_id": "rep_001",
+                "endpoint": "viability_percent",
+                "value": value,
+                "unit": "percent",
+                "observation_noise": 1.0,
+                "source_type": "wetlab_feedback",
+                "source_file": "test.csv",
+                "notes": "",
+            }
+            for index, (formulation_id, batch_id, value) in enumerate(
+                [
+                    ("v2_form_0", "ROUND_001", 26.53),
+                    ("v2_form_0", "ROUND_002", 30.44),
+                    ("v2_form_1", "ROUND_001", 70.0),
+                    ("v2_form_2", "ROUND_001", 75.0),
+                ],
+                start=1,
+            )
+        ]
+    )
+    models = train_endpoint_models(formulations, observations, registry)
+    retests = build_retest_candidates(
+        formulations,
+        observations,
+        models,
+        registry,
+        load_optimization_config(),
+    )
+    assert "v2_form_0" not in set(retests.get("formulation_id", pd.Series(dtype=str)))
+
+
+def test_high_latest_batch_replicate_sd_triggers_retest() -> None:
+    registry = load_registry()
+    formulations = _formulations().head(1).copy()
+    observations = pd.DataFrame(
+        [
+            {
+                "observation_id": f"rep_{index}",
+                "formulation_id": "v2_form_0",
+                "batch_id": "ROUND_001",
+                "replicate_id": f"rep_{index:03d}",
+                "endpoint": "viability_percent",
+                "value": value,
+                "unit": "percent",
+                "observation_noise": 1.0,
+                "source_type": "wetlab_feedback",
+                "source_file": "test.csv",
+                "notes": "",
+            }
+            for index, value in enumerate([20.0, 50.0, 80.0], start=1)
+        ]
+    )
+    models = train_endpoint_models(formulations, observations, registry)
+    retests = build_retest_candidates(
+        formulations,
+        observations,
+        models,
+        registry,
+        load_optimization_config(),
+    )
+    assert list(retests["formulation_id"]) == ["v2_form_0"]
+    assert "high_latest_batch_replicate_sd" in str(
+        retests.iloc[0]["selection_explanation"]
+    )
+
+
+def test_matern_only_regression_is_deterministic_and_uses_explicit_noise() -> None:
+    x = np.arange(8, dtype=float)[:, None]
+    y = pd.Series([20.0, 35.0, 50.0, 65.0, 55.0, 70.0, 80.0, 90.0])
+    low_noise = _fit_regression(
+        x,
+        y,
+        y_noise=pd.Series([1.0] * len(y)),
+    )
+    repeated = _fit_regression(
+        x,
+        y,
+        y_noise=pd.Series([1.0] * len(y)),
+    )
+    high_noise = _fit_regression(
+        x,
+        y,
+        y_noise=pd.Series([10.0] * len(y)),
+    )
+
+    probe = np.linspace(-1.0, 9.0, 25)[:, None]
+    low_prediction = low_noise.predict(probe)
+    repeated_prediction = repeated.predict(probe)
+    high_prediction = high_noise.predict(x)
+    assert np.allclose(low_prediction.mean, repeated_prediction.mean)
+    assert np.allclose(low_prediction.std, repeated_prediction.std)
+    assert np.ptp(low_prediction.std) > 1.0
+    assert float(np.max(low_prediction.std)) < 55.0
+    assert float(np.mean(high_prediction.std)) > float(
+        np.mean(low_noise.predict(x).std)
+    )
+    kernel = low_noise.model.named_steps["gaussianprocessregressor"].kernel_
+    assert kernel.__class__.__name__ == "Matern"

@@ -16,7 +16,7 @@ from helper.feasibility import (
     build_support_context,
     policy_activation,
 )
-from helper.registry import load_registry
+from helper.registry import load_registry, presence_threshold
 from helper.similarity import (
     SimilarityAudit,
     build_history_similarity_index,
@@ -665,6 +665,29 @@ def test_round_three_selector_keeps_twelve_rows_and_operator_schema(
     assert round_three.columns.tolist() == round_two_schema
     assert metadata["formulation_similarity"]["active"] is True
     assert metadata["formulation_similarity"]["start_round"] == 3
+    registry = load_registry()
+    ingredient_counts = {
+        feature_name: int(
+            (
+                pd.to_numeric(
+                    round_three[feature_name],
+                    errors="coerce",
+                )
+                .fillna(0.0)
+                .abs()
+                >= presence_threshold(feature_name)
+            ).sum()
+        )
+        for feature_name in registry.feature_names
+    }
+    assert max(ingredient_counts.values()) <= 5
+    assert metadata["ingredient_frequency_diversity"]["active"] is True
+    assert (
+        metadata["ingredient_frequency_diversity"][
+            "maximum_ingredient_frequency"
+        ]
+        <= 5
+    )
     assert (
         metadata["formulation_similarity"]["final_validation"][
             "selected_non_retest_count"

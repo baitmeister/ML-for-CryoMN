@@ -6,10 +6,15 @@ Formal prospective cohort starts: ROUND_003
 Prediction source: archived proposal-time means and uncertainties
 Technical replicate handling: mean within candidate and round
 
-Completed rounds included: ROUND_001, ROUND_002
-Formal rounds included: 0
+Round: ROUND_002
+Provenance classification: migration_frozen_supplementary
+Formal cohort: no
 
-Primary pooled formal viability MAE: not available; the formal cohort has not produced eligible results yet.
+- critical_axial_load_N_per_needle: n=0/12, MAE=n/a
+  95% interval: coverage=n/a; mean width=n/a
+- intact_patch_formation_pass: n=12/12, Brier=0.713
+- viability_percent: n=12/12, MAE=15.374
+  95% interval: coverage=1.000; mean width=225.696
 
 Interpretation:
 - Reconstructed and migration-frozen rounds are reported separately from the formal pooled metric.

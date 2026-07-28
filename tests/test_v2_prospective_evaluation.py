@@ -201,6 +201,8 @@ def test_known_metrics_replicate_aggregation_and_missing_audit_rows(
     assert np.isclose(round_viability["bias"], 9.0)
     assert np.isclose(round_viability["r2"], 1.0 - 164.0 / 242.0)
     assert np.isclose(round_viability["interval_95_coverage"], 0.5)
+    assert np.isclose(round_viability["interval_95_mean_width"], 29.4)
+    assert np.isclose(round_viability["interval_95_median_width"], 29.4)
 
     round_gate = metrics[
         (metrics["scope"] == "round")

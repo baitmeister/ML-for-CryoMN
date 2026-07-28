@@ -17,16 +17,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, brier_score_loss, mean_absolute_error, r2_score
-from sklearn.model_selection import KFold
+from sklearn.model_selection import GroupKFold
 
 if __package__ in (None, ""):
     V2_ROOT = Path(__file__).resolve().parents[1]
     if str(V2_ROOT) not in sys.path:
         sys.path.insert(0, str(V2_ROOT))
+    from helper.config import load_optimization_config
+    from helper.feasibility import annotate_feasibility
     from helper.models import build_training_frame, train_endpoint_models
     from helper.paths import FORMULATIONS_PATH, NEXT_ROUND_CANDIDATES_PATH, OBSERVATIONS_PATH, VISUALIZATIONS_DIR
     from helper.registry import IngredientRegistry, load_registry
 else:
+    from .config import load_optimization_config
+    from .feasibility import annotate_feasibility
     from .models import build_training_frame, train_endpoint_models
     from .paths import FORMULATIONS_PATH, NEXT_ROUND_CANDIDATES_PATH, OBSERVATIONS_PATH, VISUALIZATIONS_DIR
     from .registry import IngredientRegistry, load_registry
@@ -189,6 +193,95 @@ def _top_candidate_frame(candidates: pd.DataFrame) -> pd.DataFrame:
     return frame
 
 
+def _aggregate_completed_candidates(candidates: pd.DataFrame) -> pd.DataFrame:
+    """Collapse a completed technical-replicate worksheet to its 12 candidates."""
+    if candidates.empty or "candidate_id" not in candidates.columns:
+        return candidates.copy()
+    frame = candidates.copy()
+    frame["candidate_id"] = frame["candidate_id"].astype(str)
+    grouping = ["candidate_id"]
+    if "selection_rank" in frame.columns:
+        grouping.append("selection_rank")
+
+    base = frame.groupby(grouping, dropna=False, sort=False).first().reset_index()
+    if "viability_percent" in frame.columns:
+        viability = (
+            frame.assign(
+                viability_percent=pd.to_numeric(
+                    frame["viability_percent"],
+                    errors="coerce",
+                )
+            )
+            .groupby(grouping, dropna=False, sort=False)["viability_percent"]
+            .agg(["mean", "std", "count"])
+            .reset_index()
+            .rename(
+                columns={
+                    "mean": "completed_viability_mean",
+                    "std": "completed_viability_sd",
+                    "count": "completed_viability_replicate_count",
+                }
+            )
+        )
+        viability["completed_viability_sd"] = viability[
+            "completed_viability_sd"
+        ].fillna(0.0)
+        base = base.merge(viability, on=grouping, how="left")
+    if "intact_patch_formation_pass" in frame.columns:
+        intact = (
+            frame.assign(
+                _intact_numeric=pd.to_numeric(
+                    frame["intact_patch_formation_pass"],
+                    errors="coerce",
+                )
+            )
+            .groupby(grouping, dropna=False, sort=False)["_intact_numeric"]
+            .agg(["mean", "count"])
+            .reset_index()
+            .rename(
+                columns={
+                    "mean": "completed_intact_pass_fraction",
+                    "count": "completed_intact_replicate_count",
+                }
+            )
+        )
+        base = base.merge(intact, on=grouping, how="left")
+    return _top_candidate_frame(base).reset_index(drop=True)
+
+
+def _campaign_and_literature_observed(
+    observed: pd.DataFrame,
+    registry: IngredientRegistry,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    if observed.empty:
+        return observed.copy(), observed.copy()
+    sources = observed.get(
+        "observed_sources",
+        pd.Series("", index=observed.index),
+    ).fillna("").astype(str)
+    campaign = observed.loc[
+        sources.str.split(", ").apply(
+            lambda values: "wetlab_feedback" in set(values)
+        )
+    ].copy()
+    if not campaign.empty:
+        campaign = annotate_feasibility(
+            campaign,
+            registry,
+            load_optimization_config(),
+            policy_active=True,
+        )
+        campaign = campaign.loc[
+            campaign["feasibility_pass"].astype(bool)
+        ].reset_index(drop=True)
+    literature = observed.loc[
+        sources.str.split(", ").apply(
+            lambda values: "legacy_literature" in set(values)
+        )
+    ].copy()
+    return campaign, literature
+
+
 def _write_best_performers_summary(
     formulations: pd.DataFrame,
     observations: pd.DataFrame,
@@ -199,7 +292,15 @@ def _write_best_performers_summary(
     candidate_heading: str = "Current leading next-round candidates:",
 ) -> Path:
     observed = _observed_endpoint_frame(formulations, observations)
-    top_candidates = _top_candidate_frame(candidates).head(5)
+    candidate_summary = _aggregate_completed_candidates(candidates)
+    show_all_candidates = "completed-round" in candidate_heading
+    top_candidates = _top_candidate_frame(candidate_summary)
+    if not show_all_candidates:
+        top_candidates = top_candidates.head(5)
+    campaign_observed, literature_observed = _campaign_and_literature_observed(
+        observed,
+        registry,
+    )
     lines = [
         "CryoMN v2 Best Performers",
         "=" * 25,
@@ -207,15 +308,18 @@ def _write_best_performers_summary(
         "Database snapshot:",
         f"- Formulations tracked: {len(formulations)}",
         f"- Observation rows: {len(observations)}",
-        f"- Current next-round candidates: {len(candidates)}",
+        f"- Candidate formulations shown: {len(candidate_summary)}",
         "",
     ]
 
-    viability_frame = observed.dropna(subset=["viability_percent"]).sort_values(
+    viability_frame = campaign_observed.dropna(
+        subset=["viability_percent"]
+    ).sort_values(
         "viability_percent",
         ascending=False,
     )
     lines.append("Best observed viability performers:")
+    lines.append("- scope: feasible wetlab_feedback campaign formulations only")
     if viability_frame.empty:
         lines.append("- none yet")
     else:
@@ -227,13 +331,35 @@ def _write_best_performers_summary(
             lines.append(f"  formulation: {_format_formulation(row, registry)}")
     lines.append("")
 
+    literature_viability = literature_observed.dropna(
+        subset=["viability_percent"]
+    ).sort_values("viability_percent", ascending=False)
+    lines.append("Historical literature-reference viability leaders:")
+    if literature_viability.empty:
+        lines.append("- none")
+    else:
+        for rank, (_, row) in enumerate(
+            literature_viability.head(5).iterrows(),
+            start=1,
+        ):
+            lines.append(
+                f"- #{rank} {row['formulation_id']} | viability "
+                f"{_format_metric(row['viability_percent'], '{:.1f}')}%"
+            )
+            lines.append(f"  formulation: {_format_formulation(row, registry)}")
+    lines.append("")
+
     load_column = "critical_axial_load_N_per_needle"
     load_frame = (
-        observed.dropna(subset=[load_column]).sort_values(load_column, ascending=False)
-        if load_column in observed.columns
+        campaign_observed.dropna(subset=[load_column]).sort_values(
+            load_column,
+            ascending=False,
+        )
+        if load_column in campaign_observed.columns
         else pd.DataFrame()
     )
     lines.append("Best observed mechanical performers:")
+    lines.append("- scope: feasible wetlab_feedback campaign formulations only")
     if load_frame.empty:
         lines.append("- none yet; no critical axial load measurements are in the v2 database")
     else:
@@ -249,11 +375,16 @@ def _write_best_performers_summary(
     lines.append("")
 
     balanced = (
-        observed.dropna(subset=["viability_percent", load_column]).copy()
-        if {"viability_percent", load_column}.issubset(observed.columns)
+        campaign_observed.dropna(
+            subset=["viability_percent", load_column]
+        ).copy()
+        if {"viability_percent", load_column}.issubset(
+            campaign_observed.columns
+        )
         else pd.DataFrame()
     )
     lines.append("Balanced multi-objective leaders:")
+    lines.append("- scope: feasible wetlab_feedback campaign formulations only")
     if balanced.empty:
         lines.append("- none yet; this section appears after formulations have both viability and mechanical measurements")
     else:
@@ -271,13 +402,21 @@ def _write_best_performers_summary(
     lines.append("")
 
     retest_mask = (
-        candidates.get(
+        candidate_summary.get(
             "recommendation_type",
-            pd.Series([""] * len(candidates), index=candidates.index, dtype="object"),
+            pd.Series(
+                [""] * len(candidate_summary),
+                index=candidate_summary.index,
+                dtype="object",
+            ),
         ).astype(str)
         == "retest_priority"
-    ) if not candidates.empty else pd.Series(dtype=bool)
-    retest_candidates = candidates.loc[retest_mask].copy() if not candidates.empty else pd.DataFrame()
+    ) if not candidate_summary.empty else pd.Series(dtype=bool)
+    retest_candidates = (
+        candidate_summary.loc[retest_mask].copy()
+        if not candidate_summary.empty
+        else pd.DataFrame()
+    )
     lines.append("Retest-priority recommendations:")
     if retest_candidates.empty:
         lines.append("- none in the current slate")
@@ -306,6 +445,38 @@ def _write_best_performers_summary(
                 f"intact probability {_format_metric(pd.to_numeric(row.get('intact_patch_pass_probability'), errors='coerce'), '{:.2f}')}"
                 f" | mechanical test {bool(row.get('mechanical_test_recommended', False))}"
             )
+            if show_all_candidates:
+                viability_mean = pd.to_numeric(
+                    row.get("completed_viability_mean"),
+                    errors="coerce",
+                )
+                viability_sd = pd.to_numeric(
+                    row.get("completed_viability_sd"),
+                    errors="coerce",
+                )
+                viability_count = pd.to_numeric(
+                    row.get("completed_viability_replicate_count"),
+                    errors="coerce",
+                )
+                intact_fraction = pd.to_numeric(
+                    row.get("completed_intact_pass_fraction"),
+                    errors="coerce",
+                )
+                lines.append(
+                    "  completed result: viability "
+                    f"{_format_metric(viability_mean, '{:.2f}')}% "
+                    f"(sample SD {_format_metric(viability_sd, '{:.2f}')}, "
+                    f"n={int(viability_count) if pd.notna(viability_count) else 0}); "
+                    "intact "
+                    + (
+                        "pass"
+                        if pd.notna(intact_fraction)
+                        and float(intact_fraction) >= 0.5
+                        else "fail"
+                        if pd.notna(intact_fraction)
+                        else "not recorded"
+                    )
+                )
             lines.append(f"  formulation: {_format_formulation(row, registry)}")
 
     output_path = _artifact_path(output_dir, "best_performers_summary", ".txt", artifact_prefix)
@@ -476,25 +647,27 @@ def _cross_validated_predictions(
     if len(valid) < 2:
         return pd.DataFrame()
 
-    n_splits = min(5, len(valid))
+    groups = valid["formulation_id"].astype(str)
+    n_splits = min(5, int(groups.nunique()))
     if n_splits < 2:
         return pd.DataFrame()
 
     predictions: list[pd.DataFrame] = []
-    splitter = KFold(n_splits=n_splits, shuffle=True, random_state=42)
-    for _, test_index in splitter.split(valid):
+    splitter = GroupKFold(n_splits=n_splits)
+    for fold_number, (_, test_index) in enumerate(
+        splitter.split(valid, groups=groups),
+        start=1,
+    ):
         test_rows = valid.iloc[test_index].copy()
-        holdout_keys = {
-            (str(row["formulation_id"]), str(row.get("batch_id", "")))
-            for _, row in test_rows.iterrows()
-        }
+        holdout_formulation_ids = set(
+            test_rows["formulation_id"].astype(str)
+        )
         train_observations = observations.copy()
-        if "batch_id" not in train_observations.columns:
-            train_observations["batch_id"] = ""
         endpoint_mask = train_observations["endpoint"].astype(str) == endpoint
-        holdout_mask = train_observations.apply(
-            lambda row: (str(row.get("formulation_id", "")), str(row.get("batch_id", ""))) in holdout_keys,
-            axis=1,
+        holdout_mask = (
+            train_observations["formulation_id"]
+            .astype(str)
+            .isin(holdout_formulation_ids)
         )
         train_observations = train_observations.loc[~(endpoint_mask & holdout_mask)].copy()
         models = train_endpoint_models(formulations, train_observations, registry)
@@ -526,6 +699,7 @@ def _cross_validated_predictions(
                     "actual": pd.to_numeric(test_rows[endpoint], errors="coerce").to_numpy(dtype=float),
                     "predicted": np.asarray(predicted, dtype=float),
                     "predicted_std": np.asarray(predicted_std, dtype=float),
+                    "cv_fold": fold_number,
                 }
             )
         )
@@ -698,14 +872,14 @@ def _save_model_evaluation_overview(
     viability_metrics = _plot_parity_axis(
         ax_viability,
         viability_cv,
-        "Cross-validated viability fit",
+        "Formulation-grouped cross-validation: viability",
         "viability (%)",
         BLUE,
     )
     load_metrics = _plot_parity_axis(
         ax_load,
         load_cv,
-        "Cross-validated mechanical fit",
+        "Formulation-grouped cross-validation: mechanics",
         "critical load (N/needle)",
         GOLD,
     )
@@ -1063,7 +1237,7 @@ def _save_endpoint_r2_plot(
     x = np.arange(1, len(r2_frame) + 1)
     ax.plot(x, r2_frame["viability_r2"], marker="o", linewidth=2, color=BLUE, label="Viability R²")
     ax.plot(x, r2_frame["load_r2"], marker="o", linewidth=2, color=GOLD, label="Critical-load R²")
-    ax.set_title("Cross-validated endpoint R² vs cumulative round")
+    ax.set_title("Formulation-grouped cross-validation R² vs cumulative round")
     ax.set_xlabel("Round")
     ax.set_ylabel("R²")
     ax.set_xticks(x, r2_frame["batch_id"], rotation=30, ha="right")
@@ -1122,6 +1296,7 @@ def _write_visualization_summary(
     base_name: str = "visualization_summary",
 ) -> Path:
     observed = _observed_endpoint_frame(formulations, observations)
+    candidate_summary = _aggregate_completed_candidates(candidates)
     summary = [
         "CryoMN v2 Round Review Summary",
         "=" * 30,
@@ -1129,8 +1304,9 @@ def _write_visualization_summary(
         f"Review label: {review_label or 'default'}",
         f"Formulation rows: {len(formulations)}",
         f"Observation rows: {len(observations)}",
-        f"Candidate rows: {len(candidates)}",
-        f"Retest-priority rows in current slate: {int((candidates.get('recommendation_type', pd.Series([''] * len(candidates), index=candidates.index, dtype='object')).astype(str) == 'retest_priority').sum()) if not candidates.empty else 0}",
+        f"Candidate worksheet rows: {len(candidates)}",
+        f"Unique candidates: {len(candidate_summary)}",
+        f"Retest-priority candidates in current slate: {int((candidate_summary.get('recommendation_type', pd.Series([''] * len(candidate_summary), index=candidate_summary.index, dtype='object')).astype(str) == 'retest_priority').sum()) if not candidate_summary.empty else 0}",
         f"Formulations with observed viability: {int(observed.get('viability_percent', pd.Series(dtype=float)).notna().sum()) if not observed.empty else 0}",
         f"Formulations with observed critical load: {int(observed.get('critical_axial_load_N_per_needle', pd.Series(dtype=float)).notna().sum()) if not observed.empty else 0}",
         f"Formulations with observed intact-patch gate: {int(observed.get('intact_patch_formation_pass', pd.Series(dtype=float)).notna().sum()) if not observed.empty else 0}",
