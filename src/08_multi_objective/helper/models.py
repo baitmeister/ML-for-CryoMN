@@ -14,6 +14,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
+from .endpoints import INTACT_PATCH_ENDPOINT, aggregate_intact_patch_replicates
 from .registry import IngredientRegistry
 
 
@@ -108,13 +109,24 @@ def _pivot_observations(formulations: pd.DataFrame, observations: pd.DataFrame) 
     if "batch_id" not in obs.columns:
         obs["batch_id"] = ""
     obs["batch_id"] = obs["batch_id"].fillna("").astype(str)
-    aggregated = (
-        obs.groupby(["formulation_id", "batch_id", "endpoint"], dropna=False, as_index=False)
+    grouping = ["formulation_id", "batch_id", "endpoint"]
+    continuous = (
+        obs[obs["endpoint"].astype(str) != INTACT_PATCH_ENDPOINT]
+        .groupby(grouping, dropna=False, as_index=False)
         .agg(
             value=("value", "mean"),
             observation_noise=("observation_noise", "mean"),
         )
     )
+    intact = (
+        obs[obs["endpoint"].astype(str) == INTACT_PATCH_ENDPOINT]
+        .groupby(grouping, dropna=False, as_index=False)
+        .agg(
+            value=("value", aggregate_intact_patch_replicates),
+            observation_noise=("observation_noise", "mean"),
+        )
+    )
+    aggregated = pd.concat([continuous, intact], ignore_index=True)
     pivot = aggregated.pivot_table(
         index=["formulation_id", "batch_id"],
         columns="endpoint",

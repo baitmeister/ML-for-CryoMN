@@ -193,10 +193,12 @@ The existing `model_evaluation_overview.png` and
 diagnostics: all batches of one chemistry remain in the same fold. They fit
 from the current database and estimate within-dataset generalization. They are
 not prospective hold-out results. Completed-round descriptive reports first
-aggregate technical replicates to one candidate row and report the mean,
-sample SD and replicate count. Prospective evaluation instead reads means
-and uncertainties only from frozen proposal CSVs, then compares them with
-later observations without retraining. Round 1 is reconstructed, Round 2 is
+aggregate technical replicates to one candidate row. Continuous endpoints use
+the replicate mean; the intact-patch gate passes only when every measured patch
+replicate passes. Prospective evaluation reads means and uncertainties only
+from frozen proposal CSVs, then compares them with later observations without
+retraining. Its round summaries report formulations observed, passed and failed
+explicitly. Round 1 is reconstructed, Round 2 is
 supplementary because it was migration-frozen, and the locked primary metric
 is pooled viability MAE for the formal Round 3+ cohort. Interval coverage is
 always accompanied by interval width.

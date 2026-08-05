@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 from .config import nested_get
+from .endpoints import INTACT_PATCH_ENDPOINT, aggregate_intact_patch_replicates
 from .feasibility import SupportContext, annotate_feasibility, annotate_support
 from .penalties import count_active_ingredients
 from .registry import IngredientRegistry
@@ -432,16 +433,20 @@ def generate_rescue_candidate_pool(
     obs["value"] = pd.to_numeric(obs["value"], errors="coerce")
     obs["endpoint"] = obs["endpoint"].fillna("").astype(str)
     obs["batch_id"] = obs["batch_id"].fillna("").astype(str)
-    pivot = (
-        obs[obs["endpoint"].isin(["viability_percent", "intact_patch_formation_pass"])]
-        .pivot_table(
-            index=["formulation_id", "batch_id"],
-            columns="endpoint",
-            values="value",
-            aggfunc="mean",
-        )
-        .reset_index()
+    grouping = ["formulation_id", "batch_id"]
+    viability = (
+        obs[obs["endpoint"] == "viability_percent"]
+        .groupby(grouping, as_index=False)["value"]
+        .mean()
+        .rename(columns={"value": "viability_percent"})
     )
+    intact = (
+        obs[obs["endpoint"] == INTACT_PATCH_ENDPOINT]
+        .groupby(grouping, as_index=False)["value"]
+        .agg(aggregate_intact_patch_replicates)
+        .rename(columns={"value": INTACT_PATCH_ENDPOINT})
+    )
+    pivot = viability.merge(intact, on=grouping, how="inner")
     if pivot.empty or "viability_percent" not in pivot.columns or "intact_patch_formation_pass" not in pivot.columns:
         return pd.DataFrame()
 

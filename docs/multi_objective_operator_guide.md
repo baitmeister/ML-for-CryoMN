@@ -309,7 +309,9 @@ active file, optionally run `helper/instron.py`, then run Stage 03 once.
 The existing `model_evaluation_*` outputs are cross-validated diagnostics
 trained from the current database, with all batches of one formulation held in
 the same fold. Completed-round summaries collapse technical replicates to one
-candidate row and show mean, sample SD and replicate count. The
+candidate row. Continuous endpoints show their mean, sample SD and replicate
+count. The intact-patch gate reports one formulation-level outcome and passes
+only when every measured patch replicate passes. The
 `prospective_*` outputs compare frozen proposal-time predictions with later
 measurements without model retraining and report interval width alongside
 coverage.

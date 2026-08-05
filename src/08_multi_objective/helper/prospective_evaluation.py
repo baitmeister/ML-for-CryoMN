@@ -24,6 +24,7 @@ from .artifacts import (
     round_artifact_paths,
     validate_completed_against_proposal,
 )
+from .endpoints import INTACT_PATCH_ENDPOINT, aggregate_intact_patch_replicates
 from .paths import RESULTS_V2_DIR
 
 
@@ -235,7 +236,7 @@ def build_round_prospective_table(
     round_number = _round_number(batch_id)
     active_phase = _active_phase(batch_id, results_root)
     policy_version = str(
-        evaluation_config.get("policy_version", "prospective_evaluation_v1")
+        evaluation_config.get("policy_version", "prospective_evaluation_v2")
     )
     interval_z = float(
         evaluation_config.get("prediction_interval", {}).get("z_value", 1.96)
@@ -269,11 +270,14 @@ def build_round_prospective_table(
                 (round_observations["formulation_id"].astype(str) == formulation_id)
                 & (round_observations["endpoint"].astype(str) == str(endpoint))
             ].dropna(subset=["value"])
-            observed_mean = (
-                float(endpoint_observations["value"].mean())
-                if not endpoint_observations.empty
-                else None
-            )
+            if endpoint_observations.empty:
+                observed_mean = None
+            elif str(endpoint) == INTACT_PATCH_ENDPOINT:
+                observed_mean = aggregate_intact_patch_replicates(
+                    endpoint_observations["value"]
+                )
+            else:
+                observed_mean = float(endpoint_observations["value"].mean())
             unit = (
                 str(endpoint_observations.iloc[0].get("unit", ""))
                 if not endpoint_observations.empty
@@ -708,10 +712,11 @@ def _summary_text(
         "CryoMN v2 Prospective Evaluation",
         "=" * 33,
         "",
-        f"Policy version: {evaluation_config.get('policy_version', 'prospective_evaluation_v1')}",
+        f"Policy version: {evaluation_config.get('policy_version', 'prospective_evaluation_v2')}",
         f"Formal prospective cohort starts: ROUND_{formal_start:03d}",
         "Prediction source: archived proposal-time means and uncertainties",
-        "Technical replicate handling: mean within candidate and round",
+        "Technical replicate handling: continuous endpoints use the mean; "
+        "the intact-patch gate uses all-pass within formulation and round",
         "",
     ]
     if campaign:
@@ -758,18 +763,38 @@ def _summary_text(
             ]
         )
         for _, row in metrics[metrics["scope"].astype(str) == "round"].iterrows():
-            metric_name = "Brier" if row["endpoint"] == "intact_patch_formation_pass" else "MAE"
+            endpoint = str(row["endpoint"])
+            metric_name = "Brier" if endpoint == INTACT_PATCH_ENDPOINT else "MAE"
             metric_value = row["brier_score"] if metric_name == "Brier" else row["mae"]
+            if endpoint == INTACT_PATCH_ENDPOINT:
+                gate_rows = table[
+                    (table["endpoint"].astype(str) == INTACT_PATCH_ENDPOINT)
+                    & table["evaluation_eligible"].astype(bool)
+                ].copy()
+                gate_values = pd.to_numeric(
+                    gate_rows["observed_mean"],
+                    errors="coerce",
+                ).dropna()
+                passed = int((gate_values >= 0.5).sum())
+                failed = int((gate_values < 0.5).sum())
+                lines.append(
+                    "- Intact-patch formation gate: formulations observed="
+                    f"{int(row['n_evaluated'])}/{int(row['n_proposed'])}; "
+                    f"passed={passed}; failed={failed}; "
+                    f"Brier={_format_metric(metric_value)}; "
+                    f"accuracy={_format_metric(row['accuracy'])}"
+                )
+                continue
             lines.append(
-                f"- {row['endpoint']}: n={int(row['n_evaluated'])}/{int(row['n_proposed'])}, "
+                f"- {row['endpoint']}: formulations observed="
+                f"{int(row['n_evaluated'])}/{int(row['n_proposed'])}, "
                 f"{metric_name}={_format_metric(metric_value)}"
             )
-            if str(row.get("endpoint", "")) != "intact_patch_formation_pass":
-                lines.append(
-                    "  95% interval: "
-                    f"coverage={_format_metric(row['interval_95_coverage'])}; "
-                    f"mean width={_format_metric(row['interval_95_mean_width'])}"
-                )
+            lines.append(
+                "  95% interval: "
+                f"coverage={_format_metric(row['interval_95_coverage'])}; "
+                f"mean width={_format_metric(row['interval_95_mean_width'])}"
+            )
     lines.extend(
         [
             "",

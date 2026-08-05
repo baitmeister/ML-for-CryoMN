@@ -5,7 +5,10 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from helper.endpoints import intact_patch_formation_pass
+from helper.endpoints import (
+    aggregate_intact_patch_replicates,
+    intact_patch_formation_pass,
+)
 from helper.instron import metrics_to_observations, parse_instron_csv, update_candidate_results
 
 
@@ -16,6 +19,15 @@ def test_intact_patch_gate_uses_tip_count_and_collapse_flags() -> None:
         {"intact_tip_count": 100, "total_tip_count": 100, "no_collapse": "no"}
     )
     assert intact_patch_formation_pass({"intact_patch_formation_pass": "yes"})
+
+
+def test_intact_patch_replicates_use_conservative_all_pass_rule() -> None:
+    assert aggregate_intact_patch_replicates([1.0, "pass", True]) == 1.0
+    assert aggregate_intact_patch_replicates([1.0, "fail", True]) == 0.0
+    assert aggregate_intact_patch_replicates([None, float("nan")]) is None
+
+    with pytest.raises(ValueError, match="boolean-like"):
+        aggregate_intact_patch_replicates([0.5])
 
 
 def test_instron_importer_extracts_allowed_metrics() -> None:

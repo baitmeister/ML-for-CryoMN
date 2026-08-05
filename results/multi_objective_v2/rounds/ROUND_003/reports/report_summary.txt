@@ -1,0 +1,21 @@
+CryoMN v2 Round Review Summary
+==============================
+
+Review label: state_after_ingest_ROUND_003
+Formulation rows: 338
+Observation rows: 424
+Candidate worksheet rows: 24
+Unique candidates: 12
+Retest-priority candidates in current slate: 1
+Formulations with observed viability: 338
+Formulations with observed critical load: 0
+Formulations with observed intact-patch gate: 34
+
+Generated files:
+- best_performers_summary.txt
+- endpoint_observation_counts.png
+- model_evaluation_table.csv
+- model_evaluation_overview.png
+
+Reader note:
+This review snapshot captures one specific state of the round workflow.

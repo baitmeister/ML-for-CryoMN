@@ -123,7 +123,9 @@ ingested working worksheet.
 
 `best_performers_summary.txt` collapses technical replicates to one row per
 candidate and selection rank, reporting viability mean, sample SD, replicate
-count and intact outcome. Its main campaign rankings use feasible
+count and one formulation-level intact outcome. Continuous endpoints use the
+replicate mean; the intact gate passes only if every measured patch replicate
+passes. Its main campaign rankings use feasible
 `wetlab_feedback` formulations; literature leaders appear separately as
 historical references.
 

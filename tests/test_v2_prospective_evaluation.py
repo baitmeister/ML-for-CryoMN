@@ -212,6 +212,34 @@ def test_known_metrics_replicate_aggregation_and_missing_audit_rows(
     assert np.isclose(round_gate["accuracy"], 1.0)
 
 
+def test_prospective_gate_uses_all_pass_for_discordant_replicates(
+    tmp_path: Path,
+) -> None:
+    results_root = tmp_path / "results"
+    _write_round(results_root, "ROUND_003")
+    observations = _observations("ROUND_003")
+    observations.loc[
+        (observations["formulation_id"] == "formulation_1")
+        & (observations["replicate_id"] == "rep_2")
+        & (observations["endpoint"] == "intact_patch_formation_pass"),
+        "value",
+    ] = 0.0
+
+    table = build_round_prospective_table(
+        "ROUND_003",
+        observations,
+        results_root=results_root,
+        evaluation_config=EVALUATION_CONFIG,
+    )
+    gate = table[
+        (table["candidate_id"] == "candidate_1")
+        & (table["endpoint"] == "intact_patch_formation_pass")
+    ].iloc[0]
+
+    assert gate["replicate_count"] == 2
+    assert gate["observed_mean"] == 0.0
+
+
 def test_provenance_cohorts_and_proposal_predictions_remain_separate(
     tmp_path: Path,
 ) -> None:
@@ -314,6 +342,15 @@ def test_round_and_campaign_artifact_destinations(tmp_path: Path) -> None:
         assert (root / "tables" / "prospective_metrics.csv").exists()
         for name in plot_names:
             assert (root / "plots" / name).exists()
+
+    round_summary = (
+        round_reports / "prospective_evaluation_summary.txt"
+    ).read_text(encoding="utf-8")
+    assert (
+        "Intact-patch formation gate: formulations observed=2/3; "
+        "passed=1; failed=1"
+    ) in round_summary
+    assert "intact_patch_formation_pass: n=" not in round_summary
 
 
 def test_report_cli_does_not_mutate_campaign_inputs(tmp_path: Path) -> None:

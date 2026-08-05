@@ -97,8 +97,9 @@ results/multi_objective_v2/rounds/ROUND_###/proposal/
   `prospective_*` uses frozen proposal-time predictions. The formal
   prospective cohort begins at Round 3, and interval coverage is accompanied
   by interval width.
-- Completed-round summaries aggregate technical replicates to 12 candidate
-  results with mean, sample SD and replicate count.
+- Completed-round summaries aggregate technical replicates to 12 formulation
+  results. Continuous endpoints use their mean, sample SD and replicate count;
+  the intact-patch gate passes only when every measured patch replicate passes.
 - The selector stays at 12 rows and retains its existing origin allocation.
   From Round 3, ordinary and rescue candidates are similarity-gated against
   actual wet-lab history and candidates already accepted into the new pool;

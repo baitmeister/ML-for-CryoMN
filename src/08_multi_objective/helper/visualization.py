@@ -24,12 +24,14 @@ if __package__ in (None, ""):
     if str(V2_ROOT) not in sys.path:
         sys.path.insert(0, str(V2_ROOT))
     from helper.config import load_optimization_config
+    from helper.endpoints import INTACT_PATCH_ENDPOINT, aggregate_intact_patch_replicates
     from helper.feasibility import annotate_feasibility
     from helper.models import build_training_frame, train_endpoint_models
     from helper.paths import FORMULATIONS_PATH, NEXT_ROUND_CANDIDATES_PATH, OBSERVATIONS_PATH, VISUALIZATIONS_DIR
     from helper.registry import IngredientRegistry, load_registry
 else:
     from .config import load_optimization_config
+    from .endpoints import INTACT_PATCH_ENDPOINT, aggregate_intact_patch_replicates
     from .feasibility import annotate_feasibility
     from .models import build_training_frame, train_endpoint_models
     from .paths import FORMULATIONS_PATH, NEXT_ROUND_CANDIDATES_PATH, OBSERVATIONS_PATH, VISUALIZATIONS_DIR
@@ -134,6 +136,12 @@ def _observed_endpoint_frame(formulations: pd.DataFrame, observations: pd.DataFr
         values="value",
         aggfunc="mean",
     )
+    intact_observations = obs[obs["endpoint"].astype(str) == INTACT_PATCH_ENDPOINT]
+    if not intact_observations.empty:
+        pivot[INTACT_PATCH_ENDPOINT] = (
+            intact_observations.groupby("formulation_id")["value"]
+            .agg(aggregate_intact_patch_replicates)
+        )
     frame = frame.merge(pivot, on="formulation_id", how="left")
 
     batch_map = (
@@ -236,14 +244,12 @@ def _aggregate_completed_candidates(candidates: pd.DataFrame) -> pd.DataFrame:
                 )
             )
             .groupby(grouping, dropna=False, sort=False)["_intact_numeric"]
-            .agg(["mean", "count"])
-            .reset_index()
-            .rename(
-                columns={
-                    "mean": "completed_intact_pass_fraction",
-                    "count": "completed_intact_replicate_count",
-                }
+            .agg(
+                completed_intact_pass_fraction="mean",
+                completed_intact_replicate_count="count",
+                completed_intact_gate_pass=aggregate_intact_patch_replicates,
             )
+            .reset_index()
         )
         base = base.merge(intact, on=grouping, how="left")
     return _top_candidate_frame(base).reset_index(drop=True)
@@ -458,8 +464,8 @@ def _write_best_performers_summary(
                     row.get("completed_viability_replicate_count"),
                     errors="coerce",
                 )
-                intact_fraction = pd.to_numeric(
-                    row.get("completed_intact_pass_fraction"),
+                intact_gate = pd.to_numeric(
+                    row.get("completed_intact_gate_pass"),
                     errors="coerce",
                 )
                 lines.append(
@@ -470,10 +476,10 @@ def _write_best_performers_summary(
                     "intact "
                     + (
                         "pass"
-                        if pd.notna(intact_fraction)
-                        and float(intact_fraction) >= 0.5
+                        if pd.notna(intact_gate)
+                        and float(intact_gate) >= 0.5
                         else "fail"
-                        if pd.notna(intact_fraction)
+                        if pd.notna(intact_gate)
                         else "not recorded"
                     )
                 )

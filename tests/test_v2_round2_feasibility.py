@@ -427,6 +427,19 @@ def test_high_viability_failed_patch_generates_dilution_rescue_candidates() -> N
                 "source_file": "test",
                 "notes": "",
             },
+            {
+                "observation_id": "obs_failed_high_intact_second_replicate",
+                "formulation_id": "v2_high_viability_failed",
+                "batch_id": "ROUND_001",
+                "replicate_id": "rep_002",
+                "endpoint": "intact_patch_formation_pass",
+                "value": 1.0,
+                "unit": "binary",
+                "observation_noise": "",
+                "source_type": "wetlab_feedback",
+                "source_file": "test",
+                "notes": "",
+            },
         ]
     )
     support = build_support_context(formulations, registry, config, observations)

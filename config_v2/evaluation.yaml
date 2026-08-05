@@ -1,6 +1,8 @@
-policy_version: prospective_evaluation_v1
+policy_version: prospective_evaluation_v2
 formal_start_round: 3
-replicate_aggregation: mean
+replicate_aggregation:
+  continuous_endpoints: mean
+  intact_patch_formation_pass: all_pass
 prediction_interval:
   confidence: 0.95
   z_value: 1.96

@@ -11,6 +11,12 @@ prospective cohort. The primary metric is pooled formal Round 3+ viability MAE.
 Cross-validated model diagnostics remain separate from these prospective
 results.
 
+Continuous technical replicates are averaged within formulation and round.
+The intact-patch gate uses a conservative all-pass rule: any measured failed
+patch replicate makes the formulation-level gate fail. Round summaries report
+formulations observed, passed and failed explicitly; they do not list every
+individual patch observation.
+
 Refresh only the cumulative campaign report:
 
 ```bash

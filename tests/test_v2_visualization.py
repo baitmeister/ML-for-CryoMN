@@ -182,6 +182,31 @@ def test_completed_report_collapses_48_rows_to_12_candidates(tmp_path: Path) -> 
     assert text.count("completed result: viability") == 12
 
 
+def test_completed_candidate_gate_uses_all_pass_across_replicates() -> None:
+    completed = pd.DataFrame(
+        [
+            {
+                "candidate_id": "candidate_01",
+                "selection_rank": 1,
+                "replicate_id": "rep_001",
+                "intact_patch_formation_pass": 1.0,
+            },
+            {
+                "candidate_id": "candidate_01",
+                "selection_rank": 1,
+                "replicate_id": "rep_002",
+                "intact_patch_formation_pass": 0.0,
+            },
+        ]
+    )
+
+    aggregated = _aggregate_completed_candidates(completed)
+
+    assert aggregated.loc[0, "completed_intact_pass_fraction"] == 0.5
+    assert aggregated.loc[0, "completed_intact_replicate_count"] == 2
+    assert aggregated.loc[0, "completed_intact_gate_pass"] == 0.0
+
+
 def test_grouped_cross_validation_keeps_all_batches_of_formulation_together() -> None:
     registry = load_registry()
     observations = _observations()

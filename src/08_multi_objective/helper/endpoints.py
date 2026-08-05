@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from typing import Any, Mapping
 
 import pandas as pd
@@ -9,6 +10,8 @@ import pandas as pd
 
 TRUE_VALUES = {"1", "true", "t", "yes", "y", "pass", "passed"}
 FALSE_VALUES = {"0", "false", "f", "no", "n", "fail", "failed"}
+INTACT_PATCH_ENDPOINT = "intact_patch_formation_pass"
+INTACT_PATCH_REPLICATE_POLICY = "all_pass"
 
 
 def parse_bool(value: Any) -> bool | None:
@@ -54,6 +57,29 @@ def intact_patch_formation_pass(
 
     threshold = max(int(min_intact_tip_count), float(total_tip_count) * min_intact_tip_fraction)
     return float(intact_tip_count) >= threshold
+
+
+def aggregate_intact_patch_replicates(values: Iterable[Any]) -> float | None:
+    """Collapse measured patch replicates with the conservative all-pass rule.
+
+    Missing values are ignored. A formulation passes only when every measured
+    replicate passes; one failed replicate therefore makes the formulation-level
+    gate fail. ``None`` is returned when no replicate has a measured gate result.
+    """
+    measured: list[bool] = []
+    for value in values:
+        if value is None or pd.isna(value):
+            continue
+        parsed = parse_bool(value)
+        if parsed is None:
+            raise ValueError(
+                "Intact-patch replicate values must be boolean-like (0/1, "
+                "true/false, or pass/fail)."
+            )
+        measured.append(parsed)
+    if not measured:
+        return None
+    return 1.0 if all(measured) else 0.0
 
 
 def canonical_endpoint_name(name: str) -> str:
