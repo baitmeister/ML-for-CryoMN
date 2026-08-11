@@ -2,7 +2,7 @@
 
 ## Setup
 
-- All scenarios now use the same shared candidate pool for each round. That removes candidate-generation differences as a confounder and makes the comparison a cleaner A/B/C test of the fake wet-lab response assumptions.
+- All scenarios use the same shared candidate pool for each round. That removes candidate-generation differences as a confounder and makes the comparison a cleaner A/B/C test of the fake wet-lab response assumptions.
 - The scenario differences therefore come from the response-model parameters and each scenario's wet-lab noise seed, not from different proposed candidate pools.
 
 ## Tweaked Parameters
@@ -16,7 +16,7 @@
 - `viability_bias` shifts the whole viability landscape up or down.
 - `viability_noise` broadens within-round scatter and makes viability look less uniformly optimistic.
 - `intact_bias` and `intact_round_gain` control how easily formulations pass the screening gate and how fast that process improves with rounds.
-- `intact_threshold` is now part of the intact-pass rule, making some scenarios stricter about when a formulation is considered fabrication-ready.
+- `intact_threshold` is part of the intact-pass rule, making some scenarios stricter about when a formulation is considered fabrication-ready.
 - `load_bias`, `load_noise`, and `mechanical_round_gain` control mechanical baseline quality, spread, and late-round improvement.
 - `stiffness_bias` and `stiffness_noise` control the secondary mechanical endpoint scale and dispersion.
 
@@ -40,8 +40,11 @@
 
 ## Potential Ramifications
 
-- Shared pools make cross-scenario conclusions much easier to trust, because any divergence in selected formulations now comes from the simulated wet-lab evolution instead of different candidate generation draws.
+- Shared pools make cross-scenario conclusions easier to interpret because divergence in selected formulations comes from the simulated wet-lab response instead of candidate-generation draws.
 - Higher viability noise and round-level batch shifts produce a more realistic spread, but they also make short-run conclusions more sensitive to seed choice.
 - Using `intact_threshold` as an active gate makes stricter scenarios slower to accumulate paired mechanics data, which is closer to a real fabrication bottleneck.
-- Relaxing the earlier hard pass-for-mechanics shortcut reduces optimism in the phase switch; if a scenario still reaches mechanics-enabled mode, that is stronger evidence the switch logic is behaving sensibly.
-- A higher mechanical ceiling avoids artificial saturation, so later-round mechanical gains can remain interpretable instead of flattening at the clamp.
+- A probabilistic mechanics-follow-up rule reduces optimism in the phase switch;
+  mechanics-enabled activation therefore provides a stricter check of the
+  switch logic.
+- A higher mechanical ceiling avoids artificial saturation, so mechanical gains
+  remain interpretable instead of flattening at the clamp.

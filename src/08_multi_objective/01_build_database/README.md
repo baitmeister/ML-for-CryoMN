@@ -4,7 +4,7 @@
 
 Build the v2 multi-objective database from legacy project evidence.
 
-This stage transfers the old literature and wet-lab validation results as
+This stage transfers the legacy literature and wet-lab validation results as
 viability-only observations. It does not infer mechanical labels from legacy
 data.
 

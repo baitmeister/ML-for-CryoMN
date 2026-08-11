@@ -10,7 +10,12 @@ import pandas as pd
 
 from .config import nested_get
 from .endpoints import INTACT_PATCH_ENDPOINT, aggregate_intact_patch_replicates
-from .feasibility import SupportContext, annotate_feasibility, annotate_support
+from .feasibility import (
+    SupportContext,
+    annotate_feasibility,
+    annotate_support,
+    ingredient_upper_bound_for_policy,
+)
 from .penalties import count_active_ingredients
 from .registry import IngredientRegistry
 from .similarity import (
@@ -53,6 +58,11 @@ def unavailable_features_from_config(
         resolved = registry.resolve_name(name)
         if resolved is not None and resolved.feature_name in registry.feature_names:
             features.add(resolved.feature_name)
+            continue
+        raise ValueError(
+            "Temporarily unavailable ingredient must resolve to an active, "
+            f"metadata-validated registry ingredient: {name}"
+        )
     return sorted(features)
 
 
@@ -114,6 +124,8 @@ def generate_random_candidate_pool(
     random_seed: int = 42,
     max_sampled_active_ingredients: int = 10,
     unavailable_feature_names: Iterable[str] = (),
+    optimization_config: Mapping | None = None,
+    policy_version: str | None = None,
 ) -> pd.DataFrame:
     """Generate a sparse formulation pool from registry bounds."""
     rng = np.random.default_rng(random_seed)
@@ -134,10 +146,17 @@ def generate_random_candidate_pool(
         chosen = rng.choice(len(ingredients), size=active_count, replace=False)
         for ingredient_index in chosen:
             ingredient = ingredients[int(ingredient_index)]
-            if ingredient.upper_bound <= ingredient.lower_bound:
+            upper_bound = (
+                ingredient.upper_bound
+                if optimization_config is None
+                else ingredient_upper_bound_for_policy(
+                    ingredient, optimization_config, policy_version
+                )
+            )
+            if upper_bound <= ingredient.lower_bound:
                 value = ingredient.lower_bound
             else:
-                value = float(rng.uniform(ingredient.lower_bound, ingredient.upper_bound))
+                value = float(rng.uniform(ingredient.lower_bound, upper_bound))
             row[ingredient.feature_name] = value
         row["candidate_id"] = f"cand_{index + 1:06d}"
         row["formulation_id"] = stable_formulation_id(row, registry)
@@ -185,6 +204,7 @@ def generate_support_aware_candidate_pool(
     unavailable_feature_names: Iterable[str] = (),
     similarity_index: SimilarityIndex | None = None,
     similarity_audit: SimilarityAudit | None = None,
+    policy_version: str | None = None,
 ) -> pd.DataFrame:
     """Generate the ROUND_002+ finite pool with a 40/35/25 policy."""
     rng = np.random.default_rng(random_seed)
@@ -230,16 +250,11 @@ def generate_support_aware_candidate_pool(
     boundary_max = int(
         nested_get(optimization_config, "candidate_generation.boundary_max_active_ingredients", 4)
     )
-    campaign_caps = (
-        nested_get(optimization_config, "formulation_feasibility.ingredient_caps", {})
-        or {}
-    )
     bounds = {
         ingredient.feature_name: (
             ingredient.lower_bound,
-            min(
-                ingredient.upper_bound,
-                float(campaign_caps.get(ingredient.feature_name, ingredient.upper_bound)),
+            ingredient_upper_bound_for_policy(
+                ingredient, optimization_config, policy_version
             ),
         )
         for ingredient in ingredients
@@ -257,7 +272,13 @@ def generate_support_aware_candidate_pool(
         for feature in registry.feature_names:
             if feature not in frame.columns:
                 frame[feature] = 0.0
-        frame = annotate_feasibility(frame, registry, optimization_config, policy_active=True)
+        frame = annotate_feasibility(
+            frame,
+            registry,
+            optimization_config,
+            policy_active=True,
+            policy_version=policy_version,
+        )
         frame = annotate_support(frame, registry, support)
         if not bool(frame.iloc[0]["feasibility_pass"]):
             if len(rejected_rows) < n_candidates:
@@ -391,7 +412,13 @@ def generate_support_aware_candidate_pool(
             remaining -= 1
 
     pool = _finalize_generated_rows(rows, registry)
-    pool = annotate_feasibility(pool, registry, optimization_config, policy_active=True)
+    pool = annotate_feasibility(
+        pool,
+        registry,
+        optimization_config,
+        policy_active=True,
+        policy_version=policy_version,
+    )
     pool = annotate_support(pool, registry, support)
     accepted_pool = pool.head(n_candidates).reset_index(drop=True)
     rejected_pool = _finalize_generated_rows(
@@ -405,6 +432,7 @@ def generate_support_aware_candidate_pool(
             registry,
             optimization_config,
             policy_active=True,
+            policy_version=policy_version,
         )
         rejected_pool = annotate_support(rejected_pool, registry, support)
         rejected_pool["candidate_origin"] = "rejected_generation_attempt"
@@ -421,6 +449,7 @@ def generate_rescue_candidate_pool(
     unavailable_feature_names: Iterable[str] = (),
     similarity_index: SimilarityIndex | None = None,
     similarity_audit: SimilarityAudit | None = None,
+    policy_version: str | None = None,
 ) -> pd.DataFrame:
     """Generate dilution variants of high-viability formulations that failed formation."""
     if formulations.empty or observations.empty:
@@ -524,7 +553,13 @@ def generate_rescue_candidate_pool(
     if not rows:
         return pd.DataFrame()
     rescue = _finalize_generated_rows(rows, registry, candidate_id_prefix="rescue")
-    rescue = annotate_feasibility(rescue, registry, optimization_config, policy_active=True)
+    rescue = annotate_feasibility(
+        rescue,
+        registry,
+        optimization_config,
+        policy_active=True,
+        policy_version=policy_version,
+    )
     rescue = annotate_support(rescue, registry, support)
     rescue = rescue.loc[
         rescue["feasibility_pass"].astype(bool)

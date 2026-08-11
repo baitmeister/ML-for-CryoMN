@@ -137,18 +137,18 @@ def main() -> None:
         similarity_policy,
         history_reference_count=len(similarity_index),
     )
+    availability_excluded_candidates = pd.DataFrame()
 
     if args.candidate_pool:
         candidate_pool = load_candidate_pool(args.candidate_pool, registry)
         before_filter = len(candidate_pool)
         candidate_pool = filter_candidate_pool_to_registry_bounds(candidate_pool, registry)
         bounds_filtered_count = before_filter - len(candidate_pool)
-        candidate_pool = filter_available_candidate_pool(candidate_pool, unavailable_features)
         if candidate_pool.empty:
             raise SystemExit(
-                "Candidate pool is empty after applying registry bounds and temporary availability restrictions."
+                "Candidate pool is empty after applying registry bounds."
             )
-        filtered_count = before_filter - bounds_filtered_count - len(candidate_pool)
+        filtered_count = 0
     else:
         pool_size = args.pool_size or int(
             nested_get(optimization_config, "selection.generated_candidate_pool_size", 2000)
@@ -165,6 +165,7 @@ def main() -> None:
                 unavailable_feature_names=unavailable_features,
                 similarity_index=similarity_index,
                 similarity_audit=similarity_audit,
+                policy_version=policy_version,
             )
             rescue_candidate_count = int(len(rescue_candidates))
             candidate_pool = generate_support_aware_candidate_pool(
@@ -177,6 +178,7 @@ def main() -> None:
                 unavailable_feature_names=unavailable_features,
                 similarity_index=similarity_index,
                 similarity_audit=similarity_audit,
+                policy_version=policy_version,
             )
             if not rescue_candidates.empty:
                 candidate_pool = pd.concat(
@@ -202,6 +204,7 @@ def main() -> None:
             registry,
             optimization_config,
             policy_active=True,
+            policy_version=policy_version,
         )
         candidate_pool = annotate_support(candidate_pool, registry, support_context)
         if "candidate_origin" not in candidate_pool.columns:
@@ -218,6 +221,30 @@ def main() -> None:
             )
     else:
         rejected_candidates = candidate_pool.head(0).copy()
+
+    if args.candidate_pool:
+        before_availability = len(candidate_pool)
+        available_candidate_pool = filter_available_candidate_pool(
+            candidate_pool,
+            unavailable_features,
+        )
+        available_ids = set(available_candidate_pool["candidate_id"].astype(str))
+        availability_excluded_candidates = candidate_pool.loc[
+            ~candidate_pool["candidate_id"].astype(str).isin(available_ids)
+        ].copy()
+        if not availability_excluded_candidates.empty:
+            availability_excluded_candidates["availability_eligible"] = False
+            availability_excluded_candidates["availability_reasons"] = (
+                "temporarily_unavailable_ingredient"
+            )
+        candidate_pool = available_candidate_pool
+        candidate_pool["availability_eligible"] = True
+        candidate_pool["availability_reasons"] = ""
+        filtered_count = before_availability - len(candidate_pool)
+        if candidate_pool.empty:
+            raise SystemExit(
+                "Candidate pool is empty after applying temporary availability restrictions."
+            )
 
     before_zero_active_filter = len(candidate_pool)
     candidate_pool = filter_nonzero_active_candidate_pool(candidate_pool, registry)
@@ -247,18 +274,24 @@ def main() -> None:
         requested_phase_mode=args.phase_mode,
         target_round_number=target_round_number,
         policy_active=policy_active,
+        policy_version=policy_version,
         similarity_audit=similarity_audit,
     )
-    if not rejected_candidates.empty:
-        rejected_candidates["selected_for_viability_screen"] = False
-        rejected_candidates["selected_for_mechanical_test"] = False
-        rejected_candidates["selection_rank"] = ""
-        rejected_candidates["mechanics_phase_score"] = float("nan")
-        rejected_candidates["screening_phase_score"] = float("nan")
+    audit_excluded_candidates = pd.concat(
+        [rejected_candidates, availability_excluded_candidates],
+        ignore_index=True,
+        sort=False,
+    )
+    if not audit_excluded_candidates.empty:
+        audit_excluded_candidates["selected_for_viability_screen"] = False
+        audit_excluded_candidates["selected_for_mechanical_test"] = False
+        audit_excluded_candidates["selection_rank"] = ""
+        audit_excluded_candidates["mechanics_phase_score"] = float("nan")
+        audit_excluded_candidates["screening_phase_score"] = float("nan")
         result = replace(
             result,
             candidate_pool=pd.concat(
-                [result.candidate_pool, rejected_candidates],
+                [result.candidate_pool, audit_excluded_candidates],
                 ignore_index=True,
                 sort=False,
             ),

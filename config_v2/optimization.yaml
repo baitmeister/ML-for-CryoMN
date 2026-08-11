@@ -17,6 +17,14 @@ formulation_similarity:
     - wetlab_feedback
 
 formulation_feasibility:
+  # Version schedule is forward-only: the v1 checks remain authoritative for
+  # Rounds 2-4 and the literature-backed v2 checks begin in Round 5.
+  policy_versions:
+    - policy_version: round2_candidate_feasibility_v1
+      start_round: 2
+    - policy_version: round5_solubility_viscosity_v2
+      start_round: 5
+  # Legacy scalar keys remain for older consumers and describe the first policy.
   policy_version: round2_candidate_feasibility_v1
   start_round: 2
   max_active_polymers: 1
@@ -38,6 +46,10 @@ formulation_feasibility:
     - fbs_pct
     - hsa_pct
     - human_serum_pct
+    # Keep feasibility chemistry independent of temporary lab availability.
+    # Sericin is currently unavailable, but must contribute to the protein /
+    # crowding burden as soon as availability is restored.
+    - sericin_pct
   sugar_features:
     - trehalose_M
     - sucrose_M
@@ -56,6 +68,31 @@ formulation_feasibility:
     - glucose_M
     - creatine_M
     - acetamide_M
+  round5_rules:
+    max_total_permeating_cpa_M: 2.50
+    max_total_nonpermeating_solute_M: 0.50
+    max_total_sugar_M: 0.50
+    max_sugar_M_with_polymer: 0.30
+    max_nonpermeating_M_with_polymer: 0.30
+    max_crystalline_solute_saturation_burden: 0.80
+    max_active_polymers: 1
+    max_total_polymer_pct: 10.0
+    max_total_serum_protein_pct: 10.0
+    max_total_polymer_serum_pct: 15.0
+    # Retained only as an audit diagnostic; there is intentionally no hard
+    # total-g/L rejection threshold in v2.
+    report_estimated_small_solute_g_L: true
+    preparation_gate:
+      apparent_viscosity_max_mPa_s: 3000
+      viscosity_temperature_C: 25
+      shear_rate_s_inverse: 10
+      homogeneous_after_preparation_required: true
+      homogeneous_after_4C_30min_required: true
+      no_sediment_or_crystallization_2h_required: true
+      minimum_filled_cavities: 90
+      reference_total_cavities: 100
+      centrifugation_g: 400
+      centrifugation_minutes: 3
 
 candidate_generation:
   local_fraction: 0.40

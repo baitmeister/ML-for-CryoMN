@@ -117,6 +117,12 @@ RESULT_COLUMNS = (
     "preparation_feasibility_pass",
     "homogeneous_solution_pass",
     "fillability_pass",
+    "apparent_viscosity_mPa_s_25C_10s",
+    "homogeneous_after_preparation_pass",
+    "homogeneous_after_4C_30min_pass",
+    "no_sediment_or_crystallization_2h_pass",
+    "filled_cavity_count",
+    "total_cavity_count",
     "preparation_failure_reason",
     "instron_file",
     "critical_axial_load_N_per_needle",
@@ -276,6 +282,7 @@ def main() -> None:
             batch_date=args.batch_date,
             default_needles_compressed=args.default_needles_compressed,
             viability_noise=_resolve_viability_noise(optimization_config, args.viability_noise),
+            optimization_config=optimization_config,
         )
 
         Path(args.formulations).parent.mkdir(parents=True, exist_ok=True)

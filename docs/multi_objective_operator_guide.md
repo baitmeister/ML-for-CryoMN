@@ -1,32 +1,38 @@
 # Multi-Objective Operator Guide
 
-This is the practical runbook for `src/08_multi_objective`.
+This runbook covers `src/08_multi_objective`.
 
 ## Operating Model
 
 - `data/processed_v2/formulations.csv` stores canonical formulations.
-- `data/processed_v2/observations.csv` stores experimental evidence.
-- Stage 02 selects the next 12-row slate and freezes its pre-bench proposal.
-- The operator edits only the active worksheet under `next_round/`.
-- Stage 03 validates, ingests, archives the completed worksheet, creates the
-  completed-round reports, refreshes the cumulative prospective evaluation,
-  and then selects the next slate.
+- `data/processed_v2/observations.csv` stores endpoint evidence.
+- Stage 02 selects a 12-row slate and freezes its pre-bench proposal.
+- The operator edits only the worksheet under `next_round/`.
+- Stage 03 validates, ingests, archives, reports and invokes Stage 02 for the
+  following slate.
 
-The artifact organization does not alter the CSV schema, the early
-viability-plus-intact input, the mechanical phase transition, or any Round 1/2
-observations. Beginning with Round 3, candidate generation adds a similarity
-gate while retaining the 12-row slate and existing origin-allocation policy.
+## Policy Schedule
 
-## Files To Know
+| Round | Feasibility policy |
+|---|---|
+| `ROUND_001` | Stored proposal behavior |
+| `ROUND_002`–`ROUND_004` | `round2_candidate_feasibility_v1` |
+| `ROUND_005` and higher | `round5_solubility_viscosity_v2` |
 
-### Persistent database
+Temporary availability restrictions affect sampling only. All registered
+active and temporarily unavailable ingredients remain subject to individual,
+aggregate, saturation-burden and preparation checks.
+
+## Files
+
+Persistent database:
 
 ```text
 data/processed_v2/formulations.csv
 data/processed_v2/observations.csv
 ```
 
-### Active operator workspace
+Operator workspace:
 
 ```text
 results/multi_objective_v2/next_round/next_round_candidates.csv
@@ -34,10 +40,10 @@ results/multi_objective_v2/next_round/next_round_summary.txt
 results/multi_objective_v2/next_round/next_round_metadata.json
 ```
 
-Only `next_round_candidates.csv` is edited. The summary and metadata are
+Only `next_round_candidates.csv` is editable. The summary and metadata are
 read-only references.
 
-### Round archive
+Round archive:
 
 ```text
 results/multi_objective_v2/rounds/ROUND_###/
@@ -55,44 +61,31 @@ results/multi_objective_v2/rounds/ROUND_###/
     └── plots/
 ```
 
-- `proposal/` records the exact model output before bench work.
-- `completed/completed.csv` records the exact successfully ingested worksheet.
-- `reports/` records the post-ingest state for that round.
-- Some report tables or plots are absent until enough endpoint data exist.
+Do not edit archived proposal or completed files.
 
-Never edit archived proposal or completed files.
-
-### Campaign-level artifacts
+Campaign reports:
 
 ```text
 results/multi_objective_v2/reports/
 ```
 
-This top-level directory contains cumulative campaign reports and is separate
-from each completed round's reports. Stage 03 refreshes
-`reports/prospective/` automatically; Stage 04 can regenerate it on demand
-without changing campaign state.
-
-### Latest-only artifacts
+Mutable audit artifacts:
 
 ```text
 results/multi_objective_v2/total_candidate_pool.csv
 results/multi_objective_v2/current_round_status.json
 ```
 
-The pool is overwritten on each selection run and is for debugging and
-auditing, not result entry.
+The candidate pool is overwritten by selection and is not a result-entry file.
 
 ## Stage 01: Build Database
-
-Run once at the start:
 
 ```bash
 python3 src/08_multi_objective/01_build_database/build_database.py
 ```
 
-This transfers the legacy viability evidence into the v2 database. It does not
-create mechanical labels from legacy data.
+Stage 01 transfers viability evidence into the v2 database without creating
+mechanical labels.
 
 ## Stage 02: Select Candidates
 
@@ -102,72 +95,23 @@ python3 src/08_multi_objective/02_select_candidates/select_candidates.py
 
 Stage 02:
 
-- reads the persistent database and configuration
-- applies the current ingredient availability rules
-- resolves `screening_only` or `mechanics_enabled` automatically
-- retains the existing support-aware pool generation and 12-row allocation
-- from Round 3, rejects candidates too similar to actual wet-lab history or an
-  already accepted new-pool candidate and resamples to preserve origin targets
-- limits every shared active-ingredient pair to five non-retest slate rows,
-  counting rescue rows and pair membership inside larger formulations
-- limits every individual registry ingredient to five of all 12 rows from
-  Round 3 onward; retest and rescue rows count but are protected, and ordinary
-  replacements preserve candidate origin
-- requests retests only from observed campaign disagreement, high latest-batch
-  replicate SD, or one single-batch neighbour-anomaly confirmation; model
-  uncertainty is only a tie-breaker
-- writes the active `next_round/` files
-- freezes exact proposal copies under `rounds/ROUND_###/proposal/`
-- generates the proposal candidate-screen plot
-- overwrites the latest full candidate pool
+- reads the database and configuration
+- applies ingredient availability to sampling
+- applies the round-resolved feasibility policy to every candidate path
+- resolves `screening_only` or `mechanics_enabled`
+- enforces support, similarity and slate-diversity controls
+- writes the `next_round/` files
+- freezes proposal copies under `rounds/ROUND_###/proposal/`
+- writes the full candidate audit pool
 
 An identical selector rerun is idempotent. Stage 02 refuses to replace a
 different frozen proposal for the same round.
 
-The Round 3+ similarity rule treats sub-threshold trace concentrations as zero
-and requires a registry-bounds-normalized Euclidean distance greater than
-`0.05`. The same-single-ingredient case also requires at least a 50% relative
-concentration difference. Literature-only formulations are not references;
-rescue dilutions are checked; deliberate `retest_priority` rows are exempt.
-The proposal metadata contains the thresholds, history count, rejection audit
-and minimum final-slate distances. No operator-input columns are added.
+## Stage 03: Enter Results and Advance
 
-Review after selection:
+### Result entry
 
-```text
-results/multi_objective_v2/current_round_status.json
-results/multi_objective_v2/next_round/next_round_summary.txt
-results/multi_objective_v2/next_round/next_round_candidates.csv
-results/multi_objective_v2/rounds/ROUND_###/proposal/
-```
-
-## Stage 03: Complete and Advance a Round
-
-### 1. Review the active slate
-
-Use:
-
-```text
-results/multi_objective_v2/next_round/next_round_summary.txt
-results/multi_objective_v2/next_round/next_round_candidates.csv
-```
-
-Review the active phase, the 12 formulations, any `retest_priority` rows and,
-once mechanics is enabled, mechanical-test recommendations.
-
-### 2. Perform the wet-lab work
-
-During the current screening phase, measure:
-
-- viability
-- intact microneedle formation
-
-Mechanical measurements remain optional until the existing automatic
-paired-data threshold enables `mechanics_enabled`.
-
-### 3. Fill the active worksheet
-
-Edit only:
+Edit:
 
 ```text
 results/multi_objective_v2/next_round/next_round_candidates.csv
@@ -177,37 +121,32 @@ Fill as applicable:
 
 - `viability_percent`
 - `intact_patch_formation_pass`
-- optional intact detail: `no_slurry`, `no_collapse`, `intact_tip_count`,
-  `total_tip_count`
-- optional preparation fields already present in the sheet
-- optional mechanical fields already present in the sheet
+- `no_slurry`, `no_collapse`, `intact_tip_count`, `total_tip_count`
+- preparation-gate fields
+- mechanical or Instron fields
 - `replicate_id`
 - `notes`
 
-Leave unmeasured fields blank. Duplicate a proposal row when technical
-replicates are needed and give the rows distinct `replicate_id` values. Row
-reordering is allowed.
+Leave unmeasured fields blank. Duplicate a proposal row for technical
+replicates and use distinct `replicate_id` values. Row reordering is allowed.
 
 Do not change:
 
 - `batch_id`, `candidate_id` or `formulation_id`
 - ingredient concentrations
 - predictions or uncertainties
-- recommendation, ranking or selection diagnostic fields
-- the CSV columns
+- recommendations, ranks or selection diagnostics
+- CSV columns
 
-Do not enter results in `total_candidate_pool.csv` or anywhere under
-`rounds/`.
+### Optional Instron import
 
-### 4. Optionally import Instron data
-
-Store raw files under a batch folder such as:
+Store raw files under a batch directory such as:
 
 ```text
 data/raw/instron/ROUND_###/
 ```
 
-Then use the existing helper:
+Use:
 
 ```bash
 python3 src/08_multi_objective/helper/instron.py \
@@ -218,33 +157,32 @@ python3 src/08_multi_objective/helper/instron.py \
   --needles-compressed 100
 ```
 
-The helper updates only the active `next_round_candidates.csv`.
+The helper updates only `next_round_candidates.csv`.
 
-### 5. Validate, ingest, report and roll over
+### Ingest, report and select
 
 ```bash
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv
 ```
 
-The order is deliberate:
+The command order is:
 
 1. validate the worksheet against the frozen proposal
-2. reject any unconfirmed carried-over Round 2 retest result
-3. ingest observations and formulations
-4. archive the exact source bytes as `completed/completed.csv`
-5. generate replicate-aggregated descriptive and formulation-grouped
+2. ingest observations and formulations
+3. archive the source bytes as `completed/completed.csv`
+4. generate replicate-aggregated descriptive and formulation-grouped
    cross-validation reports
-6. evaluate the round's frozen proposal-time predictions
-7. refresh the cumulative prospective report
-8. generate and freeze the next proposal
-9. replace the active workspace with the next editable slate
+5. evaluate frozen proposal-time predictions
+6. refresh the cumulative prospective report
+7. generate and freeze the following proposal
+8. replace the operator workspace with the editable slate
 
-The next slate is generated only after reporting succeeds. If reporting fails,
-the database update and completed worksheet remain preserved and the command
-can be rerun safely.
+Proposal generation occurs only if reporting succeeds. A reporting failure
+retains the database update and completed worksheet so the command can be
+rerun safely.
 
-To stop before next-slate generation:
+To omit proposal generation:
 
 ```bash
 python3 src/08_multi_objective/03_run_round/run_round.py \
@@ -252,92 +190,43 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
   --skip-generate
 ```
 
-### 6. Review the completed round and next proposal
+## Preparation-Gate Entry
 
-For the round just ingested:
+`ROUND_005` sheets support:
 
-```text
-results/multi_objective_v2/rounds/ROUND_###/completed/completed.csv
-results/multi_objective_v2/rounds/ROUND_###/reports/report_summary.txt
-results/multi_objective_v2/rounds/ROUND_###/reports/best_performers_summary.txt
-results/multi_objective_v2/rounds/ROUND_###/reports/tables/
-results/multi_objective_v2/rounds/ROUND_###/reports/plots/
-```
+- `apparent_viscosity_mPa_s_25C_10s`
+- `homogeneous_after_preparation_pass`
+- `homogeneous_after_4C_30min_pass`
+- `no_sediment_or_crystallization_2h_pass`
+- `filled_cavity_count`
+- `total_cavity_count`
 
-For the new round:
+The provisional gate requires viscosity at or below 3,000 mPa·s, passing both
+homogeneity checks, no sediment or crystallization at two hours, and at least
+90 filled cavities out of 100. A complete detailed record derives
+`preparation_feasibility_pass`; incomplete records remain unlabeled.
 
-```text
-results/multi_objective_v2/next_round/
-results/multi_objective_v2/rounds/ROUND_###/proposal/
-```
+## Reports
 
-## Round 2 Instructions
+`model_evaluation_*` artifacts are formulation-grouped cross-validation
+diagnostics. All batches of one formulation stay in the same fold.
 
-Round 2 was selected before this storage change. Its original active slate was
-copied byte-for-byte into:
+`prospective_*` artifacts compare frozen proposal-time predictions with
+measurements without retraining. Round summaries report eligible, passed,
+failed and missing measurements explicitly. Interval coverage is paired with
+interval width.
 
-```text
-results/multi_objective_v2/rounds/ROUND_002/proposal/proposal.csv
-```
-
-Enter Round 2 results in:
-
-```text
-results/multi_objective_v2/next_round/next_round_candidates.csv
-```
-
-Do not edit the archived proposal. After filling the working sheet, run:
-
-```bash
-python3 src/08_multi_objective/03_run_round/run_round.py \
-  results/multi_objective_v2/next_round/next_round_candidates.csv
-```
-
-Successful ingestion creates `ROUND_002/completed/completed.csv`, creates the
-Round 2 reports, freezes the Round 3 proposal, and leaves the editable Round 3
-slate in `next_round/`.
-
-Before ingestion, resolve the existing `retest_priority` row's prefilled
-viability `26.53`: replace it with the new result, add `replicate_id` if a real
-new result is coincidentally identical, or clear it if the retest was not run.
-
-Do not run Stage 01 or Stage 02 for Round 2 or later normal iterations. Fill the
-active file, optionally run `helper/instron.py`, then run Stage 03 once.
-
-## Prospective Versus Cross-Validated Evaluation
-
-The existing `model_evaluation_*` outputs are cross-validated diagnostics
-trained from the current database, with all batches of one formulation held in
-the same fold. Completed-round summaries collapse technical replicates to one
-candidate row. Continuous endpoints show their mean, sample SD and replicate
-count. The intact-patch gate reports one formulation-level outcome and passes
-only when every measured patch replicate passes. The
-`prospective_*` outputs compare frozen proposal-time predictions with later
-measurements without model retraining and report interval width alongside
-coverage.
-Round 1 is explicitly reconstructed, Round 2 is
-`migration_frozen_supplementary`, and pooled Round 3+ viability MAE is the
-locked primary prospective metric. Missing measurements remain visible as
-ineligible audit rows.
-
-To refresh reports without ingesting data or selecting candidates:
+To regenerate reports without ingestion or candidate selection:
 
 ```bash
 python3 src/08_multi_objective/04_report_campaign/report_campaign.py \
   --all-rounds
 ```
 
-## Historical Round 1
+## Archive Rules
 
-Round 1 remains valid historical evidence:
-
-```text
-results/multi_objective_v2/rounds/ROUND_001/completed/completed.csv
-results/multi_objective_v2/rounds/ROUND_001/proposal/proposal_reconstructed.csv
-results/multi_objective_v2/rounds/ROUND_001/reports/legacy_pre_ingest/
-results/multi_objective_v2/rounds/ROUND_001/legacy/migration_manifest.json
-```
-
-The Round 1 proposal is explicitly labelled reconstructed because automatic
-pre-bench freezing did not exist at that time. No Round 1 observations were
-regenerated or invalidated.
+- `proposal/proposal.csv` is the immutable pre-bench slate.
+- `completed/completed.csv` is the exact ingested worksheet.
+- `reports/` contains outputs derived from the database.
+- `next_round/next_round_candidates.csv` is the only result-entry file.
+- `total_candidate_pool.csv` is an audit pool and must not receive results.

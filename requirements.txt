@@ -25,6 +25,3 @@ seaborn>=0.12.0
 # Explainability
 # SHAP plots are skipped gracefully if this dependency is not installed.
 shap>=0.42.0
-
-# Testing / development
-pytest>=7.4.0

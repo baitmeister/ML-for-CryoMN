@@ -5,7 +5,7 @@
 Generate and score a candidate pool, export the next wet-lab slate, and freeze
 an exact pre-bench proposal for that round.
 
-This is where optimization happens in the current v2 workflow. The candidate
+This stage performs optimization in the v2 workflow. The candidate
 pool is generated randomly or loaded from a CSV, scored by the surrogate models,
 and reduced to 12 wet-lab candidates.
 
@@ -54,9 +54,9 @@ python3 src/08_multi_objective/02_select_candidates/select_candidates.py \
 wet-lab input.
 
 `next_round_candidates.csv` is the file to fill after validation. It contains
-the 12 selected wet-lab formulations and blank result columns. Beginning with
-newly generated Round 3 proposals, every editable result field is blank,
-including for `retest_priority` rows; prior measurements remain in the
+the 12 selected wet-lab formulations and blank result columns. Round 3 and
+higher proposals leave every editable result field blank, including for
+`retest_priority` rows; source measurements remain in the
 database rather than being carried into the operator worksheet.
 
 The files under `rounds/ROUND_###/proposal/` are the frozen record of what the
@@ -65,13 +65,14 @@ is allowed; a rerun that would replace the same round with different proposal
 bytes is rejected. The active `next_round/` files are promoted only after the
 proposal has been frozen successfully.
 
-`total_candidate_pool.csv` remains a latest-only debug artifact and is
+`total_candidate_pool.csv` is a mutable debug artifact and is
 overwritten. It is not copied into every round.
 
 ## Selection Logic
 
 1. Resolve the proposed `ROUND_###`. ROUND_001 retains the original generator;
-   ROUND_002+ activates `round2_candidate_feasibility_v1`.
+   Rounds 2-4 use `round2_candidate_feasibility_v1`, and Round 5+ uses
+   `round5_solubility_viscosity_v2`.
 2. Generate `selection.generated_candidate_pool_size` candidates. The default
    is `2000`. ROUND_002+ uses 40% local perturbation, 35% sparse exploration,
    and 25% boundary-style exploration. Local shortfall is reassigned to
@@ -79,9 +80,9 @@ overwritten. It is not copied into every round.
    a diagnostic rather than silently changing the policy.
    Support is measured against the evidence subset implied by
    `observations.csv`, not against every formulation row ever written into
-   `formulations.csv`. Legacy literature, legacy wet-lab, and new wet-lab
+   `formulations.csv`. Legacy literature, legacy wet-lab, and campaign wet-lab
    observations all remain support evidence. Boundary-style generation samples
-   chemically feasible upper-range probes; those probes may still be classified
+   chemically feasible upper-range probes; those probes may be classified
    as `in_support` when the observed support radius is broad.
    ROUND_002+ also adds capped `rescue_dilution` candidates by scaling down
    high-viability formulations that failed intact-patch formation. These rows
@@ -89,14 +90,16 @@ overwritten. It is not copied into every round.
    patch formation, without letting rescue hypotheses dominate the slate.
 3. Exclude temporary unavailable ingredients listed in
    `config_v2/availability.yaml`.
-4. Apply ROUND_002+ hard formulation guardrails and retain rejected attempts in
-   the audit pool with explicit reasons.
-5. Beginning with ROUND_003, apply one unified formulation-similarity policy
-   before model scoring. Concentrations below the existing practical-presence
+4. Apply the round-selected hard formulation guardrails and retain rejected
+   attempts in the audit pool with explicit reasons. Round 5 checks practical
+   ingredient ceilings, permeating-CPA/sugar/nonpermeating totals, crystalline
+   saturation burden and polymer/protein loads regardless of availability.
+5. For ROUND_003 and higher, apply one unified formulation-similarity policy
+   before model scoring. Concentrations below the configured practical-presence
    thresholds are treated as zero, then every ingredient is scaled by its
    registry range. Ordinary candidates must have bounds-normalized Euclidean
    distance greater than `0.05` from every actual wet-lab formulation and every
-   candidate already accepted into the new pool. Two formulations containing
+   candidate accepted into the generated pool. Two formulations containing
    the same single ingredient must also differ by at least 50% relative to the
    lower concentration. Rescue dilutions receive no exception; intentional
    `retest_priority` rows are exempt. Literature-only formulations are not
@@ -105,12 +108,11 @@ overwritten. It is not copied into every round.
    feasible.
 6. Train v2 surrogate models from `formulations.csv` and `observations.csv`,
    preserving separate validation batches instead of collapsing everything to
-   one formulation-wide mean. From Round 3, each regression uses a fixed
-   Matérn 2.5 kernel and the existing per-observation `alpha` values as its
-   only noise mechanism; the removed fixed `WhiteKernel(5.0)` no longer
-   inflates every candidate's posterior SD.
+   one formulation-wide mean. For Round 3 and higher, each regression uses a
+   fixed Matérn 2.5 kernel and per-observation `alpha` values as its only noise
+   mechanism; a fixed `WhiteKernel(5.0)` is absent.
 7. Resolve the active selection phase automatically:
-   - `screening_only` while real paired viability + mechanical data are still sparse
+   - `screening_only` when the paired viability + mechanical evidence threshold is unsatisfied
    - `mechanics_enabled` once the configured evidence thresholds are met
 8. Score the feasible pool with the active phase policy. During
    `screening_only`, `screening_phase_score` is purely viability-based;
@@ -134,7 +136,7 @@ overwritten. It is not copied into every round.
      four-a-kind, etc.) is far more specific and is capped at `1` per round
      by default via `selection.max_candidates_per_larger_ingredient_combination`.
      Both caps are enforced by swapping the lowest-scoring offender for the
-     best-scoring eligible pool candidate not already at its own cap; the
+     best-scoring eligible pool candidate below its own cap; the
      slate is never shrunk, and an over-cap combination is left in place if
      no eligible replacement exists.
    - **Shared-core-pair cap** — counts every unordered ingredient pair within
@@ -142,22 +144,22 @@ overwritten. It is not copied into every round.
      formulations. No pair may occur in more than five non-retest rows.
      Rescue rows count and are preserved; retests are exempt. Ordinary
      offenders are replaced from the same origin bucket, and Stage 02 refuses
-     to freeze a still-violating slate.
-   - **Marginal ingredient-frequency cap** — beginning with Round 3, each
+     to freeze a violating slate.
+   - **Marginal ingredient-frequency cap** — for Round 3 and higher, each
      registry ingredient may occur above its practical presence threshold in
      at most five of all 12 rows. Retests and rescues count but are protected
      from removal. The lowest-scoring ordinary offender is replaced by the
      highest-scoring eligible candidate from the same origin, preserving the
-     slate size, origin allocation and all earlier diversity constraints.
-     Stage 02 refuses to freeze a still-violating slate.
+     slate size, origin allocation and all other diversity constraints.
+     Stage 02 refuses to freeze a violating slate.
 10. Add at most two feasible `retest_priority` formulations using campaign
     `wetlab_feedback` evidence only. Eligibility requires a feedback
-    batch-mean range of at least 15 points, a latest-batch sample SD of at
+    batch-mean range of at least 15 points, a highest-numbered-batch sample SD of at
     least 8 points from at least three replicates, or one anomaly-confirmation
     opportunity for a single-batch formulation whose viability is at least 20
     points off its bounds-normalized chemical neighbours. Two agreeing
     batches suppress further neighbour-driven retesting. Model uncertainty
-    only breaks ties between already eligible rows.
+    only breaks ties between eligible rows.
 11. If `mechanics_enabled`, attempt continuous constrained qLogNEHVI and fall
     back to the constrained finite pool when unavailable or unsuccessful.
 
@@ -188,4 +190,4 @@ operator worksheet.
 The batch ID is generated as `ROUND_###` from `observations.csv`. After `03_run_round/run_round.py`
 ingests `ROUND_001`, the next Stage 02 run emits `ROUND_002`. If you rerun Stage
 02 before ingesting results, it will emit the same next unused round ID and
-must match the existing frozen proposal.
+must match the frozen proposal.

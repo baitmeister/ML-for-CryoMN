@@ -2,7 +2,8 @@
 
 Machine learning pipeline for optimizing cryoprotective formulations for cryomicroneedle (CryoMN) technology.
 
-Repository checkpoint artifacts referenced below use stage-tagged iteration directories such as `iteration_10_prior_mean`.
+Reference artifacts use stage-tagged iteration directories such as
+`iteration_10_prior_mean`.
 
 ## Goals
 
@@ -40,11 +41,11 @@ Project workflow with planning and implementation phases under human oversight:
 
 | Lane | Use when | Main entry point |
 |------|----------|------------------|
-| Legacy viability-only | Reproduce the manuscript viability pipeline and prior BO outputs. | `src/01_data_parsing` through `src/07_next_formulations` |
-| V2 multi-objective | Run the new viability + CryoMN mechanical robustness loop. | `src/08_multi_objective` |
+| Legacy viability-only | Reproduce the manuscript viability pipeline and its BO outputs. | `src/01_data_parsing` through `src/07_next_formulations` |
+| V2 multi-objective | Run the viability + CryoMN mechanical robustness loop. | `src/08_multi_objective` |
 
-The current implementation work is concentrated in the v2 lane. Its detailed
-workflow documentation lives in `src/08_multi_objective/README.md`, with one
+Detailed v2 workflow documentation lives in
+`src/08_multi_objective/README.md`, with one
 README in each numbered stage folder.
 
 ## Quick Start: V2 Multi-Objective Loop
@@ -56,8 +57,7 @@ python3 src/08_multi_objective/01_build_database/build_database.py
 # 2. Generate the full scored pool and the 12-row wet-lab slate
 python3 src/08_multi_objective/02_select_candidates/select_candidates.py
 
-# 3. After wet lab, fill the current next_round_candidates.csv, then run the
-# full round step: review current state, ingest, review updated state, generate
+# 3. Fill next_round_candidates.csv with wet-lab results and run the round step
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv
 ```
@@ -69,21 +69,21 @@ V2 files to know:
 | `data/processed_v2/formulations.csv` | Persistent formulation table. |
 | `data/processed_v2/observations.csv` | Persistent endpoint observation table. |
 | `results/multi_objective_v2/total_candidate_pool.csv` | Full generated/scored candidate pool for audit. |
-| `results/multi_objective_v2/next_round/next_round_candidates.csv` | Current 12-row wet-lab sheet to fill. |
+| `results/multi_objective_v2/next_round/next_round_candidates.csv` | Editable 12-row wet-lab sheet. |
 | `results/multi_objective_v2/next_round/next_round_summary.txt` | Human-readable validation summary. |
 | `config_v2/availability.yaml` | Temporary ingredient availability restrictions. |
 | `config_v2/optimization.yaml` | Candidate-pool size, penalties, and noise settings. |
 
 `next_round_candidates.csv` is overwritten each Stage 02 run. The batch ID is
-generated from `observations.csv`: after Stage 03 ingests `ROUND_001`, the next
-Stage 02 run emits `ROUND_002`.
+derived from `observations.csv` as one greater than the highest observed round
+ID.
 
-New validation viability feedback defaults to `1.0` observation noise, one fifth
+Campaign validation viability feedback defaults to `1.0` observation noise, one fifth
 of the legacy wet-lab viability noise. Change this in
 `config_v2/optimization.yaml` or pass `--viability-noise` to Stage 03 for a
 single import.
 
-The v2 lane treats prior data as viability-only evidence, uses
+The v2 lane treats transferred data as viability-only evidence, uses
 `intact_patch_formation_pass` as the mechanical screening gate, and optimizes
 viability with `critical_axial_load_N_per_needle`.
 Exact BoTorch qLogNEHVI support uses the optional packages listed in
@@ -128,21 +128,20 @@ python src/07_next_formulations/next_formulations.py
 > [!CAUTION]
 > `python src/05_bo_optimization/bo_optimizer.py` is a long-running optimization step. It evaluates repeated Differential Evolution searches for both general and low-DMSO candidate batches, and it prints live DE-search status while the script is running.
 
-## Repository Snapshot
+## Reference Dataset
 
-Snapshot date: `2026-04-22` (checkpoint: `iteration_10_prior_mean`).
+Reference checkpoint: `iteration_10_prior_mean`.
 
-| Metric | Snapshot value |
+| Metric | Reference value |
 |--------|---------------|
 | Wet-lab validation rows | 106 |
-| Latest wet-lab batch date in snapshot | 2026-04-21 |
 | Best validated viability | 95.15% |
 | Best validated formulation | 21.0mM DMSO + 291.1mM ectoin + 1.79M ethylene glycol + 5.4% FBS |
 | Mean wet-lab viability | 52.26% |
 | Median wet-lab viability | 57.45% |
 | Wet-lab runs at or above 50% viability | 63 |
 
-The snapshot highlights the ectoin + ethylene glycol ridge with FBS-augmented
+The reference data highlight the ectoin + ethylene glycol ridge with FBS-augmented
 variants. The residual-driven `07_next_formulations` step targets blind spots
 from completed wet-lab stages.
 
@@ -162,11 +161,11 @@ from completed wet-lab stages.
 - In code, the wet-lab fold count is `min(5, len(X_val))` with `shuffle=True` and `random_state=42`. In the saved iterations in this repo that behaves as 5-fold CV, because every completed wet-lab stage has at least 5 measured rows.
 - For the standard update, each fold trains on `literature + wetlab_train_fold` and predicts the held-out wet-lab fold. The weighted-simple update uses the same split but duplicates the training-fold wet-lab rows, and the prior-mean update keeps the literature GP fixed while cross-validating only the wet-lab residual correction GP.
 
-## Results Snapshot
+## Reference Results
 
 ### Wet-Lab Validation Signal
 
-The best measured wet-lab result in this snapshot is:
+The best measured wet-lab result in the reference checkpoint is:
 
 - `95.15%` viability for `21.0mM DMSO + 291.1mM ectoin + 1.79M ethylene glycol + 5.4% FBS`
 
@@ -174,7 +173,8 @@ That same region remains the model's top BO target, which is a useful consistenc
 
 ### DE-Based Bayesian Optimization (`05_bo_optimization`)
 
-General BO summary for this snapshot: `results/bo_candidates_general_iteration_10_prior_mean_summary.txt`
+General BO summary for the reference checkpoint:
+`results/bo_candidates_general_iteration_10_prior_mean_summary.txt`
 
 | Rank | Formulation | Predicted viability |
 |------|-------------|---------------------|
@@ -196,13 +196,13 @@ This script:
 - resolves the active iteration automatically
 - requires validation coverage through stage `N-1` when targeting stage `N`
 - uses `05` BO outputs as the exploitation source pool
-- normalizes existing and newly generated candidates so trace ingredients below `0.1%` or `1.0 mM` are treated as absent
-- chooses exploit/explore counts adaptively from the previous completed stage diagnostics (default `8/12`, bounded to exploit `4..12`, total always `20`)
+- normalizes registry and generated candidates so trace ingredients below `0.1%` or `1.0 mM` are treated as absent
+- chooses exploit/explore counts adaptively from the preceding completed-stage diagnostics (default `8/12`, bounded to exploit `4..12`, total always `20`)
 - reserves 2 BO-only `coverage_probe` slots selected by greedy k-center distance from observed context
 - adaptively relaxes the positive-residual anchor threshold when stronger anchors are unavailable
 - fills the exploration remainder with local-rank and blind-spot probes using an adaptive local/blindspot target, then uses BO fallback only if needed
 - fails by default if fewer than 2 coverage probes are feasible; `--allow-coverage-shortfall` allows fallback backfill with audit logging
-- allows exploration probes to anchor from any historical positive-residual wet-lab stage
+- allows exploration probes to anchor from any completed positive-residual wet-lab stage
 - writes recommended batch subsets for wet-lab capacities from 6 to 12 formulations
 - validates inputs before generation and validates all 20 outputs again before writing
 
@@ -216,7 +216,7 @@ Outputs are written under `results/next_formulations/<iteration_tag>/`, for exam
 
 The summary and metadata artifacts record positive-residual thresholds,
 selected threshold, exploration-row sources (local-rank probes, coverage
-probes, blind-spot probes, BO fallback), and historical anchor stages for
+probes, blind-spot probes, BO fallback), and anchor stages for
 generated probes. The text summary also
 includes a human-readable version of each recommended batch subset for wet-lab
 capacities from 6 through 12 formulations.
@@ -248,7 +248,7 @@ model output against the wet-lab batch it actually generated:
 - `iteration_7_*` outputs → wet-lab batch on 2026-04-09
 - `iteration_8_*` outputs → wet-lab batch on 2026-04-14
 - `iteration_9_*` outputs → wet-lab batch on 2026-04-21
-- `iteration_10_*` outputs → pending wet-lab results
+- `iteration_10_*` outputs → no matched wet-lab batch
 
 Run:
 
@@ -268,7 +268,7 @@ Outputs:
 
 Candidate-hit matching in `06_evaluation_explainability` uses the same
 practical concentration floor, so frozen candidate rows count as hits in
-subsequent wet-lab stages when the only difference is a trace ingredient below
+wet-lab stages with a greater stage ID when the only difference is a trace ingredient below
 `0.1%` or `1.0 mM`.
 
 Stage-level metrics from the saved evaluation artifacts:
@@ -285,13 +285,13 @@ Stage-level metrics from the saved evaluation artifacts:
 | Iteration 7 | `2026-04-09` | 12 | 18.50 | 0.818 | 0.750 |
 | Iteration 8 | `2026-04-14` | 8 | 10.10 | 0.857 | 0.750 |
 | Iteration 9 | `2026-04-21` | 8 | 6.86 | 0.810 | 0.875 |
-| Iteration 10 | pending wet-lab results | 0 | N/A | N/A | N/A |
+| Iteration 10 | no matched wet-lab batch | 0 | N/A | N/A | N/A |
 
 Interpretation:
 
 - absolute error improved sharply from the literature-only baseline, with best RMSE at iteration 4
-- rank ordering strengthened materially in later stages, peaking so far in iterations 5 and 7
-- hit rate at 50% remains high for recent completed stages (iterations 5 to 7)
+- rank ordering is strongest in iterations 5 and 7
+- iterations 5 to 7 have high hit rate at 50%
 - `07_next_formulations` uses stage residuals plus BO outputs to choose a mixed exploit/explore wet-lab batch
 
 Stage-indexed wet-lab R² visuals are generated separately by:
@@ -301,7 +301,7 @@ python src/06_evaluation_explainability/stage_r2_predicted_vs_actual.py
 ```
 
 The default mode is prospective cumulative (stage-indexed outputs in
-`results/explainability/stage_r2/` through the latest completed stage).
+`results/explainability/stage_r2/` for every completed stage).
 
 ![Stage Performance](results/evaluation/stage_performance.png)
 
@@ -387,7 +387,7 @@ For detailed interpretation and additional visualizations, see [`src/06_evaluati
 | `04_validation_loop` | Three update strategies + iteration checkpointing + shadow method comparison helpers | Closing the active learning loop with wet lab feedback and comparing candidate update methods without activation |
 | `05_bo_optimization` | Differential Evolution with batched population scoring, wet-lab-aware BO context, shared iteration-aware model loading | Exploiting validated winners while proposing nearby informative variants |
 | `06_evaluation_explainability` | Stage-based evaluation, recommendation-slate auditing, SHAP, PDPs, Interaction Contours, shared iteration-aware model loading | Measuring frozen-stage performance, auditing `07` outputs, and understanding model drivers |
-| `07_next_formulations` | Strict next-batch generation from BO outputs + residual blind spots + adaptive exploit/explore split + smaller-batch subset recommendation | Selecting exactly 20 future wet-lab formulations with diagnostics-driven exploit/explore counts and recommending subsets for batch sizes 6 through 12 |
+| `07_next_formulations` | Strict next-batch generation from BO outputs + residual blind spots + adaptive exploit/explore split + smaller-batch subset recommendation | Selecting exactly 20 wet-lab formulations with diagnostics-driven exploit/explore counts and recommending subsets for batch sizes 6 through 12 |
 
 ## Key Features
 
@@ -406,5 +406,5 @@ For detailed interpretation and additional visualizations, see [`src/06_evaluati
 - **Vectorized DE scoring** (`05` evaluates each DE population in batches so GP prediction and penalty calculations are not repeated point-by-point)
 - **Metadata-driven calibration** (`04` fits with fixed alpha assumptions, then learns `bias_shift_percent` and `uncertainty_scale`; `05/06/07` consume the same calibrated prediction path)
 - **Strict next-batch planning** (`07` validates inputs, generates calibration probes from residual blind spots, and writes traceable next-batch artifacts)
-- **Adaptive exploit/explore policy** (`07` retunes exploit/explore counts from recent residual and coverage diagnostics while keeping total batch size fixed at 20)
+- **Adaptive exploit/explore policy** (`07` retunes exploit/explore counts from residual and coverage diagnostics while keeping total batch size fixed at 20)
 - **Subset recommendation for limited wet-lab capacity** (`07` writes exact best-subset recommendations for batch sizes 6 through 12)

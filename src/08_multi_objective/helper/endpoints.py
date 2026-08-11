@@ -12,6 +12,9 @@ TRUE_VALUES = {"1", "true", "t", "yes", "y", "pass", "passed"}
 FALSE_VALUES = {"0", "false", "f", "no", "n", "fail", "failed"}
 INTACT_PATCH_ENDPOINT = "intact_patch_formation_pass"
 INTACT_PATCH_REPLICATE_POLICY = "all_pass"
+PREPARATION_VISCOSITY_MAX_MPA_S = 3000.0
+PREPARATION_MIN_FILLED_CAVITIES = 90
+PREPARATION_REFERENCE_TOTAL_CAVITIES = 100
 
 
 def parse_bool(value: Any) -> bool | None:
@@ -57,6 +60,48 @@ def intact_patch_formation_pass(
 
     threshold = max(int(min_intact_tip_count), float(total_tip_count) * min_intact_tip_fraction)
     return float(intact_tip_count) >= threshold
+
+
+def preparation_gate_pass(
+    row: Mapping[str, Any],
+    apparent_viscosity_max_mPa_s: float = PREPARATION_VISCOSITY_MAX_MPA_S,
+    minimum_filled_cavities: int = PREPARATION_MIN_FILLED_CAVITIES,
+    reference_total_cavities: int = PREPARATION_REFERENCE_TOTAL_CAVITIES,
+) -> bool | None:
+    """Evaluate the provisional Round-5 cell-free preparation gate.
+
+    ``None`` means the detailed gate is incomplete. The caller must not turn an
+    incomplete record into a pass label.
+    """
+    required_booleans = [
+        parse_bool(row.get("homogeneous_after_preparation_pass")),
+        parse_bool(row.get("homogeneous_after_4C_30min_pass")),
+        parse_bool(row.get("no_sediment_or_crystallization_2h_pass")),
+    ]
+    viscosity = pd.to_numeric(
+        row.get("apparent_viscosity_mPa_s_25C_10s"), errors="coerce"
+    )
+    filled = pd.to_numeric(row.get("filled_cavity_count"), errors="coerce")
+    total = pd.to_numeric(row.get("total_cavity_count"), errors="coerce")
+    if (
+        any(value is None for value in required_booleans)
+        or pd.isna(viscosity)
+        or pd.isna(filled)
+        or pd.isna(total)
+    ):
+        return None
+    if float(total) <= 0:
+        return False
+    fill_fraction = float(filled) / float(total)
+    reference_fraction = float(minimum_filled_cavities) / float(
+        reference_total_cavities
+    )
+    return bool(
+        all(required_booleans)
+        and float(viscosity) <= float(apparent_viscosity_max_mPa_s)
+        and float(filled) >= float(minimum_filled_cavities)
+        and fill_fraction >= reference_fraction
+    )
 
 
 def aggregate_intact_patch_replicates(values: Iterable[Any]) -> float | None:

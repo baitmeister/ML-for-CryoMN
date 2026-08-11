@@ -1,17 +1,17 @@
-# Round 2 Candidate-Failure Prevention
+# ROUND_002–ROUND_004 Candidate-Feasibility Policy
 
 ## Purpose and activation
 
-This forward-only policy prevents future slates from repeating preparation
-failures observed while making the first multi-objective slate:
+This policy applies preparation guardrails to `ROUND_002` through
+`ROUND_004`, based on failures observed in `ROUND_001`:
 
 - policy version: `round2_candidate_feasibility_v1`
 - activation: `ROUND_002`
-- affected data: generated or externally supplied candidate pools
-- unaffected data: transferred formulations, transferred observations, legacy
-  viability values, noise assignments, and the executed `ROUND_001` slate
+- checked data: generated or externally supplied candidate pools
+- immutable data: transferred formulations, transferred observations, legacy
+  viability values, noise assignments and the executed `ROUND_001` slate
 
-Existing formulation and observation tables remain model evidence. They are
+Stored formulation and observation tables remain model evidence. They are
 read to establish support and train models, but are never rewritten, filtered,
 relabelled, or migrated by this policy.
 
@@ -29,12 +29,12 @@ identical scores, after which diversity selection favored chemically distant
 points. The exact high concentrations therefore arose mainly from permissive
 independent bounds, whole-box random sampling, out-of-support uncertainty, and
 diversity tie-breaking. They were not concentration optima learned from
-historical experiments.
+transferred experiments.
 
-Applying the new rules retrospectively for diagnosis, without changing the
-executed slate, gives:
+Diagnostic application of this policy to the stored `ROUND_001` slate, without
+changing the slate, gives:
 
-| ROUND_001 rank | Candidate | Main prospective rejection causes |
+| ROUND_001 rank | Candidate | Main rejection causes under this policy |
 |---:|---|---|
 | 2 | `cand_000754` | 25.25% total polymer, three polymers, 7.13% protein, 0.51 M sugars, 0.97 M non-permeating solutes |
 | 5 | `cand_000440` | 24.21% total polymer and three polymers |
@@ -48,7 +48,7 @@ not edited or relabelled.
 
 ## What the legacy optimizer did
 
-The legacy single-objective code did not contain the new polymer, protein, or
+The legacy single-objective code did not contain the policy's polymer, protein, or
 combined-solids rules. It addressed preparation risk only indirectly:
 
 - HA had a 1% feature bound and methylcellulose a 2% bound.
@@ -73,9 +73,9 @@ solvent composition, and mixing protocol can materially change behavior.
 | Active viscosity polymers | maximum 1 | No transferred wet-lab support for the failed polymer combinations |
 | PVP | maximum 10% | Literature: 10% gave 69.7%, 20% gave 55.5%, and 40% gave 4.6%; wet-lab support reached 7.2% |
 | Dextran | maximum 5% | Maximum transferred concentration; wet-lab support above 3.3% is absent |
-| HA | maximum 1% | Existing exploratory ceiling; transferred evidence ends at 0.2% |
+| HA | maximum 1% | Configured exploratory ceiling; transferred evidence ends at 0.2% |
 | Total polymer | maximum 10% | Prevents independent polymer limits from accumulating |
-| FBS+HSA+human serum | maximum 10% | Conservative future protein/crowding burden |
+| FBS+HSA+human serum+sericin | maximum 10% | Conservative protein/crowding burden; temporary availability never removes an ingredient from this check |
 | Polymer+serum/protein | maximum 15% | Allows 10%+5% or 5%+10%, but blocks simultaneous high loading |
 | Listed sugars with polymer | maximum 0.50 M | Prevents several individually legal sugars accumulating into high solids |
 | Non-permeating osmolytes with polymer | maximum 0.75 M | Allows moderate combinations while blocking approximately 1 M burdens seen among failures |
@@ -102,7 +102,7 @@ Exact transferred records used for these statements:
 - Legacy literature serum rows include `legacy_lit_97` and `legacy_lit_98`
   at 40% and 80% FBS with 10% PVP. Wet-lab records also reach high serum
   levels. These rows show that high-serum evidence exists; they do not establish
-  preparation safety for the current microneedle campaign. The 10% future
+  preparation safety for the microneedle campaign. The 10%
   serum/protein limit is therefore explicitly conservative.
 
 The source rows are transferred from
@@ -116,16 +116,17 @@ Evidence classification:
   failures.
 - **Inferred:** accumulated polymer, protein, sugar, and osmolyte burdens are
   plausible contributors to the observed non-homogeneity and viscosity. The
-  current data do not isolate a single causal ingredient for each failure.
+  evidence does not isolate a single causal ingredient for each failure.
 - **Conservative policy:** the one-polymer rule and the 10%, 15%, 0.50 M, and
   0.75 M aggregate limits. These are campaign decisions chosen to prevent
-  recurrence while new preparation labels accumulate.
+  recurrence while preparation labels accumulate.
 
 Every candidate receives:
 
 - `feasibility_pass` and `feasibility_reasons`
 - polymer, serum/protein, sugar, and non-permeating-solute totals
-- `estimated_small_solute_g_L`
+- `estimated_small_solute_g_L` (raffinose uses the pentahydrate reagent mass,
+  594.51 g/mol)
 - `nearest_support_distance` and `support_status`
 
 Rejected generated attempts remain in `total_candidate_pool.csv` for audit but
@@ -135,7 +136,7 @@ are never scored or selected.
 
 During `screening_only`, the finite pool is generated as:
 
-- 40% local perturbations around transferred or newly validated formulations
+- 40% local perturbations around transferred or campaign-validated formulations
 - 35% sparse single-ingredient and pairwise exploration
 - 25% chemically feasible boundary-style exploration
 
@@ -147,7 +148,7 @@ within the bounded attempt budget. The quota is a sampling-mode allocation, not
 a requirement that every boundary-style row be outside the observed support
 radius.
 
-The split preserves useful local learning without allowing narrow historical
+The split preserves useful local learning without allowing narrow observed
 support to dominate, produces interpretable sparse effects, and reserves
 meaningful capacity for discovery.
 
@@ -199,8 +200,8 @@ extreme outliers; the multiplier supplies controlled exploration slack.
 The support set is derived from formulation IDs that have actual entries in
 `observations.csv`, so unobserved candidate rows do not expand support merely
 by being written into `formulations.csv`. Legacy literature, legacy wet-lab,
-and new wet-lab observations remain support evidence regardless of outcome.
-Failed round results still define where the campaign has evidence; feasibility
+and campaign wet-lab observations remain support evidence regardless of outcome.
+Failed round results define where the campaign has evidence; feasibility
 rules and endpoint models decide whether nearby lower-concentration candidates
 are worth selecting.
 
@@ -234,7 +235,7 @@ of a mature classifier. Deterministic chemistry gates remain authoritative.
 
 ## Constrained qLogNEHVI after screening
 
-The existing mechanics transition remains:
+The mechanics transition is:
 
 - 8 paired viability/load observations
 - 6 distinct paired formulations
@@ -249,7 +250,7 @@ Once `mechanics_enabled`:
    inactive ingredients are fixed to zero.
 4. Every point is rechecked against campaign feasibility.
 5. Once fitted, preparation probability is an additional constraint.
-6. Accepted points become pending points so later batch choices seek
+6. Accepted points become pending points so batch selection seeks
    complementary experiments.
 7. Support and one-boundary-candidate rules remain active.
 
@@ -266,4 +267,7 @@ Candidate origins and metadata identify the path used.
 Review manual preparation labels, polymer grade and molecular weight,
 solvent/media, temperature, mixing protocol, replication, and Pareto
 performance before changing limits. Increment `policy_version` whenever any
-limit or feature grouping changes so prior recommendations remain reproducible.
+limit or feature grouping changes so stored recommendations remain reproducible.
+
+`ROUND_005` and higher use `round5_solubility_viscosity_v2`, documented in
+[`src/08_multi_objective/README.md`](../src/08_multi_objective/README.md#round_005-solubility-and-viscosity-policy).

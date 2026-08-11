@@ -26,6 +26,8 @@
 
 ## Findings
 
-- The fake campaign harness originally generated CSV and JSON outputs only; it did not call any plotting/evaluation step, so the lack of graphs was an omission in the harness rather than a core optimizer failure.
-- Mechanical loads are still capped in the fake generator, but the ceiling was raised to reduce the strong flattening seen in the earlier draft.
-- Mechanical follow-up rows now get a probability boost instead of an automatic intact pass, which makes the paired-data accumulation less optimistic than the earlier draft.
+- The fake campaign harness generates CSV, JSON and evaluation plots; graph
+  generation is separate from the core optimizer.
+- Mechanical loads are capped at a level that limits artificial flattening.
+- Mechanical follow-up rows receive a probability boost instead of an
+  automatic intact pass, reducing optimism in paired-data accumulation.

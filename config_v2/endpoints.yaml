@@ -22,6 +22,29 @@ preparation_constraints:
   - name: fillability_pass
     type: binary
     description: Optional manual indication that the formulation could fill the mold.
+  - name: apparent_viscosity_mPa_s_25C_10s
+    type: continuous
+    unit: mPa_s
+    maximum_for_provisional_pass: 3000
+    description: Apparent viscosity measured at 25 C and 10 inverse seconds.
+  - name: homogeneous_after_preparation_pass
+    type: binary
+    description: Clear and homogeneous immediately after preparation.
+  - name: homogeneous_after_4C_30min_pass
+    type: binary
+    description: Clear and homogeneous after 30 minutes at 4 C.
+  - name: no_sediment_or_crystallization_2h_pass
+    type: binary
+    description: No sediment or crystallization after two hours.
+  - name: filled_cavity_count
+    type: count
+    minimum_for_provisional_pass: 90
+    reference_total_cavities: 100
+    description: Cavities filled after centrifugation at 400 g for three minutes.
+  - name: total_cavity_count
+    type: count
+    expected_value: 100
+    description: Total mold cavities assessed for fillability.
 
 primary_objectives:
   - name: viability_percent

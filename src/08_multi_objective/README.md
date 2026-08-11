@@ -18,22 +18,22 @@ Legacy literature is read from `data/processed/parsed_formulations.csv` during
 stage 01. Ingredients that cannot be acquired for this project, including
 `cooh_pll`, `ficoll`, and `hes`, are not active v2 features. Literature
 viability observations are assigned 10x the noise of legacy CryoMN wet-lab
-validation observations.
+campaign validation observations.
 
 Noise settings live in `config_v2/optimization.yaml`. Legacy literature
-viability is `50.0`, legacy wet-lab viability is `5.0`, and new validation
-viability feedback is `1.0` by default, meaning new results carry one fifth the
+viability is `50.0`, legacy wet-lab viability is `5.0`, and campaign validation
+viability feedback is `1.0` by default, meaning campaign results carry one fifth the
 noise of legacy wet-lab results. For one-off imports, Stage 03 also accepts
 `--viability-noise`.
 
-Temporary ingredient availability is controlled by
+Ingredient availability is controlled by
 `config_v2/availability.yaml`. These restrictions only affect stage 02 candidate
-selection; they do not delete historical observations or change result imports.
+selection; they do not delete stored observations or change result imports.
 
 ## ROUND_002+ candidate-feasibility policy
 
 The executed `ROUND_001` slate and all transferred records remain unchanged.
-Beginning with candidate generation for `ROUND_002`, Stage 02 applies versioned
+Candidate generation for `ROUND_002` and higher applies versioned
 formulation guardrails, support-aware `40/35/25` screening generation,
 uncertainty controls, and at most one support-boundary candidate per slate.
 Here, the boundary cap applies to rows whose measured support classification is
@@ -48,6 +48,16 @@ See [Round 2 Candidate-Failure Prevention](../../docs/round2_candidate_failure_p
 for the failure analysis, evidence behind each limit, preparation-label
 semantics, and optimizer details.
 
+## ROUND_005+ solubility and viscosity policy
+
+Round 5 activates `round5_solubility_viscosity_v2`. It adds registry-backed
+individual practical ceilings, unconditional permeating-CPA, sugar and
+nonpermeating-solute totals, a crystalline-solute saturation burden, corrected
+raffinose-pentahydrate preparation mass, and detailed cell-free preparation
+measurements. Availability suppresses sampling only. The policy schedule
+and limits are defined in `config_v2/optimization.yaml`; ingredient evidence
+and practical ceilings are defined in `config_v2/ingredients.yaml`.
+
 ## ROUND_003+ formulation-similarity policy
 
 Round 3 introduces one unified history-and-pool similarity gate without
@@ -58,22 +68,21 @@ formulation vector. When both formulations contain the same single active
 ingredient, they must also differ by at least 50% relative to the lower
 concentration.
 
-The historical reference set contains only unique formulations with actual
+The similarity reference set contains only unique formulations with actual
 `legacy_wetlab` or `wetlab_feedback` observations; literature-only rows are
 excluded. Accepted candidates are also compared with one another during pool
 generation. Rescue dilutions are subject to the rule, while intentional
 `retest_priority` rows are exempt. The generator rejects and resamples instead
 of post-filtering a fixed pool, preserving the configured 40/35/25 origin
-targets where feasible. Round 1 and the already-generated Round 2 proposal are
-unaffected.
+targets where feasible. `ROUND_001` and `ROUND_002` do not use this policy.
 
 ### Screening score and slate diversity controls
 
 During `screening_only`, `screening_phase_score` is purely viability-based;
 predicted intact-formation probability does not gate or score screening
 candidates. Intact-formation risk is instead addressed by capped
-`rescue_dilution` candidates (dilutions of high-viability formulations that
-previously failed intact-patch formation) and, once `mechanics_enabled`, by
+`rescue_dilution` candidates (dilutions of high-viability formulations with a
+recorded intact-patch failure) and, once `mechanics_enabled`, by
 mechanics-phase scoring (`penalties.intact_failure_weight`,
 `round_policy.intact_probability_threshold`).
 
@@ -98,20 +107,20 @@ mechanism.
 
 ### Round 3 uncertainty and retest policy
 
-Round 3 uses a Matérn 2.5 regression kernel with the existing per-observation
-`alpha` values as the sole GP noise mechanism. The former fixed normalized
+Round 3 uses a Matérn 2.5 regression kernel with per-observation
+`alpha` values as the sole GP noise mechanism. A fixed normalized
 `WhiteKernel(5.0)` is not used. Proposal metadata records the minimum, median
 and maximum candidate-pool uncertainty, while prospective reports show
 prediction-interval width alongside coverage.
 
 Automatic retests use campaign `wetlab_feedback` only. A formulation is
 eligible for at most two available slate slots when feedback batches disagree
-by at least 15 percentage points, the latest batch has at least three
+by at least 15 percentage points, the highest-numbered batch has at least three
 replicates with sample SD at least 8 points, or a single feedback batch is at
 least 20 points off its bounds-normalized chemical neighbours and has not yet
 received its one anomaly-confirmation batch. Model uncertainty never creates
 eligibility; it only breaks ties. Once two batches agree within 15 points and
-the latest replicate SD is below 8, the neighbour residual cannot request a
+the highest-numbered-batch replicate SD is below 8, the neighbour residual cannot request a
 third test.
 
 ## Numbered Stages
@@ -144,8 +153,8 @@ availability filtering. It includes model predictions, penalties, selection
 scores, and flags showing which rows were promoted into the wet-lab slate.
 
 `current_round_status.json` is a derived status file for operators. It records
-the latest observed `ROUND_###`, the next proposed round ID, the active phase,
-and whether the current proposal matches the next round implied by
+the highest observed `ROUND_###`, the proposed round ID, the active phase,
+and whether the proposal matches the round implied by
 `observations.csv`.
 
 `next_round_candidates.csv` is the one detailed CSV. It contains the candidate
@@ -185,25 +194,25 @@ replicates are allowed, but all proposed candidates must remain present.
 
 The top-level `results/multi_objective_v2/reports/` directory is reserved for
 cumulative campaign reports. Proposal-time prospective reports are stored
-under `reports/prospective/`. The top-level `total_candidate_pool.csv` is only
-the latest full debug pool and is overwritten on each selection run.
+under `reports/prospective/`. The top-level `total_candidate_pool.csv` is a
+mutable full debug pool and is overwritten on each selection run.
 
-The existing `model_evaluation_overview.png` and
+`model_evaluation_overview.png` and
 `model_evaluation_table.csv` are formulation-grouped cross-validation
 diagnostics: all batches of one chemistry remain in the same fold. They fit
-from the current database and estimate within-dataset generalization. They are
+from the database contents and estimate within-dataset generalization. They are
 not prospective hold-out results. Completed-round descriptive reports first
 aggregate technical replicates to one candidate row. Continuous endpoints use
 the replicate mean; the intact-patch gate passes only when every measured patch
 replicate passes. Prospective evaluation reads means and uncertainties only
-from frozen proposal CSVs, then compares them with later observations without
+from frozen proposal CSVs, then compares them with matching observations without
 retraining. Its round summaries report formulations observed, passed and failed
 explicitly. Round 1 is reconstructed, Round 2 is
 supplementary because it was migration-frozen, and the locked primary metric
 is pooled viability MAE for the formal Round 3+ cohort. Interval coverage is
 always accompanied by interval width.
 
-To lift the current temporary restriction on an ingredient, remove its
+To lift a temporary restriction on an ingredient, remove its
 `feature_name` from `config_v2/availability.yaml` and rerun stage 02.
 
 ## Simple Loop
@@ -255,6 +264,12 @@ archived proposal or completed files, and do not edit `formulation_id` or
 | `critical_axial_load_N_per_needle` | number, `>= 0` | Use when entered manually. |
 | `critical_axial_load_N_total` | number, `>= 0` | Program divides by `needles_compressed`. |
 | `initial_stiffness_N_per_mm_per_needle` | number, `>= 0` | Secondary endpoint only. |
+| `apparent_viscosity_mPa_s_25C_10s` | number, `>= 0` | Round 5 provisional gate; passes at `<= 3000`. |
+| `homogeneous_after_preparation_pass` | boolean | Round 5 clear/homogeneous check immediately after preparation. |
+| `homogeneous_after_4C_30min_pass` | boolean | Round 5 check after 30 minutes at 4 C. |
+| `no_sediment_or_crystallization_2h_pass` | boolean | Round 5 two-hour stability check. |
+| `filled_cavity_count` | whole number | Round 5 fill count; at least 90 is required. |
+| `total_cavity_count` | positive whole number | Normally 100 cavities. |
 | `notes` | free text | Optional handling/test notes. |
 
 ## Instron Files

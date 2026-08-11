@@ -3,12 +3,19 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Mapping
 import re
 
 import pandas as pd
 
-from .endpoints import intact_patch_formation_pass, parse_bool
+from .endpoints import (
+    PREPARATION_MIN_FILLED_CAVITIES,
+    PREPARATION_VISCOSITY_MAX_MPA_S,
+    intact_patch_formation_pass,
+    parse_bool,
+    preparation_gate_pass,
+)
+from .config import nested_get
 from .instron import parse_instron_csv
 from .penalties import count_active_ingredients
 from .registry import IngredientRegistry
@@ -174,8 +181,33 @@ def ingest_feedback(
     batch_date: str = "",
     default_needles_compressed: int | None = None,
     viability_noise: float = 5.0,
+    optimization_config: Mapping | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Append one wet-lab feedback CSV into the v2 tables."""
+    gate_config = (
+        nested_get(
+            optimization_config,
+            "formulation_feasibility.round5_rules.preparation_gate",
+            {},
+        )
+        if optimization_config is not None
+        else {}
+    ) or {}
+    viscosity_limit = float(
+        gate_config.get(
+            "apparent_viscosity_max_mPa_s",
+            PREPARATION_VISCOSITY_MAX_MPA_S,
+        )
+    )
+    minimum_filled_cavities = int(
+        gate_config.get(
+            "minimum_filled_cavities",
+            PREPARATION_MIN_FILLED_CAVITIES,
+        )
+    )
+    reference_total_cavities = int(
+        gate_config.get("reference_total_cavities", 100)
+    )
     feedback_path = Path(feedback_path)
     feedback = pd.read_csv(feedback_path)
     candidates = load_candidate_lookup(candidate_files, registry)
@@ -200,6 +232,9 @@ def ingest_feedback(
             "preparation_feasibility_pass",
             "homogeneous_solution_pass",
             "fillability_pass",
+            "homogeneous_after_preparation_pass",
+            "homogeneous_after_4C_30min_pass",
+            "no_sediment_or_crystallization_2h_pass",
         ]:
             if _blank(row.get(column)):
                 continue
@@ -223,6 +258,117 @@ def ingest_feedback(
                     notes=notes,
                 )
             )
+
+        apparent_viscosity = _safe_float(
+            row.get("apparent_viscosity_mPa_s_25C_10s")
+        )
+        _require_range(
+            apparent_viscosity,
+            "apparent_viscosity_mPa_s_25C_10s",
+            row_number,
+            minimum=0.0,
+        )
+        if apparent_viscosity is not None:
+            new_observations.append(
+                _observation_row(
+                    f"{observation_prefix}_apparent_viscosity",
+                    formulation_id,
+                    batch_id,
+                    replicate_id,
+                    "apparent_viscosity_mPa_s_25C_10s",
+                    apparent_viscosity,
+                    "mPa_s",
+                    "wetlab_feedback",
+                    str(feedback_path),
+                    notes=notes,
+                )
+            )
+
+        filled_cavity_count = _safe_float(row.get("filled_cavity_count"))
+        total_cavity_count = _safe_float(row.get("total_cavity_count"))
+        _require_range(
+            filled_cavity_count,
+            "filled_cavity_count",
+            row_number,
+            minimum=0.0,
+        )
+        _require_range(
+            total_cavity_count,
+            "total_cavity_count",
+            row_number,
+            minimum=1.0,
+        )
+        for column, value in (
+            ("filled_cavity_count", filled_cavity_count),
+            ("total_cavity_count", total_cavity_count),
+        ):
+            if value is not None and not float(value).is_integer():
+                raise ValueError(f"Row {row_number} {column} must be a whole number.")
+        if (
+            filled_cavity_count is not None
+            and total_cavity_count is not None
+            and filled_cavity_count > total_cavity_count
+        ):
+            raise ValueError(
+                f"Row {row_number} filled_cavity_count cannot exceed total_cavity_count."
+            )
+        for column, value in (
+            ("filled_cavity_count", filled_cavity_count),
+            ("total_cavity_count", total_cavity_count),
+        ):
+            if value is None:
+                continue
+            new_observations.append(
+                _observation_row(
+                    f"{observation_prefix}_{column}",
+                    formulation_id,
+                    batch_id,
+                    replicate_id,
+                    column,
+                    value,
+                    "count",
+                    "wetlab_feedback",
+                    str(feedback_path),
+                    notes=notes,
+                )
+            )
+
+        detailed_preparation_gate = preparation_gate_pass(
+            row,
+            apparent_viscosity_max_mPa_s=viscosity_limit,
+            minimum_filled_cavities=minimum_filled_cavities,
+            reference_total_cavities=reference_total_cavities,
+        )
+        explicit_preparation_gate = preparation_values.get(
+            "preparation_feasibility_pass"
+        )
+        if detailed_preparation_gate is not None:
+            if (
+                explicit_preparation_gate is not None
+                and explicit_preparation_gate != detailed_preparation_gate
+            ):
+                raise ValueError(
+                    f"Row {row_number} preparation_feasibility_pass conflicts with "
+                    "the complete detailed preparation-gate measurements."
+                )
+            if explicit_preparation_gate is None:
+                preparation_values["preparation_feasibility_pass"] = (
+                    detailed_preparation_gate
+                )
+                new_observations.append(
+                    _observation_row(
+                        f"{observation_prefix}_preparation_feasibility_pass",
+                        formulation_id,
+                        batch_id,
+                        replicate_id,
+                        "preparation_feasibility_pass",
+                        1.0 if detailed_preparation_gate else 0.0,
+                        "binary",
+                        "wetlab_feedback_derived",
+                        str(feedback_path),
+                        notes=notes,
+                    )
+                )
 
         preparation_reason = (
             ""
@@ -252,6 +398,19 @@ def ingest_feedback(
         preparation_failed = (
             any(value is False for value in preparation_values.values())
             or bool(preparation_reason)
+            or (
+                apparent_viscosity is not None
+                and apparent_viscosity > viscosity_limit
+            )
+            or (
+                filled_cavity_count is not None
+                and total_cavity_count is not None
+                and (
+                    filled_cavity_count < minimum_filled_cavities
+                    or filled_cavity_count / total_cavity_count
+                    < minimum_filled_cavities / reference_total_cavities
+                )
+            )
         )
 
         viability = _safe_float(row.get("viability_percent"))

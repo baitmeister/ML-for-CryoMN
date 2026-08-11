@@ -4,6 +4,13 @@ ingredients:
     feature_name: dmso_M
     unit: M
     active: true
+    reagent_form: neat dimethyl sulfoxide
+    ingredient_class: permeating_cpa
+    aggregate_groups: [permeating_cpa]
+    practical_upper_bound: 0.10
+    evidence_type: project device constraint
+    limit_basis: Retained CryoMN/device ceiling
+    sources: [project:CryoMN-device-ceiling]
     molecular_weight_g_mol: 78.13
     lower_bound: 0.0
     upper_bound: 0.10
@@ -14,6 +21,18 @@ ingredients:
     feature_name: ectoin_M
     unit: M
     active: true
+    reagent_form: ectoin (neutral zwitterion)
+    ingredient_class: nonpermeating_osmolyte
+    aggregate_groups: [nonpermeating_osmolyte, crystalline_solute]
+    practical_upper_bound: 0.50
+    aqueous_solubility_M: 4.0
+    solubility_reference_temperature_C: 25
+    solubility_evidence_type: experimental aqueous solubility
+    evidence_type: literature solubility screening inference
+    limit_basis: Conservative practical ceiling relative to approximately 4 M aqueous solubility
+    sources:
+      - https://www.nature.com/articles/srep31434
+      - https://www.sigmaaldrich.com/deepweb/assets/sigmaaldrich/product/documents/301/819/e2271pis.pdf
     molecular_weight_g_mol: 142.16
     lower_bound: 0.0
     upper_bound: 0.50
@@ -24,6 +43,13 @@ ingredients:
     feature_name: ethylene_glycol_M
     unit: M
     active: true
+    reagent_form: neat ethylene glycol
+    ingredient_class: permeating_cpa
+    aggregate_groups: [permeating_cpa]
+    practical_upper_bound: 2.50
+    evidence_type: retained project constraint
+    limit_basis: Retained individual ceiling; aggregate permeating-CPA ceiling controls accumulation
+    sources: [project:CryoMN-individual-CPA-ceiling]
     molecular_weight_g_mol: 62.07
     lower_bound: 0.0
     upper_bound: 2.50
@@ -34,6 +60,13 @@ ingredients:
     feature_name: glycerol_M
     unit: M
     active: true
+    reagent_form: neat glycerol
+    ingredient_class: permeating_cpa
+    aggregate_groups: [permeating_cpa]
+    practical_upper_bound: 2.50
+    evidence_type: retained project constraint
+    limit_basis: Retained individual ceiling; aggregate permeating-CPA ceiling controls accumulation
+    sources: [project:CryoMN-individual-CPA-ceiling]
     molecular_weight_g_mol: 92.09
     lower_bound: 0.0
     upper_bound: 2.50
@@ -44,6 +77,13 @@ ingredients:
     feature_name: propylene_glycol_M
     unit: M
     active: true
+    reagent_form: neat propylene glycol
+    ingredient_class: permeating_cpa
+    aggregate_groups: [permeating_cpa]
+    practical_upper_bound: 2.50
+    evidence_type: retained project constraint
+    limit_basis: Retained individual ceiling; aggregate permeating-CPA ceiling controls accumulation
+    sources: [project:CryoMN-individual-CPA-ceiling]
     molecular_weight_g_mol: 76.09
     lower_bound: 0.0
     upper_bound: 2.50
@@ -54,6 +94,16 @@ ingredients:
     feature_name: trehalose_M
     unit: M
     active: true
+    reagent_form: anhydrous trehalose
+    ingredient_class: sugar
+    aggregate_groups: [sugar, nonpermeating_osmolyte, crystalline_solute]
+    practical_upper_bound: 0.50
+    aqueous_solubility_M: 1.36
+    solubility_reference_temperature_C: 20
+    solubility_evidence_type: experimental solubility converted from 46.6 wt% solution
+    evidence_type: literature solubility screening inference
+    limit_basis: Practical ceiling well below reported room-temperature aqueous solubility
+    sources: [https://www.sciencedirect.com/science/article/abs/pii/S0308814697001325]
     molecular_weight_g_mol: 342.30
     lower_bound: 0.0
     upper_bound: 0.50
@@ -64,6 +114,16 @@ ingredients:
     feature_name: sucrose_M
     unit: M
     active: true
+    reagent_form: anhydrous sucrose
+    ingredient_class: sugar
+    aggregate_groups: [sugar, nonpermeating_osmolyte, crystalline_solute]
+    practical_upper_bound: 0.50
+    aqueous_solubility_M: 6.14
+    solubility_reference_temperature_C: 20
+    solubility_evidence_type: reference aqueous solubility
+    evidence_type: literature solubility screening inference
+    limit_basis: Practical ceiling well below reported room-temperature aqueous solubility
+    sources: ["https://pubchem.ncbi.nlm.nih.gov/compound/sucrose?c=METABOLISM"]
     molecular_weight_g_mol: 342.30
     lower_bound: 0.0
     upper_bound: 0.50
@@ -74,16 +134,39 @@ ingredients:
     feature_name: raffinose_M
     unit: M
     active: true
-    molecular_weight_g_mol: 504.44
+    reagent_form: raffinose pentahydrate
+    ingredient_class: sugar
+    aggregate_groups: [sugar, nonpermeating_osmolyte, crystalline_solute]
+    practical_upper_bound: 0.30
+    aqueous_solubility_M: 0.40242
+    solubility_reference_temperature_C: 25
+    solubility_evidence_type: anhydrous-equivalent literature solubility (203 g/L divided by 504.44 g/mol)
+    evidence_type: literature solubility screening inference
+    limit_basis: 25% saturation margin while preparation mass uses pentahydrate molecular weight
+    sources:
+      - https://www.acs.org/molecule-of-the-week/archive/r/raffinose.html
+      - https://labchem-wako.fujifilm.com/jp/product/detail/W01W0118-0001.html
+      - https://pubmed.ncbi.nlm.nih.gov/31593692/
+    molecular_weight_g_mol: 594.51
     lower_bound: 0.0
     upper_bound: 0.50
     penalize_single_over_500mM: true
-    synonyms: []
+    synonyms: [raffinose pentahydrate, d-(+)-raffinose pentahydrate]
   - canonical_name: taurine
     display_name: taurine
     feature_name: taurine_M
     unit: M
     active: true
+    reagent_form: taurine
+    ingredient_class: nonpermeating_osmolyte
+    aggregate_groups: [nonpermeating_osmolyte, crystalline_solute]
+    practical_upper_bound: 0.50
+    aqueous_solubility_M: 0.75829
+    solubility_reference_temperature_C: 25
+    solubility_evidence_type: reference aqueous solubility
+    evidence_type: literature solubility screening inference
+    limit_basis: Approximately 66% of reported room-temperature solubility
+    sources: [https://pubchem.ncbi.nlm.nih.gov/compound/2-amino-ethanesulfonic%20acid]
     molecular_weight_g_mol: 125.15
     lower_bound: 0.0
     upper_bound: 0.50
@@ -94,6 +177,16 @@ ingredients:
     feature_name: myo_inositol_M
     unit: M
     active: true
+    reagent_form: myo-inositol
+    ingredient_class: nonpermeating_osmolyte
+    aggregate_groups: [nonpermeating_osmolyte, crystalline_solute]
+    practical_upper_bound: 0.50
+    aqueous_solubility_M: 0.79374
+    solubility_reference_temperature_C: 25
+    solubility_evidence_type: reference aqueous solubility
+    evidence_type: literature solubility screening inference
+    limit_basis: Approximately 63% of reported room-temperature solubility
+    sources: [https://pubchem.ncbi.nlm.nih.gov/compound/Inositol]
     molecular_weight_g_mol: 180.16
     lower_bound: 0.0
     upper_bound: 0.50
@@ -104,7 +197,17 @@ ingredients:
     feature_name: methoxyphenyl_beta_d_glucopyranoside_M
     unit: M
     active: true
-    molecular_weight_g_mol:
+    reagent_form: 4-methoxyphenyl beta-D-glucopyranoside
+    ingredient_class: nonpermeating_osmolyte
+    aggregate_groups: [nonpermeating_osmolyte, crystalline_solute]
+    practical_upper_bound: 0.025
+    aqueous_solubility_M: 0.03493
+    solubility_reference_temperature_C: 25
+    solubility_evidence_type: manufacturer-demonstrated aqueous concentration lower bound (1% w/v)
+    evidence_type: manufacturer specification screening inference
+    limit_basis: Conservative ceiling below manufacturer-demonstrated 1% aqueous concentration
+    sources: [https://www.fishersci.at/shop/products/4-methoxyphenyl-beta-d-glucopyranoside-98-thermo-scientific-2/15497769]
+    molecular_weight_g_mol: 286.28
     lower_bound: 0.0
     upper_bound: 0.50
     penalize_single_over_500mM: true
@@ -117,6 +220,16 @@ ingredients:
     feature_name: betaine_M
     unit: M
     active: true
+    reagent_form: anhydrous betaine
+    ingredient_class: nonpermeating_osmolyte
+    aggregate_groups: [nonpermeating_osmolyte, crystalline_solute]
+    practical_upper_bound: 0.50
+    aqueous_solubility_M: 5.2155
+    solubility_reference_temperature_C: 25
+    solubility_evidence_type: reference aqueous solubility
+    evidence_type: literature solubility screening inference
+    limit_basis: Practical ceiling substantially below reported solubility
+    sources: [https://pubchem.ncbi.nlm.nih.gov/compound/betaine]
     molecular_weight_g_mol: 117.15
     lower_bound: 0.0
     upper_bound: 0.50
@@ -127,6 +240,16 @@ ingredients:
     feature_name: proline_M
     unit: M
     active: true
+    reagent_form: L-proline
+    ingredient_class: nonpermeating_osmolyte
+    aggregate_groups: [nonpermeating_osmolyte, crystalline_solute]
+    practical_upper_bound: 0.50
+    aqueous_solubility_M: 14.07
+    solubility_reference_temperature_C: 25
+    solubility_evidence_type: experimental aqueous solubility
+    evidence_type: literature solubility screening inference
+    limit_basis: Practical ceiling substantially below reported solubility
+    sources: [https://rupress.org/jgp/article/19/2/379/11493/THE-SOLUBILITIES-OF-l-PROLINE-AND-l-HYDROXYPROLINE]
     molecular_weight_g_mol: 115.13
     lower_bound: 0.0
     upper_bound: 0.50
@@ -137,6 +260,16 @@ ingredients:
     feature_name: glucose_M
     unit: M
     active: true
+    reagent_form: anhydrous D-glucose
+    ingredient_class: sugar
+    aggregate_groups: [sugar, nonpermeating_osmolyte, crystalline_solute]
+    practical_upper_bound: 0.50
+    aqueous_solubility_M: 2.65875
+    solubility_reference_temperature_C: 20
+    solubility_evidence_type: reference aqueous solubility
+    evidence_type: literature solubility screening inference
+    limit_basis: Practical ceiling well below reported room-temperature aqueous solubility
+    sources: [https://pubchem.ncbi.nlm.nih.gov/compound/D-Glucose]
     molecular_weight_g_mol: 180.16
     lower_bound: 0.0
     upper_bound: 0.50
@@ -147,6 +280,16 @@ ingredients:
     feature_name: creatine_M
     unit: M
     active: true
+    reagent_form: creatine (anhydrous)
+    ingredient_class: nonpermeating_osmolyte
+    aggregate_groups: [nonpermeating_osmolyte, crystalline_solute]
+    practical_upper_bound: 0.03
+    aqueous_solubility_M: 0.10143
+    solubility_reference_temperature_C: 18
+    solubility_evidence_type: reference aqueous solubility
+    evidence_type: retained project constraint informed by literature solubility
+    limit_basis: Retained conservative project ceiling
+    sources: [https://pubchem.ncbi.nlm.nih.gov/compound/creatine]
     molecular_weight_g_mol: 131.13
     lower_bound: 0.0
     upper_bound: 0.03
@@ -157,6 +300,16 @@ ingredients:
     feature_name: acetamide_M
     unit: M
     active: true
+    reagent_form: acetamide
+    ingredient_class: nonpermeating_osmolyte
+    aggregate_groups: [nonpermeating_osmolyte, crystalline_solute]
+    practical_upper_bound: 0.50
+    aqueous_solubility_M: 11.935
+    solubility_reference_temperature_C: 25
+    solubility_evidence_type: reference aqueous solubility
+    evidence_type: literature solubility screening inference
+    limit_basis: Practical ceiling substantially below reported solubility
+    sources: [https://pubchem.ncbi.nlm.nih.gov/compound/178]
     molecular_weight_g_mol: 59.07
     lower_bound: 0.0
     upper_bound: 0.50
@@ -167,6 +320,14 @@ ingredients:
     feature_name: sericin_pct
     unit: pct
     active: true
+    reagent_form: sericin hydrolysate
+    ingredient_class: serum_protein
+    aggregate_groups: [serum_protein]
+    practical_upper_bound: 1.0
+    grade_or_molecular_weight: approximately 30 kDa hydrolysate
+    evidence_type: primary cryopreservation study
+    limit_basis: Cryopreservation evidence for 1% sericin hydrolysate
+    sources: [https://pubmed.ncbi.nlm.nih.gov/22793071/]
     molecular_weight_g_mol:
     lower_bound: 0.0
     upper_bound: 10.0
@@ -177,6 +338,14 @@ ingredients:
     feature_name: methylcellulose_pct
     unit: pct
     active: true
+    reagent_form: high-viscosity Methocel methylcellulose
+    ingredient_class: viscosity_active_polymer
+    aggregate_groups: [viscosity_active_polymer]
+    practical_upper_bound: 1.0
+    grade_or_molecular_weight: 3000-5500 mPa.s at 2% and 20 C
+    evidence_type: primary handling study
+    limit_basis: Concentrations above 1% reported difficult to handle
+    sources: [https://pmc.ncbi.nlm.nih.gov/articles/PMC3139530/]
     molecular_weight_g_mol:
     lower_bound: 0.0
     upper_bound: 2.0
@@ -187,6 +356,16 @@ ingredients:
     feature_name: dextran_pct
     unit: pct
     active: true
+    reagent_form: Dextran-40
+    ingredient_class: viscosity_active_polymer
+    aggregate_groups: [viscosity_active_polymer]
+    practical_upper_bound: 5.0
+    grade_or_molecular_weight: approximately 40 kDa
+    evidence_type: identity specification and cryopreservation study
+    limit_basis: Common Dextran-40 grade with 5% cryopreservation evidence
+    sources:
+      - https://precision.fda.gov/ginas/app/ui/substances/4151e873-61cc-4b04-a7a2-eaae0b06067a
+      - https://www.nature.com/articles/npre.2009.3722.1
     molecular_weight_g_mol:
     lower_bound: 0.0
     upper_bound: 10.0
@@ -217,6 +396,16 @@ ingredients:
     feature_name: pvp_pct
     unit: pct
     active: true
+    reagent_form: PVP K30
+    ingredient_class: viscosity_active_polymer
+    aggregate_groups: [viscosity_active_polymer]
+    practical_upper_bound: 10.0
+    grade_or_molecular_weight: K30, 38-56 kDa
+    evidence_type: manufacturer grade specification and cryopreservation study
+    limit_basis: Best tested PVP-only cryopreservation result at 10%
+    sources:
+      - https://download.basf.com/p1/EN_StaticDocuments_5916/en/Technical_Information_Technical_Information_English.pdf
+      - https://pubmed.ncbi.nlm.nih.gov/19839742/
     molecular_weight_g_mol:
     lower_bound: 0.0
     upper_bound: 20.0
@@ -227,6 +416,14 @@ ingredients:
     feature_name: hyaluronic_acid_pct
     unit: pct
     active: true
+    reagent_form: high-molecular-weight hyaluronic acid
+    ingredient_class: viscosity_active_polymer
+    aggregate_groups: [viscosity_active_polymer]
+    practical_upper_bound: 0.20
+    grade_or_molecular_weight: greater than 1 MDa
+    evidence_type: primary study screening inference
+    limit_basis: Conservative cap aligned to HMW-HA primary study
+    sources: [https://pmc.ncbi.nlm.nih.gov/articles/PMC9138570/]
     molecular_weight_g_mol:
     lower_bound: 0.0
     upper_bound: 1.0
@@ -237,6 +434,14 @@ ingredients:
     feature_name: fbs_pct
     unit: pct
     active: true
+    reagent_form: fetal bovine serum
+    ingredient_class: serum_protein
+    aggregate_groups: [serum_protein]
+    practical_upper_bound: 10.0
+    grade_or_molecular_weight: serum mixture
+    evidence_type: retained project protocol constraint
+    limit_basis: Individual and aggregate serum/protein ceiling
+    sources: [project:CryoMN-serum-protein-ceiling]
     molecular_weight_g_mol:
     lower_bound: 0.0
     upper_bound: 10.0
@@ -247,6 +452,14 @@ ingredients:
     feature_name: hsa_pct
     unit: pct
     active: true
+    reagent_form: human serum albumin
+    ingredient_class: serum_protein
+    aggregate_groups: [serum_protein]
+    practical_upper_bound: 10.0
+    grade_or_molecular_weight: albumin protein preparation
+    evidence_type: retained project protocol constraint
+    limit_basis: Individual and aggregate serum/protein ceiling
+    sources: [project:CryoMN-serum-protein-ceiling]
     molecular_weight_g_mol:
     lower_bound: 0.0
     upper_bound: 10.0
@@ -257,6 +470,14 @@ ingredients:
     feature_name: human_serum_pct
     unit: pct
     active: true
+    reagent_form: human serum
+    ingredient_class: serum_protein
+    aggregate_groups: [serum_protein]
+    practical_upper_bound: 10.0
+    grade_or_molecular_weight: serum mixture
+    evidence_type: retained project protocol constraint
+    limit_basis: Individual and aggregate serum/protein ceiling
+    sources: [project:CryoMN-serum-protein-ceiling]
     molecular_weight_g_mol:
     lower_bound: 0.0
     upper_bound: 10.0

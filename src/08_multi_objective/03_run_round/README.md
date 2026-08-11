@@ -16,33 +16,7 @@ artifacts:
 
 This is the supported entry point for normal round progression.
 
-## Round 2 Result Entry
-
-Enter Round 2 results only in:
-
-```text
-results/multi_objective_v2/next_round/next_round_candidates.csv
-```
-
-The corresponding frozen source record is:
-
-```text
-results/multi_objective_v2/rounds/ROUND_002/proposal/proposal.csv
-```
-
-Do not edit the frozen proposal. In the working file, fill the existing
-viability and intact-patch fields, optional intact-patch detail fields,
-optional mechanical fields when measured, and `replicate_id` or `notes` when
-needed. The CSV schema and automatic endpoint phase progression are unchanged.
-
-The migration-frozen Round 2 proposal has one `retest_priority` row with a
-carried viability value of `26.53`. Replace it with the new measurement if the
-retest was run. If a genuine new result is coincidentally also `26.53`, add a
-`replicate_id`. Clear it if the retest was not run. Stage 03 rejects an
-unchanged carried value with no replicate ID so it cannot be mistaken for new
-evidence.
-
-Then run:
+## Command
 
 ```bash
 python3 src/08_multi_objective/03_run_round/run_round.py \
@@ -73,11 +47,18 @@ frozen proposal.
 
 Allowed changes:
 
-- existing wet-lab result fields
-- existing optional preparation and mechanical fields
+- wet-lab result fields
+- optional preparation and mechanical fields
 - `replicate_id` and `notes`
 - row reordering
 - row duplication for technical replicates
+
+Round 5 worksheets also accept the detailed provisional preparation-gate
+fields for apparent viscosity, immediate and cold homogeneity, two-hour
+sediment/crystallization, and filled/total cavity counts. Duplicate each
+candidate row and assign distinct `replicate_id` values for triplicate tests.
+A complete detailed record derives `preparation_feasibility_pass`; incomplete
+records are not silently labeled.
 
 Rejected changes:
 
@@ -117,7 +98,8 @@ results/multi_objective_v2/rounds/ROUND_###/
         └── prospective_gate_calibration.png
 ```
 
-Reports that need more observations are omitted until the data support them.
+Reports that need more observations are omitted when the data do not support
+them.
 `completed/completed.csv` is an exact byte-for-byte archive of the successfully
 ingested working worksheet.
 
@@ -127,10 +109,10 @@ count and one formulation-level intact outcome. Continuous endpoints use the
 replicate mean; the intact gate passes only if every measured patch replicate
 passes. Its main campaign rankings use feasible
 `wetlab_feedback` formulations; literature leaders appear separately as
-historical references.
+literature references.
 
 `model_evaluation_*` uses formulation-grouped cross-validation, so every batch
-of the same chemistry stays in one fold, and may retrain from the current
+of the same chemistry stays in one fold, and may retrain from the
 database. `prospective_*` uses only archived proposal-time predictions and
 never retrains. Round 1 is reconstructed, Round 2 is supplementary, and Round
 3+ supplies the formal pooled viability MAE. Coverage is reported with
@@ -142,9 +124,9 @@ Only after completed-round reporting succeeds does Stage 02 replace the active
 generation fails, the database update and completed archive are retained, the
 next slate is not generated, and the same command can be rerun safely.
 
-If no new result fields are filled, Stage 03 skips ingestion, completed
+If no result fields are filled, Stage 03 skips ingestion, completed
 archival and completed-round reporting. Unless `--skip-generate` is supplied,
-it still attempts to regenerate the current proposal; frozen-proposal conflict
+it attempts to regenerate the proposal; frozen-proposal conflict
 protection remains active.
 
 The command also refreshes
