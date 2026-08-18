@@ -82,18 +82,6 @@ formulation_feasibility:
     # Retained only as an audit diagnostic; there is intentionally no hard
     # total-g/L rejection threshold in v2.
     report_estimated_small_solute_g_L: true
-    preparation_gate:
-      apparent_viscosity_max_mPa_s: 3000
-      viscosity_temperature_C: 25
-      shear_rate_s_inverse: 10
-      homogeneous_after_preparation_required: true
-      homogeneous_after_4C_30min_required: true
-      no_sediment_or_crystallization_2h_required: true
-      minimum_filled_cavities: 90
-      reference_total_cavities: 100
-      centrifugation_g: 400
-      centrifugation_minutes: 3
-
 candidate_generation:
   local_fraction: 0.40
   sparse_fraction: 0.35

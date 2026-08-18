@@ -1,0 +1,81 @@
+CryoMN v2 Best Performers
+=========================
+
+Database snapshot:
+- Formulations tracked: 350
+- Observation rows: 484
+- Candidate formulations shown: 12
+
+Best observed viability performers:
+- scope: feasible wetlab_feedback campaign formulations only
+- #1 v2_237544a25f30 | viability 69.2% | source wetlab_feedback
+  formulation: 304mM ectoin + 1.95M ethylene glycol + 9.32% HSA
+- #2 v2_3e8ef993abba | viability 65.6% | source wetlab_feedback
+  formulation: 240mM ectoin + 1.07M ethylene glycol
+- #3 v2_430e18c49d10 | viability 65.0% | source wetlab_feedback
+  formulation: 152mM ectoin + 974mM ethylene glycol + 4.66% HSA
+- #4 v2_655729013931 | viability 64.9% | source wetlab_feedback
+  formulation: 286mM ectoin + 1.56M ethylene glycol + 154mM glycerol
+- #5 v2_8a721b7d8f1c | viability 64.0% | source wetlab_feedback
+  formulation: 385mM ectoin + 791mM ethylene glycol
+
+Historical literature-reference viability leaders:
+- #1 legacy_lit_38 | viability 100.0%
+  formulation: 1.13M DMSO
+- #2 legacy_lit_37 | viability 100.0%
+  formulation: 986mM DMSO
+- #3 legacy_lit_306 | viability 99.0%
+  formulation: 0.5mM trehalose
+- #4 legacy_lit_309 | viability 99.0%
+  formulation: 1.41M DMSO + 0.5mM trehalose
+- #5 legacy_lit_1 | viability 96.0%
+  formulation: 1.41M DMSO + 70.3mM ectoin + 300mM ethylene glycol + 1mM taurine
+
+Best observed mechanical performers:
+- scope: feasible wetlab_feedback campaign formulations only
+- none yet; no critical axial load measurements are in the v2 database
+
+Balanced multi-objective leaders:
+- scope: feasible wetlab_feedback campaign formulations only
+- none yet; this section appears after formulations have both viability and mechanical measurements
+
+Retest-priority recommendations:
+- none in the current slate
+
+ROUND_004 completed-round candidates:
+- #1 v2_ced63818bdd1 | predicted viability 46.8% | intact probability 0.74 | mechanical test False
+  completed result: viability 32.88% (sample SD 6.52, n=4); intact pass
+  formulation: 111mM trehalose + 74.4mM proline + 0.208% hyaluronic acid
+- #2 v2_6fb2fa9dc5d5 | predicted viability 45.0% | intact probability 0.80 | mechanical test False
+  completed result: viability 58.35% (sample SD 7.03, n=4); intact pass
+  formulation: 82.1mM ectoin + 513mM ethylene glycol + 2.03% FBS
+- #3 v2_0e9e2b605ce7 | predicted viability 76.5% | intact probability 0.56 | mechanical test False
+  completed result: viability 50.52% (sample SD 1.74, n=4); intact fail
+  formulation: 1.06M ethylene glycol + 6.71% PVP
+- #4 v2_8d9d8b0a7098 | predicted viability 72.5% | intact probability 0.50 | mechanical test False
+  completed result: viability 50.60% (sample SD 4.40, n=4); intact fail
+  formulation: 1M ethylene glycol + 8.13% PVP
+- #5 v2_eb8bb8b8618f | predicted viability 64.0% | intact probability 0.94 | mechanical test False
+  completed result: viability 52.88% (sample SD 2.23, n=4); intact pass
+  formulation: 500mM ectoin + 619mM ethylene glycol
+- #6 v2_6005e837cd4b | predicted viability 58.8% | intact probability 0.91 | mechanical test False
+  completed result: viability 28.37% (sample SD 2.91, n=4); intact pass
+  formulation: 299mM ectoin + 500mM proline + 0.0968% methylcellulose
+- #7 v2_1d06992cb257 | predicted viability 58.8% | intact probability 0.91 | mechanical test False
+  completed result: viability 35.83% (sample SD 2.81, n=4); intact pass
+  formulation: 100mM DMSO + 90.4mM ectoin + 253mM ethylene glycol + 0.906mM taurine
+- #8 v2_4da335e6bc9d | predicted viability 61.3% | intact probability 0.55 | mechanical test False
+  completed result: viability 10.11% (sample SD 2.93, n=4); intact fail
+  formulation: 393mM raffinose + 274mM myo-inositol + 6.9% HSA
+- #9 v2_1e09bd3298a1 | predicted viability 60.7% | intact probability 0.62 | mechanical test False
+  completed result: viability 0.69% (sample SD 0.33, n=4); intact pass
+  formulation: 418mM raffinose + 5.74% HSA
+- #10 v2_e5b28bf5a066 | predicted viability 60.2% | intact probability 0.88 | mechanical test False
+  completed result: viability 40.47% (sample SD 5.44, n=4); intact pass
+  formulation: 42.2mM ectoin + 424mM raffinose
+- #11 v2_6886b09726ac | predicted viability 60.5% | intact probability 0.89 | mechanical test False
+  completed result: viability 30.22% (sample SD 4.00, n=4); intact pass
+  formulation: 75.4mM DMSO + 161mM raffinose
+- #12 v2_98a8e114024b | predicted viability 59.7% | intact probability 0.65 | mechanical test False
+  completed result: viability 1.33% (sample SD 0.23, n=4); intact pass
+  formulation: 71.7mM DMSO + 429mM raffinose + 6.22% HSA

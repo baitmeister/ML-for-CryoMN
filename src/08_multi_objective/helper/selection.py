@@ -2221,16 +2221,6 @@ def _write_summary(
             f"- Fallback reason: {result.metadata.get('continuous_qlognehvi', {}).get('continuous_optimizer_reason', 'not applicable')}",
             "",
         ]
-        if (
-            result.metadata.get("formulation_feasibility_policy_version")
-            == ROUND5_POLICY_VERSION
-        ):
-            policy_lines[-1:-1] = [
-                "- Cell-free gate: <=3000 mPa.s at 25 C/10 s^-1; clear and homogeneous",
-                "  after preparation and 30 min at 4 C; no crystals/sediment at 2 h;",
-                "  and >=90/100 cavities after 400 g for 3 min.",
-                "- Duplicate worksheet rows with unique replicate_id values for triplicates.",
-            ]
         insertion_index = lines.index("Wet-lab instructions:")
         lines[insertion_index:insertion_index] = policy_lines
     similarity_metadata = result.metadata.get("formulation_similarity", {})
@@ -2375,22 +2365,6 @@ def write_selection_result(
             "fillability_pass",
             "preparation_failure_reason",
         ]
-        if (
-            result.metadata.get("formulation_feasibility_policy_version")
-            == ROUND5_POLICY_VERSION
-        ):
-            preparation_columns = [
-                "preparation_feasibility_pass",
-                "apparent_viscosity_mPa_s_25C_10s",
-                "homogeneous_after_preparation_pass",
-                "homogeneous_after_4C_30min_pass",
-                "no_sediment_or_crystallization_2h_pass",
-                "filled_cavity_count",
-                "total_cavity_count",
-                "homogeneous_solution_pass",
-                "fillability_pass",
-                "preparation_failure_reason",
-            ]
         notes_index = wetlab_result_columns.index("notes")
         wetlab_result_columns[notes_index:notes_index] = preparation_columns
     selected["batch_id"] = batch_id

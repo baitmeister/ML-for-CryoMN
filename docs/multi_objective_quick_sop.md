@@ -13,7 +13,7 @@ Fill the applicable fields:
 - `viability_percent`
 - `intact_patch_formation_pass`
 - optional intact-patch detail fields
-- optional preparation-gate fields
+- optional preparation fields
 - optional mechanical or Instron fields
 - `replicate_id` and `notes`
 

@@ -122,7 +122,7 @@ Fill as applicable:
 - `viability_percent`
 - `intact_patch_formation_pass`
 - `no_slurry`, `no_collapse`, `intact_tip_count`, `total_tip_count`
-- preparation-gate fields
+- optional preparation fields
 - mechanical or Instron fields
 - `replicate_id`
 - `notes`
@@ -189,22 +189,6 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv \
   --skip-generate
 ```
-
-## Preparation-Gate Entry
-
-`ROUND_005` sheets support:
-
-- `apparent_viscosity_mPa_s_25C_10s`
-- `homogeneous_after_preparation_pass`
-- `homogeneous_after_4C_30min_pass`
-- `no_sediment_or_crystallization_2h_pass`
-- `filled_cavity_count`
-- `total_cavity_count`
-
-The provisional gate requires viscosity at or below 3,000 mPa·s, passing both
-homogeneity checks, no sediment or crystallization at two hours, and at least
-90 filled cavities out of 100. A complete detailed record derives
-`preparation_feasibility_pass`; incomplete records remain unlabeled.
 
 ## Reports
 

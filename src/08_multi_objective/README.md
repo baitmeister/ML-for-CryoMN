@@ -53,10 +53,10 @@ semantics, and optimizer details.
 Round 5 activates `round5_solubility_viscosity_v2`. It adds registry-backed
 individual practical ceilings, unconditional permeating-CPA, sugar and
 nonpermeating-solute totals, a crystalline-solute saturation burden, corrected
-raffinose-pentahydrate preparation mass, and detailed cell-free preparation
-measurements. Availability suppresses sampling only. The policy schedule
-and limits are defined in `config_v2/optimization.yaml`; ingredient evidence
-and practical ceilings are defined in `config_v2/ingredients.yaml`.
+raffinose-pentahydrate preparation mass. Availability suppresses sampling only.
+The policy schedule and limits are defined in `config_v2/optimization.yaml`;
+ingredient evidence and practical ceilings are defined in
+`config_v2/ingredients.yaml`.
 
 ## ROUND_003+ formulation-similarity policy
 
@@ -264,12 +264,6 @@ archived proposal or completed files, and do not edit `formulation_id` or
 | `critical_axial_load_N_per_needle` | number, `>= 0` | Use when entered manually. |
 | `critical_axial_load_N_total` | number, `>= 0` | Program divides by `needles_compressed`. |
 | `initial_stiffness_N_per_mm_per_needle` | number, `>= 0` | Secondary endpoint only. |
-| `apparent_viscosity_mPa_s_25C_10s` | number, `>= 0` | Round 5 provisional gate; passes at `<= 3000`. |
-| `homogeneous_after_preparation_pass` | boolean | Round 5 clear/homogeneous check immediately after preparation. |
-| `homogeneous_after_4C_30min_pass` | boolean | Round 5 check after 30 minutes at 4 C. |
-| `no_sediment_or_crystallization_2h_pass` | boolean | Round 5 two-hour stability check. |
-| `filled_cavity_count` | whole number | Round 5 fill count; at least 90 is required. |
-| `total_cavity_count` | positive whole number | Normally 100 cavities. |
 | `notes` | free text | Optional handling/test notes. |
 
 ## Instron Files

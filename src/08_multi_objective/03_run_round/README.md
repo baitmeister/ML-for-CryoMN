@@ -53,13 +53,6 @@ Allowed changes:
 - row reordering
 - row duplication for technical replicates
 
-Round 5 worksheets also accept the detailed provisional preparation-gate
-fields for apparent viscosity, immediate and cold homogeneity, two-hour
-sediment/crystallization, and filled/total cavity counts. Duplicate each
-candidate row and assign distinct `replicate_id` values for triplicate tests.
-A complete detailed record derives `preparation_feasibility_pass`; incomplete
-records are not silently labeled.
-
 Rejected changes:
 
 - unknown or missing proposal candidates
