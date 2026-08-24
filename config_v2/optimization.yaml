@@ -129,6 +129,9 @@ round_policy:
   mechanical_tests_per_round: 4
   mechanical_min_tests_per_round: 3
   allow_one_novelty_exception: true
+  # Used only by intact_combination_policy.compatibility_mode. The active
+  # empirical-feasibility mechanics mode ranks all 12 rows and uses actual
+  # intact results to promote ordered backups.
   intact_probability_threshold: 0.50
   mechanics_startup_observation_threshold: 8
 
@@ -137,7 +140,42 @@ penalties:
   active_ingredient_excess_weight: 0.05
   single_molar_ingredient_limit_M: 0.5
   single_molar_excess_weight: 0.20
+  # Retained for the documented classifier-compatibility mechanics mode.
+  # The active Round-6 empirical policy does not use this term.
   intact_failure_weight: 0.80
+
+intact_combination_policy:
+  policy_version: round6_empirical_combination_intact_v1
+  start_round: 6
+  evidence_source_types:
+    - wetlab_feedback
+  evidence_radius: 0.35
+  beta_prior_pass: 1.0
+  beta_prior_fail: 1.0
+  screening_neutral_probability: 0.50
+  screening_max_penalty: 0.20
+  mechanics_mode: empirical_feasibility_weighted
+  compatibility_mode: classifier_threshold_penalty
+  numerical_probability_floor: 1.0e-9
+  mechanics_primary_test_count: 4
+  mechanics_backup_behavior: actual_intact_priority_promotion
+
+cold_start_policy:
+  policy_version: round6_cold_start_graduation_v1
+  start_round: 6
+  evidence_source_types:
+    - wetlab_feedback
+  evidence_endpoint: viability_percent
+  minimum_distinct_formulations: 3
+  max_ordinary_rows_per_ingredient: 2
+  graduation_slots_per_round: 4
+  exempt_candidate_origins:
+    - retest
+    - rescue_dilution
+  graduation_max_cold_ingredients_per_row: 1
+  graduation_require_distinct_active_sets: true
+  same_origin_replacement_preferred: true
+  preserve_origin_allocation: true
 
 transfer:
   literature_viability_noise_percent: 50.0
@@ -179,12 +217,11 @@ selection:
     viability_percent: 0.0
     critical_axial_load_N_per_needle: 0.0
 
-# NOTE: screening_phase_score is now purely viability-based (see
-# helper/selection.py annotate_candidates). viability_weight/intact_weight
-# below are unused by the screening path and kept only as a record of the
-# pre-fix weighting; the intact gate now only acts via rescue-candidate
-# generation (candidate_generation.rescue_*) and mechanics-phase scoring
-# (penalties.intact_failure_weight, round_policy.intact_probability_threshold).
+# NOTE: viability_weight/intact_weight below are unused by the active
+# screening path and retained only as a record of the pre-Round-6 scheme.
+# Screening now uses normalized viability UCB minus chemistry, support, and
+# empirical exact-combination intact deductions. The additive intact
+# classifier remains diagnostic except in compatibility mechanics mode.
 screening_phase:
   viability_weight: 0.75
   intact_weight: 0.25

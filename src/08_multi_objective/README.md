@@ -78,13 +78,12 @@ targets where feasible. `ROUND_001` and `ROUND_002` do not use this policy.
 
 ### Screening score and slate diversity controls
 
-During `screening_only`, `screening_phase_score` is purely viability-based;
-predicted intact-formation probability does not gate or score screening
-candidates. Intact-formation risk is instead addressed by capped
-`rescue_dilution` candidates (dilutions of high-viability formulations with a
-recorded intact-patch failure) and, once `mechanics_enabled`, by
-mechanics-phase scoring (`penalties.intact_failure_weight`,
-`round_policy.intact_probability_threshold`).
+Through Round 5, screening did not use the additive intact classifier. From
+Round 6, `screening_phase_score` is min-max-normalized viability UCB minus
+chemistry penalties, support penalty, and a bounded exact-combination empirical
+intact deduction. The viability GP and `StandardScaler` are unchanged. The
+classifier remains a reported prospective diagnostic and cannot alter active
+screening selection.
 
 Before the 12-row slate is finalized, Stage 02 applies the ROUND_003+
 similarity gate plus four slate-level diversity controls: an origin-quota that
@@ -104,6 +103,56 @@ rescues count toward this marginal limit but are protected from removal;
 ordinary replacements must come from the same candidate origin. See
 [Stage 02](02_select_candidates/README.md#selection-logic) for the full
 mechanism.
+
+## ROUND_006+ intact and cold-start policy
+
+Round 6 activates `round6_empirical_combination_intact_v1` and
+`round6_cold_start_graduation_v1`. Both are forward-only: completed observations
+and frozen Rounds 1-5 remain immutable.
+
+The intact policy aggregates prior campaign technical replicates per
+formulation/batch with the all-pass rule, matches only identical complete active
+ingredient sets, and uses registry-range-normalized RMS distance. Within radius
+`0.35`, evidence weight is `max(0,1-distance/0.35)`. With weighted passes `P`
+and failures `F`, `p_combo=(1+P)/(2+P+F)`. Unseen active sets therefore start at
+`0.50`. Screening deducts at most `0.20` and only when `p_combo<0.50`; failures
+are never assigned to an individual ingredient, subset, or superset.
+
+An ingredient is cold-start below three distinct prior campaign formulation IDs
+with measured viability. Each cold ingredient is independently capped at two
+ordinary rows; a multi-cold row consumes a slot under every applicable cap.
+Retests and rescue dilutions are exempt, though their completed viability can
+contribute to later graduation. Up to four ordinary positions target
+graduation, one per cold ingredient first, in closest-to-three,
+least-recently-tested, registry order. Remaining positions may provide a second
+distinct active set. All availability, feasibility, support, similarity,
+combination, pair, universal-frequency, and origin-allocation rules remain hard.
+
+### Phase-specific behavior
+
+| Phase | Viability/intact rows | Program-requested mechanics | Intact role in selection |
+|---|---:|---:|---|
+| `screening_only` | 12 | 0; ranks and backup status blank | Exact-combination deduction affects screening ranking; classifier is diagnostic. |
+| `mechanics_enabled` | 12 | 4 primaries plus 8 ordered backups | `p_combo` feasibility-weights qLogNEHVI/proxy; actual intact formation decides which four reach Instron. |
+
+In mechanics, viability and critical axial load per needle remain the two Pareto
+objectives. BoTorch uses `qLogNEHVI + log(max(p_combo,1e-9))`; the finite-pool
+fallback uses `log1p(raw hypervolume-like improvement × p_combo)`. The prior
+classifier threshold and `0.80 × (1-p_classifier)` deduction are available only
+as `classifier_threshold_penalty` compatibility behavior.
+
+After fabrication, test the first four mechanics-priority rows that actually
+pass intact. A failed primary is skipped and the next intact backup is promoted.
+If fewer than four of the 12 pass, test all intact rows and record the shortfall.
+Stage 03 rejects mechanical values without a measured intact pass and archives
+the execution audit.
+
+Round 6 remains `screening_only`, so it requests 12 viability/intact experiments
+and no Instron tests. Automatic transition thresholds are unchanged: eight
+paired observations, six distinct formulations, and two batches. This leaves a
+known bootstrap circularity: the automatic workflow cannot reach mechanics
+without externally collected mechanical evidence or a manual phase override.
+No mechanical-bootstrap phase was introduced.
 
 ### Round 3 uncertainty and retest policy
 

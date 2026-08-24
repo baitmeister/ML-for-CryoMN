@@ -1,0 +1,18 @@
+{
+  "manifest_version": 1,
+  "mechanics_active_in_proposal": false,
+  "mechanics_execution_mode": "screening_only_no_program_recommendations",
+  "configured_mechanical_capacity": 4,
+  "program_requested_test_count": 0,
+  "proposal_primary_count": 0,
+  "proposal_backup_count": 0,
+  "actual_intact_pass_count": 0,
+  "expected_actual_intact_test_ids": [],
+  "recorded_mechanical_test_ids": [],
+  "promoted_backup_ids": [],
+  "promotion_count": 0,
+  "actual_pass_shortfall": 0,
+  "failed_intact_mechanical_ids": [],
+  "unconfirmed_intact_mechanical_ids": [],
+  "violations": []
+}

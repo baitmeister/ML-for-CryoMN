@@ -323,9 +323,9 @@ def ingest_feedback(
                 f"Row {row_number} supplies mechanical data for preparation-failed formulation "
                 f"{formulation_id}."
             )
-        if has_mechanical and intact is False:
+        if has_mechanical and intact is not True:
             raise ValueError(
-                f"Row {row_number} supplies mechanical data for non-intact formulation {formulation_id}."
+                f"Row {row_number} supplies mechanical data without a measured intact pass for formulation {formulation_id}."
             )
 
         needles = _safe_float(row.get("needles_compressed"))

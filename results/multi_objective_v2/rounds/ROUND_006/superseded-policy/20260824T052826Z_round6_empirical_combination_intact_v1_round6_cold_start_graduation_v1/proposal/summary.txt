@@ -81,21 +81,25 @@ Candidates:
   note: rescue_dilution: scaled down a high-viability failed-patch formulation
 - #5; candidate_id=cand_000388; formulation_id=v2_b7e07e99afa8; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=56.1%; intact_probability=0.99; origin=local_perturbation; support=in_support
   formulation: 100mM DMSO + 140mM ectoin + 207mM ethylene glycol + 0.426mM taurine
+  note: nan
 - #6; candidate_id=cand_000599; formulation_id=v2_4673547a29eb; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=53.7%; intact_probability=0.98; origin=local_perturbation; support=in_support
   formulation: 68.5mM ectoin + 300mM raffinose
+  note: nan
 - #7; candidate_id=cand_000452; formulation_id=v2_fb629591d74c; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=66.6%; intact_probability=0.90; origin=local_perturbation; support=in_support
   formulation: 130mM ectoin + 884mM ethylene glycol
+  note: nan
 - #8; candidate_id=cand_001218; formulation_id=v2_b0c3376ad599; recommendation_type=cold_start_graduation; mechanical_test=False; predicted_viability=54.5%; intact_probability=0.00; origin=sparse_exploration; support=in_support
   formulation: 467mM propylene glycol + 289mM raffinose
-  note: cold_start_graduation: ingredient=propylene_glycol_M; prior_distinct_formulations=2; graduation_threshold=3
+  note: nan; cold_start_graduation: ingredient=propylene_glycol_M; prior_distinct_formulations=2; graduation_threshold=3
 - #9; candidate_id=cand_000842; formulation_id=v2_0edd7362eda9; recommendation_type=cold_start_graduation; mechanical_test=False; predicted_viability=56.3%; intact_probability=1.00; origin=sparse_exploration; support=in_support
   formulation: 28.5mM taurine + 2.64% FBS
-  note: cold_start_graduation: ingredient=taurine_M; prior_distinct_formulations=0; graduation_threshold=3
+  note: nan; cold_start_graduation: ingredient=taurine_M; prior_distinct_formulations=0; graduation_threshold=3
 - #10; candidate_id=cand_000858; formulation_id=v2_9d3ceb7016d5; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=56.3%; intact_probability=1.00; origin=sparse_exploration; support=in_support
   formulation: 69.2mM taurine + 88.7mM proline
+  note: nan
 - #11; candidate_id=cand_001700; formulation_id=v2_e579d58c9088; recommendation_type=cold_start_graduation; mechanical_test=False; predicted_viability=56.3%; intact_probability=0.00; origin=boundary_probe; support=in_support
   formulation: 447mM myo-inositol + 21.7mM creatine + 7.94% FBS
-  note: cold_start_graduation: ingredient=myo_inositol_M; prior_distinct_formulations=1; graduation_threshold=3
+  note: nan; cold_start_graduation: ingredient=myo_inositol_M; prior_distinct_formulations=1; graduation_threshold=3
 - #12; candidate_id=cand_001749; formulation_id=v2_445849cbfa02; recommendation_type=cold_start_graduation; mechanical_test=False; predicted_viability=56.3%; intact_probability=0.92; origin=boundary_probe; support=in_support
   formulation: 190mM raffinose + 23.8mM creatine + 0.613% methylcellulose
-  note: cold_start_graduation: ingredient=methylcellulose_pct; prior_distinct_formulations=2; graduation_threshold=3
+  note: nan; cold_start_graduation: ingredient=methylcellulose_pct; prior_distinct_formulations=2; graduation_threshold=3

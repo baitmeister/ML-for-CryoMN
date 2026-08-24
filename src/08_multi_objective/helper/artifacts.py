@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import csv
+from datetime import datetime, timezone
 import hashlib
+import json
 import os
 from pathlib import Path
 import shutil
@@ -174,6 +176,114 @@ def freeze_proposal(
     if metadata_path is not None and Path(metadata_path).exists():
         copy_frozen(metadata_path, paths.proposal_metadata)
     return paths
+
+
+def supersede_unstarted_proposal(
+    batch_id: str,
+    observations: pd.DataFrame,
+    active_worksheet: str | Path | None,
+    reason: str,
+    policy_versions: list[str] | tuple[str, ...],
+    total_candidate_pool: str | Path | None = None,
+    results_root: str | Path = RESULTS_V2_DIR,
+) -> Path | None:
+    """Archive an unstarted frozen proposal before an explicit replacement.
+
+    The normal freeze path remains immutable. This escape hatch is deliberately
+    narrow: it rejects any observed/completed round or any active worksheet with
+    entered wet-lab values, then moves the old proposal beneath a timestamped
+    superseded directory with hashes and a reason manifest.
+    """
+    paths = round_artifact_paths(batch_id, results_root)
+    if not paths.proposal_dir.exists():
+        return None
+    if paths.completed_csv.exists():
+        raise ArtifactConflictError(
+            f"Cannot supersede {batch_id}: completed artifact already exists."
+        )
+    if (
+        not observations.empty
+        and "batch_id" in observations.columns
+        and observations["batch_id"].fillna("").astype(str).eq(batch_id).any()
+    ):
+        raise ArtifactConflictError(
+            f"Cannot supersede {batch_id}: observations already exist for the batch."
+        )
+
+    worksheet_path = Path(active_worksheet) if active_worksheet is not None else None
+    if worksheet_path is not None and worksheet_path.exists():
+        worksheet = pd.read_csv(worksheet_path)
+        worksheet_batches = set(
+            worksheet.get("batch_id", pd.Series(dtype=str))
+            .dropna()
+            .astype(str)
+            .str.strip()
+        )
+        if worksheet_batches == {batch_id}:
+            entered: dict[str, int] = {}
+            for column in EDITABLE_WETLAB_COLUMNS:
+                if column not in worksheet.columns:
+                    continue
+                values = worksheet[column]
+                nonblank = values.notna() & values.astype(str).str.strip().ne("")
+                if nonblank.any():
+                    entered[column] = int(nonblank.sum())
+            if entered:
+                raise ArtifactConflictError(
+                    f"Cannot supersede {batch_id}: active worksheet contains "
+                    f"entered wet-lab values {entered}."
+                )
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    version_label = "_".join(
+        value.strip().replace("/", "_")
+        for value in policy_versions
+        if str(value).strip()
+    ) or "policy_change"
+    superseded_root = paths.round_dir / "superseded-policy"
+    destination = superseded_root / f"{timestamp}_{version_label}"
+    if destination.exists():
+        raise ArtifactConflictError(
+            f"Superseded proposal destination already exists: {destination}"
+        )
+    destination.mkdir(parents=True, exist_ok=False)
+
+    old_hashes = {
+        str(path.relative_to(paths.proposal_dir)): sha256_file(path)
+        for path in sorted(paths.proposal_dir.rglob("*"))
+        if path.is_file()
+    }
+    os.replace(paths.proposal_dir, destination / "proposal")
+    extra_hashes: dict[str, str] = {}
+    if worksheet_path is not None and worksheet_path.exists():
+        worksheet_copy = destination / "active_worksheet.csv"
+        shutil.copy2(worksheet_path, worksheet_copy)
+        extra_hashes[worksheet_copy.name] = sha256_file(worksheet_copy)
+    pool_path = Path(total_candidate_pool) if total_candidate_pool is not None else None
+    if pool_path is not None and pool_path.exists():
+        pool_copy = destination / "total_candidate_pool.csv"
+        shutil.copy2(pool_path, pool_copy)
+        extra_hashes[pool_copy.name] = sha256_file(pool_copy)
+
+    manifest = {
+        "manifest_version": 1,
+        "batch_id": batch_id,
+        "superseded_at_utc": datetime.now(timezone.utc).isoformat(),
+        "reason": str(reason).strip(),
+        "replacement_policy_versions": list(policy_versions),
+        "safety_checks": {
+            "completed_artifact_absent": True,
+            "batch_observations_absent": True,
+            "active_worksheet_results_blank": True,
+        },
+        "proposal_file_sha256": old_hashes,
+        "additional_file_sha256": extra_hashes,
+    }
+    (destination / "supersession_manifest.json").write_text(
+        json.dumps(manifest, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return destination
 
 
 def _is_blank(value: object) -> bool:

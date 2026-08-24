@@ -90,6 +90,133 @@ Exact BoTorch qLogNEHVI support uses the optional packages listed in
 `requirements-v2-optional.txt`; if those are unavailable, the executable
 fallback mode is reported in `next_round_summary.txt`.
 
+## Round 6 Conservative Intact and Cold-Start Policy
+
+Round 6 activates two forward-only policies. Completed observations and frozen
+Rounds 1-5 are not rescored or rewritten. The historical audit is written to
+`results/multi_objective_v2/reports/round6_policy_audit/`.
+
+| Behavior | Through Round 5 | Round 6 and later |
+|---|---|---|
+| Screening intact treatment | Additive classifier was reported; screening did not use it. | Exact-combination empirical failures cause a bounded screening-score deduction. The classifier remains diagnostic. |
+| Unseen intact evidence | Classifier probability could generalize ingredient coefficients. | Exact unseen active set starts at empirical probability `0.50`; no failure is assigned to a single ingredient. |
+| Cold-start control | Universal maximum of five selected rows per ingredient. | Universal maximum five remains, plus an independent maximum of two ordinary rows for each cold ingredient. |
+| Cold-start learning | No reserved graduation budget. | Up to four ordinary positions deliberately target ingredients with fewer than three prior measured campaign formulations. |
+| Mechanics intact treatment | Compatibility filter at classifier probability `0.50`, with an additive classifier penalty and fallback-to-all. | qLogNEHVI is feasibility-weighted by the empirical exact-combination probability; no classifier filter or classifier deduction is active. |
+| Mechanical execution | At most four recommended rows. | All 12 receive a mechanics priority; ranks 1-4 are primaries and ranks 5-12 are ordered backups promoted only after actual intact formation. |
+
+### Viability prediction and screening acquisition
+
+The viability model is unchanged: a `StandardScaler` followed by Gaussian
+process regression with a fixed Matérn 2.5 kernel, per-observation noise,
+`normalize_y=True`, and no fitted kernel optimizer. Candidate screening uses:
+
+```text
+viability UCB = predicted viability mean + 0.35 × predicted viability SD
+```
+
+This UCB is a one-objective acquisition heuristic, not qLogNEHVI. It rewards a
+high predicted mean and a controlled amount of uncertainty. Screening min-max
+normalizes the UCB over the current candidate pool, then subtracts chemistry,
+support, and empirical intact-combination deductions. A formulation far from
+training support tends toward the GP global mean with greater uncertainty. For
+the pre-Round-6 taurine cold-start examples, mean `56.30%` and SD `24.72`
+produce UCB `64.95%`. The scaler and surrogate are deliberately unchanged;
+the new cap controls how often uncertain cold-start candidates reach the slate.
+
+### Intact evidence and screening deduction
+
+Only prior campaign `wetlab_feedback` is used. Technical replicates are
+collapsed per formulation and batch with the conservative all-pass rule. Active
+ingredients use the registry presence thresholds (`0.001 M` or `0.1%`). A
+candidate can borrow evidence only from the same complete active-ingredient
+set; failures never propagate to an ingredient, subset, or superset.
+Concentrations are compared by registry-range-normalized RMS distance. At
+distance `d ≤ 0.35`, evidence weight is `max(0, 1-d/0.35)`.
+
+With weighted passes `P` and failures `F`:
+
+```text
+p_combo = (1 + P) / (2 + P + F)
+screening intact deduction = 0.20 × max(0, (0.50 - p_combo) / 0.50)
+```
+
+Thus an unseen combination is neutral at `0.50`; one identical pass gives
+`0.67`; one identical failure gives `0.33` and a deduction of about `0.067`;
+two identical failures give `0.25` and a deduction of `0.10`; and one pass plus
+one failure returns to `0.50`. The deduction changes selection rank only. It
+does not modify the GP prediction, uncertainty, observation, or reported
+classifier probability.
+
+### Four distinct decision layers
+
+| Layer | Meaning |
+|---|---|
+| Objective prediction | GP mean and SD for viability and, when data exist, critical axial load. |
+| Acquisition | Screening viability UCB or mechanics qLogNEHVI/proxy; this values the next experiment. |
+| Empirical feasibility weighting | `p_combo` reduces the value of mechanics experiments unlikely to yield a testable patch. |
+| Actual wet-lab gate | A failed fabricated patch is never sent to Instron and no mechanical value is ingested. |
+
+In `mechanics_enabled`, viability and critical axial load remain the only two
+Pareto objectives. For BoTorch log acquisition, the active score is
+`qLogNEHVI + log(max(p_combo, 1e-9))`, equivalent to multiplying expected
+hypervolume improvement by feasibility. The finite-pool fallback uses
+`log1p(raw hypervolume-like improvement × p_combo)`. This avoids presenting an
+intact penalty as a third objective or subtracting a fixed number from an
+arbitrarily scaled multi-objective acquisition.
+
+An entirely unseen formulation receives model predictions from the GPs and
+`p_combo=0.50`. It can still win if the objective improvement is valuable, but
+it is not treated as demonstrated intact. If the additive classifier says
+`0.90` or `0.10`, that value is still reported but cannot change the active
+screening or mechanics ranking.
+
+### Cold-start lifecycle
+
+An available ingredient is cold-start while fewer than three distinct prior
+campaign formulation IDs containing it above the presence threshold have a
+measured viability result. Technical replicates and repeated batches of the
+same formulation count once. A failed-intact formulation still counts when its
+viability was measured. For Round 6 the prior counts are propylene glycol `2`,
+methylcellulose `2`, myo-inositol `1`, and taurine `0`.
+
+Each cold ingredient may appear in no more than two ordinary rows per round,
+independently. A formulation containing two cold ingredients consumes one slot
+under each cap. Retests and rescue dilutions are exempt from this cold cap, but
+completed special rows can contribute future graduation evidence. The existing
+universal cap of five across all rows still applies.
+
+Up to four ordinary positions are reserved for graduation. The selector first
+offers one to each cold ingredient, starting with the ingredient closest to
+three observations; ties use least-recent campaign testing and registry order.
+Remaining positions can supply a second distinct active set, without exceeding
+two rows per ingredient. A graduation formulation must contain exactly one cold
+ingredient and satisfy availability, feasibility, support, similarity, exact
+combination, shared-pair, marginal-frequency, and origin-allocation rules. An
+unfillable reservation is reassigned; unused capacity returns to ordinary
+score-based selection. This creates pressure toward zero cold ingredients, but
+does not override chemical feasibility. With complete results, the current
+backlog can normally be warm for Round 8.
+
+### Mechanical primaries, backups, and bootstrap limitation
+
+When mechanics is active, all 12 selected formulations are ranked by the
+feasibility-weighted mechanics acquisition. The first four are initial
+recommendations and the remaining eight are ordered backups. After fabrication,
+run Instron on the first four priority-ranked rows that actually pass intact.
+Failed primaries are skipped in favor of the next intact backup. If fewer than
+four patches pass, test all intact rows and record the shortfall. Stage 03
+rejects mechanical data without a measured intact pass and writes a completion
+manifest recording primaries, backups, promotions, and shortfall.
+
+Round 6 is still `screening_only`: 12 viability/intact experiments, blank
+mechanical priorities, and zero program-requested Instron tests. The existing
+automatic transition still requires paired mechanical observations from at
+least six formulations across two batches (eight paired observations total).
+Consequently, without externally collected mechanical observations or an
+explicit phase override, the campaign cannot bootstrap itself into mechanics;
+this known circularity is not changed by the Round 6 policy.
+
 ## Quick Start: Legacy Viability Pipeline
 
 ```bash

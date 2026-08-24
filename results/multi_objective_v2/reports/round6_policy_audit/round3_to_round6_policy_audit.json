@@ -1,0 +1,129 @@
+{
+  "audit_version": "round6_policy_counterfactual_v1",
+  "historical_artifacts_modified": false,
+  "replacement_outcomes_are_unknown": true,
+  "rounds": [
+    {
+      "batch_id": "ROUND_003",
+      "status": "audited",
+      "cold_ingredients": [
+        "glycerol_M",
+        "propylene_glycol_M",
+        "raffinose_M",
+        "taurine_M",
+        "myo_inositol_M",
+        "acetamide_M",
+        "methylcellulose_pct"
+      ],
+      "prior_distinct_formulation_counts": {
+        "glycerol_M": 2,
+        "propylene_glycol_M": 2,
+        "raffinose_M": 0,
+        "taurine_M": 0,
+        "myo_inositol_M": 0,
+        "acetamide_M": 0,
+        "methylcellulose_pct": 0
+      },
+      "ordinary_cold_counts": {
+        "glycerol_M": 1,
+        "propylene_glycol_M": 0,
+        "raffinose_M": 0,
+        "taurine_M": 0,
+        "myo_inositol_M": 0,
+        "acetamide_M": 0,
+        "methylcellulose_pct": 0
+      },
+      "cold_cap_violations": {},
+      "rows_with_empirical_intact_deduction": 2,
+      "maximum_empirical_intact_deduction": 0.06666666666666668
+    },
+    {
+      "batch_id": "ROUND_004",
+      "status": "audited",
+      "cold_ingredients": [
+        "propylene_glycol_M",
+        "raffinose_M",
+        "taurine_M",
+        "myo_inositol_M",
+        "acetamide_M",
+        "methylcellulose_pct"
+      ],
+      "prior_distinct_formulation_counts": {
+        "propylene_glycol_M": 2,
+        "raffinose_M": 0,
+        "taurine_M": 0,
+        "myo_inositol_M": 0,
+        "acetamide_M": 0,
+        "methylcellulose_pct": 0
+      },
+      "ordinary_cold_counts": {
+        "propylene_glycol_M": 0,
+        "raffinose_M": 5,
+        "taurine_M": 0,
+        "myo_inositol_M": 1,
+        "acetamide_M": 0,
+        "methylcellulose_pct": 0
+      },
+      "cold_cap_violations": {
+        "raffinose_M": 5
+      },
+      "rows_with_empirical_intact_deduction": 0,
+      "maximum_empirical_intact_deduction": 0.0
+    },
+    {
+      "batch_id": "ROUND_005",
+      "status": "audited",
+      "cold_ingredients": [
+        "propylene_glycol_M",
+        "taurine_M",
+        "myo_inositol_M",
+        "acetamide_M",
+        "methylcellulose_pct"
+      ],
+      "prior_distinct_formulation_counts": {
+        "propylene_glycol_M": 2,
+        "taurine_M": 0,
+        "myo_inositol_M": 1,
+        "acetamide_M": 0,
+        "methylcellulose_pct": 0
+      },
+      "ordinary_cold_counts": {
+        "propylene_glycol_M": 0,
+        "taurine_M": 0,
+        "myo_inositol_M": 0,
+        "acetamide_M": 5,
+        "methylcellulose_pct": 2
+      },
+      "cold_cap_violations": {
+        "acetamide_M": 5
+      },
+      "rows_with_empirical_intact_deduction": 2,
+      "maximum_empirical_intact_deduction": 0.08133759592565742
+    },
+    {
+      "batch_id": "ROUND_006",
+      "status": "audited",
+      "cold_ingredients": [
+        "propylene_glycol_M",
+        "taurine_M",
+        "myo_inositol_M",
+        "methylcellulose_pct"
+      ],
+      "prior_distinct_formulation_counts": {
+        "propylene_glycol_M": 2,
+        "taurine_M": 0,
+        "myo_inositol_M": 1,
+        "methylcellulose_pct": 2
+      },
+      "ordinary_cold_counts": {
+        "propylene_glycol_M": 1,
+        "taurine_M": 2,
+        "myo_inositol_M": 1,
+        "methylcellulose_pct": 1
+      },
+      "cold_cap_violations": {},
+      "rows_with_empirical_intact_deduction": 1,
+      "maximum_empirical_intact_deduction": 0.06666666666666668
+    }
+  ]
+}

@@ -90,15 +90,11 @@ def constraint_report(
 ) -> dict[str, Any]:
     """Build the per-candidate constraint/penalty report.
 
-    Returns both the full acquisition penalty (used by mechanics-phase
-    scoring, which legitimately weighs intact-formation risk against the
-    viability/mechanical objectives) and a screening-phase variant with the
-    intact-failure term zeroed out. Screening exists to find viable
-    formulations; intact-needle formation is evaluated later, in the
-    mechanics phase, once enough paired data exists. Screening-phase
-    rescue candidates (see generate_rescue_candidate_pool) remain the only
-    place intact-failure observations feed back into candidate generation
-    during screening.
+    Returns both the legacy full acquisition penalty and the non-classifier
+    chemistry penalty. From Round 6, active screening separately subtracts the
+    bounded empirical exact-combination intact penalty, while active mechanics
+    feasibility-weights qLogNEHVI. The classifier-derived intact term in the
+    full penalty is used only by documented compatibility mechanics mode.
     """
     soft_limit = int(nested_get(optimization_config, "penalties.active_ingredient_soft_limit", 8))
     molar_limit = float(nested_get(optimization_config, "penalties.single_molar_ingredient_limit_M", 0.5))

@@ -26,7 +26,11 @@ from helper.candidates import (
     unavailable_features_from_config,
 )
 from helper.config import load_availability_config, load_optimization_config, nested_get
-from helper.artifacts import copy_working, freeze_proposal
+from helper.artifacts import (
+    copy_working,
+    freeze_proposal,
+    supersede_unstarted_proposal,
+)
 from helper.feasibility import (
     annotate_feasibility,
     annotate_support,
@@ -82,6 +86,15 @@ def parse_args() -> argparse.Namespace:
         "--batch-id",
         default=None,
         help="Wet-lab round ID to prefill in next_round_candidates.csv. Defaults to next ROUND_###.",
+    )
+    parser.add_argument(
+        "--supersede-unstarted-proposal",
+        action="store_true",
+        help=(
+            "Explicitly archive and replace an existing frozen proposal only "
+            "when the batch has no observations/completed artifact and the "
+            "active worksheet has no entered wet-lab results."
+        ),
     )
     return parser.parse_args()
 
@@ -276,6 +289,7 @@ def main() -> None:
         policy_active=policy_active,
         policy_version=policy_version,
         similarity_audit=similarity_audit,
+        unavailable_feature_names=unavailable_features,
     )
     audit_excluded_candidates = pd.concat(
         [rejected_candidates, availability_excluded_candidates],
@@ -327,6 +341,31 @@ def main() -> None:
         staged_candidates = staging_output / "next_round_candidates.csv"
         staged_summary = staging_output / "next_round_summary.txt"
         staged_metadata = staging_output / "next_round_metadata.json"
+        if args.supersede_unstarted_proposal:
+            superseded_path = supersede_unstarted_proposal(
+                batch_id,
+                observations=observations,
+                active_worksheet=output_dir / "next_round_candidates.csv",
+                reason=(
+                    "Forward-only Round-6 empirical intact-combination and "
+                    "cold-start policy activation"
+                ),
+                policy_versions=[
+                    result.metadata.get("intact_combination_policy", {}).get(
+                        "policy_version", ""
+                    ),
+                    result.metadata.get("cold_start_policy", {}).get(
+                        "policy_version", ""
+                    ),
+                ],
+                total_candidate_pool=args.total_candidate_pool,
+                results_root=results_root,
+            )
+            if superseded_path is not None:
+                print(
+                    "Archived superseded unstarted proposal: "
+                    f"{superseded_path.resolve()}"
+                )
         round_paths = freeze_proposal(
             batch_id,
             staged_candidates,
@@ -355,7 +394,11 @@ def main() -> None:
         proposed_batch_override_used=args.batch_id is not None,
     )
     print(f"Selected {len(result.viability_screen)} viability-screen candidates.")
-    print(f"Selected {len(result.mechanical_tests)} mechanical-test candidates.")
+    print(
+        "Selected "
+        f"{int(result.metadata.get('mechanical_test_count', 0))} primary "
+        "mechanical-test candidate(s)."
+    )
     print(f"Batch ID: {batch_id}")
     print(f"Active phase: {result.metadata['active_phase']}")
     print(

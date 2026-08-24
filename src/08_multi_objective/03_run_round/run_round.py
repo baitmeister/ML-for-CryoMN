@@ -38,6 +38,10 @@ from helper.config import (
     nested_get,
 )
 from helper.feedback import ingest_feedback
+from helper.mechanics_execution import (
+    freeze_mechanics_execution_manifest,
+    validate_mechanics_execution,
+)
 from helper.phase import resolve_phase_mode
 from helper.prospective_evaluation import (
     generate_campaign_prospective_artifacts,
@@ -84,6 +88,14 @@ def parse_args() -> argparse.Namespace:
         help="Skip post-ingestion round reports (advanced/debug use only).",
     )
     parser.add_argument("--skip-generate", action="store_true", help="Skip Stage 02 candidate generation.")
+    parser.add_argument(
+        "--supersede-unstarted-proposal",
+        action="store_true",
+        help=(
+            "Forward the guarded Stage-02 option that archives and replaces "
+            "an existing unstarted proposal."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -264,6 +276,21 @@ def main() -> None:
             f"{validation['proposal_candidate_count']} candidates, "
             f"{validation['completed_row_count']} completed row(s)."
         )
+        mechanics_audit = validate_mechanics_execution(
+            current_candidates,
+            pd.read_csv(round_paths.proposal_csv),
+            primary_capacity=int(
+                nested_get(
+                    optimization_config,
+                    "intact_combination_policy.mechanics_primary_test_count",
+                    nested_get(
+                        optimization_config,
+                        "round_policy.mechanical_tests_per_round",
+                        4,
+                    ),
+                )
+            ),
+        )
 
     if round_progressed:
         formulations, observations = ingest_feedback(
@@ -289,6 +316,11 @@ def main() -> None:
             results_root=results_root,
         )
         print(f"Archived completed worksheet: {completed_path.resolve()}")
+        mechanics_manifest = freeze_mechanics_execution_manifest(
+            mechanics_audit,
+            round_paths.completed_dir / "mechanical_execution_manifest.json",
+        )
+        print(f"Archived mechanical execution audit: {mechanics_manifest.resolve()}")
         if not args.skip_review:
             report_paths = generate_completed_round_artifacts(
                 formulations,
@@ -360,6 +392,8 @@ def main() -> None:
             select_args.extend(["--seed", str(args.seed)])
         if args.phase_mode is not None:
             select_args.extend(["--phase-mode", args.phase_mode])
+        if args.supersede_unstarted_proposal:
+            select_args.append("--supersede-unstarted-proposal")
         _run(select_script, select_args)
 
     print(f"Round status: {status_path.resolve()}")

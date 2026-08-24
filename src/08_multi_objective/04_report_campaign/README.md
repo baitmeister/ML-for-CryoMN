@@ -37,6 +37,20 @@ python3 src/08_multi_objective/04_report_campaign/report_campaign.py \
   --all-rounds
 ```
 
+Generate the read-only Round 3-6 counterfactual audit for the Round-6 intact
+and cold-start policies:
+
+```bash
+python3 src/08_multi_objective/04_report_campaign/counterfactual_policy_audit.py
+```
+
+This writes a row-level CSV, structured JSON summary, and human-readable README
+under `results/multi_objective_v2/reports/round6_policy_audit/`. It reconstructs
+the evidence that would have been available before each target round and never
+changes a historical proposal. Identified freed positions have unknown
+counterfactual outcomes; the report does not claim their replacements would
+have performed better.
+
 Round outputs are written below
 `results/multi_objective_v2/rounds/ROUND_N/reports/`. Cumulative prospective
 outputs are written below

@@ -1,0 +1,25 @@
+{
+  "manifest_version": 1,
+  "batch_id": "ROUND_006",
+  "superseded_at_utc": "2026-08-24T05:28:26.090482+00:00",
+  "reason": "Forward-only Round-6 empirical intact-combination and cold-start policy activation",
+  "replacement_policy_versions": [
+    "round6_empirical_combination_intact_v1",
+    "round6_cold_start_graduation_v1"
+  ],
+  "safety_checks": {
+    "completed_artifact_absent": true,
+    "batch_observations_absent": true,
+    "active_worksheet_results_blank": true
+  },
+  "proposal_file_sha256": {
+    "plots/next_round_candidate_screen.png": "373ebeb9cb90a9fd8c7146f1b98eacc6c33237b0dcb7a57afd2ce16ff6501950",
+    "proposal.csv": "da9a96bbc6aa347de7a3723977841129fab6142172f28105bb40ed5fe4463678",
+    "selection_metadata.json": "c3a76860151ee00d1464039ccfd9c0f915eb86b98ead0b39ddcc8e5ddfa13d8b",
+    "summary.txt": "f6fffcb1fdaf98b7d98a69f0d43fbae1bbc278258544a22171143b43518b52f5"
+  },
+  "additional_file_sha256": {
+    "active_worksheet.csv": "da9a96bbc6aa347de7a3723977841129fab6142172f28105bb40ed5fe4463678",
+    "total_candidate_pool.csv": "2047dc8c5e8d221e4bc505d083818e26d0685266b472121783121999bace635c"
+  }
+}

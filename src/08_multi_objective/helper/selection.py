@@ -20,6 +20,16 @@ from .acquisition import (
 )
 from .artifacts import EDITABLE_WETLAB_COLUMNS
 from .candidates import stable_formulation_id
+from .cold_start import (
+    ColdStartContext,
+    annotate_cold_start_candidates,
+    build_cold_start_context,
+    cold_ingredients_in_row,
+    cold_start_policy_metadata,
+    graduation_allocation_attempts,
+    planned_graduation_allocations,
+    resolve_cold_start_policy,
+)
 from .config import nested_get
 from .feasibility import (
     ROUND5_POLICY_VERSION,
@@ -31,6 +41,13 @@ from .feasibility import (
     policy_activation,
 )
 from .models import EndpointModels, train_endpoint_models
+from .intact_policy import (
+    IntactCombinationPolicy,
+    annotate_intact_combination_evidence,
+    build_intact_evidence,
+    intact_policy_metadata,
+    resolve_intact_combination_policy,
+)
 from .phase import PHASE_MECHANICS, PHASE_SCREENING, PhaseResolution, resolve_phase_mode
 from .penalties import constraint_report, count_active_ingredients
 from .registry import IngredientRegistry, presence_threshold
@@ -733,6 +750,427 @@ def _enforce_ingredient_frequency_cap(
     return adjusted
 
 
+def _cold_start_ordinary_counts(
+    frame: pd.DataFrame,
+    registry: IngredientRegistry,
+    context: ColdStartContext,
+) -> dict[str, int]:
+    counts = {feature_name: 0 for feature_name in context.cold_ingredients}
+    for _, row in frame.iterrows():
+        if context.is_exempt_origin(row.get("candidate_origin", "")):
+            continue
+        for feature_name in cold_ingredients_in_row(row, registry, context):
+            counts[feature_name] += 1
+    return counts
+
+
+def _cold_start_trial_passes_shared_constraints(
+    trial: pd.DataFrame,
+    registry: IngredientRegistry,
+    optimization_config: Mapping,
+) -> bool:
+    if not _exact_combination_caps_pass(trial, registry, optimization_config):
+        return False
+    pair_cap = int(
+        nested_get(
+            optimization_config,
+            "selection.max_candidates_per_shared_ingredient_pair",
+            5,
+        )
+    )
+    if max(_shared_pair_counts(trial, registry).values(), default=0) > pair_cap:
+        return False
+    universal_cap = int(
+        nested_get(
+            optimization_config,
+            "selection.max_candidates_per_ingredient",
+            5,
+        )
+    )
+    if max(
+        _ingredient_appearance_counts(trial, registry).values(), default=0
+    ) > universal_cap:
+        return False
+    boundary_cap = int(
+        nested_get(
+            optimization_config,
+            "support_policy.max_boundary_candidates_per_slate",
+            1,
+        )
+    )
+    return _support_boundary_count(trial) <= boundary_cap
+
+
+def _enforce_cold_start_policy(
+    selected: pd.DataFrame,
+    candidate_pool: pd.DataFrame,
+    registry: IngredientRegistry,
+    optimization_config: Mapping,
+    score_column: str,
+    context: ColdStartContext,
+) -> pd.DataFrame:
+    """Reserve graduation rows, then enforce each cold ingredient's cap."""
+    adjusted = selected.copy().reset_index(drop=True)
+    policy = context.policy
+    base_metadata: dict[str, object] = {
+        "planned_graduation_allocations": [],
+        "selected_graduation_allocations": [],
+        "graduation_skips": [],
+        "graduation_replacements": [],
+        "cap_replacements": [],
+        "ordinary_counts_before": _cold_start_ordinary_counts(
+            adjusted, registry, context
+        ),
+        "ordinary_counts_after": {},
+        "cross_origin_replacement_count": 0,
+    }
+    if not policy.active or not context.cold_ingredients:
+        base_metadata["ordinary_counts_after"] = base_metadata[
+            "ordinary_counts_before"
+        ]
+        adjusted.attrs["cold_start_policy"] = base_metadata
+        return adjusted
+
+    planned = planned_graduation_allocations(context, registry)
+    allocation_attempts = graduation_allocation_attempts(context, registry)
+    base_metadata["planned_graduation_allocations"] = list(planned)
+    base_metadata["graduation_allocation_attempts"] = list(allocation_attempts)
+    base_metadata["graduation_reassignments"] = []
+    ranked_pool = candidate_pool.copy()
+    ranked_pool["_cold_score"] = pd.to_numeric(
+        ranked_pool.get(score_column, 0.0), errors="coerce"
+    ).fillna(float("-inf"))
+    ranked_pool = ranked_pool.sort_values(
+        ["_cold_score", "candidate_id"],
+        ascending=[False, True],
+        kind="mergesort",
+    ).drop(columns=["_cold_score"]).reset_index(drop=True)
+    assigned_ids: set[str] = set()
+    assigned_active_sets: dict[str, set[frozenset[str]]] = {
+        feature_name: set() for feature_name in context.cold_ingredients
+    }
+
+    def score_value(row: pd.Series) -> float:
+        value = pd.to_numeric(row.get(score_column, float("-inf")), errors="coerce")
+        return float(value) if pd.notna(value) else float("-inf")
+
+    def eligible_for_ingredient(row: pd.Series, feature_name: str) -> bool:
+        cold = cold_ingredients_in_row(row, registry, context)
+        return bool(
+            not context.is_exempt_origin(row.get("candidate_origin", ""))
+            and len(cold) == 1
+            and cold[0] == feature_name
+            and bool(row.get("feasibility_pass", True))
+        )
+
+    def mark_graduation(position: int, feature_name: str) -> None:
+        candidate_id = str(adjusted.iloc[position].get("candidate_id", ""))
+        active = _active_ingredient_set(adjusted.iloc[position], registry)
+        assigned_ids.add(candidate_id)
+        assigned_active_sets[feature_name].add(active)
+        adjusted.at[position, "recommendation_type"] = "cold_start_graduation"
+        prior_count = context.evidence_counts.get(feature_name, 0)
+        explanation = (
+            "cold_start_graduation: "
+            f"ingredient={feature_name}; prior_distinct_formulations={prior_count}; "
+            f"graduation_threshold={policy.minimum_distinct_formulations}"
+        )
+        prior_value = adjusted.iloc[position].get("selection_explanation", "")
+        prior_explanation = (
+            "" if pd.isna(prior_value) else str(prior_value).strip()
+        )
+        adjusted.at[position, "selection_explanation"] = (
+            f"{prior_explanation}; {explanation}"
+            if prior_explanation
+            else explanation
+        )
+        base_metadata["selected_graduation_allocations"].append(
+            {
+                "ingredient": feature_name,
+                "candidate_id": candidate_id,
+                "prior_distinct_formulations": int(prior_count),
+                "active_ingredient_set": sorted(active),
+            }
+        )
+
+    for attempt_index, feature_name in enumerate(allocation_attempts):
+        if (
+            len(base_metadata["selected_graduation_allocations"])
+            >= policy.graduation_slots_per_round
+        ):
+            break
+        existing_positions = [
+            position
+            for position, (_, row) in enumerate(adjusted.iterrows())
+            if str(row.get("candidate_id", "")) not in assigned_ids
+            and eligible_for_ingredient(row, feature_name)
+            and (
+                not policy.graduation_require_distinct_active_sets
+                or _active_ingredient_set(row, registry)
+                not in assigned_active_sets[feature_name]
+            )
+        ]
+        existing_positions.sort(
+            key=lambda position: (
+                -score_value(adjusted.iloc[position]),
+                str(adjusted.iloc[position].get("candidate_id", "")),
+            )
+        )
+        if existing_positions:
+            existing_position = existing_positions[0]
+            mark_graduation(existing_position, feature_name)
+            if attempt_index >= len(planned):
+                base_metadata["graduation_reassignments"].append(
+                    {
+                        "ingredient": feature_name,
+                        "candidate_id": str(
+                            adjusted.iloc[existing_position].get("candidate_id", "")
+                        ),
+                        "reason": "earlier planned graduation slot was unfilled",
+                    }
+                )
+            continue
+
+        selected_ids = set(adjusted["candidate_id"].astype(str))
+        inserted = False
+        for _, candidate in ranked_pool.iterrows():
+            candidate_id = str(candidate.get("candidate_id", ""))
+            if not candidate_id or candidate_id in selected_ids:
+                continue
+            if not eligible_for_ingredient(candidate, feature_name):
+                continue
+            candidate_active = _active_ingredient_set(candidate, registry)
+            if (
+                policy.graduation_require_distinct_active_sets
+                and candidate_active in assigned_active_sets[feature_name]
+            ):
+                continue
+            candidate_origin = str(candidate.get("candidate_origin", ""))
+            loser_positions = [
+                position
+                for position, (_, row) in enumerate(adjusted.iterrows())
+                if str(row.get("candidate_id", "")) not in assigned_ids
+                and not context.is_exempt_origin(row.get("candidate_origin", ""))
+            ]
+            loser_positions.sort(
+                key=lambda position: (
+                    str(adjusted.iloc[position].get("candidate_origin", ""))
+                    != candidate_origin,
+                    score_value(adjusted.iloc[position]),
+                    str(adjusted.iloc[position].get("candidate_id", "")),
+                )
+            )
+            if policy.preserve_origin_allocation:
+                loser_positions = [
+                    position
+                    for position in loser_positions
+                    if str(
+                        adjusted.iloc[position].get("candidate_origin", "")
+                    )
+                    == candidate_origin
+                ]
+            for loser_position in loser_positions:
+                loser = adjusted.iloc[loser_position]
+                trial = pd.concat(
+                    [
+                        adjusted.iloc[:loser_position],
+                        pd.DataFrame([candidate]),
+                        adjusted.iloc[loser_position + 1 :],
+                    ],
+                    ignore_index=True,
+                )
+                if not _cold_start_trial_passes_shared_constraints(
+                    trial, registry, optimization_config
+                ):
+                    continue
+                before_counts = _cold_start_ordinary_counts(
+                    adjusted, registry, context
+                )
+                trial_counts = _cold_start_ordinary_counts(
+                    trial, registry, context
+                )
+                if any(
+                    trial_counts.get(cold_feature, 0)
+                    > max(
+                        policy.max_ordinary_rows_per_ingredient,
+                        before_counts.get(cold_feature, 0),
+                    )
+                    for cold_feature in context.cold_ingredients
+                ):
+                    continue
+                same_origin = (
+                    str(loser.get("candidate_origin", "")) == candidate_origin
+                )
+                adjusted = trial
+                base_metadata["graduation_replacements"].append(
+                    {
+                        "ingredient": feature_name,
+                        "removed_candidate_id": str(
+                            loser.get("candidate_id", "")
+                        ),
+                        "added_candidate_id": candidate_id,
+                        "same_origin": same_origin,
+                        "score_change": score_value(candidate)
+                        - score_value(loser),
+                    }
+                )
+                if not same_origin:
+                    base_metadata["cross_origin_replacement_count"] += 1
+                mark_graduation(loser_position, feature_name)
+                if attempt_index >= len(planned):
+                    base_metadata["graduation_reassignments"].append(
+                        {
+                            "ingredient": feature_name,
+                            "candidate_id": candidate_id,
+                            "reason": "earlier planned graduation slot was unfilled",
+                        }
+                    )
+                inserted = True
+                break
+            if inserted:
+                break
+        if not inserted:
+            base_metadata["graduation_skips"].append(
+                {
+                    "ingredient": feature_name,
+                    "reason": (
+                        "no eligible distinct candidate/replacement preserved "
+                        "the active slate constraints"
+                    ),
+                }
+            )
+
+    while True:
+        counts = _cold_start_ordinary_counts(adjusted, registry, context)
+        violations = {
+            feature_name: count
+            for feature_name, count in counts.items()
+            if count > policy.max_ordinary_rows_per_ingredient
+        }
+        if not violations:
+            break
+        trigger = sorted(
+            violations,
+            key=lambda feature_name: (
+                -(violations[feature_name] - policy.max_ordinary_rows_per_ingredient),
+                registry.feature_names.index(feature_name),
+            ),
+        )[0]
+        offenders = [
+            position
+            for position, (_, row) in enumerate(adjusted.iterrows())
+            if trigger in cold_ingredients_in_row(row, registry, context)
+            and not context.is_exempt_origin(row.get("candidate_origin", ""))
+            and str(row.get("candidate_id", "")) not in assigned_ids
+        ]
+        offenders.sort(
+            key=lambda position: (
+                score_value(adjusted.iloc[position]),
+                str(adjusted.iloc[position].get("candidate_id", "")),
+            )
+        )
+        if not offenders:
+            raise ValueError(
+                "Cold-start cap cannot be satisfied without removing a reserved "
+                f"graduation/special row: {trigger}={violations[trigger]}."
+            )
+
+        replacement_made = False
+        selected_ids = set(adjusted["candidate_id"].astype(str))
+        for loser_position in offenders:
+            loser = adjusted.iloc[loser_position]
+            loser_origin = str(loser.get("candidate_origin", ""))
+            for _, candidate in ranked_pool.iterrows():
+                candidate_id = str(candidate.get("candidate_id", ""))
+                if not candidate_id or candidate_id in selected_ids:
+                    continue
+                if context.is_exempt_origin(candidate.get("candidate_origin", "")):
+                    continue
+                if not bool(candidate.get("feasibility_pass", True)):
+                    continue
+                candidate_origin = str(candidate.get("candidate_origin", ""))
+                if policy.preserve_origin_allocation and candidate_origin != loser_origin:
+                    continue
+                trial = pd.concat(
+                    [
+                        adjusted.iloc[:loser_position],
+                        pd.DataFrame([candidate]),
+                        adjusted.iloc[loser_position + 1 :],
+                    ],
+                    ignore_index=True,
+                )
+                trial_counts = _cold_start_ordinary_counts(
+                    trial, registry, context
+                )
+                if trial_counts.get(trigger, 0) >= counts.get(trigger, 0):
+                    continue
+                if any(
+                    trial_counts.get(feature_name, 0)
+                    > max(
+                        policy.max_ordinary_rows_per_ingredient,
+                        counts.get(feature_name, 0),
+                    )
+                    for feature_name in context.cold_ingredients
+                ):
+                    continue
+                if not _cold_start_trial_passes_shared_constraints(
+                    trial, registry, optimization_config
+                ):
+                    continue
+                adjusted = trial
+                base_metadata["cap_replacements"].append(
+                    {
+                        "trigger_ingredient": trigger,
+                        "count_before": int(counts.get(trigger, 0)),
+                        "count_after": int(trial_counts.get(trigger, 0)),
+                        "removed_candidate_id": str(
+                            loser.get("candidate_id", "")
+                        ),
+                        "added_candidate_id": candidate_id,
+                        "same_origin": candidate_origin == loser_origin,
+                        "score_change": score_value(candidate)
+                        - score_value(loser),
+                    }
+                )
+                replacement_made = True
+                break
+            if replacement_made:
+                break
+        if not replacement_made:
+            raise ValueError(
+                "Cold-start cap cannot be satisfied from the eligible candidate "
+                "pool while preserving the selected origin and diversity rules: "
+                f"{trigger}={violations[trigger]}, "
+                f"cap={policy.max_ordinary_rows_per_ingredient}."
+            )
+
+    final_counts = _cold_start_ordinary_counts(adjusted, registry, context)
+    final_violations = {
+        feature_name: count
+        for feature_name, count in final_counts.items()
+        if count > policy.max_ordinary_rows_per_ingredient
+    }
+    if final_violations:
+        raise ValueError(
+            "Refusing to freeze a slate that violates the cold-start cap: "
+            f"{final_violations}."
+        )
+    base_metadata["ordinary_counts_after"] = {
+        feature_name: int(count) for feature_name, count in final_counts.items()
+    }
+    base_metadata["graduation_selected_count"] = len(
+        base_metadata["selected_graduation_allocations"]
+    )
+    base_metadata["graduation_skip_count"] = len(
+        base_metadata["graduation_skips"]
+    )
+    base_metadata["cap_replacement_count"] = len(
+        base_metadata["cap_replacements"]
+    )
+    adjusted.attrs["cold_start_policy"] = base_metadata
+    return adjusted
+
+
 def _greedy_diverse_pick(
     frame: pd.DataFrame,
     score: np.ndarray,
@@ -876,13 +1314,10 @@ def annotate_candidates(
     for column in report_frame.columns:
         annotated[column] = report_frame[column].to_numpy()
 
-    # Screening exists to find viable formulations; intact-needle formation
-    # is a mechanics-phase concern (see _mechanics_phase_scores, which uses
-    # the full acquisition_penalty including intact-failure risk). Screening
-    # therefore scores purely on predicted viability, net of non-intact
-    # soft-constraint penalties. The intact gate is preserved for rescue
-    # candidate generation (generate_rescue_candidate_pool), not for
-    # filtering or scoring the general screening pool.
+    # Screening is driven by normalized viability UCB. Chemistry/support
+    # deductions and the conservative exact-combination intact deduction can
+    # change candidate ranking without changing the viability GP or the
+    # diagnostic additive intact classifier.
     support_penalty = np.zeros(len(annotated), dtype=float)
     if policy_active and "support_status" in annotated.columns:
         penalty_value = float(
@@ -901,6 +1336,13 @@ def annotate_candidates(
         minmax(annotated["viability_ucb"].to_numpy(dtype=float))
         - annotated["screening_acquisition_penalty"].to_numpy(dtype=float)
         - support_penalty
+        - pd.to_numeric(
+            annotated.get(
+                "intact_combination_screening_penalty",
+                pd.Series(0.0, index=annotated.index),
+            ),
+            errors="coerce",
+        ).fillna(0.0).to_numpy(dtype=float)
     )
     if "recommendation_type" not in annotated.columns:
         annotated["recommendation_type"] = ""
@@ -914,6 +1356,7 @@ def _mechanics_phase_scores(
     models: EndpointModels,
     registry: IngredientRegistry,
     optimization_config: Mapping,
+    intact_policy: IntactCombinationPolicy | None = None,
 ) -> tuple[np.ndarray, dict]:
     train_frame = models.training_frame.copy()
     for objective_column in ["viability_percent", "critical_axial_load_N_per_needle"]:
@@ -946,6 +1389,22 @@ def _mechanics_phase_scores(
         candidate_x=candidate_x,
         reference_point=reference_point,
     )
+    empirical_mode = bool(
+        intact_policy is not None
+        and intact_policy.active
+        and intact_policy.mechanics_mode == "empirical_feasibility_weighted"
+    )
+    empirical_probability = np.clip(
+        pd.to_numeric(
+            annotated.get(
+                "empirical_combination_pass_probability",
+                pd.Series(0.5, index=annotated.index),
+            ),
+            errors="coerce",
+        ).fillna(0.5).to_numpy(dtype=float),
+        0.0,
+        1.0,
+    )
     if acquisition is None:
         mode = "qlognehvi_proxy"
         acquisition = qlognehvi_proxy_scores(
@@ -953,14 +1412,44 @@ def _mechanics_phase_scores(
             annotated["viability_ucb"].to_numpy(dtype=float),
             annotated["critical_axial_load_ucb"].to_numpy(dtype=float),
             reference_point=(0.0, 0.0),
+            feasibility_probability=(
+                empirical_probability if empirical_mode else None
+            ),
         )
     else:
         mode = "qlognehvi_botorch"
-    score = acquisition - annotated["acquisition_penalty"].to_numpy(dtype=float)
+        if empirical_mode:
+            probability_floor = intact_policy.numerical_probability_floor
+            acquisition = acquisition + np.log(
+                np.maximum(empirical_probability, probability_floor)
+            )
+    if empirical_mode:
+        # The objective acquisition is feasibility-weighted above. Retain the
+        # pre-existing non-intact chemistry pressure, but never subtract the
+        # additive classifier-derived intact term in this mode.
+        score = acquisition - annotated[
+            "screening_acquisition_penalty"
+        ].to_numpy(dtype=float)
+        classifier_role = "diagnostic_only"
+    else:
+        score = acquisition - annotated["acquisition_penalty"].to_numpy(dtype=float)
+        classifier_role = "active_compatibility_mode"
     metadata = {
         "pool_selection_mode": mode,
         "botorch_available": bool(botorch_available()),
         "botorch_metadata": botorch_metadata,
+        "intact_feasibility_mode": (
+            "empirical_combination_probability_weighting"
+            if empirical_mode
+            else "classifier_threshold_penalty"
+        ),
+        "classifier_probability_selection_role": classifier_role,
+        "empirical_probability_minimum": float(
+            np.min(empirical_probability) if len(empirical_probability) else np.nan
+        ),
+        "empirical_probability_maximum": float(
+            np.max(empirical_probability) if len(empirical_probability) else np.nan
+        ),
     }
     return np.asarray(score, dtype=float), metadata
 
@@ -1264,6 +1753,7 @@ def _select_round_slate(
     n: int,
     policy_active: bool = False,
     target_round_number: int | None = None,
+    cold_start_context: ColdStartContext | None = None,
 ) -> pd.DataFrame:
     if phase_resolution.active_phase == PHASE_MECHANICS:
         score_column = "mechanics_phase_score"
@@ -1321,14 +1811,9 @@ def _select_round_slate(
     rescue_retest_filled = sum(len(part) for part in selected_parts)
     rescue_retest_unused = max(rescue_retest_reserve - rescue_retest_filled, 0)
 
-    # Screening-phase candidate selection (the `remaining` pool below) is no
-    # longer narrowed by predicted intact-formation probability. Screening
-    # is solely about predicted viability; intact-needle formation is
-    # assessed once the selector enters the mechanics phase (mechanics_phase_score
-    # already accounts for intact-failure risk via acquisition_penalty).
-    # The intact gate during screening now only acts through rescue
-    # candidates (handled above) and select_mechanical_tests, which stays
-    # disabled in the screening phase regardless.
+    # The additive classifier probability does not narrow this screening
+    # pool. Exact-combination evidence has already supplied a bounded
+    # screening deduction, while rescue rows keep their reserved priority.
     remaining = annotated.loc[~annotated["candidate_id"].astype(str).isin(selected_ids)].reset_index(drop=True)
     remaining_n = max(n - rescue_retest_filled, 0)
     if remaining_n > 0 and not remaining.empty:
@@ -1481,6 +1966,15 @@ def _select_round_slate(
             ),
         },
     )
+    if cold_start_context is not None and cold_start_context.policy.active:
+        selected = _enforce_cold_start_policy(
+            selected,
+            annotated,
+            registry,
+            optimization_config,
+            score_column=score_column,
+            context=cold_start_context,
+        )
     selected["recommendation_type"] = selected["recommendation_type"].replace("", pd.NA).fillna(default_recommendation_type)
     selected.insert(0, "selection_rank", range(1, len(selected) + 1))
     selected["selection_role"] = "round_candidate"
@@ -1498,16 +1992,15 @@ def select_mechanical_tests(
     optimization_config: Mapping,
     phase_resolution: PhaseResolution,
     n: int,
+    intact_policy: IntactCombinationPolicy | None = None,
 ) -> tuple[pd.DataFrame, dict]:
     threshold = float(nested_get(optimization_config, "round_policy.intact_probability_threshold", 0.50))
-    pass_pool = annotated[annotated["intact_patch_pass_probability"] >= threshold].reset_index(drop=True)
-    fallback_pool = annotated.reset_index(drop=True)
-    pool = pass_pool if not pass_pool.empty else fallback_pool
-
     mechanical_count = models.mechanical_observation_count
     if phase_resolution.active_phase == PHASE_SCREENING:
-        selected = pool.head(0).copy()
+        selected = annotated.head(0).copy()
         selected.insert(0, "mechanical_selection_rank", pd.Series(dtype=int))
+        selected["mechanical_primary_recommended"] = pd.Series(dtype=bool)
+        selected["mechanical_backup_status"] = pd.Series(dtype=str)
         selected["selection_role"] = "mechanical_test_disabled"
         selected["mechanical_selection_mode"] = "disabled_screening_only"
         metadata = {
@@ -1515,28 +2008,137 @@ def select_mechanical_tests(
             "mechanical_selection_reason": "mechanical recommendations stay off until the selector enters mechanics_enabled",
             "mechanical_observation_count": mechanical_count,
             "intact_probability_threshold": threshold,
-            "pass_pool_size": int(len(pass_pool)),
+            "intact_probability_threshold_role": "unused_screening_only",
+            "pass_pool_size": 0,
+            "primary_mechanical_capacity": int(n),
+            "primary_recommendation_count": 0,
+            "backup_count": 0,
             "botorch_available": bool(botorch_available()),
             "active_phase": phase_resolution.active_phase,
         }
         return selected, metadata
 
-    score, mechanics_metadata = _mechanics_phase_scores(pool, models, registry, optimization_config)
-    mode = mechanics_metadata["pool_selection_mode"]
-    selected_indices = _greedy_diverse_pick(pool, score, registry.feature_names, n)
+    empirical_mode = bool(
+        intact_policy is not None
+        and intact_policy.active
+        and intact_policy.mechanics_mode == "empirical_feasibility_weighted"
+    )
+    if empirical_mode:
+        pool = annotated.reset_index(drop=True)
+        if "mechanics_phase_score" in pool.columns and pd.to_numeric(
+            pool["mechanics_phase_score"], errors="coerce"
+        ).notna().all():
+            score = pd.to_numeric(
+                pool["mechanics_phase_score"], errors="coerce"
+            ).to_numpy(dtype=float)
+            mechanics_metadata = {
+                "pool_selection_mode": "precomputed_feasibility_weighted",
+                "botorch_metadata": {},
+                "intact_feasibility_mode": "empirical_combination_probability_weighting",
+                "classifier_probability_selection_role": "diagnostic_only",
+            }
+        else:
+            score, mechanics_metadata = _mechanics_phase_scores(
+                pool,
+                models,
+                registry,
+                optimization_config,
+                intact_policy=intact_policy,
+            )
+        ranking = pd.DataFrame(
+            {
+                "position": np.arange(len(pool), dtype=int),
+                "score": score,
+                "candidate_id": pool["candidate_id"].astype(str).to_numpy(),
+            }
+        ).sort_values(
+            ["score", "candidate_id"],
+            ascending=[False, True],
+            kind="mergesort",
+        )
+        selected = pool.iloc[ranking["position"].to_numpy(dtype=int)].copy()
+        selected.insert(
+            0,
+            "mechanical_selection_rank",
+            range(1, len(selected) + 1),
+        )
+        primary_count = min(
+            int(n),
+            int(intact_policy.mechanics_primary_test_count),
+        )
+        selected["mechanical_primary_recommended"] = (
+            selected["mechanical_selection_rank"] <= primary_count
+        )
+        selected["mechanical_backup_status"] = np.where(
+            selected["mechanical_primary_recommended"],
+            "primary",
+            "ordered_backup",
+        )
+        mode = "empirical_feasibility_weighted_with_actual_intact_backups"
+        threshold_role = "compatibility_only_not_applied"
+        pass_pool_size = len(pool)
+    else:
+        pass_pool = annotated[
+            annotated["intact_patch_pass_probability"] >= threshold
+        ].reset_index(drop=True)
+        fallback_pool = annotated.reset_index(drop=True)
+        pool = pass_pool if not pass_pool.empty else fallback_pool
+        score, mechanics_metadata = _mechanics_phase_scores(
+            pool,
+            models,
+            registry,
+            optimization_config,
+            intact_policy=intact_policy,
+        )
+        selected_indices = _greedy_diverse_pick(
+            pool, score, registry.feature_names, n
+        )
+        selected = (
+            pool.iloc[selected_indices].copy()
+            if selected_indices
+            else pool.head(0).copy()
+        ).head(n)
+        selected.insert(
+            0,
+            "mechanical_selection_rank",
+            range(1, len(selected) + 1),
+        )
+        selected["mechanical_primary_recommended"] = True
+        selected["mechanical_backup_status"] = "primary"
+        mode = mechanics_metadata["pool_selection_mode"]
+        threshold_role = "active_compatibility_filter"
+        pass_pool_size = len(pass_pool)
 
-    selected = pool.iloc[selected_indices].copy() if selected_indices else pool.head(0).copy()
-    selected = selected.head(n).copy()
-    selected.insert(0, "mechanical_selection_rank", range(1, len(selected) + 1))
-    selected["selection_role"] = "mechanical_test"
+    selected["selection_role"] = np.where(
+        selected["mechanical_primary_recommended"],
+        "mechanical_test_primary",
+        "mechanical_test_backup",
+    )
     selected["mechanical_selection_mode"] = mode
     metadata = {
         "mechanical_selection_mode": mode,
         "mechanical_observation_count": mechanical_count,
         "intact_probability_threshold": threshold,
-        "pass_pool_size": int(len(pass_pool)),
+        "intact_probability_threshold_role": threshold_role,
+        "pass_pool_size": int(pass_pool_size),
+        "primary_mechanical_capacity": int(n),
+        "primary_recommendation_count": int(
+            selected["mechanical_primary_recommended"].sum()
+        ),
+        "backup_count": int(
+            (~selected["mechanical_primary_recommended"]).sum()
+        ),
+        "actual_intact_backup_rule": (
+            "test the first primary/backup priority rows that actually pass "
+            "intact until primary_mechanical_capacity is reached"
+            if empirical_mode
+            else "not_applicable_compatibility_mode"
+        ),
         "botorch_available": bool(botorch_available()),
         "active_phase": phase_resolution.active_phase,
+        "classifier_probability_selection_role": (
+            "diagnostic_only" if empirical_mode else "active_compatibility_mode"
+        ),
     }
     if phase_resolution.active_phase == PHASE_MECHANICS:
         metadata["botorch_metadata"] = mechanics_metadata["botorch_metadata"]
@@ -1554,6 +2156,7 @@ def select_next_round(
     policy_active: bool = False,
     policy_version: str | None = None,
     similarity_audit: SimilarityAudit | None = None,
+    unavailable_feature_names: list[str] | tuple[str, ...] = (),
 ) -> SelectionResult:
     if policy_version is None:
         policy_version = policy_activation(
@@ -1565,6 +2168,29 @@ def select_next_round(
         observations,
         registry,
         optimization_config=dict(optimization_config),
+    )
+    intact_combination_policy = resolve_intact_combination_policy(
+        optimization_config,
+        target_round_number,
+    )
+    intact_evidence = build_intact_evidence(
+        formulations,
+        observations,
+        registry,
+        intact_combination_policy,
+        target_round_number,
+    )
+    cold_start_policy = resolve_cold_start_policy(
+        optimization_config,
+        target_round_number,
+    )
+    cold_start_context = build_cold_start_context(
+        formulations,
+        observations,
+        registry,
+        cold_start_policy,
+        target_round_number,
+        unavailable_feature_names=unavailable_feature_names,
     )
     phase_resolution = resolve_phase_mode(
         formulations,
@@ -1845,6 +2471,21 @@ def select_next_round(
         combined_pool = pd.concat([combined_pool, retest_candidates], ignore_index=True, sort=False)
         combined_pool = combined_pool.drop_duplicates("candidate_id", keep="first")
     combined_pool, zero_active_filtered_count = _drop_zero_active_candidates(combined_pool, registry)
+    combined_pool = annotate_intact_combination_evidence(
+        combined_pool,
+        intact_evidence,
+        registry,
+        intact_combination_policy,
+    )
+    combined_pool = annotate_cold_start_candidates(
+        combined_pool,
+        registry,
+        cold_start_context,
+    )
+    combined_pool["mechanical_feasibility_weight"] = pd.to_numeric(
+        combined_pool["empirical_combination_pass_probability"],
+        errors="coerce",
+    ).fillna(0.50)
     annotated = annotate_candidates(
         combined_pool,
         models,
@@ -1870,6 +2511,7 @@ def select_next_round(
             models,
             registry,
             optimization_config,
+            intact_policy=intact_combination_policy,
         )
         annotated["mechanics_phase_score"] = mechanics_scores
     else:
@@ -1891,6 +2533,7 @@ def select_next_round(
         n=n_viability,
         policy_active=policy_active,
         target_round_number=target_round_number,
+        cold_start_context=cold_start_context,
     )
     mechanical_tests, mechanical_metadata = select_mechanical_tests(
         viability_screen,
@@ -1899,6 +2542,7 @@ def select_next_round(
         optimization_config,
         phase_resolution,
         n=n_mechanical,
+        intact_policy=intact_combination_policy,
     )
     similarity_validation = validate_selected_similarity(
         viability_screen,
@@ -1998,7 +2642,12 @@ def select_next_round(
         optimizer_fallback_status = "used"
     metadata = {
         "viability_screen_count": int(len(viability_screen)),
-        "mechanical_test_count": int(len(mechanical_tests)),
+        "mechanical_test_count": int(
+            mechanical_tests.get(
+                "mechanical_primary_recommended",
+                pd.Series(False, index=mechanical_tests.index),
+            ).astype(bool).sum()
+        ),
         "mechanical_policy": mechanical_metadata,
         "objective_endpoints": ["viability_percent", "critical_axial_load_N_per_needle"],
         "secondary_endpoint": "initial_stiffness_N_per_mm_per_needle",
@@ -2136,6 +2785,16 @@ def select_next_round(
             **similarity_audit.to_metadata(),
             "final_validation": similarity_validation,
         },
+        "intact_combination_policy": intact_policy_metadata(
+            intact_combination_policy,
+            intact_evidence,
+        ),
+        "cold_start_policy": {
+            **cold_start_policy_metadata(cold_start_context),
+            **dict(
+                viability_screen.attrs.get("cold_start_policy", {})
+            ),
+        },
     }
     return SelectionResult(
         viability_screen=viability_screen,
@@ -2174,7 +2833,11 @@ def _write_summary(
     mechanical_instruction = (
         "3. Do not use this sheet for mechanical-test recommendations yet; the recommender stays off during screening_only."
         if active_phase == PHASE_SCREENING
-        else "3. For rows marked mechanical_test_recommended=true and intact_patch_formation_pass=true, run Instron or enter raw critical load."
+        else (
+            "3. After intact results are known, follow mechanical_selection_rank "
+            "and run Instron on the first four rows that actually pass intact; "
+            "skip failed primaries and promote the next intact ordered backup."
+        )
     )
     lines = [
         "CryoMN v2 Next-Round Candidate Summary",
@@ -2260,6 +2923,34 @@ def _write_summary(
         ]
         insertion_index = lines.index("Wet-lab instructions:")
         lines[insertion_index:insertion_index] = frequency_lines
+    intact_metadata = result.metadata.get("intact_combination_policy", {})
+    if bool(intact_metadata.get("active", False)):
+        intact_lines = [
+            "Empirical intact-combination policy:",
+            f"- Version: {intact_metadata.get('policy_version', '')}",
+            "- Exact active ingredient sets only; no individual-ingredient blame.",
+            f"- Unseen-combination pass probability: {float(intact_metadata.get('unseen_combination_pass_probability', 0.50)):.2f}",
+            f"- Screening maximum deduction: {float(intact_metadata.get('screening_max_penalty', 0.20)):.2f}",
+            f"- Mechanics mode: {intact_metadata.get('mechanics_mode', '')}",
+            f"- Classifier selection role: {intact_metadata.get('classifier_probability_selection_role', '')}",
+            "",
+        ]
+        insertion_index = lines.index("Wet-lab instructions:")
+        lines[insertion_index:insertion_index] = intact_lines
+    cold_metadata = result.metadata.get("cold_start_policy", {})
+    if bool(cold_metadata.get("active", False)):
+        cold_lines = [
+            "Cold-start policy:",
+            f"- Version: {cold_metadata.get('policy_version', '')}",
+            f"- Cold ingredients: {', '.join(cold_metadata.get('cold_ingredients', [])) or 'none'}",
+            f"- Maximum ordinary rows per cold ingredient: {int(cold_metadata.get('max_ordinary_rows_per_ingredient', 2))}",
+            f"- Graduation rows selected: {int(cold_metadata.get('graduation_selected_count', 0))}",
+            f"- Cap-driven replacements: {int(cold_metadata.get('cap_replacement_count', 0))}",
+            "- Retests and rescue dilutions are exempt from the cold cap.",
+            "",
+        ]
+        insertion_index = lines.index("Wet-lab instructions:")
+        lines[insertion_index:insertion_index] = cold_lines
     if zero_active_filtered:
         warning_lines = [
             "Warnings:",
@@ -2306,8 +2997,9 @@ def _write_summary(
             )
         lines.append("- " + "; ".join(parts))
         lines.append(f"  formulation: {_format_candidate_line(row, registry)}")
-        if str(row.get("selection_explanation", "")).strip():
-            lines.append(f"  note: {row['selection_explanation']}")
+        explanation = row.get("selection_explanation", "")
+        if pd.notna(explanation) and str(explanation).strip():
+            lines.append(f"  note: {explanation}")
     output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -2323,16 +3015,30 @@ def write_selection_result(
     if registry is None:
         registry = IngredientRegistry.from_config()
     selected = result.viability_screen.copy()
-    selected["mechanical_test_recommended"] = selected["candidate_id"].isin(
-        set(result.mechanical_tests["candidate_id"]) if not result.mechanical_tests.empty else set()
-    )
+    primary_ids = set()
+    if not result.mechanical_tests.empty:
+        primary_mask = result.mechanical_tests.get(
+            "mechanical_primary_recommended",
+            pd.Series(True, index=result.mechanical_tests.index),
+        ).astype(bool)
+        primary_ids = set(
+            result.mechanical_tests.loc[primary_mask, "candidate_id"].astype(str)
+        )
+    selected["mechanical_test_recommended"] = selected[
+        "candidate_id"
+    ].astype(str).isin(primary_ids)
     selected["mechanical_selection_rank"] = ""
     selected["mechanical_selection_mode"] = ""
+    selected["mechanical_backup_status"] = ""
     if not result.mechanical_tests.empty:
         rank_map = result.mechanical_tests.set_index("candidate_id")["mechanical_selection_rank"].to_dict()
         mode_map = result.mechanical_tests.set_index("candidate_id")["mechanical_selection_mode"].to_dict()
+        backup_map = result.mechanical_tests.set_index("candidate_id")[
+            "mechanical_backup_status"
+        ].to_dict()
         selected["mechanical_selection_rank"] = selected["candidate_id"].map(rank_map).fillna("")
         selected["mechanical_selection_mode"] = selected["candidate_id"].map(mode_map).fillna("")
+        selected["mechanical_backup_status"] = selected["candidate_id"].map(backup_map).fillna("")
 
     wetlab_result_columns = [
         "formulation_id",
@@ -2343,6 +3049,7 @@ def write_selection_result(
         "mechanical_test_recommended",
         "mechanical_selection_rank",
         "mechanical_selection_mode",
+        "mechanical_backup_status",
         "batch_id",
         "replicate_id",
         "viability_percent",
@@ -2402,6 +3109,21 @@ def write_selection_result(
         "predicted_critical_axial_load_N_per_needle",
         "critical_axial_load_std",
         "intact_patch_pass_probability",
+        "empirical_combination_pass_probability",
+        "empirical_combination_weighted_passes",
+        "empirical_combination_weighted_failures",
+        "nearest_matching_intact_pass_distance",
+        "nearest_matching_intact_failure_distance",
+        "intact_combination_screening_penalty",
+        "intact_combination_policy_version",
+        "cold_start_ingredients",
+        "cold_start_ingredient_count",
+        "cold_start_prior_evidence_counts",
+        "cold_start_ordinary_exempt",
+        "cold_start_graduation_eligible",
+        "cold_start_graduation_priority",
+        "cold_start_graduation_reason",
+        "mechanical_feasibility_weight",
         "same_formulation_range",
         "local_neighbor_residual",
         "retest_priority_score",
@@ -2472,13 +3194,14 @@ def write_selection_result(
     total_pool["selected_for_viability_screen"] = total_pool["candidate_id"].isin(
         set(result.viability_screen["candidate_id"])
     )
-    total_pool["selected_for_mechanical_test"] = total_pool["candidate_id"].isin(
-        set(result.mechanical_tests["candidate_id"]) if not result.mechanical_tests.empty else set()
-    )
+    total_pool["selected_for_mechanical_test"] = total_pool[
+        "candidate_id"
+    ].astype(str).isin(primary_ids)
     rank_map = result.viability_screen.set_index("candidate_id")["selection_rank"].to_dict()
     total_pool["selection_rank"] = total_pool["candidate_id"].map(rank_map).fillna("")
     total_pool["mechanical_selection_rank"] = ""
     total_pool["mechanical_selection_mode"] = ""
+    total_pool["mechanical_backup_status"] = ""
     if not result.mechanical_tests.empty:
         mech_rank_map = result.mechanical_tests.set_index("candidate_id")[
             "mechanical_selection_rank"
@@ -2486,11 +3209,17 @@ def write_selection_result(
         mech_mode_map = result.mechanical_tests.set_index("candidate_id")[
             "mechanical_selection_mode"
         ].to_dict()
+        mech_backup_map = result.mechanical_tests.set_index("candidate_id")[
+            "mechanical_backup_status"
+        ].to_dict()
         total_pool["mechanical_selection_rank"] = (
             total_pool["candidate_id"].map(mech_rank_map).fillna("")
         )
         total_pool["mechanical_selection_mode"] = (
             total_pool["candidate_id"].map(mech_mode_map).fillna("")
+        )
+        total_pool["mechanical_backup_status"] = (
+            total_pool["candidate_id"].map(mech_backup_map).fillna("")
         )
     total_pool_output = (
         Path(total_candidate_pool_path)

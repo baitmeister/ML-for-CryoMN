@@ -27,6 +27,10 @@ python3 src/08_multi_objective/02_select_candidates/select_candidates.py --batch
 # Score an external candidate pool instead of generating one
 python3 src/08_multi_objective/02_select_candidates/select_candidates.py \
   --candidate-pool path/to/candidate_pool.csv
+
+# Explicitly replace a different frozen proposal only if the round is unstarted
+python3 src/08_multi_objective/02_select_candidates/select_candidates.py \
+  --supersede-unstarted-proposal
 ```
 
 ## Inputs
@@ -67,6 +71,14 @@ proposal has been frozen successfully.
 
 `total_candidate_pool.csv` is a mutable debug artifact and is
 overwritten. It is not copied into every round.
+
+`--supersede-unstarted-proposal` is a narrow policy-migration escape hatch. It
+rejects supersession if the batch has observations, a completed artifact, or
+entered wet-lab values in the active worksheet. Otherwise it archives the old
+proposal directory (CSV, summary, metadata, and plots), active worksheet, and
+current total pool under `rounds/ROUND_###/superseded-policy/`. Its manifest records
+the original SHA-256 hashes, UTC timestamp, replacement reason, and policy
+versions. Normal proposal immutability remains the default.
 
 ## Selection Logic
 
@@ -114,13 +126,11 @@ overwritten. It is not copied into every round.
 7. Resolve the active selection phase automatically:
    - `screening_only` when the paired viability + mechanical evidence threshold is unsatisfied
    - `mechanics_enabled` once the configured evidence thresholds are met
-8. Score the feasible pool with the active phase policy. During
-   `screening_only`, `screening_phase_score` is purely viability-based;
-   predicted intact-formation probability does not gate or score screening
-   candidates. Intact-formation risk is instead handled by the
-   `rescue_dilution` candidates from step 2 and, once `mechanics_enabled`,
-   by mechanics-phase scoring (`penalties.intact_failure_weight`,
-   `round_policy.intact_probability_threshold`).
+8. Score the feasible pool with the active phase policy. From Round 6,
+   `screening_phase_score` is normalized viability UCB minus existing chemistry
+   penalties, the support penalty, and the bounded empirical exact-combination
+   intact deduction. The additive intact classifier is reported but cannot
+   filter or score active screening.
 9. Build the 12-row wet-lab slate from that full-pool ranking, then apply four
    diversity controls before finalizing:
    - **Origin quota** — each candidate-origin bucket (`local_perturbation`,
@@ -152,6 +162,13 @@ overwritten. It is not copied into every round.
      highest-scoring eligible candidate from the same origin, preserving the
      slate size, origin allocation and all other diversity constraints.
      Stage 02 refuses to freeze a violating slate.
+   - **Independent cold-start cap** — from Round 6, every available ingredient
+     with fewer than three distinct prior campaign formulations with measured
+     viability is independently capped at two ordinary rows. A multi-cold row
+     consumes one slot for every cold ingredient it contains. Retest and rescue
+     origins are exempt from this cap, but remain subject to the universal
+     five-row marginal cap. Origin allocation and all other constraints must be
+     preserved; a violation stops freezing rather than being silently relaxed.
 10. Add at most two feasible `retest_priority` formulations using campaign
     `wetlab_feedback` evidence only. Eligibility requires a feedback
     batch-mean range of at least 15 points, a highest-numbered-batch sample SD of at
@@ -160,8 +177,18 @@ overwritten. It is not copied into every round.
     points off its bounds-normalized chemical neighbours. Two agreeing
     batches suppress further neighbour-driven retesting. Model uncertainty
     only breaks ties between eligible rows.
-11. If `mechanics_enabled`, attempt continuous constrained qLogNEHVI and fall
+11. Reserve up to four ordinary Round-6+ positions for cold-start graduation.
+    Offer at most one initial slot per cold ingredient in closest-to-graduation,
+    least-recently-tested, registry order. Use any remaining slots for second
+    distinct-active-set tests closest to graduation, without exceeding the
+    independent cap. A row must contain exactly one cold ingredient and retain
+    its candidate origin. Failed allocations are recorded and reassigned; any
+    unused capacity returns to ordinary score selection.
+12. If `mechanics_enabled`, attempt continuous constrained qLogNEHVI and fall
     back to the constrained finite pool when unavailable or unsuccessful.
+    Final mechanics ranking applies the empirical exact-combination feasibility
+    weight and ranks all 12 slate rows. Ranks 1-4 are primaries and 5-12 are
+    ordered actual-intact backups.
 
 ROUND_001 pool generation is random. ROUND_002+ generation is support-aware and
 chemically constrained. The final 12-candidate selection remains model-scored
@@ -182,8 +209,188 @@ thresholds, wet-lab history count, rejection counts by origin/reference type,
 bounded conflict examples, and the final slate's minimum history and pairwise
 distances. It also records retest evidence, candidate-pool uncertainty,
 selected shared-pair counts, marginal ingredient counts and any
-frequency-driven replacements. None of these diagnostics adds columns to the
-operator worksheet.
+frequency-driven replacements. Round-6 diagnostics are intentionally forwarded
+to the operator worksheet as immutable context; only wet-lab result fields are
+editable.
+
+## Round 6 Screening Formula
+
+The viability surrogate is unchanged. It is a `StandardScaler` plus Gaussian
+process regression with fixed Matérn 2.5 kernel, heteroscedastic
+per-observation `alpha`, `normalize_y=True`, and `optimizer=None`.
+
+```text
+viability UCB = predicted viability mean + 0.35 × predicted viability SD
+screening score = minmax(viability UCB)
+                  - existing chemistry penalties
+                  - support penalty
+                  - intact screening penalty
+```
+
+Viability UCB is a simple screening acquisition heuristic. It is not BoTorch
+qLogNEHVI. A formulation far from support generally receives the GP global mean
+with higher uncertainty. For the pre-Round-6 taurine examples, `56.30 + 0.35 ×
+24.72 = 64.95%`. The cold-start policy limits how many such uncertain rows can
+enter a slate; it does not change scaling, regression fitting, means, or SDs.
+
+### Exact-combination intact evidence
+
+Evidence is limited to completed prior-round `wetlab_feedback`. Technical
+replicates are aggregated per formulation and batch; every measured replicate
+must pass. Active sets use the standard `0.001 M` and `0.1%` presence floors.
+Only identical complete active sets match: an `{A,B}` failure is not evidence
+against `A`, `B`, `{A}`, `{B}`, or `{A,B,C}`.
+
+For a matching set, each ingredient concentration is normalized by its full
+registry range. The distance is RMS over the matched ingredients. A record at
+distance `d ≤ 0.35` receives weight `w=max(0,1-d/0.35)`; farther records have
+zero weight. If `P` and `F` are weighted passes and failures:
+
+```text
+p_combo = (1 + P) / (2 + P + F)
+intact screening penalty = 0.20 × max(0, (0.50 - p_combo) / 0.50)
+```
+
+| Evidence at distance zero | `p_combo` | Screening deduction |
+|---|---:|---:|
+| none | 0.50 | 0.000 |
+| one pass | 0.67 | 0.000 |
+| one failure | 0.33 | 0.067 |
+| two failures | 0.25 | 0.100 |
+| one pass + one failure | 0.50 | 0.000 |
+
+Retest and rescue priority is protected. Their empirical evidence and deduction
+are displayed, but the deduction does not remove their reserved status. The
+additive logistic classifier continues writing
+`intact_patch_pass_probability`; it has no active screening selection role.
+
+## Mechanics Acquisition and Actual-Intact Backups
+
+Mechanics keeps exactly two objectives: viability and critical axial load per
+needle. Intact formation is feasibility, not a third objective and not a fixed
+subtraction from a scale-dependent multi-objective acquisition.
+
+For BoTorch log acquisition:
+
+```text
+constrained log acquisition = qLogNEHVI + log(max(p_combo, 1e-9))
+```
+
+For the executable finite-pool fallback:
+
+```text
+constrained proxy = log1p(raw hypervolume-like improvement × p_combo)
+```
+
+An unseen combination uses `p_combo=0.50`; it remains selectable when its
+objective improvement justifies the uncertainty. In active mode there is no
+`0.80 × (1-classifier probability)` deduction, no classifier `p ≥ 0.50`
+subset, and no classifier-based fallback-to-all. Changing classifier
+predictions therefore cannot change active mechanics ranking.
+
+The selector ranks all 12 slate rows by the constrained mechanics acquisition.
+It writes `mechanical_selection_rank=1..12`, marks 1-4 `primary`, and marks
+5-12 `ordered_backup`. Fabrication determines the executable subset: Instron
+receives the first four priority rows that actually pass intact. Failed
+primaries are skipped; the lowest-numbered intact backup is promoted. If fewer
+than four form intact patches, every intact row is tested and the shortfall is
+recorded. Failed patches can never supply mechanical data.
+
+The compatibility mode `classifier_threshold_penalty` preserves the previous
+classifier threshold, `0.80` classifier-failure deduction, and fallback-to-all
+behavior for reproducibility only. Its threshold key is
+`round_policy.intact_probability_threshold=0.50`; metadata labels it
+`compatibility_only_not_applied` under the active empirical mode.
+
+## Cold-Start Cap and Graduation Algorithm
+
+Cold-start count uses distinct prior campaign formulation IDs with measured
+`viability_percent` and the ingredient above its presence floor. Replicates and
+repeat batches do not add counts; a measured-viability failed patch does.
+Unavailable ingredients are not scheduled. Before Round 6 the available cold
+counts are taurine `0`, myo-inositol `1`, methylcellulose `2`, and propylene
+glycol `2`.
+
+The cold cap applies to ordinary rows only and independently to each cold
+ingredient. A `{taurine,myo-inositol}` row consumes one of both allowances.
+`candidate_origin=retest` and `rescue_dilution` are exempt; completed exempt
+rows can still graduate an ingredient later. Replacements preserve origin,
+slate size, feasibility, similarity, support, boundary count, exact-combination
+limits, shared pairs, and the universal cap of five. No eligible replacement
+means selection fails before freezing.
+
+Graduation ordering is deterministic:
+
+1. Sort by highest prior distinct-formulation count (closest to three).
+2. Break ties by least-recent campaign round, then registry order.
+3. Offer one initial slot per ingredient.
+4. Use remaining capacity for ingredients still below three, considering the
+   evidence count plus already allocated rows and never exceeding two.
+5. Require exactly one cold ingredient and, for two rows targeting the same
+   ingredient, different complete active sets.
+6. Reassign an unfillable slot to the next eligible ingredient; return any
+   unused capacity to ordinary selection.
+
+Selected rows keep their original `candidate_origin` and receive
+`recommendation_type=cold_start_graduation`.
+
+## Configuration and Diagnostics
+
+The active policies start in Round 6 and are versioned as
+`round6_empirical_combination_intact_v1` and
+`round6_cold_start_graduation_v1`.
+
+| Configuration key | Default | Meaning |
+|---|---:|---|
+| `intact_combination_policy.policy_version` | `round6_empirical_combination_intact_v1` | Frozen behavior label in proposals. |
+| `intact_combination_policy.start_round` | `6` | Forward activation round. |
+| `intact_combination_policy.evidence_source_types` | `wetlab_feedback` | Allowed intact evidence source. |
+| `intact_combination_policy.evidence_radius` | `0.35` | Largest matching normalized RMS distance. |
+| `intact_combination_policy.beta_prior_pass`, `beta_prior_fail` | `1.0`, `1.0` | Beta prior giving unseen probability `0.50`. |
+| `intact_combination_policy.screening_neutral_probability` | `0.50` | Probability below which screening is deducted. |
+| `intact_combination_policy.screening_max_penalty` | `0.20` | Largest screening-score deduction. |
+| `intact_combination_policy.mechanics_mode` | `empirical_feasibility_weighted` | Active mechanics feasibility policy. |
+| `intact_combination_policy.compatibility_mode` | `classifier_threshold_penalty` | Deprecated behavior label only. |
+| `intact_combination_policy.numerical_probability_floor` | `1e-9` | Protects `log(p_combo)`. |
+| `intact_combination_policy.mechanics_primary_test_count` | `4` | Initial mechanics capacity. |
+| `intact_combination_policy.mechanics_backup_behavior` | `actual_intact_priority_promotion` | Promotion policy. |
+| `cold_start_policy.policy_version` | `round6_cold_start_graduation_v1` | Frozen cold-policy label. |
+| `cold_start_policy.start_round` | `6` | Forward activation round. |
+| `cold_start_policy.evidence_source_types` | `wetlab_feedback` | Evidence sources allowed to graduate an ingredient. |
+| `cold_start_policy.evidence_endpoint` | `viability_percent` | Measurement required for a distinct formulation to count. |
+| `cold_start_policy.minimum_distinct_formulations` | `3` | Graduation threshold. |
+| `cold_start_policy.max_ordinary_rows_per_ingredient` | `2` | Independent cold cap. |
+| `cold_start_policy.graduation_slots_per_round` | `4` | Maximum graduation reserve. |
+| `cold_start_policy.exempt_candidate_origins` | `retest`, `rescue_dilution` | Cold-cap exceptions. |
+| `cold_start_policy.graduation_max_cold_ingredients_per_row` | `1` | Graduation-row cold content. |
+| `cold_start_policy.graduation_require_distinct_active_sets` | `true` | Diversity for repeated graduation target. |
+| `cold_start_policy.same_origin_replacement_preferred` | `true` | Search ordering favors same-origin replacements. |
+| `cold_start_policy.preserve_origin_allocation` | `true` | Forbids cross-origin replacements. |
+
+Proposal and pool diagnostics include `empirical_combination_pass_probability`,
+weighted nearby passes/failures, nearest pass/failure distances,
+`intact_combination_screening_penalty`, policy version,
+`mechanical_feasibility_weight`, cold ingredient list and prior counts,
+graduation eligibility/priority/reason, and mechanics primary/backup status when
+active. Metadata records classifier role, counts before/after, replacements and
+score changes, allocations/skips/reassignments, primary/backup counts, and the
+actual-pass rule. Completed-round mechanics promotions and shortfalls live in
+`completed/mechanical_execution_manifest.json`.
+
+## Round 6 Rollout
+
+Round 6 is `screening_only`: exactly 12 viability/intact rows, blank mechanics
+priorities, and zero requested Instron tests. The same observation snapshot,
+availability file, random seed (`42`), pool size (`2000`), and 40/35/25
+generation mix are used. Rounds 1-5 remain immutable. If an already-frozen but
+blank Round 6 must be migrated, use the guarded supersession option; it refuses
+any started round and leaves a hash manifest and recoverable archive.
+
+The phase thresholds are unchanged: eight paired objective observations, six
+distinct formulations, and two batches. There is no mechanical-bootstrap phase.
+Unless mechanical data are collected externally or the phase is explicitly
+overridden, automatic selection remains screening-only and the weighted
+mechanics policy stays dormant.
 
 ## Batch ID
 

@@ -33,6 +33,7 @@ def qlognehvi_proxy_scores(
     viability_ucb: np.ndarray,
     critical_load_ucb: np.ndarray,
     reference_point: tuple[float, float] = (0.0, 0.0),
+    feasibility_probability: np.ndarray | None = None,
 ) -> np.ndarray:
     """Finite-pool proxy for qLogNEHVI when BoTorch is unavailable.
 
@@ -45,6 +46,17 @@ def qlognehvi_proxy_scores(
     m = minmax(critical_load_ucb)
     ref_v, ref_m = reference_point
     improvement = np.maximum(v - ref_v, 0.0) * np.maximum(m - ref_m, 0.0)
+    if feasibility_probability is not None:
+        probability = np.clip(
+            np.asarray(feasibility_probability, dtype=float),
+            0.0,
+            1.0,
+        )
+        if probability.shape != improvement.shape:
+            raise ValueError(
+                "feasibility_probability must have one value per candidate."
+            )
+        improvement = improvement * probability
     return np.log1p(improvement)
 
 

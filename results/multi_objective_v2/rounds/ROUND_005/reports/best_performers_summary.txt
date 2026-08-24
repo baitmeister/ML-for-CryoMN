@@ -1,0 +1,81 @@
+CryoMN v2 Best Performers
+=========================
+
+Database snapshot:
+- Formulations tracked: 362
+- Observation rows: 544
+- Candidate formulations shown: 12
+
+Best observed viability performers:
+- scope: feasible wetlab_feedback campaign formulations only
+- #1 v2_237544a25f30 | viability 69.2% | source wetlab_feedback
+  formulation: 304mM ectoin + 1.95M ethylene glycol + 9.32% HSA
+- #2 v2_3e8ef993abba | viability 65.6% | source wetlab_feedback
+  formulation: 240mM ectoin + 1.07M ethylene glycol
+- #3 v2_430e18c49d10 | viability 65.0% | source wetlab_feedback
+  formulation: 152mM ectoin + 974mM ethylene glycol + 4.66% HSA
+- #4 v2_655729013931 | viability 64.9% | source wetlab_feedback
+  formulation: 286mM ectoin + 1.56M ethylene glycol + 154mM glycerol
+- #5 v2_8a721b7d8f1c | viability 64.0% | source wetlab_feedback
+  formulation: 385mM ectoin + 791mM ethylene glycol
+
+Historical literature-reference viability leaders:
+- #1 legacy_lit_38 | viability 100.0%
+  formulation: 1.13M DMSO
+- #2 legacy_lit_37 | viability 100.0%
+  formulation: 986mM DMSO
+- #3 legacy_lit_306 | viability 99.0%
+  formulation: 0.5mM trehalose
+- #4 legacy_lit_309 | viability 99.0%
+  formulation: 1.41M DMSO + 0.5mM trehalose
+- #5 legacy_lit_1 | viability 96.0%
+  formulation: 1.41M DMSO + 70.3mM ectoin + 300mM ethylene glycol + 1mM taurine
+
+Best observed mechanical performers:
+- scope: feasible wetlab_feedback campaign formulations only
+- none yet; no critical axial load measurements are in the v2 database
+
+Balanced multi-objective leaders:
+- scope: feasible wetlab_feedback campaign formulations only
+- none yet; this section appears after formulations have both viability and mechanical measurements
+
+Retest-priority recommendations:
+- none in the current slate
+
+ROUND_005 completed-round candidates:
+- #1 v2_1be28fc1c3ad | predicted viability 59.5% | intact probability 0.52 | mechanical test False
+  completed result: viability 53.34% (sample SD 3.84, n=4); intact fail
+  formulation: 792mM ethylene glycol + 5.03% PVP
+- #2 v2_d9aaefea702e | predicted viability 40.2% | intact probability 0.83 | mechanical test False
+  completed result: viability 9.29% (sample SD 1.99, n=4); intact pass
+  formulation: 264mM ethylene glycol + 1.68% PVP
+- #3 v2_f3bcb989040c | predicted viability 68.5% | intact probability 0.69 | mechanical test False
+  completed result: viability 59.18% (sample SD 4.56, n=4); intact pass
+  formulation: 173mM ectoin + 830mM ethylene glycol + 5.21% FBS
+- #4 v2_88865d95334d | predicted viability 57.0% | intact probability 1.00 | mechanical test False
+  completed result: viability 1.36% (sample SD 0.79, n=4); intact fail
+  formulation: 0.745% methylcellulose + 10% FBS
+- #5 v2_f1b5aed4af5a | predicted viability 55.6% | intact probability 0.98 | mechanical test False
+  completed result: viability 22.14% (sample SD 3.22, n=4); intact pass
+  formulation: 96.1mM DMSO + 113mM ectoin + 241mM ethylene glycol + 0.737mM taurine
+- #6 v2_711df1b41503 | predicted viability 63.2% | intact probability 0.27 | mechanical test False
+  completed result: viability 48.33% (sample SD 6.39, n=4); intact fail
+  formulation: 699mM ethylene glycol + 10% FBS
+- #7 v2_40e9f706b46d | predicted viability 56.0% | intact probability 1.00 | mechanical test False
+  completed result: viability 19.36% (sample SD 6.86, n=4); intact pass
+  formulation: 100mM DMSO + 0.856% methylcellulose
+- #8 v2_011eef292ff1 | predicted viability 57.3% | intact probability 0.75 | mechanical test False
+  completed result: viability 31.85% (sample SD 3.45, n=4); intact pass
+  formulation: 460mM acetamide + 4.46% FBS
+- #9 v2_5526047f869b | predicted viability 57.3% | intact probability 0.18 | mechanical test False
+  completed result: viability 25.52% (sample SD 4.94, n=4); intact pass
+  formulation: 425mM glycerol + 343mM acetamide
+- #10 v2_c52464fe22c3 | predicted viability 57.3% | intact probability 0.91 | mechanical test False
+  completed result: viability 6.93% (sample SD 1.21, n=4); intact pass
+  formulation: 367mM acetamide
+- #11 v2_79ec2bf8acae | predicted viability 57.3% | intact probability 0.76 | mechanical test False
+  completed result: viability 31.50% (sample SD 3.20, n=4); intact pass
+  formulation: 63.6mM DMSO + 466mM acetamide + 5.75% FBS
+- #12 v2_117f554a123f | predicted viability 57.3% | intact probability 0.96 | mechanical test False
+  completed result: viability 11.91% (sample SD 1.83, n=4); intact pass
+  formulation: 58.5mM DMSO + 26.6mM creatine + 349mM acetamide

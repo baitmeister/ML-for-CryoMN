@@ -35,6 +35,11 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv \
   --skip-generate
+
+# Forward a guarded replacement request for a frozen but completely unstarted next proposal
+python3 src/08_multi_objective/03_run_round/run_round.py \
+  results/multi_objective_v2/next_round/next_round_candidates.csv \
+  --supersede-unstarted-proposal
 ```
 
 `--skip-review` is available for advanced debugging, but the normal workflow
@@ -61,6 +66,35 @@ Rejected changes:
 - changed model predictions or uncertainties
 - changed selection ranks, recommendation types or diagnostics
 - added or removed CSV columns
+- mechanical data for any row without a measured intact pass
+- more than four mechanical tests in a mechanics-enabled proposal
+- mechanics results that skip an earlier actual-intact priority row in favor
+  of a later backup
+
+## Actual-Intact Mechanical Workflow
+
+During `screening_only`, including Round 6, the program requests zero Instron
+tests. `mechanical_test_recommended` is false and mechanical priority/backup
+fields are blank. External mechanical observations can still bootstrap the
+campaign, but they require an explicitly measured intact pass and remain
+subject to the four-test capacity.
+
+During `mechanics_enabled`, all 12 rows have a
+`mechanical_selection_rank`. Ranks 1-4 are `primary`; ranks 5-12 are
+`ordered_backup`.
+
+1. Fabricate all 12 patches and fill the intact outcome.
+2. Read rows in ascending `mechanical_selection_rank`.
+3. Run Instron on the first four rows that actually passed intact.
+4. Skip each failed primary and promote the lowest-ranked intact backup.
+5. If fewer than four rows pass, test all intact rows and leave the remainder
+   blank; the completion manifest records the shortfall.
+
+Never enter an Instron file, critical load, or stiffness for a failed patch or
+for a row whose intact gate is blank. The ingestion layer enforces this even if
+the proposal is in compatibility mode. In active empirical mode, it also
+enforces the ordered promotion sequence; it does not use the prospective
+classifier probability to decide which fabricated patches are testable.
 
 ## Outputs
 
@@ -74,7 +108,8 @@ results/multi_objective_v2/rounds/ROUND_###/
 │   ├── selection_metadata.json
 │   └── plots/next_round_candidate_screen.png
 ├── completed/
-│   └── completed.csv
+│   ├── completed.csv
+│   └── mechanical_execution_manifest.json
 └── reports/
     ├── report_summary.txt
     ├── best_performers_summary.txt
@@ -95,6 +130,11 @@ Reports that need more observations are omitted when the data do not support
 them.
 `completed/completed.csv` is an exact byte-for-byte archive of the successfully
 ingested working worksheet.
+
+`mechanical_execution_manifest.json` records whether mechanics was active,
+configured capacity, proposal primary and backup counts, actual intact passes,
+expected and recorded test IDs, backup promotions, actual-pass shortfall, and
+any gate violations. It is frozen alongside the completed worksheet.
 
 `best_performers_summary.txt` collapses technical replicates to one row per
 candidate and selection rank, reporting viability mean, sample SD, replicate
@@ -121,6 +161,25 @@ If no result fields are filled, Stage 03 skips ingestion, completed
 archival and completed-round reporting. Unless `--skip-generate` is supplied,
 it attempts to regenerate the proposal; frozen-proposal conflict
 protection remains active.
+
+## Supersession Safeguards
+
+Normal proposal archives are immutable. The explicit
+`--supersede-unstarted-proposal` option exists only for a policy migration such
+as regenerating a blank Round 6. Stage 02 refuses supersession when any of the
+following is true:
+
+- `observations.csv` already contains the target batch;
+- `rounds/ROUND_###/completed/completed.csv` exists; or
+- the active worksheet contains any entered wet-lab/result value.
+
+For an eligible blank proposal, the original proposal directory—including CSV,
+summary, selection metadata, and plots—is moved to a timestamped
+`rounds/ROUND_###/superseded-policy/` directory. The active worksheet and current
+candidate pool are copied beside it. `supersession_manifest.json` records all
+original SHA-256 hashes, replacement reason, UTC timestamp, safety checks, and
+new policy versions. The archived proposal is recoverable; Rounds 1-5 are never
+rewritten by this option.
 
 The command also refreshes
 `results/multi_objective_v2/current_round_status.json`.
