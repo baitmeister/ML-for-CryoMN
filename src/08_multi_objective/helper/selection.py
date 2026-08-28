@@ -50,6 +50,10 @@ from .intact_policy import (
 )
 from .phase import PHASE_MECHANICS, PHASE_SCREENING, PhaseResolution, resolve_phase_mode
 from .penalties import constraint_report, count_active_ingredients
+from .prediction_labels import (
+    annotate_viability_prediction_labels,
+    is_unknown_viability_status,
+)
 from .registry import IngredientRegistry, presence_threshold
 from .retest import build_retest_candidates
 from .similarity import (
@@ -2493,6 +2497,14 @@ def select_next_round(
         optimization_config,
         policy_active=policy_active,
     )
+    annotated = annotate_viability_prediction_labels(
+        annotated,
+        observations,
+        models,
+        cold_start_context,
+        optimization_config,
+        target_round_number=target_round_number,
+    )
     if policy_active and models.preparation.fitted:
         preparation_threshold = float(
             nested_get(
@@ -2613,6 +2625,9 @@ def select_next_round(
     surrogate_config = (
         nested_get(optimization_config, "surrogate_model", {}) or {}
     )
+    prediction_labeling_config = (
+        nested_get(optimization_config, "prediction_labeling", {}) or {}
+    )
 
     def uncertainty_summary(column: str) -> dict[str, float | None]:
         values = pd.to_numeric(
@@ -2690,7 +2705,7 @@ def select_next_round(
             ),
             "observation_noise_mechanism": "per_observation_alpha",
             "candidate_pool_viability_std": uncertainty_summary(
-                "viability_std"
+                "raw_surrogate_viability_std"
             ),
             "candidate_pool_critical_load_std": uncertainty_summary(
                 "critical_axial_load_std"
@@ -2698,6 +2713,38 @@ def select_next_round(
             "candidate_pool_initial_stiffness_std": uncertainty_summary(
                 "initial_stiffness_std"
             ),
+        },
+        "viability_prediction_labeling": {
+            "policy_version": str(
+                prediction_labeling_config.get(
+                    "policy_version",
+                    "round7_viability_prediction_labeling_v1",
+                )
+            ),
+            "start_round": int(prediction_labeling_config.get("start_round", 7)),
+            "active": bool(
+                prediction_labeling_config.get("enabled", True)
+                and target_round_number is not None
+                and int(target_round_number)
+                >= int(prediction_labeling_config.get("start_round", 7))
+            ),
+            "public_unknown_rule": (
+                "unobserved cold-start, support boundary, or surrogate "
+                "prior reversion"
+            ),
+            "raw_surrogate_retained_for_acquisition_and_evaluation": True,
+            "selected_status_counts": {
+                str(status): int(count)
+                for status, count in viability_screen[
+                    "viability_prediction_status"
+                ].value_counts(dropna=False).items()
+            },
+            "candidate_pool_status_counts": {
+                str(status): int(count)
+                for status, count in annotated[
+                    "viability_prediction_status"
+                ].value_counts(dropna=False).items()
+            },
         },
         "shared_ingredient_pair_diversity": {
             "definition": (
@@ -2951,6 +2998,24 @@ def _write_summary(
         ]
         insertion_index = lines.index("Wet-lab instructions:")
         lines[insertion_index:insertion_index] = cold_lines
+    labeling_metadata = result.metadata.get("viability_prediction_labeling", {})
+    if bool(labeling_metadata.get("active", False)):
+        status_counts = labeling_metadata.get("selected_status_counts", {})
+        unknown_count = sum(
+            int(count)
+            for status, count in status_counts.items()
+            if is_unknown_viability_status(status)
+        )
+        labeling_lines = [
+            "Viability prediction labeling:",
+            f"- Version: {labeling_metadata.get('policy_version', '')}",
+            f"- Candidates labeled unknown: {unknown_count}",
+            "- Unknown candidates keep raw GP values only as acquisition/audit diagnostics.",
+            "- Blank predicted_viability_percent means no reliable public viability estimate.",
+            "",
+        ]
+        insertion_index = lines.index("Wet-lab instructions:")
+        lines[insertion_index:insertion_index] = labeling_lines
     if zero_active_filtered:
         warning_lines = [
             "Warnings:",
@@ -2967,18 +3032,35 @@ def _write_summary(
         "formulation_id",
         "mechanical_test_recommended",
         "predicted_viability_percent",
+        "viability_prediction_status",
         "intact_patch_pass_probability",
         "predicted_critical_axial_load_N_per_needle",
         "active_ingredient_count",
     ]
     for _, row in selected.iterrows():
+        prediction_status = str(
+            row.get("viability_prediction_status", "model_supported")
+        )
+        if is_unknown_viability_status(prediction_status):
+            viability_part = "viability=UNKNOWN"
+        else:
+            predicted_viability = pd.to_numeric(
+                row.get("predicted_viability_percent"),
+                errors="coerce",
+            )
+            viability_part = (
+                f"predicted_viability={float(predicted_viability):.1f}%"
+                if pd.notna(predicted_viability)
+                else "viability=UNKNOWN"
+            )
         parts = [
             f"#{int(row['selection_rank'])}",
             f"candidate_id={row['candidate_id']}",
             f"formulation_id={row['formulation_id']}",
             f"recommendation_type={row.get('recommendation_type', '')}",
             f"mechanical_test={bool(row['mechanical_test_recommended'])}",
-            f"predicted_viability={float(row['predicted_viability_percent']):.1f}%",
+            viability_part,
+            f"viability_status={prediction_status}",
             f"intact_probability={float(row['intact_patch_pass_probability']):.2f}",
         ]
         if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
@@ -2997,6 +3079,25 @@ def _write_summary(
             )
         lines.append("- " + "; ".join(parts))
         lines.append(f"  formulation: {_format_candidate_line(row, registry)}")
+        prediction_reason = str(row.get("viability_prediction_reason", "")).strip()
+        if prediction_reason:
+            raw_mean = pd.to_numeric(
+                row.get("raw_surrogate_viability_mean"),
+                errors="coerce",
+            )
+            raw_std = pd.to_numeric(
+                row.get("raw_surrogate_viability_std"),
+                errors="coerce",
+            )
+            diagnostic = ""
+            if is_unknown_viability_status(prediction_status) and pd.notna(raw_mean):
+                diagnostic = f"; raw surrogate diagnostic={float(raw_mean):.1f}%"
+                if pd.notna(raw_std):
+                    diagnostic += f" ± {float(raw_std):.1f}%"
+                diagnostic += " (not a public prediction)"
+            lines.append(
+                f"  viability note: {prediction_reason}{diagnostic}"
+            )
         explanation = row.get("selection_explanation", "")
         if pd.notna(explanation) and str(explanation).strip():
             lines.append(f"  note: {explanation}")
@@ -3106,6 +3207,18 @@ def write_selection_result(
         "source_type",
         "predicted_viability_percent",
         "viability_std",
+        "viability_prediction_status",
+        "viability_prediction_label",
+        "viability_prediction_reason",
+        "raw_surrogate_viability_mean",
+        "raw_surrogate_viability_std",
+        "viability_surrogate_prior_mean",
+        "viability_surrogate_prior_std",
+        "viability_prior_reversion",
+        "viability_exact_observation_count",
+        "viability_exact_batch_count",
+        "viability_exact_observed_mean",
+        "viability_exact_observed_sources",
         "predicted_critical_axial_load_N_per_needle",
         "critical_axial_load_std",
         "intact_patch_pass_probability",

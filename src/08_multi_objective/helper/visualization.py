@@ -103,6 +103,16 @@ def _format_metric(value: float | None, fmt: str = "{:.2f}") -> str:
     return fmt.format(float(value))
 
 
+def _candidate_viability_text(row: pd.Series) -> str:
+    status = str(row.get("viability_prediction_status", "")).strip()
+    if status.startswith("unknown_"):
+        return f"viability unknown ({status})"
+    value = pd.to_numeric(row.get("predicted_viability_percent"), errors="coerce")
+    if pd.isna(value):
+        return "viability unknown"
+    return f"predicted viability {float(value):.1f}%"
+
+
 def _format_formulation(row: pd.Series, registry: IngredientRegistry) -> str:
     ingredients = []
     for feature_name in registry.feature_names:
@@ -429,8 +439,8 @@ def _write_best_performers_summary(
     else:
         for _, row in retest_candidates.iterrows():
             lines.append(
-                f"- {row.get('formulation_id', '')} | predicted viability "
-                f"{_format_metric(pd.to_numeric(row.get('predicted_viability_percent'), errors='coerce'), '{:.1f}')}% | "
+                f"- {row.get('formulation_id', '')} | "
+                f"{_candidate_viability_text(row)} | "
                 f"intact probability {_format_metric(pd.to_numeric(row.get('intact_patch_pass_probability'), errors='coerce'), '{:.2f}')}"
             )
             if str(row.get("selection_explanation", "")).strip():
@@ -446,8 +456,8 @@ def _write_best_performers_summary(
             selection_rank = pd.to_numeric(row.get("selection_rank"), errors="coerce")
             prefix = f"#{int(selection_rank)}" if pd.notna(selection_rank) else row.get("candidate_id", "candidate")
             lines.append(
-                f"- {prefix} {row.get('formulation_id', '')} | predicted viability "
-                f"{_format_metric(pd.to_numeric(row.get('predicted_viability_percent'), errors='coerce'), '{:.1f}')}% | "
+                f"- {prefix} {row.get('formulation_id', '')} | "
+                f"{_candidate_viability_text(row)} | "
                 f"intact probability {_format_metric(pd.to_numeric(row.get('intact_patch_pass_probability'), errors='coerce'), '{:.2f}')}"
                 f" | mechanical test {bool(row.get('mechanical_test_recommended', False))}"
             )
@@ -991,18 +1001,31 @@ def _save_candidate_plot(
     output_dir: Path,
     artifact_prefix: str = "",
 ) -> Path | None:
-    required = {"predicted_viability_percent", "intact_patch_pass_probability"}
-    if candidates.empty or not required.issubset(set(candidates.columns)):
+    if candidates.empty or "intact_patch_pass_probability" not in candidates.columns:
         return None
     frame = candidates.copy()
-    frame["predicted_viability_percent"] = pd.to_numeric(frame["predicted_viability_percent"], errors="coerce")
+    frame["predicted_viability_percent"] = pd.to_numeric(
+        frame.get("predicted_viability_percent"),
+        errors="coerce",
+    )
+    frame["raw_surrogate_viability_mean"] = pd.to_numeric(
+        frame.get("raw_surrogate_viability_mean"),
+        errors="coerce",
+    )
+    frame["_plot_viability"] = frame["predicted_viability_percent"].fillna(
+        frame["raw_surrogate_viability_mean"]
+    )
+    frame["_unknown_viability"] = frame.get(
+        "viability_prediction_status",
+        pd.Series("", index=frame.index, dtype=object),
+    ).astype(str).str.startswith("unknown_")
     frame["intact_patch_pass_probability"] = pd.to_numeric(frame["intact_patch_pass_probability"], errors="coerce")
     frame["predicted_critical_axial_load_N_per_needle"] = pd.to_numeric(
         frame.get("predicted_critical_axial_load_N_per_needle"),
         errors="coerce",
     )
     frame["selection_rank"] = pd.to_numeric(frame.get("selection_rank"), errors="coerce")
-    frame = frame.dropna(subset=list(required))
+    frame = frame.dropna(subset=["_plot_viability", "intact_patch_pass_probability"])
     if frame.empty:
         return None
 
@@ -1019,18 +1042,20 @@ def _save_candidate_plot(
 
     fig, ax = plt.subplots(figsize=(8, 6))
     fig.patch.set_facecolor(PAGE_BG)
-    high_viability = float(frame["predicted_viability_percent"].quantile(0.75))
+    high_viability = float(frame["_plot_viability"].quantile(0.75))
     high_pass = float(frame["intact_patch_pass_probability"].quantile(0.75))
-    ax.axvspan(high_viability, frame["predicted_viability_percent"].max() + 1, color=GOLD, alpha=0.08)
+    ax.axvspan(high_viability, frame["_plot_viability"].max() + 1, color=GOLD, alpha=0.08)
     ax.axhspan(high_pass, 1.03, color=TEAL, alpha=0.08)
 
-    screen_only = frame.loc[~mechanical_flags]
-    mechanical = frame.loc[mechanical_flags]
+    known = ~frame["_unknown_viability"]
+    screen_only = frame.loc[~mechanical_flags & known]
+    mechanical = frame.loc[mechanical_flags & known]
+    unknown = frame.loc[~known]
     if not screen_only.empty:
         ax.scatter(
-            screen_only["predicted_viability_percent"],
+            screen_only["_plot_viability"],
             screen_only["intact_patch_pass_probability"],
-            s=sizes[~mechanical_flags.to_numpy()],
+            s=sizes[(~mechanical_flags & known).to_numpy()],
             color=BLUE,
             alpha=0.82,
             edgecolor="white",
@@ -1039,27 +1064,39 @@ def _save_candidate_plot(
         )
     if not mechanical.empty:
         ax.scatter(
-            mechanical["predicted_viability_percent"],
+            mechanical["_plot_viability"],
             mechanical["intact_patch_pass_probability"],
-            s=sizes[mechanical_flags.to_numpy()],
+            s=sizes[(mechanical_flags & known).to_numpy()],
             color=CORAL,
             alpha=0.9,
             edgecolor="white",
             linewidth=0.8,
             label="Mechanical follow-up",
         )
+    if not unknown.empty:
+        ax.scatter(
+            unknown["_plot_viability"],
+            unknown["intact_patch_pass_probability"],
+            s=sizes[(~known).to_numpy()],
+            marker="X",
+            color=SLATE,
+            alpha=0.9,
+            edgecolor="white",
+            linewidth=0.8,
+            label="Unknown viability (raw GP diagnostic)",
+        )
     for _, row in frame.nsmallest(5, "selection_rank").iterrows():
         if pd.isna(row["selection_rank"]):
             continue
         ax.annotate(
             f"#{int(row['selection_rank'])}",
-            (row["predicted_viability_percent"], row["intact_patch_pass_probability"]),
+            (row["_plot_viability"], row["intact_patch_pass_probability"]),
             xytext=(6, 6),
             textcoords="offset points",
             fontsize=9,
             color=TEXT,
         )
-    ax.set_xlabel("Predicted viability (%)")
+    ax.set_xlabel("Viability estimate; raw GP diagnostic for unknown rows (%)")
     ax.set_ylabel("Predicted intact-patch probability")
     ax.set_ylim(-0.03, 1.03)
     ax.set_title("Next-round candidate screen", pad=14)

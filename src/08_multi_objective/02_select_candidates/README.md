@@ -233,6 +233,17 @@ with higher uncertainty. For the pre-Round-6 taurine examples, `56.30 + 0.35 ×
 24.72 = 64.95%`. The cold-start policy limits how many such uncertain rows can
 enter a slate; it does not change scaling, regression fitting, means, or SDs.
 
+Starting in Round 7, evidence-aware prediction labeling prevents that global
+mean from being presented as a reliable viability estimate. The selector keeps
+`raw_surrogate_viability_mean` and `raw_surrogate_viability_std` for acquisition
+and frozen prospective evaluation, but blanks the public
+`predicted_viability_percent` and `viability_std` fields when an unobserved
+formulation contains a cold-start ingredient, lies outside formulation support,
+or has mean/uncertainty consistent with prior reversion. The corresponding
+`viability_prediction_status`, label and reason fields explain the decision.
+Exact observed formulations take precedence and remain labeled
+`observed_supported` or `observed_retest`.
+
 ### Exact-combination intact evidence
 
 Evidence is limited to completed prior-round `wetlab_feedback`. Technical

@@ -41,6 +41,7 @@ from helper.mechanics_execution import (  # noqa: E402
 )
 from helper.models import RegressionPrediction  # noqa: E402
 from helper.phase import PHASE_MECHANICS, PHASE_SCREENING, PhaseResolution  # noqa: E402
+from helper.prediction_labels import annotate_viability_prediction_labels  # noqa: E402
 from helper.registry import load_registry  # noqa: E402
 from helper.selection import (  # noqa: E402
     _cold_start_trial_passes_shared_constraints,
@@ -371,6 +372,126 @@ class Round6PolicyTests(unittest.TestCase):
             low_classifier["screening_phase_score"],
             reversed_classifier["screening_phase_score"],
         )
+
+    def test_viability_labels_hide_unknowns_but_preserve_raw_surrogate(self) -> None:
+        policy = resolve_cold_start_policy(self.config, 7)
+        counts = {feature: 3 for feature in self.registry.feature_names}
+        counts["myo_inositol_M"] = 2
+        context = ColdStartContext(
+            policy=policy,
+            evidence_counts=counts,
+            last_campaign_round={
+                feature: None for feature in self.registry.feature_names
+            },
+            cold_ingredients=("myo_inositol_M",),
+        )
+        candidates = pd.DataFrame(
+            [
+                {
+                    **self._formulation("observed", myo_inositol_M=0.4),
+                    "candidate_id": "observed",
+                    "recommendation_type": "retest_priority",
+                    "cold_start_ingredients": "myo_inositol_M",
+                    "cold_start_prior_evidence_counts": "myo_inositol_M=2",
+                    "support_status": "in_support",
+                    "predicted_viability_percent": 8.2,
+                    "viability_std": 1.0,
+                    "viability_ucb": 8.55,
+                },
+                {
+                    **self._formulation("cold", myo_inositol_M=0.2),
+                    "candidate_id": "cold",
+                    "recommendation_type": "screening_candidate",
+                    "cold_start_ingredients": "myo_inositol_M",
+                    "cold_start_prior_evidence_counts": "myo_inositol_M=2",
+                    "support_status": "in_support",
+                    "predicted_viability_percent": 50.0,
+                    "viability_std": 30.0,
+                    "viability_ucb": 60.5,
+                },
+                {
+                    **self._formulation("supported", ectoin_M=0.2),
+                    "candidate_id": "supported",
+                    "recommendation_type": "screening_candidate",
+                    "cold_start_ingredients": "",
+                    "cold_start_prior_evidence_counts": "",
+                    "support_status": "in_support",
+                    "predicted_viability_percent": 62.0,
+                    "viability_std": 5.0,
+                    "viability_ucb": 63.75,
+                },
+                {
+                    **self._formulation("prior", ectoin_M=0.1),
+                    "candidate_id": "prior",
+                    "recommendation_type": "screening_candidate",
+                    "cold_start_ingredients": "",
+                    "cold_start_prior_evidence_counts": "",
+                    "support_status": "in_support",
+                    "predicted_viability_percent": 50.5,
+                    "viability_std": 30.0,
+                    "viability_ucb": 61.0,
+                },
+            ]
+        )
+        observations = pd.DataFrame(
+            [
+                self._observation(
+                    "observed",
+                    "ROUND_006",
+                    "viability_percent",
+                    8.1,
+                )
+            ]
+        )
+        models = SimpleNamespace(
+            viability=SimpleNamespace(fallback_mean=50.0, fitted=True),
+            training_frame=pd.DataFrame(
+                {"viability_percent": [20.0, 50.0, 80.0]}
+            ),
+        )
+        labeled = annotate_viability_prediction_labels(
+            candidates,
+            observations,
+            models,
+            context,
+            self.config,
+            target_round_number=7,
+        ).set_index("candidate_id")
+
+        self.assertEqual(
+            labeled.loc["observed", "viability_prediction_status"],
+            "observed_retest",
+        )
+        self.assertAlmostEqual(
+            labeled.loc["observed", "predicted_viability_percent"],
+            8.2,
+        )
+        self.assertEqual(
+            labeled.loc["cold", "viability_prediction_status"],
+            "unknown_cold_start",
+        )
+        self.assertTrue(
+            pd.isna(labeled.loc["cold", "predicted_viability_percent"])
+        )
+        self.assertTrue(pd.isna(labeled.loc["cold", "viability_std"]))
+        self.assertAlmostEqual(
+            labeled.loc["cold", "raw_surrogate_viability_mean"],
+            50.0,
+        )
+        self.assertAlmostEqual(labeled.loc["cold", "viability_ucb"], 60.5)
+        self.assertEqual(
+            labeled.loc["supported", "viability_prediction_status"],
+            "model_supported",
+        )
+        self.assertAlmostEqual(
+            labeled.loc["supported", "predicted_viability_percent"],
+            62.0,
+        )
+        self.assertEqual(
+            labeled.loc["prior", "viability_prediction_status"],
+            "unknown_prior_reversion",
+        )
+
 
     def test_mechanics_adds_log_empirical_probability_not_classifier_penalty(self) -> None:
         policy = resolve_intact_combination_policy(self.config, 6)

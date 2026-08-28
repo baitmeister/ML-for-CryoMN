@@ -1,0 +1,26 @@
+{
+  "manifest_version": 1,
+  "batch_id": "ROUND_007",
+  "superseded_at_utc": "2026-08-27T09:43:40.059728+00:00",
+  "reason": "Explicit forward-only selection-policy update for an unstarted proposal",
+  "replacement_policy_versions": [
+    "round6_empirical_combination_intact_v1",
+    "round6_cold_start_graduation_v1",
+    "round7_viability_prediction_labeling_v1"
+  ],
+  "safety_checks": {
+    "completed_artifact_absent": true,
+    "batch_observations_absent": true,
+    "active_worksheet_results_blank": true
+  },
+  "proposal_file_sha256": {
+    "plots/next_round_candidate_screen.png": "8eb4b7904022b24c2d82570502b284b024544b0c96ac04216bd64fd42ca93efb",
+    "proposal.csv": "8f3bed61cde7e42b32ad426876af6f9b2684f1c80b23da25ed1e69b7a3a47285",
+    "selection_metadata.json": "b6f2a58b0296819071f6dc8be1012bc5f328017e43fcc0a4b40418d08fe5fc5b",
+    "summary.txt": "789f24ef3e01b00c105c20d2cab6fd066f13a2b82c662da6f47e4c68052640e1"
+  },
+  "additional_file_sha256": {
+    "active_worksheet.csv": "8f3bed61cde7e42b32ad426876af6f9b2684f1c80b23da25ed1e69b7a3a47285",
+    "total_candidate_pool.csv": "2333c4a2c6bee79f1d3d1e475c88297af9f3f7d5c584166656eb41c84ec65b0b"
+  }
+}

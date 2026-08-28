@@ -185,6 +185,17 @@ transfer:
 feedback:
   new_viability_noise_percent: 1.0
 
+prediction_labeling:
+  # Raw surrogate values remain available for acquisition and frozen
+  # prospective evaluation. Public prediction fields are blanked when the
+  # formulation is an unobserved cold start, outside support, or has reverted
+  # to the surrogate's pooled training prior.
+  policy_version: round7_viability_prediction_labeling_v1
+  start_round: 7
+  enabled: true
+  prior_reversion_mean_tolerance_percent: 2.50
+  prior_reversion_std_ratio_threshold: 0.95
+
 selection:
   generated_candidate_pool_size: 2000
   viability_ucb_kappa: 0.35

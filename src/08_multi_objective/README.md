@@ -162,6 +162,12 @@ Round 3 uses a Matérn 2.5 regression kernel with per-observation
 and maximum candidate-pool uncertainty, while prospective reports show
 prediction-interval width alongside coverage.
 
+Round 7 adds forward-only evidence-aware viability labels. Unsupported
+cold-start and prior-reverted surrogate outputs are shown to operators as
+unknown instead of as the pooled GP mean. Raw surrogate mean/SD columns remain
+frozen in the proposal for acquisition provenance and prospective evaluation;
+the public prediction columns are blank for unknown candidates.
+
 Automatic retests use campaign `wetlab_feedback` only. A formulation is
 eligible for at most two available slate slots when feedback batches disagree
 by at least 15 percentage points, the highest-numbered batch has at least three

@@ -196,6 +196,25 @@ def _replicate_count(frame: pd.DataFrame) -> int:
     return int(len(frame))
 
 
+def _proposal_prediction_value(
+    proposal_row: pd.Series,
+    definition: Mapping[str, Any],
+    primary_key: str,
+    fallback_key: str,
+) -> float | None:
+    """Read a frozen prediction with backward compatibility for old rounds."""
+    primary_column = str(definition.get(primary_key, "")).strip()
+    if primary_column:
+        value = _numeric(proposal_row.get(primary_column))
+        if value is not None:
+            return value
+    for column in definition.get(fallback_key, []) or []:
+        value = _numeric(proposal_row.get(str(column)))
+        if value is not None:
+            return value
+    return None
+
+
 def build_round_prospective_table(
     batch_id: str,
     observations: pd.DataFrame,
@@ -260,11 +279,17 @@ def build_round_prospective_table(
         candidate_id = str(proposal_row["candidate_id"])
         formulation_id = str(proposal_row["formulation_id"])
         for endpoint, definition in endpoint_config.items():
-            prediction_mean = _numeric(
-                proposal_row.get(str(definition.get("prediction_mean_column", "")))
+            prediction_mean = _proposal_prediction_value(
+                proposal_row,
+                definition,
+                "prediction_mean_column",
+                "prediction_mean_fallback_columns",
             )
-            prediction_std = _numeric(
-                proposal_row.get(str(definition.get("prediction_std_column", "")))
+            prediction_std = _proposal_prediction_value(
+                proposal_row,
+                definition,
+                "prediction_std_column",
+                "prediction_std_fallback_columns",
             )
             endpoint_observations = round_observations[
                 (round_observations["formulation_id"].astype(str) == formulation_id)

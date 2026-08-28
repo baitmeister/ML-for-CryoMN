@@ -267,6 +267,25 @@
       "maximum": 0.0
     }
   },
+  "viability_prediction_labeling": {
+    "policy_version": "round7_viability_prediction_labeling_v1",
+    "start_round": 7,
+    "active": true,
+    "public_unknown_rule": "unobserved cold-start, support boundary, or surrogate prior reversion",
+    "raw_surrogate_retained_for_acquisition_and_evaluation": true,
+    "selected_status_counts": {
+      "model_supported": 4,
+      "unknown_cold_start": 4,
+      "observed_retest": 2,
+      "unknown_prior_reversion": 2
+    },
+    "candidate_pool_status_counts": {
+      "model_supported": 1328,
+      "unknown_prior_reversion": 496,
+      "unknown_cold_start": 182,
+      "observed_retest": 8
+    }
+  },
   "shared_ingredient_pair_diversity": {
     "definition": "unordered active registry pair above practical presence thresholds; additional ingredients do not change membership",
     "max_non_retest_rows_per_pair": 5,

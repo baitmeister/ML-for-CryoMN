@@ -14,8 +14,10 @@ round_provenance:
 
 endpoints:
   viability_percent:
-    prediction_mean_column: predicted_viability_percent
-    prediction_std_column: viability_std
+    prediction_mean_column: raw_surrogate_viability_mean
+    prediction_mean_fallback_columns: [predicted_viability_percent]
+    prediction_std_column: raw_surrogate_viability_std
+    prediction_std_fallback_columns: [viability_std]
     metric_type: continuous
     role: primary
   intact_patch_formation_pass:

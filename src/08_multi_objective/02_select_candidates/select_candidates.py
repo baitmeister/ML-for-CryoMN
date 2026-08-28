@@ -347,14 +347,17 @@ def main() -> None:
                 observations=observations,
                 active_worksheet=output_dir / "next_round_candidates.csv",
                 reason=(
-                    "Forward-only Round-6 empirical intact-combination and "
-                    "cold-start policy activation"
+                    "Explicit forward-only selection-policy update for an "
+                    "unstarted proposal"
                 ),
                 policy_versions=[
                     result.metadata.get("intact_combination_policy", {}).get(
                         "policy_version", ""
                     ),
                     result.metadata.get("cold_start_policy", {}).get(
+                        "policy_version", ""
+                    ),
+                    result.metadata.get("viability_prediction_labeling", {}).get(
                         "policy_version", ""
                     ),
                 ],

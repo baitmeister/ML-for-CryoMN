@@ -1,0 +1,99 @@
+CryoMN v2 Next-Round Candidate Summary
+==========================================
+
+Batch ID: ROUND_007
+Active phase: screening_only
+Phase reason: auto-selected screening_only: paired_observations=0/8, distinct_formulations=0/6, batches=0/2
+Candidates to make: 12
+Mechanical tests requested: 0
+Mechanical selection mode: disabled_screening_only
+Mechanical observations in database: 0
+Retest-priority formulations in slate: 2
+
+Main database used by selector:
+- data/processed_v2/formulations.csv
+- data/processed_v2/observations.csv
+
+Temporary selection restrictions:
+- human_serum_pct, methoxyphenyl_beta_d_glucopyranoside_M, sericin_pct
+
+Forward-only formulation policy:
+- Version: round5_solubility_viscosity_v2
+- Activation round: ROUND_005
+- Support radius: 1.541
+- Rejected pool rows: 1984
+- Optimizer mode: support_aware_finite_pool_screening
+- Fallback status: not_applicable
+- Fallback reason: screening_only phase
+
+Formulation similarity policy:
+- Version: round3_formulation_similarity_v1
+- Status: active
+- Activation round: ROUND_003
+- Bounds-normalized distance threshold: 0.05
+- Same-single-ingredient minimum relative difference: 50%
+- Historical references: 174
+- Rejected generation/pool rows: 2399
+- Final minimum history distance: 0.06744823005836331
+- Final minimum within-slate distance: 0.06744823005836331
+
+Marginal ingredient-frequency policy:
+- Version: round3_marginal_ingredient_diversity_v1
+- Maximum selected rows per ingredient: 5
+- Retest and rescue rows count toward the limit but are protected from removal.
+- Frequency-driven replacements: 2
+- Final maximum ingredient frequency: 5
+
+Empirical intact-combination policy:
+- Version: round6_empirical_combination_intact_v1
+- Exact active ingredient sets only; no individual-ingredient blame.
+- Unseen-combination pass probability: 0.50
+- Screening maximum deduction: 0.20
+- Mechanics mode: empirical_feasibility_weighted
+- Classifier selection role: compatibility_only
+
+Cold-start policy:
+- Version: round6_cold_start_graduation_v1
+- Cold ingredients: taurine_M, myo_inositol_M
+- Maximum ordinary rows per cold ingredient: 2
+- Graduation rows selected: 2
+- Cap-driven replacements: 2
+- Retests and rescue dilutions are exempt from the cold cap.
+
+Wet-lab instructions:
+1. Make every formulation listed below.
+2. Fill viability_percent and intact_patch_formation_pass in next_round_candidates.csv.
+3. Do not use this sheet for mechanical-test recommendations yet; the recommender stays off during screening_only.
+4. Run 03_run_round/run_round.py after the CSV is filled.
+
+Candidates:
+- #1; candidate_id=retest_v2_6fb2fa9dc5d5; formulation_id=v2_6fb2fa9dc5d5; recommendation_type=retest_priority; mechanical_test=False; predicted_viability=57.4%; intact_probability=0.87; origin=retest; support=in_support
+  formulation: 82.1mM ectoin + 513mM ethylene glycol + 2.03% FBS
+  note: retest_priority: reason=single_batch_neighbor_anomaly_confirmation; feedback_batches=1; batch_range=0.0; latest_batch_n=4; latest_batch_sd=7.0; neighbor_residual=36.0; viability_std_tiebreak=1.0
+- #2; candidate_id=retest_v2_e579d58c9088; formulation_id=v2_e579d58c9088; recommendation_type=retest_priority; mechanical_test=False; predicted_viability=8.2%; intact_probability=0.74; origin=retest; support=in_support
+  formulation: 447mM myo-inositol + 21.7mM creatine + 7.94% FBS
+  note: retest_priority: reason=single_batch_neighbor_anomaly_confirmation; feedback_batches=1; batch_range=0.0; latest_batch_n=4; latest_batch_sd=0.6; neighbor_residual=32.7; viability_std_tiebreak=1.0
+- #3; candidate_id=rescue_000002; formulation_id=v2_c0858ec7c2c6; recommendation_type=rescue_candidate; mechanical_test=False; predicted_viability=24.0%; intact_probability=0.69; origin=rescue_dilution; support=in_support
+  formulation: 528mM ethylene glycol + 3.36% PVP
+  note: rescue_dilution: scaled down a high-viability failed-patch formulation
+- #4; candidate_id=rescue_000005; formulation_id=v2_d880ac9c9187; recommendation_type=rescue_candidate; mechanical_test=False; predicted_viability=16.4%; intact_probability=0.78; origin=rescue_dilution; support=in_support
+  formulation: 396mM ethylene glycol + 2.52% PVP
+  note: rescue_dilution: scaled down a high-viability failed-patch formulation
+- #5; candidate_id=cand_000497; formulation_id=v2_6f20e63adb1d; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=72.9%; intact_probability=0.75; origin=local_perturbation; support=in_support
+  formulation: 193mM ectoin + 583mM ethylene glycol + 5.82% FBS
+- #6; candidate_id=cand_000249; formulation_id=v2_7371aa062562; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=53.5%; intact_probability=0.33; origin=local_perturbation; support=in_support
+  formulation: 299mM glycerol + 167mM glucose + 22.4mM creatine
+- #7; candidate_id=cand_000331; formulation_id=v2_655dce03a47b; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=63.4%; intact_probability=0.95; origin=local_perturbation; support=in_support
+  formulation: 321mM ectoin + 580mM ethylene glycol
+- #8; candidate_id=cand_001166; formulation_id=v2_724742f4ebc1; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=55.3%; intact_probability=0.96; origin=sparse_exploration; support=in_support
+  formulation: 232mM myo-inositol + 27.2mM creatine
+- #9; candidate_id=cand_000813; formulation_id=v2_adfd2284b7fb; recommendation_type=cold_start_graduation; mechanical_test=False; predicted_viability=55.3%; intact_probability=1.00; origin=sparse_exploration; support=in_support
+  formulation: 80.8mM DMSO + 312mM taurine
+  note: cold_start_graduation: ingredient=taurine_M; prior_distinct_formulations=2; graduation_threshold=3
+- #10; candidate_id=cand_001453; formulation_id=v2_a1a1ae0b19bb; recommendation_type=cold_start_graduation; mechanical_test=False; predicted_viability=55.3%; intact_probability=0.61; origin=sparse_exploration; support=in_support
+  formulation: 271mM myo-inositol + 3.36% dextran
+  note: cold_start_graduation: ingredient=myo_inositol_M; prior_distinct_formulations=2; graduation_threshold=3
+- #11; candidate_id=cand_001508; formulation_id=v2_acaa3c7de271; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=55.3%; intact_probability=0.98; origin=boundary_probe; support=in_support
+  formulation: 80.8mM DMSO + 419mM betaine + 26.1mM creatine
+- #12; candidate_id=cand_001571; formulation_id=v2_2df18f043f0c; recommendation_type=screening_candidate; mechanical_test=False; predicted_viability=55.3%; intact_probability=1.00; origin=boundary_probe; support=in_support
+  formulation: 382mM taurine + 16.5mM creatine + 8% FBS
