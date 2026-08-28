@@ -129,12 +129,14 @@ results/multi_objective_v2/rounds/ROUND_###/
 Reports that need more observations are omitted when the data do not support
 them.
 `completed/completed.csv` is an exact byte-for-byte archive of the successfully
-ingested working worksheet.
+ingested working worksheet. Campaign observation provenance points to this
+immutable round-scoped archive rather than the mutable active worksheet.
 
-`mechanical_execution_manifest.json` records whether mechanics was active,
-configured capacity, proposal primary and backup counts, actual intact passes,
-expected and recorded test IDs, backup promotions, actual-pass shortfall, and
-any gate violations. It is frozen alongside the completed worksheet.
+`mechanical_execution_manifest.json` schema v2 records whether mechanics was
+active, configured capacity, proposal primary and backup counts, all measured
+intact passes/failures, mechanically ranked intact passes, expected and recorded
+test IDs, backup promotions, actual-pass shortfall, and any gate violations. It
+is frozen alongside the completed worksheet.
 
 `best_performers_summary.txt` collapses technical replicates to one row per
 candidate and selection rank, reporting viability mean, sample SD, replicate

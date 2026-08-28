@@ -30,6 +30,7 @@ from helper.cold_start import (  # noqa: E402
     resolve_cold_start_policy,
 )
 from helper.config import load_optimization_config  # noqa: E402
+from helper.feedback import ingest_feedback  # noqa: E402
 from helper.intact_policy import (  # noqa: E402
     annotate_intact_combination_evidence,
     build_intact_evidence,
@@ -50,6 +51,7 @@ from helper.selection import (  # noqa: E402
     annotate_candidates,
     select_mechanical_tests,
 )
+from helper.visualization import _aggregate_completed_candidates  # noqa: E402
 
 
 class Round6PolicyTests(unittest.TestCase):
@@ -761,6 +763,11 @@ class Round6PolicyTests(unittest.TestCase):
             completed["candidate_id"].isin(pass_ids), 1.0, np.nan
         )
         audit = validate_mechanics_execution(completed, proposal, primary_capacity=4)
+        self.assertEqual(audit["manifest_version"], 2)
+        self.assertEqual(audit["actual_intact_measured_count"], 12)
+        self.assertEqual(audit["actual_intact_pass_count"], 4)
+        self.assertEqual(audit["actual_intact_fail_count"], 8)
+        self.assertEqual(audit["ranked_actual_intact_pass_count"], 4)
         self.assertEqual(audit["expected_actual_intact_test_ids"], ["c2", "c5", "c6", "c8"])
         self.assertEqual(audit["promoted_backup_ids"], ["c5", "c6", "c8"])
         self.assertEqual(audit["actual_pass_shortfall"], 0)
@@ -788,6 +795,84 @@ class Round6PolicyTests(unittest.TestCase):
         )
         with self.assertRaises(Exception):
             validate_mechanics_execution(five, proposal, primary_capacity=4)
+
+    def test_screening_manifest_counts_intact_outcomes_without_mechanical_ranks(self) -> None:
+        proposal = pd.DataFrame(
+            {
+                "candidate_id": ["c1", "c2", "c3"],
+                "mechanical_selection_rank": [np.nan, np.nan, np.nan],
+                "mechanical_test_recommended": [False, False, False],
+            }
+        )
+        completed = pd.DataFrame(
+            {
+                "candidate_id": ["c1", "c2", "c3"],
+                "intact_patch_formation_pass": ["yes", "pass", "failed"],
+            }
+        )
+        audit = mechanics_execution_audit(completed, proposal, primary_capacity=4)
+        self.assertFalse(audit["mechanics_active_in_proposal"])
+        self.assertEqual(audit["actual_intact_measured_count"], 3)
+        self.assertEqual(audit["actual_intact_pass_count"], 2)
+        self.assertEqual(audit["actual_intact_fail_count"], 1)
+        self.assertEqual(audit["ranked_actual_intact_pass_count"], 0)
+        self.assertEqual(audit["expected_actual_intact_test_ids"], [])
+
+    def test_completed_report_aggregates_text_boolean_replicates(self) -> None:
+        completed = pd.DataFrame(
+            {
+                "candidate_id": ["pass"] * 4 + ["fail"] * 4,
+                "selection_rank": [1] * 4 + [2] * 4,
+                "intact_patch_formation_pass": [
+                    "yes",
+                    "pass",
+                    "TRUE",
+                    "1",
+                    "pass",
+                    "passed",
+                    "failed",
+                    "yes",
+                ],
+            }
+        )
+        summary = _aggregate_completed_candidates(completed).set_index("candidate_id")
+        self.assertEqual(summary.loc["pass", "completed_intact_replicate_count"], 4)
+        self.assertEqual(summary.loc["pass", "completed_intact_pass_fraction"], 1.0)
+        self.assertEqual(summary.loc["pass", "completed_intact_gate_pass"], 1.0)
+        self.assertEqual(summary.loc["fail", "completed_intact_replicate_count"], 4)
+        self.assertEqual(summary.loc["fail", "completed_intact_pass_fraction"], 0.75)
+        self.assertEqual(summary.loc["fail", "completed_intact_gate_pass"], 0.0)
+
+    def test_feedback_records_immutable_observation_source_override(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            candidate = self._formulation("f1", ectoin_M=0.1)
+            candidate["candidate_id"] = "c1"
+            candidate_path = root / "proposal.csv"
+            pd.DataFrame([candidate]).to_csv(candidate_path, index=False)
+            feedback_path = root / "active.csv"
+            pd.DataFrame(
+                [
+                    {
+                        "formulation_id": "f1",
+                        "candidate_id": "c1",
+                        "replicate_id": "rep_001",
+                        "viability_percent": 50.0,
+                        "intact_patch_formation_pass": "yes",
+                    }
+                ]
+            ).to_csv(feedback_path, index=False)
+            immutable_source = "results/multi_objective_v2/rounds/ROUND_999/completed/completed.csv"
+            _, observations = ingest_feedback(
+                feedback_path=feedback_path,
+                candidate_files=[candidate_path],
+                formulations=pd.DataFrame(),
+                observations=pd.DataFrame(),
+                registry=self.registry,
+                batch_id="ROUND_999",
+                observation_source_file=immutable_source,
+            )
+            self.assertEqual(set(observations["source_file"]), {immutable_source})
 
     def test_supersession_rejects_entered_results_and_archives_blank_proposal(self) -> None:
         with tempfile.TemporaryDirectory() as directory:

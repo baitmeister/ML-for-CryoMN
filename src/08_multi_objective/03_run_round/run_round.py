@@ -117,6 +117,15 @@ def _read_or_empty(path: str | Path) -> pd.DataFrame:
     return pd.DataFrame()
 
 
+def _portable_source_path(path: str | Path) -> str:
+    """Return a stable repository-relative path when the artifact is local."""
+    resolved = Path(path).resolve()
+    try:
+        return resolved.relative_to(PROJECT_ROOT).as_posix()
+    except ValueError:
+        return str(resolved)
+
+
 # Columns that helper.feedback.ingest_feedback reads to produce new
 # observation rows. If none of these are filled in across every row of the
 # feedback CSV, the round has not actually progressed yet (no new wet-lab
@@ -303,19 +312,20 @@ def main() -> None:
             batch_date=args.batch_date,
             default_needles_compressed=args.default_needles_compressed,
             viability_noise=_resolve_viability_noise(optimization_config, args.viability_noise),
+            observation_source_file=_portable_source_path(round_paths.completed_csv),
         )
 
-        Path(args.formulations).parent.mkdir(parents=True, exist_ok=True)
-        formulations.to_csv(args.formulations, index=False)
-        observations.to_csv(args.observations, index=False)
-        print(f"Updated formulations: {Path(args.formulations).resolve()} ({len(formulations)} rows)")
-        print(f"Updated observations: {Path(args.observations).resolve()} ({len(observations)} rows)")
         completed_path = archive_completed(
             batch_id,
             args.candidates_csv,
             results_root=results_root,
         )
         print(f"Archived completed worksheet: {completed_path.resolve()}")
+        Path(args.formulations).parent.mkdir(parents=True, exist_ok=True)
+        formulations.to_csv(args.formulations, index=False)
+        observations.to_csv(args.observations, index=False)
+        print(f"Updated formulations: {Path(args.formulations).resolve()} ({len(formulations)} rows)")
+        print(f"Updated observations: {Path(args.observations).resolve()} ({len(observations)} rows)")
         mechanics_manifest = freeze_mechanics_execution_manifest(
             mechanics_audit,
             round_paths.completed_dir / "mechanical_execution_manifest.json",

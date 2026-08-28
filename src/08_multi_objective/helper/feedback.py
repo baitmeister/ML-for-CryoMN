@@ -174,9 +174,15 @@ def ingest_feedback(
     batch_date: str = "",
     default_needles_compressed: int | None = None,
     viability_noise: float = 5.0,
+    observation_source_file: str | Path | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Append one wet-lab feedback CSV into the v2 tables."""
     feedback_path = Path(feedback_path)
+    source_file = str(
+        Path(observation_source_file)
+        if observation_source_file is not None
+        else feedback_path
+    )
     feedback = pd.read_csv(feedback_path)
     candidates = load_candidate_lookup(candidate_files, registry)
     new_observations: list[dict] = []
@@ -219,7 +225,7 @@ def ingest_feedback(
                     1.0 if parsed else 0.0,
                     "binary",
                     "wetlab_feedback",
-                    str(feedback_path),
+                    source_file,
                     notes=notes,
                 )
             )
@@ -245,7 +251,7 @@ def ingest_feedback(
                     1.0,
                     "categorical_indicator",
                     "wetlab_feedback",
-                    str(feedback_path),
+                    source_file,
                     notes=notes,
                 )
             )
@@ -267,7 +273,7 @@ def ingest_feedback(
                     viability,
                     "percent",
                     "wetlab_feedback",
-                    str(feedback_path),
+                    source_file,
                     notes=notes,
                     observation_noise=viability_noise,
                 )
@@ -302,7 +308,7 @@ def ingest_feedback(
                     1.0 if intact else 0.0,
                     "binary",
                     "wetlab_feedback",
-                    str(feedback_path),
+                    source_file,
                     notes=notes,
                 )
             )
@@ -395,7 +401,7 @@ def ingest_feedback(
                         critical_per_needle,
                         "N_per_needle",
                         "wetlab_feedback_raw",
-                        str(feedback_path),
+                        source_file,
                         notes=notes,
                     )
                 )
@@ -418,7 +424,7 @@ def ingest_feedback(
                         stiffness,
                         "N_per_mm_per_needle",
                         "wetlab_feedback_raw",
-                        str(feedback_path),
+                        source_file,
                         notes=notes,
                     )
                 )

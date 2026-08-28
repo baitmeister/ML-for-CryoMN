@@ -80,6 +80,16 @@ def mechanics_execution_audit(
         if rows.apply(_row_has_mechanical_result, axis=1).any():
             tested_ids.add(str(candidate_id))
 
+    actual_intact_passes = sorted(
+        candidate_id
+        for candidate_id, value in intact_by_candidate.items()
+        if value == 1.0
+    )
+    actual_intact_failures = sorted(
+        candidate_id
+        for candidate_id, value in intact_by_candidate.items()
+        if value == 0.0
+    )
     ranked_actual_passes: list[str] = []
     if mechanics_active:
         ranked_actual_passes = [
@@ -139,7 +149,7 @@ def mechanics_execution_audit(
 
     requested_capacity = capacity if mechanics_active else 0
     return {
-        "manifest_version": 1,
+        "manifest_version": 2,
         "mechanics_active_in_proposal": mechanics_active,
         "mechanics_execution_mode": (
             "actual_intact_priority_promotion"
@@ -150,7 +160,10 @@ def mechanics_execution_audit(
         "program_requested_test_count": requested_capacity,
         "proposal_primary_count": len(primary_ids),
         "proposal_backup_count": len(backup_ids),
-        "actual_intact_pass_count": len(ranked_actual_passes),
+        "actual_intact_measured_count": len(actual_intact_passes) + len(actual_intact_failures),
+        "actual_intact_pass_count": len(actual_intact_passes),
+        "actual_intact_fail_count": len(actual_intact_failures),
+        "ranked_actual_intact_pass_count": len(ranked_actual_passes),
         "expected_actual_intact_test_ids": expected_test_ids,
         "recorded_mechanical_test_ids": sorted(tested_ids),
         "promoted_backup_ids": promoted_ids,

@@ -24,14 +24,14 @@ if __package__ in (None, ""):
     if str(V2_ROOT) not in sys.path:
         sys.path.insert(0, str(V2_ROOT))
     from helper.config import load_optimization_config
-    from helper.endpoints import INTACT_PATCH_ENDPOINT, aggregate_intact_patch_replicates
+    from helper.endpoints import INTACT_PATCH_ENDPOINT, aggregate_intact_patch_replicates, parse_bool
     from helper.feasibility import annotate_feasibility
     from helper.models import build_training_frame, train_endpoint_models
     from helper.paths import FORMULATIONS_PATH, NEXT_ROUND_CANDIDATES_PATH, OBSERVATIONS_PATH, VISUALIZATIONS_DIR
     from helper.registry import IngredientRegistry, load_registry
 else:
     from .config import load_optimization_config
-    from .endpoints import INTACT_PATCH_ENDPOINT, aggregate_intact_patch_replicates
+    from .endpoints import INTACT_PATCH_ENDPOINT, aggregate_intact_patch_replicates, parse_bool
     from .feasibility import annotate_feasibility
     from .models import build_training_frame, train_endpoint_models
     from .paths import FORMULATIONS_PATH, NEXT_ROUND_CANDIDATES_PATH, OBSERVATIONS_PATH, VISUALIZATIONS_DIR
@@ -111,6 +111,11 @@ def _candidate_viability_text(row: pd.Series) -> str:
     if pd.isna(value):
         return "viability unknown"
     return f"predicted viability {float(value):.1f}%"
+
+
+def _boolean_numeric(value: object) -> float:
+    parsed = parse_bool(value)
+    return np.nan if parsed is None else float(parsed)
 
 
 def _format_formulation(row: pd.Series, registry: IngredientRegistry) -> str:
@@ -248,9 +253,8 @@ def _aggregate_completed_candidates(candidates: pd.DataFrame) -> pd.DataFrame:
     if "intact_patch_formation_pass" in frame.columns:
         intact = (
             frame.assign(
-                _intact_numeric=pd.to_numeric(
-                    frame["intact_patch_formation_pass"],
-                    errors="coerce",
+                _intact_numeric=frame["intact_patch_formation_pass"].map(
+                    _boolean_numeric
                 )
             )
             .groupby(grouping, dropna=False, sort=False)["_intact_numeric"]

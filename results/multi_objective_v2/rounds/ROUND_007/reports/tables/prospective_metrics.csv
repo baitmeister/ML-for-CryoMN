@@ -1,0 +1,4 @@
+scope,round_id,provenance_class,formal_cohort,endpoint,endpoint_role,n_proposed,n_evaluated,completion_rate,mae,rmse,bias,r2,interval_95_coverage,interval_95_mean_width,interval_95_median_width,brier_score,accuracy
+round,ROUND_007,formal_frozen,True,critical_axial_load_N_per_needle,mechanical_secondary,12,0,0.0,,,,,,,,,
+round,ROUND_007,formal_frozen,True,intact_patch_formation_pass,gate_secondary,12,12,1.0,,,,,,,,0.07469923835233049,0.9166666666666666
+round,ROUND_007,formal_frozen,True,viability_percent,primary,12,12,1.0,22.18776496960027,29.00029925263236,20.43958094525095,-1.597090165554111,0.6666666666666666,60.04486819641365,72.07728122297885,,
