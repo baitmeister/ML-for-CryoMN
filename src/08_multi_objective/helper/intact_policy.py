@@ -28,7 +28,6 @@ class IntactCombinationPolicy:
     mechanics_mode: str
     compatibility_mode: str
     numerical_probability_floor: float
-    mechanics_primary_test_count: int
     mechanics_backup_behavior: str
 
 
@@ -44,7 +43,6 @@ def resolve_intact_combination_policy(
     neutral = float(cfg.get("screening_neutral_probability", 0.50))
     max_penalty = float(cfg.get("screening_max_penalty", 0.20))
     probability_floor = float(cfg.get("numerical_probability_floor", 1e-9))
-    primary_test_count = int(cfg.get("mechanics_primary_test_count", 4))
     source_types = tuple(
         str(value).strip()
         for value in cfg.get("evidence_source_types", ["wetlab_feedback"])
@@ -73,10 +71,6 @@ def resolve_intact_combination_policy(
         raise ValueError(
             "intact_combination_policy.numerical_probability_floor must be in (0, 1)."
         )
-    if primary_test_count < 1:
-        raise ValueError(
-            "intact_combination_policy.mechanics_primary_test_count must be at least 1."
-        )
     if mechanics_mode not in {
         "empirical_feasibility_weighted",
         "classifier_threshold_penalty",
@@ -104,7 +98,6 @@ def resolve_intact_combination_policy(
         mechanics_mode=mechanics_mode,
         compatibility_mode=compatibility_mode,
         numerical_probability_floor=probability_floor,
-        mechanics_primary_test_count=primary_test_count,
         mechanics_backup_behavior=str(
             cfg.get(
                 "mechanics_backup_behavior",
@@ -324,7 +317,6 @@ def intact_policy_metadata(
         "screening_max_penalty": policy.screening_max_penalty,
         "mechanics_mode": policy.mechanics_mode,
         "compatibility_mode": policy.compatibility_mode,
-        "mechanics_primary_test_count": policy.mechanics_primary_test_count,
         "mechanics_backup_behavior": policy.mechanics_backup_behavior,
         "classifier_probability_selection_role": (
             "compatibility_only"

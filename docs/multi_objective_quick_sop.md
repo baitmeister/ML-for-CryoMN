@@ -88,4 +88,11 @@ results/multi_objective_v2/rounds/ROUND_###/proposal/
   the configured neighbour-anomaly evidence; model uncertainty only breaks
   ties among eligible formulations.
 - `screening_only` uses viability selection and the intact-patch gate.
-- `mechanics_enabled` adds critical axial load per needle to selection.
+- `mechanics_bootstrap` allocates four diversity-oriented mechanical tests
+  after the screening-entry requirement is met.
+- `mechanics_hybrid` allocates two qLogNEHVI, one local, and one coverage role
+  after the 8/6/2 paired-evidence gate.
+- `mechanics_enabled` uses the full mechanics policy after the 16/12/3 gate.
+- Enter mechanics only for numeric-ranked actual-intact rows, promote backups
+  in rank order, and never exceed four tests.
+- Remeasure viability, intact formation, and load for a bootstrap anchor.

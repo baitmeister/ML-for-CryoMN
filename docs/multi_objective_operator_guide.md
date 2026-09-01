@@ -98,7 +98,8 @@ Stage 02:
 - reads the database and configuration
 - applies ingredient availability to sampling
 - applies the round-resolved feasibility policy to every candidate path
-- resolves `screening_only` or `mechanics_enabled`
+- resolves `screening_only`, `mechanics_bootstrap`, `mechanics_hybrid`, or
+  `mechanics_enabled` from completed-screening and paired-mechanics evidence
 - enforces support, similarity and slate-diversity controls
 - writes the `next_round/` files
 - freezes proposal copies under `rounds/ROUND_###/proposal/`
@@ -129,6 +130,13 @@ Fill as applicable:
 
 Leave unmeasured fields blank. Duplicate a proposal row for technical
 replicates and use distinct `replicate_id` values. Row reordering is allowed.
+
+Enter mechanical results only for rows with a numeric
+`mechanical_selection_rank` that actually pass intact. Follow numeric rank
+order until four passing rows have been tested. Leave unused capacity blank
+when fewer than four ranked rows pass; do not substitute an unranked row.
+Remeasure viability, intact formation, and load for a `mechanics_anchor` under
+the worksheet batch ID.
 
 Do not change:
 
@@ -214,3 +222,6 @@ python3 src/08_multi_objective/04_report_campaign/report_campaign.py \
 - `reports/` contains outputs derived from the database.
 - `next_round/next_round_candidates.csv` is the only result-entry file.
 - `total_candidate_pool.csv` is an audit pool and must not receive results.
+
+The four-phase gates, anchor rules, and transition roles are defined in the
+[canonical mechanics policy](../src/08_multi_objective/README.md#evidence-gated-mechanics-transition).

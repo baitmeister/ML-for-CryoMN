@@ -2,103 +2,193 @@
 
 ## Purpose
 
-Advance one real wet-lab round with a provenance check and round-scoped
-artifacts:
+Stage 03 validates the filled worksheet against the frozen proposal, enforces
+actual-intact mechanical execution, ingests same-batch measurements, archives
+the exact completed sheet, generates reports, and freezes the following
+proposal.
 
-1. validate the filled working sheet against the frozen pre-bench proposal
-2. ingest the wet-lab results
-3. archive the exact filled worksheet bytes
-4. generate replicate-aggregated descriptive reports and
-   formulation-grouped cross-validation reports from the updated database
-5. evaluate the archived proposal-time predictions for the completed round
-6. refresh the cumulative prospective report
-7. generate and freeze the next proposal
+The canonical mechanics policy is documented in
+[Evidence-gated mechanics transition](../README.md#evidence-gated-mechanics-transition).
 
-This is the supported entry point for normal round progression.
-
-## Command
+## Command and phase controls
 
 ```bash
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv
 ```
 
-## Options
+Optional controls:
 
 ```bash
-# Override the automatic selection phase for auditing/debugging
-python3 src/08_multi_objective/03_run_round/run_round.py \
-  results/multi_objective_v2/next_round/next_round_candidates.csv \
-  --phase-mode mechanics_enabled
-
-# Ingest, archive and report, but do not generate the next round
+# Stop after validation, ingestion, archival, and reporting
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv \
   --skip-generate
 
-# Forward a guarded replacement request for a frozen but completely unstarted next proposal
+# Override the phase used for the following proposal for audit/debugging
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv \
-  --supersede-unstarted-proposal
+  --phase-mode mechanics_hybrid
 ```
 
-`--skip-review` is available for advanced debugging, but the normal workflow
-always generates completed-round reports.
+`--phase-mode` accepts `auto`, `screening_only`, `mechanics_bootstrap`,
+`mechanics_hybrid`, and `mechanics_enabled`. Explicit values are recorded as
+manual overrides; `auto` evaluates the configured screening, hybrid, and full
+evidence gates.
 
-## Validation Rules
+## Worksheet entry
 
-Before changing the database, Stage 03 requires the working sheet to match the
-frozen proposal.
+Edit only:
 
-Allowed changes:
+```text
+results/multi_objective_v2/next_round/next_round_candidates.csv
+```
 
-- wet-lab result fields
-- optional preparation and mechanical fields
-- `replicate_id` and `notes`
-- row reordering
-- row duplication for technical replicates
+Fill the result fields that were measured:
 
-Rejected changes:
+| Column | Operator action |
+|---|---|
+| `replicate_id` | Give duplicated technical-replicate rows distinct IDs. |
+| `viability_percent` | Enter post-thaw viability from `0` to `100`. |
+| `intact_patch_formation_pass` | Enter `yes/no`, `pass/fail`, `true/false`, or `1/0`. |
+| `no_slurry`, `no_collapse` | Optional formation details used by the intact gate. |
+| `intact_tip_count`, `total_tip_count` | Optional quantitative formation details. |
+| preparation fields | Record preparation, homogeneity, fillability, and failure reason when assessed. |
+| `instron_file` | Enter the raw Bluehill CSV path only for an eligible actual-intact row. |
+| `needles_compressed` | Required with an Instron file or total-load entry. |
+| critical-load fields | Enter per-needle load, or total load with needle count. |
+| initial-stiffness field | Optional diagnostic endpoint. |
+| `notes` | Record handling, deviations, or test context. |
 
-- unknown or missing proposal candidates
-- changed formulation or candidate identity
-- changed composition
-- changed model predictions or uncertainties
-- changed selection ranks, recommendation types or diagnostics
-- added or removed CSV columns
-- mechanical data for any row without a measured intact pass
-- more than four mechanical tests in a mechanics-enabled proposal
-- mechanics results that skip an earlier actual-intact priority row in favor
-  of a later backup
+Leave unmeasured fields blank. Duplicate a proposal row for technical
+replicates; do not replace the original candidate or create another formulation
+identity. Row reordering is allowed.
 
-## Actual-Intact Mechanical Workflow
+Do not change candidate/formulation/batch IDs, ingredient concentrations,
+recommendation type, screening or mechanical rank, transition role,
+predictions, uncertainties, repeat status, diagnostics, or CSV columns.
 
-During `screening_only`, including Round 6, the program requests zero Instron
-tests. `mechanical_test_recommended` is false and mechanical priority/backup
-fields are blank. External mechanical observations can still bootstrap the
-campaign, but they require an explicitly measured intact pass and remain
-subject to the four-test capacity.
+## Same-batch paired measurements
 
-During `mechanics_enabled`, all 12 rows have a
-`mechanical_selection_rank`. Ranks 1-4 are `primary`; ranks 5-12 are
-`ordered_backup`.
+A mechanics training pair requires `viability_percent` and
+`critical_axial_load_N_per_needle` for the same `formulation_id` and
+`batch_id`. An intact pass for that batch is required before the load can be
+accepted. Measurements copied from another batch do not form a same-batch
+pair.
 
-1. Fabricate all 12 patches and fill the intact outcome.
-2. Read rows in ascending `mechanical_selection_rank`.
-3. Run Instron on the first four rows that actually passed intact.
-4. Skip each failed primary and promote the lowest-ranked intact backup.
-5. If fewer than four rows pass, test all intact rows and leave the remainder
-   blank; the completion manifest records the shortfall.
+Technical replicates may supply multiple worksheet rows. Continuous endpoints
+aggregate by mean and intact replicates use the conservative all-pass rule.
+The database therefore creates one formulation–batch training row, not one
+paired observation per technical replicate.
 
-Never enter an Instron file, critical load, or stiffness for a failed patch or
-for a row whose intact gate is blank. The ingestion layer enforces this even if
-the proposal is in compatibility mode. In active empirical mode, it also
-enforces the ordered promotion sequence; it does not use the prospective
-classifier probability to decide which fabricated patches are testable.
+A `mechanics_anchor` is deliberately measured in another batch. Its viability,
+intact, and mechanical fields must all be filled from the repeated experiment;
+never copy the source-batch values. Ingestion creates a second
+formulation–batch pair and preserves the source pair.
+
+## Actual-intact execution for partially ranked slates
+
+Every proposal contains 12 viability/intact rows, but only rows with a numeric
+`mechanical_selection_rank` belong to the mechanical priority list. A slate may
+therefore be partially ranked when retests, mechanically observed formulations,
+or other screening-only rows are present.
+
+The execution sequence is:
+
+1. Fabricate and record viability/intact results for all 12 rows.
+2. Ignore every row whose mechanical rank is blank.
+3. Read numeric mechanical ranks in ascending order.
+4. Run Instron on the first four ranked rows that actually pass intact.
+5. Skip a failed or blank-intact primary and promote the next ranked
+   actual-intact backup.
+6. If fewer than four ranked rows pass intact, test every ranked passing row and
+   leave the unused capacity blank.
+
+`mechanical_test_recommended=true` identifies the proposal-time primaries; it
+does not authorize a failed patch. Actual intact outcome and numeric rank define
+the executable set. The empirical or classifier pass probability is never a
+substitute for the measured intact gate.
+
+## Rejection and shortfall rules
+
+Stage 03 rejects the worksheet before database mutation when it contains:
+
+- unknown or missing proposal candidates;
+- changed identity, composition, rank, role, prediction, or diagnostics;
+- mechanical data on an unranked row;
+- mechanical data on a failed-intact or blank-intact row;
+- a later passing backup tested while an earlier passing rank is skipped;
+- more than four formulations with mechanical results;
+- carried mechanical values on an anchor instead of same-batch remeasurement;
+- changed or missing CSV columns.
+
+A lack of four passing ranked patches is not a validation error. It is an
+execution shortfall: record the available ranked passing tests, leave all other
+mechanical fields blank, and let the completion manifest report the unused
+capacity. Do not fill a failed, unranked, or disallowed-repeat formulation to
+reach the nominal capacity.
+
+## Optional Instron import
+
+Store raw files under a batch directory:
+
+```text
+data/raw/instron/ROUND_###/
+```
+
+The helper can parse one file into the active worksheet:
+
+```bash
+python3 src/08_multi_objective/helper/instron.py \
+  data/raw/instron/ROUND_###/example.csv \
+  --formulation-id v2_example \
+  --batch-id ROUND_### \
+  --replicate-id rep_001 \
+  --needles-compressed 100
+```
+
+The worksheet is still subject to frozen-proposal and mechanical-execution
+validation when Stage 03 runs.
+
+## Validation and progression order
+
+Stage 03 performs these operations in order:
+
+1. compare the working worksheet with the frozen proposal;
+2. validate actual-intact mechanics rank promotion and capacity;
+3. ingest formulations and endpoint observations;
+4. archive the exact worksheet bytes as `completed/completed.csv`;
+5. freeze `completed/mechanical_execution_manifest.json`;
+6. generate replicate-aggregated descriptive, formulation-grouped
+   cross-validation, and frozen-proposal prospective reports;
+7. refresh cumulative prospective reports;
+8. run Stage 02 for the following proposal unless `--skip-generate` is set.
+
+If reporting fails after ingestion, the database update and completed archive
+remain available and proposal generation does not proceed. Re-running the
+command is safe because archive compatibility is verified.
+
+## Completion manifest
+
+`mechanical_execution_manifest.json` records:
+
+- resolved phase and proposal selection policy;
+- configured capacity and proposal primary/backup counts;
+- transition role, rank, prior-mechanics count, and repeat status for each
+  mechanically ranked candidate;
+- anchor decision, source batch, and selection score from proposal metadata;
+- qLogNEHVI availability/errors and optimizer fallback mode;
+- measured intact pass/fail counts;
+- expected and recorded mechanical test IDs;
+- promoted backup IDs and promotion count;
+- unranked, failed-intact, and unconfirmed-intact mechanical IDs;
+- actual-intact shortfall and validation violations.
+
+The manifest should be interpreted with the frozen proposal. A nonzero
+`actual_pass_shortfall` means the batch had fewer than four ranked actual-intact
+patches; it does not authorize a replacement outside the numeric rank list.
 
 ## Outputs
-
-After a successful `ROUND_###` ingestion:
 
 ```text
 results/multi_objective_v2/rounds/ROUND_###/
@@ -106,7 +196,7 @@ results/multi_objective_v2/rounds/ROUND_###/
 │   ├── proposal.csv
 │   ├── summary.txt
 │   ├── selection_metadata.json
-│   └── plots/next_round_candidate_screen.png
+│   └── plots/
 ├── completed/
 │   ├── completed.csv
 │   └── mechanical_execution_manifest.json
@@ -115,76 +205,19 @@ results/multi_objective_v2/rounds/ROUND_###/
     ├── best_performers_summary.txt
     ├── prospective_evaluation_summary.txt
     ├── tables/
-    │   ├── model_evaluation_table.csv
-    │   ├── prospective_evaluation_table.csv
-    │   └── prospective_metrics.csv
     └── plots/
-        ├── endpoint_observation_counts.png
-        ├── model_evaluation_overview.png
-        ├── observed_performance_landscape.png
-        ├── prospective_prediction_vs_observed.png
-        └── prospective_gate_calibration.png
 ```
 
-Reports that need more observations are omitted when the data do not support
-them.
-`completed/completed.csv` is an exact byte-for-byte archive of the successfully
-ingested working worksheet. Campaign observation provenance points to this
-immutable round-scoped archive rather than the mutable active worksheet.
+`completed.csv` is the exact ingested worksheet. Proposal-time prospective
+reports read frozen predictions and do not retrain. Model-evaluation reports
+use formulation-grouped cross-validation so batches of the same chemistry stay
+within one fold.
 
-`mechanical_execution_manifest.json` schema v2 records whether mechanics was
-active, configured capacity, proposal primary and backup counts, all measured
-intact passes/failures, mechanically ranked intact passes, expected and recorded
-test IDs, backup promotions, actual-pass shortfall, and any gate violations. It
-is frozen alongside the completed worksheet.
+## Archive safeguards
 
-`best_performers_summary.txt` collapses technical replicates to one row per
-candidate and selection rank, reporting viability mean, sample SD, replicate
-count and one formulation-level intact outcome. Continuous endpoints use the
-replicate mean; the intact gate passes only if every measured patch replicate
-passes. Its main campaign rankings use feasible
-`wetlab_feedback` formulations; literature leaders appear separately as
-literature references.
-
-`model_evaluation_*` uses formulation-grouped cross-validation, so every batch
-of the same chemistry stays in one fold, and may retrain from the
-database. `prospective_*` uses only archived proposal-time predictions and
-never retrains. Round 1 is reconstructed, Round 2 is supplementary, and Round
-3+ supplies the formal pooled viability MAE. Coverage is reported with
-interval width. The cumulative bundle is written under
-`results/multi_objective_v2/reports/prospective/`.
-
-Only after completed-round reporting succeeds does Stage 02 replace the active
-`next_round/` files and freeze the following round proposal. If report
-generation fails, the database update and completed archive are retained, the
-next slate is not generated, and the same command can be rerun safely.
-
-If no result fields are filled, Stage 03 skips ingestion, completed
-archival and completed-round reporting. Unless `--skip-generate` is supplied,
-it attempts to regenerate the proposal; frozen-proposal conflict
-protection remains active.
-
-## Supersession Safeguards
-
-Normal proposal archives are immutable. The explicit
-`--supersede-unstarted-proposal` option exists only for a policy migration such
-as regenerating a blank Round 6. Stage 02 refuses supersession when any of the
-following is true:
-
-- `observations.csv` already contains the target batch;
-- `rounds/ROUND_###/completed/completed.csv` exists; or
-- the active worksheet contains any entered wet-lab/result value.
-
-For an eligible blank proposal, the original proposal directory—including CSV,
-summary, selection metadata, and plots—is moved to a timestamped
-`rounds/ROUND_###/superseded-policy/` directory. The active worksheet and current
-candidate pool are copied beside it. `supersession_manifest.json` records all
-original SHA-256 hashes, replacement reason, UTC timestamp, safety checks, and
-new policy versions. The archived proposal is recoverable; Rounds 1-5 are never
-rewritten by this option.
-
-The command also refreshes
-`results/multi_objective_v2/current_round_status.json`.
-
-Read-only backfill or refresh commands are documented under
-[`04_report_campaign`](../04_report_campaign/README.md).
+Files under `rounds/ROUND_###/proposal/` and `completed/` are immutable campaign
+records. The guarded `--supersede-unstarted-proposal` path applies only to a
+proposal with no batch observations, no completion archive, and no entered
+result values. It moves the superseded proposal and related working artifacts
+to a recoverable directory with SHA-256 hashes; it does not alter completed or
+historical artifacts.

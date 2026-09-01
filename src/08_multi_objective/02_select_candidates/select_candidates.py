@@ -78,7 +78,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=None, help="Random seed for generated pool.")
     parser.add_argument(
         "--phase-mode",
-        choices=["auto", "screening_only", "mechanics_enabled"],
+        choices=[
+            "auto",
+            "screening_only",
+            "mechanics_bootstrap",
+            "mechanics_hybrid",
+            "mechanics_enabled",
+        ],
         default=None,
         help="Optional override for the automatic selection phase.",
     )
@@ -393,6 +399,28 @@ def main() -> None:
         source_observations_path=args.observations,
         active_phase=result.metadata["active_phase"],
         phase_reason=result.metadata.get("phase_resolution", {}).get("reason", ""),
+        phase_resolution=result.metadata.get("phase_resolution", {}),
+        proposal_policy={
+            "mechanics_transition": result.metadata.get("mechanics_transition", {}),
+            "mechanical_policy": result.metadata.get("mechanical_policy", {}),
+            "continuous_qlognehvi": result.metadata.get("continuous_qlognehvi", {}),
+            "optimizer_mode": result.metadata.get("optimizer_mode", ""),
+            "optimizer_fallback_status": result.metadata.get(
+                "optimizer_fallback_status", ""
+            ),
+            "ranked_candidates": (
+                result.mechanical_tests[
+                    [
+                        "candidate_id",
+                        "mechanical_selection_rank",
+                        "mechanical_transition_role",
+                        "mechanical_backup_status",
+                    ]
+                ].to_dict(orient="records")
+                if not result.mechanical_tests.empty
+                else []
+            ),
+        },
         proposed_batch_id=batch_id,
         proposed_batch_override_used=args.batch_id is not None,
     )

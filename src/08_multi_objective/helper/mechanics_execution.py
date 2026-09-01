@@ -45,6 +45,7 @@ def mechanics_execution_audit(
     completed: pd.DataFrame,
     proposal: pd.DataFrame,
     primary_capacity: int = 4,
+    proposal_metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Derive expected actual-intact promotions and any execution violations."""
     capacity = max(int(primary_capacity), 0)
@@ -58,7 +59,10 @@ def mechanics_execution_audit(
     )
     mechanics_active = bool(ranks.notna().any())
     if mechanics_active:
-        proposal_rows = proposal_rows.assign(_mechanical_rank=ranks).sort_values(
+        proposal_rows = proposal_rows.assign(_mechanical_rank=ranks)
+        proposal_rows = proposal_rows.loc[
+            proposal_rows["_mechanical_rank"].notna()
+        ].sort_values(
             ["_mechanical_rank", "candidate_id"],
             ascending=[True, True],
             kind="mergesort",
@@ -124,8 +128,9 @@ def mechanics_execution_audit(
         if intact_by_candidate.get(candidate_id) is None
     )
     unexpected_ranked_test_ids = sorted(
-        tested_ids - set(expected_test_ids)
+        (tested_ids & ranked_ids) - set(expected_test_ids)
     ) if mechanics_active else []
+    unranked_test_ids = sorted(tested_ids - ranked_ids)
     violations: list[str] = []
     if failed_tested_ids:
         violations.append(
@@ -146,8 +151,46 @@ def mechanics_execution_audit(
             "mechanical data do not follow actual-intact priority promotion: "
             + ", ".join(unexpected_ranked_test_ids)
         )
+    if unranked_test_ids:
+        violations.append(
+            "mechanical data supplied for unranked candidates: "
+            + ", ".join(unranked_test_ids)
+        )
 
     requested_capacity = capacity if mechanics_active else 0
+    ranked_assignments = []
+    if mechanics_active:
+        for _, row in proposal_rows.iterrows():
+            ranked_assignments.append(
+                {
+                    "candidate_id": str(row.get("candidate_id", "")),
+                    "formulation_id": str(row.get("formulation_id", "")),
+                    "mechanical_selection_rank": int(row["_mechanical_rank"]),
+                    "mechanical_transition_role": str(
+                        row.get("mechanical_transition_role", "")
+                    ),
+                    "prior_mechanical_observation_count": int(
+                        pd.to_numeric(
+                            row.get("prior_mechanical_observation_count", 0),
+                            errors="coerce",
+                        )
+                        if pd.notna(
+                            pd.to_numeric(
+                                row.get("prior_mechanical_observation_count", 0),
+                                errors="coerce",
+                            )
+                        )
+                        else 0
+                    ),
+                    "mechanical_repeat_status": str(
+                        row.get("mechanical_repeat_status", "")
+                    ),
+                    "mechanical_repeat_allowed": bool(
+                        row.get("mechanical_repeat_allowed", False)
+                    ),
+                }
+            )
+    proposal_policy = proposal_metadata or {}
     return {
         "manifest_version": 2,
         "mechanics_active_in_proposal": mechanics_active,
@@ -175,6 +218,16 @@ def mechanics_execution_audit(
         ),
         "failed_intact_mechanical_ids": failed_tested_ids,
         "unconfirmed_intact_mechanical_ids": unconfirmed_tested_ids,
+        "unranked_mechanical_ids": unranked_test_ids,
+        "mechanical_transition_assignments": ranked_assignments,
+        "phase_resolution": proposal_policy.get("phase_resolution", {}),
+        "mechanical_policy": proposal_policy.get("mechanical_policy", {}),
+        "mechanics_transition": proposal_policy.get("mechanics_transition", {}),
+        "continuous_qlognehvi": proposal_policy.get("continuous_qlognehvi", {}),
+        "optimizer_mode": proposal_policy.get("optimizer_mode", ""),
+        "optimizer_fallback_status": proposal_policy.get(
+            "optimizer_fallback_status", ""
+        ),
         "violations": violations,
     }
 
@@ -183,8 +236,14 @@ def validate_mechanics_execution(
     completed: pd.DataFrame,
     proposal: pd.DataFrame,
     primary_capacity: int = 4,
+    proposal_metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    audit = mechanics_execution_audit(completed, proposal, primary_capacity)
+    audit = mechanics_execution_audit(
+        completed,
+        proposal,
+        primary_capacity,
+        proposal_metadata=proposal_metadata,
+    )
     if audit["violations"]:
         raise ProposalValidationError(
             "Mechanical execution violates the actual-intact priority policy: "

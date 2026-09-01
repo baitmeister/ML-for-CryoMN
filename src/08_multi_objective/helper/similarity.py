@@ -409,8 +409,10 @@ def build_history_similarity_index(
 
 def is_retest_row(row: Mapping[str, Any] | pd.Series) -> bool:
     return (
-        str(row.get("recommendation_type", "")).strip() == "retest_priority"
-        or str(row.get("candidate_origin", "")).strip() == "retest"
+        str(row.get("recommendation_type", "")).strip()
+        in {"retest_priority", "mechanics_anchor"}
+        or str(row.get("candidate_origin", "")).strip()
+        in {"retest", "mechanics_anchor"}
     )
 
 

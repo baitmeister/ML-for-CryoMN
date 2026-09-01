@@ -48,7 +48,14 @@ from .intact_policy import (
     intact_policy_metadata,
     resolve_intact_combination_policy,
 )
-from .phase import PHASE_MECHANICS, PHASE_SCREENING, PhaseResolution, resolve_phase_mode
+from .phase import (
+    PHASE_BOOTSTRAP,
+    PHASE_HYBRID,
+    PHASE_MECHANICS,
+    PHASE_SCREENING,
+    PhaseResolution,
+    resolve_phase_mode,
+)
 from .penalties import constraint_report, count_active_ingredients
 from .prediction_labels import (
     annotate_viability_prediction_labels,
@@ -84,6 +91,303 @@ def _scaled_matrix(matrix: np.ndarray) -> np.ndarray:
     high = np.nanmax(matrix, axis=0)
     spread = np.where((high - low) < 1e-12, 1.0, high - low)
     return (matrix - low) / spread
+
+
+def _registry_scaled_feature_matrix(
+    frame: pd.DataFrame,
+    registry: IngredientRegistry,
+) -> np.ndarray:
+    if frame.empty:
+        return np.empty((0, len(registry.feature_names)), dtype=float)
+    matrix = _feature_matrix(frame, registry.feature_names)
+    lower = np.asarray(
+        [registry.get_by_feature(name).lower_bound for name in registry.feature_names],
+        dtype=float,
+    )
+    upper = np.asarray(
+        [registry.get_by_feature(name).upper_bound for name in registry.feature_names],
+        dtype=float,
+    )
+    spread = np.where((upper - lower) < 1e-12, 1.0, upper - lower)
+    return (matrix - lower) / spread
+
+
+def _mechanical_history_counts(observations: pd.DataFrame) -> pd.Series:
+    if observations.empty:
+        return pd.Series(dtype=int)
+    required = {"formulation_id", "batch_id", "endpoint", "value"}
+    if not required.issubset(observations.columns):
+        return pd.Series(dtype=int)
+    mechanical = observations.loc[
+        observations["endpoint"].astype(str).eq(
+            "critical_axial_load_N_per_needle"
+        )
+        & pd.to_numeric(observations["value"], errors="coerce").notna(),
+        ["formulation_id", "batch_id"],
+    ].drop_duplicates()
+    if mechanical.empty:
+        return pd.Series(dtype=int)
+    return mechanical.groupby("formulation_id")["batch_id"].nunique().astype(int)
+
+
+def _annotate_mechanical_history(
+    frame: pd.DataFrame,
+    observations: pd.DataFrame,
+) -> pd.DataFrame:
+    annotated = frame.copy()
+    counts = _mechanical_history_counts(observations)
+    annotated["prior_mechanical_observation_count"] = (
+        annotated.get("formulation_id", pd.Series("", index=annotated.index))
+        .astype(str)
+        .map(counts)
+        .fillna(0)
+        .astype(int)
+    )
+    is_anchor = annotated.get(
+        "recommendation_type", pd.Series("", index=annotated.index)
+    ).astype(str).eq("mechanics_anchor")
+    annotated["mechanical_repeat_allowed"] = (
+        annotated["prior_mechanical_observation_count"].eq(0) | is_anchor
+    )
+    annotated["mechanical_repeat_status"] = np.select(
+        [
+            is_anchor,
+            annotated["prior_mechanical_observation_count"].gt(0),
+        ],
+        ["anchor_allowed", "previously_measured"],
+        default="unmeasured",
+    )
+    if "mechanical_transition_role" not in annotated.columns:
+        annotated["mechanical_transition_role"] = ""
+    return annotated
+
+
+def _batch_sort_key(batch_id: str) -> tuple[int, int | str]:
+    value = str(batch_id).strip()
+    if value.startswith("ROUND_") and value.removeprefix("ROUND_").isdigit():
+        return (1, int(value.removeprefix("ROUND_")))
+    return (0, value)
+
+
+def _select_bootstrap_anchor(
+    formulations: pd.DataFrame,
+    observations: pd.DataFrame,
+    registry: IngredientRegistry,
+    optimization_config: Mapping,
+    phase_resolution: PhaseResolution,
+    policy_active: bool,
+    policy_version: str,
+    unavailable_feature_names: list[str] | tuple[str, ...] = (),
+) -> tuple[pd.DataFrame, dict]:
+    metadata: dict = {
+        "enabled": False,
+        "selected": False,
+        "source_batch_id": "",
+        "formulation_id": "",
+        "selection_score": None,
+        "reason": "anchor is not scheduled for this bootstrap batch",
+    }
+    if phase_resolution.active_phase != PHASE_BOOTSTRAP:
+        return formulations.head(0).copy(), metadata
+    enabled_index = int(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.anchor.enabled_for_bootstrap_batch_index",
+            2,
+        )
+    )
+    allowed = bool(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.repeat_policy.allow_bootstrap_anchor",
+            True,
+        )
+    )
+    if not allowed or phase_resolution.bootstrap_batch_index != enabled_index:
+        return formulations.head(0).copy(), metadata
+    metadata["enabled"] = True
+    if observations.empty:
+        metadata["reason"] = "no observations are available for anchor selection"
+        return formulations.head(0).copy(), metadata
+
+    campaign = observations.copy()
+    if "source_type" in campaign.columns:
+        campaign = campaign[campaign["source_type"].astype(str).eq("wetlab_feedback")]
+    campaign["value"] = pd.to_numeric(campaign.get("value"), errors="coerce")
+    campaign = campaign[campaign["value"].notna()].copy()
+    if campaign.empty:
+        metadata["reason"] = "no measured campaign observations are available"
+        return formulations.head(0).copy(), metadata
+
+    grouping = ["formulation_id", "batch_id"]
+    viability = (
+        campaign[campaign["endpoint"].astype(str).eq("viability_percent")]
+        .groupby(grouping, as_index=False)
+        .agg(
+            viability_percent=("value", "mean"),
+            viability_replicate_sd=("value", "std"),
+        )
+    )
+    critical = (
+        campaign[
+            campaign["endpoint"].astype(str).eq(
+                "critical_axial_load_N_per_needle"
+            )
+        ]
+        .groupby(grouping, as_index=False)["value"]
+        .mean()
+        .rename(columns={"value": "critical_axial_load_N_per_needle"})
+    )
+    intact = (
+        campaign[
+            campaign["endpoint"].astype(str).eq(
+                "intact_patch_formation_pass"
+            )
+        ]
+        .groupby(grouping, as_index=False)["value"]
+        .min()
+        .rename(columns={"value": "intact_patch_formation_pass"})
+    )
+    paired = viability.merge(critical, on=grouping, how="inner").merge(
+        intact, on=grouping, how="inner"
+    )
+    if paired.empty:
+        metadata["reason"] = "no same-batch viability/load/intact record is available"
+        return formulations.head(0).copy(), metadata
+    source_batch = sorted(
+        critical["batch_id"].astype(str).unique(), key=_batch_sort_key
+    )[-1]
+    metadata["source_batch_id"] = source_batch
+    paired = paired[paired["batch_id"].astype(str).eq(source_batch)].copy()
+    paired = paired[paired["intact_patch_formation_pass"].eq(1.0)].copy()
+    if paired.empty:
+        metadata["reason"] = (
+            "the immediately preceding mechanical batch has no paired "
+            "actual-intact formulation"
+        )
+        return formulations.head(0).copy(), metadata
+    maximum_exact_repeats = int(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.anchor.maximum_exact_repeats",
+            1,
+        )
+    )
+    prior_batch_counts = (
+        critical[["formulation_id", "batch_id"]]
+        .drop_duplicates()
+        .groupby("formulation_id")["batch_id"]
+        .nunique()
+    )
+    paired["_prior_mechanical_batch_count"] = (
+        paired["formulation_id"].astype(str).map(prior_batch_counts).fillna(0)
+    )
+    paired = paired.loc[
+        (paired["_prior_mechanical_batch_count"] - 1)
+        < maximum_exact_repeats
+    ].reset_index(drop=True)
+    if paired.empty:
+        metadata["reason"] = "all source-batch anchors reached the exact-repeat limit"
+        return formulations.head(0).copy(), metadata
+    paired = paired.merge(formulations, on="formulation_id", how="inner")
+    if paired.empty:
+        metadata["reason"] = "source-batch formulations are absent from the database"
+        return formulations.head(0).copy(), metadata
+
+    unavailable = set(unavailable_feature_names)
+    if unavailable:
+        available_mask = np.ones(len(paired), dtype=bool)
+        for feature_name in unavailable:
+            if feature_name not in paired.columns:
+                continue
+            values = pd.to_numeric(paired[feature_name], errors="coerce").fillna(0.0)
+            available_mask &= values.abs().lt(presence_threshold(feature_name)).to_numpy()
+        paired = paired.loc[available_mask].reset_index(drop=True)
+    if paired.empty:
+        metadata["reason"] = "all source-batch anchors use unavailable ingredients"
+        return formulations.head(0).copy(), metadata
+
+    preparation_failures = set(
+        campaign.loc[
+            campaign["endpoint"].astype(str).eq("preparation_feasibility_pass")
+            & campaign["value"].eq(0.0),
+            "formulation_id",
+        ].astype(str)
+    )
+    if preparation_failures:
+        paired = paired.loc[
+            ~paired["formulation_id"].astype(str).isin(preparation_failures)
+        ].reset_index(drop=True)
+    if "preparation_feasibility_pass" in paired.columns:
+        preparation = pd.to_numeric(
+            paired["preparation_feasibility_pass"], errors="coerce"
+        )
+        paired = paired.loc[~preparation.eq(0.0)].reset_index(drop=True)
+    if paired.empty:
+        metadata["reason"] = "all source-batch anchors have preparation failures"
+        return formulations.head(0).copy(), metadata
+
+    if policy_active:
+        paired = annotate_feasibility(
+            paired,
+            registry,
+            optimization_config,
+            policy_active=True,
+            policy_version=policy_version,
+        )
+        paired = paired[paired["feasibility_pass"].astype(bool)].reset_index(drop=True)
+    if paired.empty:
+        metadata["reason"] = "all source-batch anchors fail active feasibility rules"
+        return formulations.head(0).copy(), metadata
+
+    viability_weight = float(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.anchor.viability_weight",
+            0.50,
+        )
+    )
+    load_weight = float(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.anchor.critical_load_weight",
+            0.50,
+        )
+    )
+    paired["_anchor_score"] = (
+        viability_weight
+        * minmax(paired["viability_percent"].to_numpy(dtype=float))
+        + load_weight
+        * minmax(
+            paired["critical_axial_load_N_per_needle"].to_numpy(dtype=float)
+        )
+    )
+    paired["viability_replicate_sd"] = pd.to_numeric(
+        paired["viability_replicate_sd"], errors="coerce"
+    ).fillna(float("inf"))
+    winner = paired.sort_values(
+        ["_anchor_score", "viability_replicate_sd", "formulation_id"],
+        ascending=[False, True, True],
+        kind="mergesort",
+    ).iloc[0].copy()
+    winner["candidate_id"] = f"mechanics_anchor_{winner['formulation_id']}"
+    winner["candidate_origin"] = "mechanics_anchor"
+    winner["recommendation_type"] = "mechanics_anchor"
+    winner["selection_explanation"] = (
+        "mechanics_anchor: paired actual-intact formulation selected from the "
+        "preceding mechanical batch by balanced observed viability and critical load"
+    )
+    winner["mechanics_anchor_source_batch"] = source_batch
+    winner["mechanics_anchor_selection_score"] = float(winner["_anchor_score"])
+    metadata.update(
+        {
+            "selected": True,
+            "formulation_id": str(winner["formulation_id"]),
+            "selection_score": float(winner["_anchor_score"]),
+            "reason": "selected balanced paired actual-intact anchor",
+        }
+    )
+    return pd.DataFrame([winner]).drop(columns=["_anchor_score"], errors="ignore"), metadata
 
 
 def _drop_zero_active_candidates(frame: pd.DataFrame, registry: IngredientRegistry) -> tuple[pd.DataFrame, int]:
@@ -1762,6 +2066,9 @@ def _select_round_slate(
     if phase_resolution.active_phase == PHASE_MECHANICS:
         score_column = "mechanics_phase_score"
         default_recommendation_type = "joint_candidate"
+    elif phase_resolution.active_phase == PHASE_HYBRID:
+        score_column = "hybrid_phase_score"
+        default_recommendation_type = "joint_candidate"
     else:
         score_column = "screening_phase_score"
         default_recommendation_type = "screening_candidate"
@@ -1770,10 +2077,21 @@ def _select_round_slate(
     # uncertainty is the second ranking key after evidence severity and
     # cannot create a retest by itself. Feasibility was applied before this
     # point, so an infeasible diagnostic row cannot consume either slot.
+    anchors = annotated[
+        annotated.get(
+            "recommendation_type", pd.Series("", index=annotated.index)
+        ).astype(str).eq("mechanics_anchor")
+    ].copy()
     retest_limit = int(nested_get(optimization_config, "retest.max_candidates_per_round", 2))
     retests = annotated[annotated["recommendation_type"] == "retest_priority"].copy()
     selected_parts: list[pd.DataFrame] = []
     selected_ids: set[str] = set()
+    if not anchors.empty:
+        selected_anchor = anchors.sort_values(
+            ["candidate_id"], ascending=[True], kind="mergesort"
+        ).head(1)
+        selected_parts.append(selected_anchor)
+        selected_ids.update(selected_anchor["candidate_id"].astype(str))
     if not retests.empty and retest_limit > 0:
         selected_retests = retests.sort_values(
             ["retest_priority_score", "viability_std", "formulation_id"],
@@ -1785,7 +2103,9 @@ def _select_round_slate(
 
     rescue_limit = (
         int(nested_get(optimization_config, "candidate_generation.rescue_candidates_per_round", 2))
-        if policy_active and phase_resolution.active_phase == PHASE_SCREENING
+        if policy_active
+        and phase_resolution.active_phase
+        in {PHASE_SCREENING, PHASE_BOOTSTRAP, PHASE_HYBRID}
         else 0
     )
     if rescue_limit > 0:
@@ -1989,6 +2309,368 @@ def _select_round_slate(
     return selected
 
 
+def _mechanical_eligibility_mask(
+    frame: pd.DataFrame,
+    optimization_config: Mapping,
+) -> tuple[pd.Series, dict]:
+    prior_count = pd.to_numeric(
+        frame.get(
+            "prior_mechanical_observation_count",
+            pd.Series(0, index=frame.index),
+        ),
+        errors="coerce",
+    ).fillna(0)
+    recommendation = frame.get(
+        "recommendation_type", pd.Series("", index=frame.index)
+    ).astype(str)
+    is_anchor = recommendation.eq("mechanics_anchor")
+    is_retest = recommendation.eq("retest_priority")
+    allow_prior = bool(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.repeat_policy.allow_other_prior_mechanical_formulations",
+            False,
+        )
+    )
+    allow_retests = bool(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.repeat_policy.allow_retest_priority_for_mechanics",
+            False,
+        )
+    )
+    repeat_eligible = prior_count.eq(0) | is_anchor | allow_prior
+    retest_eligible = ~is_retest | allow_retests
+    mask = repeat_eligible & retest_eligible
+    return mask, {
+        "prior_mechanics_excluded_count": int((~repeat_eligible).sum()),
+        "retest_excluded_count": int((~retest_eligible).sum()),
+        "allow_other_prior_mechanical_formulations": allow_prior,
+        "allow_retest_priority_for_mechanics": allow_retests,
+    }
+
+
+def _bootstrap_mechanical_order(
+    pool: pd.DataFrame,
+    registry: IngredientRegistry,
+    optimization_config: Mapping,
+) -> tuple[pd.DataFrame, dict]:
+    if pool.empty:
+        return pool.copy(), {"anchor_selected": False}
+    screening_weight = float(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.bootstrap.screening_utility_weight",
+            0.70,
+        )
+    )
+    intact_weight = float(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.bootstrap.empirical_intact_weight",
+            0.30,
+        )
+    )
+    diversity_weight = float(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.bootstrap.diversity_weight",
+            0.40,
+        )
+    )
+    ordered_pool = pool.reset_index(drop=True).copy()
+    screening_score = pd.to_numeric(
+        ordered_pool.get("screening_phase_score", 0.0), errors="coerce"
+    ).fillna(0.0).to_numpy(dtype=float)
+    intact_probability = pd.to_numeric(
+        ordered_pool.get("empirical_combination_pass_probability", 0.50),
+        errors="coerce",
+    ).fillna(0.50).to_numpy(dtype=float)
+    utility = screening_weight * minmax(screening_score) + intact_weight * np.clip(
+        intact_probability, 0.0, 1.0
+    )
+    ordered_pool["bootstrap_utility"] = utility
+    matrix = _registry_scaled_feature_matrix(ordered_pool, registry)
+    anchor_positions = np.flatnonzero(
+        ordered_pool.get(
+            "recommendation_type", pd.Series("", index=ordered_pool.index)
+        ).astype(str).eq("mechanics_anchor").to_numpy()
+    ).tolist()
+    selected_positions: list[int] = anchor_positions[:1]
+    first_new_position: int | None = None
+    remaining = [
+        position
+        for position in range(len(ordered_pool))
+        if position not in selected_positions
+    ]
+    while remaining:
+        if first_new_position is None:
+            best_utility = max(utility[position] for position in remaining)
+            competitive = [
+                position
+                for position in remaining
+                if abs(utility[position] - best_utility) < 1e-12
+            ]
+            chosen = min(
+                competitive,
+                key=lambda position: str(
+                    ordered_pool.iloc[position].get("candidate_id", "")
+                ),
+            )
+        else:
+            distances = np.linalg.norm(
+                matrix[remaining, None, :] - matrix[selected_positions][None, :, :],
+                axis=2,
+            )
+            minimum_distance = np.min(distances, axis=1)
+            combined = (
+                (1.0 - diversity_weight) * minmax(utility[remaining])
+                + diversity_weight * minmax(minimum_distance)
+            )
+            ranking = sorted(
+                range(len(remaining)),
+                key=lambda offset: (
+                    -float(combined[offset]),
+                    str(
+                        ordered_pool.iloc[remaining[offset]].get(
+                            "candidate_id", ""
+                        )
+                    ),
+                ),
+            )
+            chosen = remaining[ranking[0]]
+        if first_new_position is None:
+            first_new_position = chosen
+        selected_positions.append(chosen)
+        remaining.remove(chosen)
+
+    ranked = ordered_pool.iloc[selected_positions].copy().reset_index(drop=True)
+    ranked["mechanical_transition_role"] = "bootstrap_coverage"
+    if anchor_positions:
+        ranked.loc[
+            ranked["recommendation_type"].astype(str).eq("mechanics_anchor"),
+            "mechanical_transition_role",
+        ] = "anchor"
+    if first_new_position is not None:
+        first_new_candidate = str(
+            ordered_pool.iloc[first_new_position].get("candidate_id", "")
+        )
+        ranked.loc[
+            ranked["candidate_id"].astype(str).eq(first_new_candidate),
+            "mechanical_transition_role",
+        ] = "bootstrap_utility"
+    return ranked, {
+        "anchor_selected": bool(anchor_positions),
+        "screening_utility_weight": screening_weight,
+        "empirical_intact_weight": intact_weight,
+        "diversity_weight": diversity_weight,
+    }
+
+
+def _hybrid_mechanical_order(
+    pool: pd.DataFrame,
+    models: EndpointModels,
+    registry: IngredientRegistry,
+    optimization_config: Mapping,
+    primary_capacity: int,
+) -> tuple[pd.DataFrame, dict]:
+    if pool.empty:
+        return pool.copy(), {"role_fallbacks": []}
+    working = pool.reset_index(drop=True).copy()
+    mechanics = pd.to_numeric(
+        working.get("mechanics_phase_score", 0.0), errors="coerce"
+    ).fillna(float("-inf")).to_numpy(dtype=float)
+    hybrid = pd.to_numeric(
+        working.get("hybrid_phase_score", mechanics), errors="coerce"
+    ).fillna(float("-inf")).to_numpy(dtype=float)
+    matrix = _registry_scaled_feature_matrix(working, registry)
+    selected: list[int] = []
+    role_by_position: dict[int, str] = {}
+    fallbacks: list[dict] = []
+
+    qlog_slots = int(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.hybrid.qlognehvi_slots",
+            2,
+        )
+    )
+    local_slots = int(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.hybrid.local_slots",
+            1,
+        )
+    )
+    coverage_slots = int(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.hybrid.coverage_slots",
+            1,
+        )
+    )
+
+    def best_position(candidates: list[int], score: np.ndarray) -> int | None:
+        if not candidates:
+            return None
+        return sorted(
+            candidates,
+            key=lambda position: (
+                -float(score[position]),
+                str(working.iloc[position].get("candidate_id", "")),
+            ),
+        )[0]
+
+    for slot in range(qlog_slots):
+        candidates = [position for position in range(len(working)) if position not in selected]
+        if not candidates:
+            break
+        if slot == 0 or not selected:
+            chosen = best_position(candidates, mechanics)
+        else:
+            distance = np.min(
+                np.linalg.norm(
+                    matrix[candidates, None, :] - matrix[selected][None, :, :],
+                    axis=2,
+                ),
+                axis=1,
+            )
+            combined = minmax(mechanics[candidates]) + float(
+                nested_get(optimization_config, "selection.diversity_weight", 0.10)
+            ) * minmax(distance)
+            chosen = candidates[
+                sorted(
+                    range(len(candidates)),
+                    key=lambda offset: (
+                        -float(combined[offset]),
+                        str(
+                            working.iloc[candidates[offset]].get("candidate_id", "")
+                        ),
+                    ),
+                )[0]
+            ]
+        if chosen is not None:
+            selected.append(chosen)
+            role_by_position[chosen] = "hybrid_qlognehvi"
+
+    for _ in range(local_slots):
+        candidates = [
+            position
+            for position in range(len(working))
+            if position not in selected
+            and str(working.iloc[position].get("candidate_origin", ""))
+            == "local_perturbation"
+        ]
+        chosen = best_position(candidates, mechanics)
+        if chosen is None:
+            fallbacks.append({"role": "hybrid_local", "reason": "no eligible local_perturbation candidate"})
+            continue
+        selected.append(chosen)
+        role_by_position[chosen] = "hybrid_local"
+
+    for _ in range(coverage_slots):
+        screening = pd.to_numeric(
+            working.get("screening_phase_score", 0.0), errors="coerce"
+        ).fillna(float("-inf"))
+        quantile = float(
+            nested_get(
+                optimization_config,
+                "mechanics_transition.hybrid.coverage_min_screening_quantile",
+                0.50,
+            )
+        )
+        score_floor = float(screening.quantile(quantile))
+        probability_floor = float(
+            nested_get(
+                optimization_config,
+                "mechanics_transition.hybrid.coverage_min_empirical_intact_probability",
+                0.50,
+            )
+        )
+        probability = pd.to_numeric(
+            working.get("empirical_combination_pass_probability", 0.50),
+            errors="coerce",
+        ).fillna(0.50)
+        candidates = [
+            position
+            for position in range(len(working))
+            if position not in selected
+            and float(screening.iloc[position]) >= score_floor
+            and float(probability.iloc[position]) >= probability_floor
+        ]
+        if not candidates:
+            fallbacks.append({"role": "hybrid_coverage", "reason": "no candidate meets coverage floors"})
+            continue
+        historical = models.training_frame.copy()
+        if "critical_axial_load_N_per_needle" in historical.columns:
+            historical = historical.loc[
+                pd.to_numeric(
+                    historical["critical_axial_load_N_per_needle"], errors="coerce"
+                ).notna()
+            ]
+        else:
+            historical = historical.head(0)
+        reference_matrix = _registry_scaled_feature_matrix(historical, registry)
+        if selected:
+            reference_matrix = np.vstack([reference_matrix, matrix[selected]])
+        if reference_matrix.size == 0:
+            coverage_distance = np.ones(len(candidates), dtype=float)
+        else:
+            coverage_distance = np.min(
+                np.linalg.norm(
+                    matrix[candidates, None, :] - reference_matrix[None, :, :],
+                    axis=2,
+                ),
+                axis=1,
+            )
+        chosen = candidates[
+            sorted(
+                range(len(candidates)),
+                key=lambda offset: (
+                    -float(coverage_distance[offset]),
+                    str(working.iloc[candidates[offset]].get("candidate_id", "")),
+                ),
+            )[0]
+        ]
+        selected.append(chosen)
+        role_by_position[chosen] = "hybrid_coverage"
+
+    while len(selected) < min(primary_capacity, len(working)):
+        candidates = [position for position in range(len(working)) if position not in selected]
+        chosen = best_position(candidates, hybrid)
+        if chosen is None:
+            break
+        selected.append(chosen)
+        role_by_position[chosen] = "hybrid_qlognehvi"
+        fallbacks.append(
+            {
+                "role": "hybrid_fallback",
+                "candidate_id": str(working.iloc[chosen].get("candidate_id", "")),
+                "reason": "unfilled transition role backfilled by hybrid score",
+            }
+        )
+
+    remaining = [position for position in range(len(working)) if position not in selected]
+    remaining.sort(
+        key=lambda position: (
+            -float(mechanics[position]),
+            str(working.iloc[position].get("candidate_id", "")),
+        )
+    )
+    ordered_positions = [*selected, *remaining]
+    ranked = working.iloc[ordered_positions].copy().reset_index(drop=True)
+    ranked["mechanical_transition_role"] = [
+        role_by_position.get(position, "ordered_backup")
+        for position in ordered_positions
+    ]
+    return ranked, {
+        "qlognehvi_slots": qlog_slots,
+        "local_slots": local_slots,
+        "coverage_slots": coverage_slots,
+        "role_fallbacks": fallbacks,
+    }
+
+
 def select_mechanical_tests(
     annotated: pd.DataFrame,
     models: EndpointModels,
@@ -2007,9 +2689,9 @@ def select_mechanical_tests(
         selected["mechanical_backup_status"] = pd.Series(dtype=str)
         selected["selection_role"] = "mechanical_test_disabled"
         selected["mechanical_selection_mode"] = "disabled_screening_only"
-        metadata = {
+        return selected, {
             "mechanical_selection_mode": "disabled_screening_only",
-            "mechanical_selection_reason": "mechanical recommendations stay off until the selector enters mechanics_enabled",
+            "mechanical_selection_reason": "mechanical recommendations remain off until the screening-count gate is satisfied",
             "mechanical_observation_count": mechanical_count,
             "intact_probability_threshold": threshold,
             "intact_probability_threshold_role": "unused_screening_only",
@@ -2020,15 +2702,22 @@ def select_mechanical_tests(
             "botorch_available": bool(botorch_available()),
             "active_phase": phase_resolution.active_phase,
         }
-        return selected, metadata
 
-    empirical_mode = bool(
-        intact_policy is not None
-        and intact_policy.active
-        and intact_policy.mechanics_mode == "empirical_feasibility_weighted"
+    eligibility, eligibility_metadata = _mechanical_eligibility_mask(
+        annotated, optimization_config
     )
-    if empirical_mode:
-        pool = annotated.reset_index(drop=True)
+    pool = annotated.loc[eligibility].reset_index(drop=True).copy()
+    primary_count = min(int(n), len(pool))
+    mechanics_metadata: dict = {"botorch_metadata": {}}
+    transition_metadata: dict = {}
+
+    if phase_resolution.active_phase == PHASE_BOOTSTRAP:
+        selected, transition_metadata = _bootstrap_mechanical_order(
+            pool, registry, optimization_config
+        )
+        mode = "bootstrap_utility_diversity_with_actual_intact_backups"
+        threshold_role = "empirical_probability_in_bootstrap_utility"
+    else:
         if "mechanics_phase_score" in pool.columns and pd.to_numeric(
             pool["mechanics_phase_score"], errors="coerce"
         ).notna().all():
@@ -2038,8 +2727,6 @@ def select_mechanical_tests(
             mechanics_metadata = {
                 "pool_selection_mode": "precomputed_feasibility_weighted",
                 "botorch_metadata": {},
-                "intact_feasibility_mode": "empirical_combination_probability_weighting",
-                "classifier_probability_selection_role": "diagnostic_only",
             }
         else:
             score, mechanics_metadata = _mechanics_phase_scores(
@@ -2049,103 +2736,99 @@ def select_mechanical_tests(
                 optimization_config,
                 intact_policy=intact_policy,
             )
-        ranking = pd.DataFrame(
-            {
-                "position": np.arange(len(pool), dtype=int),
-                "score": score,
-                "candidate_id": pool["candidate_id"].astype(str).to_numpy(),
-            }
-        ).sort_values(
-            ["score", "candidate_id"],
-            ascending=[False, True],
-            kind="mergesort",
-        )
-        selected = pool.iloc[ranking["position"].to_numpy(dtype=int)].copy()
-        selected.insert(
-            0,
-            "mechanical_selection_rank",
-            range(1, len(selected) + 1),
-        )
-        primary_count = min(
-            int(n),
-            int(intact_policy.mechanics_primary_test_count),
-        )
-        selected["mechanical_primary_recommended"] = (
-            selected["mechanical_selection_rank"] <= primary_count
-        )
-        selected["mechanical_backup_status"] = np.where(
-            selected["mechanical_primary_recommended"],
-            "primary",
-            "ordered_backup",
-        )
-        mode = "empirical_feasibility_weighted_with_actual_intact_backups"
+            pool["mechanics_phase_score"] = score
+        if phase_resolution.active_phase == PHASE_HYBRID:
+            selected, transition_metadata = _hybrid_mechanical_order(
+                pool,
+                models,
+                registry,
+                optimization_config,
+                primary_capacity=primary_count,
+            )
+            mode = "hybrid_2qlognehvi_1local_1coverage_with_actual_intact_backups"
+        else:
+            ranking = pd.DataFrame(
+                {
+                    "position": np.arange(len(pool), dtype=int),
+                    "score": score,
+                    "candidate_id": pool["candidate_id"].astype(str).to_numpy(),
+                }
+            ).sort_values(
+                ["score", "candidate_id"],
+                ascending=[False, True],
+                kind="mergesort",
+            )
+            selected = pool.iloc[ranking["position"].to_numpy(dtype=int)].copy()
+            selected["mechanical_transition_role"] = "ordered_backup"
+            if primary_count:
+                selected.iloc[
+                    :primary_count,
+                    selected.columns.get_loc("mechanical_transition_role"),
+                ] = ""
+            mode = "empirical_feasibility_weighted_with_actual_intact_backups"
         threshold_role = "compatibility_only_not_applied"
-        pass_pool_size = len(pool)
-    else:
-        pass_pool = annotated[
-            annotated["intact_patch_pass_probability"] >= threshold
-        ].reset_index(drop=True)
-        fallback_pool = annotated.reset_index(drop=True)
-        pool = pass_pool if not pass_pool.empty else fallback_pool
-        score, mechanics_metadata = _mechanics_phase_scores(
-            pool,
-            models,
-            registry,
-            optimization_config,
-            intact_policy=intact_policy,
-        )
-        selected_indices = _greedy_diverse_pick(
-            pool, score, registry.feature_names, n
-        )
-        selected = (
-            pool.iloc[selected_indices].copy()
-            if selected_indices
-            else pool.head(0).copy()
-        ).head(n)
-        selected.insert(
-            0,
-            "mechanical_selection_rank",
-            range(1, len(selected) + 1),
-        )
-        selected["mechanical_primary_recommended"] = True
-        selected["mechanical_backup_status"] = "primary"
-        mode = mechanics_metadata["pool_selection_mode"]
-        threshold_role = "active_compatibility_filter"
-        pass_pool_size = len(pass_pool)
 
+    selected = selected.reset_index(drop=True)
+    selected.insert(0, "mechanical_selection_rank", range(1, len(selected) + 1))
+    selected["mechanical_primary_recommended"] = (
+        selected["mechanical_selection_rank"] <= primary_count
+    )
+    selected["mechanical_backup_status"] = np.where(
+        selected["mechanical_primary_recommended"], "primary", "ordered_backup"
+    )
     selected["selection_role"] = np.where(
         selected["mechanical_primary_recommended"],
         "mechanical_test_primary",
         "mechanical_test_backup",
     )
     selected["mechanical_selection_mode"] = mode
+    anchor_rows = selected.loc[
+        selected.get(
+            "recommendation_type", pd.Series("", index=selected.index)
+        ).astype(str).eq("mechanics_anchor")
+    ]
     metadata = {
         "mechanical_selection_mode": mode,
         "mechanical_observation_count": mechanical_count,
         "intact_probability_threshold": threshold,
         "intact_probability_threshold_role": threshold_role,
-        "pass_pool_size": int(pass_pool_size),
+        "pass_pool_size": int(len(pool)),
+        "mechanically_ineligible_count": int((~eligibility).sum()),
         "primary_mechanical_capacity": int(n),
         "primary_recommendation_count": int(
             selected["mechanical_primary_recommended"].sum()
         ),
-        "backup_count": int(
-            (~selected["mechanical_primary_recommended"]).sum()
-        ),
+        "backup_count": int((~selected["mechanical_primary_recommended"]).sum()),
         "actual_intact_backup_rule": (
-            "test the first primary/backup priority rows that actually pass "
-            "intact until primary_mechanical_capacity is reached"
-            if empirical_mode
-            else "not_applicable_compatibility_mode"
+            "test the first ranked rows that actually pass intact until "
+            "primary_mechanical_capacity is reached; unranked rows are ineligible"
         ),
         "botorch_available": bool(botorch_available()),
         "active_phase": phase_resolution.active_phase,
-        "classifier_probability_selection_role": (
-            "diagnostic_only" if empirical_mode else "active_compatibility_mode"
-        ),
+        "classifier_probability_selection_role": "diagnostic_only",
+        "eligibility": eligibility_metadata,
+        "transition_allocation": transition_metadata,
+        "anchor": {
+            "selected": not anchor_rows.empty,
+            "formulation_id": (
+                str(anchor_rows.iloc[0].get("formulation_id", ""))
+                if not anchor_rows.empty
+                else ""
+            ),
+            "source_batch_id": (
+                str(anchor_rows.iloc[0].get("mechanics_anchor_source_batch", ""))
+                if not anchor_rows.empty
+                else ""
+            ),
+            "selection_score": (
+                None
+                if anchor_rows.empty
+                or pd.isna(anchor_rows.iloc[0].get("mechanics_anchor_selection_score"))
+                else float(anchor_rows.iloc[0]["mechanics_anchor_selection_score"])
+            ),
+        },
+        "botorch_metadata": mechanics_metadata.get("botorch_metadata", {}),
     }
-    if phase_resolution.active_phase == PHASE_MECHANICS:
-        metadata["botorch_metadata"] = mechanics_metadata["botorch_metadata"]
     return selected, metadata
 
 
@@ -2202,6 +2885,7 @@ def select_next_round(
         registry,
         optimization_config,
         requested_phase_mode=requested_phase_mode,
+        target_round_number=target_round_number,
     )
     similarity_policy = resolve_similarity_policy(
         optimization_config,
@@ -2213,10 +2897,16 @@ def select_next_round(
         "continuous_optimizer_enabled": False,
         "continuous_optimizer_used": False,
         "continuous_optimizer_fallback": True,
-        "continuous_optimizer_reason": "screening_only phase",
+        "continuous_optimizer_reason": (
+            f"continuous optimization is disabled during "
+            f"{phase_resolution.active_phase}"
+        ),
     }
-    if phase_resolution.active_phase == PHASE_MECHANICS:
-        if "candidate_origin" in candidate_pool.columns:
+    if phase_resolution.active_phase in {PHASE_HYBRID, PHASE_MECHANICS}:
+        if (
+            phase_resolution.active_phase == PHASE_MECHANICS
+            and "candidate_origin" in candidate_pool.columns
+        ):
             preserved_origin_mask = candidate_pool["candidate_origin"].astype(str).isin(
                 ["boundary_probe", "rescue_dilution"]
             )
@@ -2449,6 +3139,28 @@ def select_next_round(
     )
     retest_policy_metadata["eligible_candidates"] = retest_audit_rows
 
+    anchor_candidates, anchor_metadata = _select_bootstrap_anchor(
+        formulations,
+        observations,
+        registry,
+        optimization_config,
+        phase_resolution,
+        policy_active=policy_active,
+        policy_version=policy_version,
+        unavailable_feature_names=unavailable_feature_names,
+    )
+    if not anchor_candidates.empty and policy_active:
+        anchor_candidates = annotate_support(
+            anchor_candidates,
+            registry,
+            build_support_context(
+                formulations,
+                registry,
+                optimization_config,
+                observations,
+            ),
+        )
+
     # Retest-only audit fields belong in metadata and explanations, not in
     # the stable operator worksheet schema.
     retained_retest_columns = set(candidate_pool.columns) | {
@@ -2474,6 +3186,10 @@ def select_next_round(
     if not retest_candidates.empty:
         combined_pool = pd.concat([combined_pool, retest_candidates], ignore_index=True, sort=False)
         combined_pool = combined_pool.drop_duplicates("candidate_id", keep="first")
+    if not anchor_candidates.empty:
+        combined_pool = pd.concat(
+            [anchor_candidates, combined_pool], ignore_index=True, sort=False
+        ).drop_duplicates("candidate_id", keep="first")
     combined_pool, zero_active_filtered_count = _drop_zero_active_candidates(combined_pool, registry)
     combined_pool = annotate_intact_combination_evidence(
         combined_pool,
@@ -2497,6 +3213,7 @@ def select_next_round(
         optimization_config,
         policy_active=policy_active,
     )
+    annotated = _annotate_mechanical_history(annotated, observations)
     annotated = annotate_viability_prediction_labels(
         annotated,
         observations,
@@ -2517,7 +3234,7 @@ def select_next_round(
             annotated["preparation_feasibility_probability"] >= preparation_threshold
         ].reset_index(drop=True)
     pool_selection_metadata = {"pool_selection_mode": "screening_phase"}
-    if phase_resolution.active_phase == PHASE_MECHANICS:
+    if phase_resolution.active_phase in {PHASE_HYBRID, PHASE_MECHANICS}:
         mechanics_scores, pool_selection_metadata = _mechanics_phase_scores(
             annotated,
             models,
@@ -2526,11 +3243,47 @@ def select_next_round(
             intact_policy=intact_combination_policy,
         )
         annotated["mechanics_phase_score"] = mechanics_scores
+        if phase_resolution.active_phase == PHASE_HYBRID:
+            screening_weight = float(
+                nested_get(
+                    optimization_config,
+                    "mechanics_transition.hybrid.screening_slate_weight",
+                    0.50,
+                )
+            )
+            mechanics_weight = float(
+                nested_get(
+                    optimization_config,
+                    "mechanics_transition.hybrid.mechanics_slate_weight",
+                    0.50,
+                )
+            )
+            annotated["hybrid_phase_score"] = (
+                screening_weight
+                * minmax(annotated["screening_phase_score"].to_numpy(dtype=float))
+                + mechanics_weight
+                * minmax(annotated["mechanics_phase_score"].to_numpy(dtype=float))
+            )
+            pool_selection_metadata = {
+                **pool_selection_metadata,
+                "pool_selection_mode": "hybrid_screening_mechanics",
+                "screening_slate_weight": screening_weight,
+                "mechanics_slate_weight": mechanics_weight,
+            }
+        else:
+            annotated["hybrid_phase_score"] = np.nan
     else:
         annotated["mechanics_phase_score"] = np.nan
+        annotated["hybrid_phase_score"] = np.nan
 
     n_viability = int(nested_get(optimization_config, "round_policy.viability_screens_per_round", 12))
-    n_mechanical = int(nested_get(optimization_config, "round_policy.mechanical_tests_per_round", 4))
+    n_mechanical = int(
+        nested_get(
+            optimization_config,
+            "mechanics_transition.bootstrap.mechanical_capacity",
+            4,
+        )
+    )
     if len(annotated) < n_viability:
         raise ValueError(
             "Candidate pool contains fewer rows than the required viability slate "
@@ -2649,11 +3402,22 @@ def select_next_round(
             else "legacy_uniform_finite_pool_screening"
         )
         optimizer_fallback_status = "not_applicable"
+    elif phase_resolution.active_phase == PHASE_BOOTSTRAP:
+        optimizer_mode = "bootstrap_utility_diversity"
+        optimizer_fallback_status = "not_applicable"
     elif continuous_metadata.get("continuous_optimizer_used", False):
-        optimizer_mode = "continuous_qlognehvi"
+        optimizer_mode = (
+            "hybrid_continuous_qlognehvi"
+            if phase_resolution.active_phase == PHASE_HYBRID
+            else "continuous_qlognehvi"
+        )
         optimizer_fallback_status = "not_used"
     else:
-        optimizer_mode = "finite_pool_fallback"
+        optimizer_mode = (
+            "hybrid_finite_pool_fallback"
+            if phase_resolution.active_phase == PHASE_HYBRID
+            else "finite_pool_fallback"
+        )
         optimizer_fallback_status = "used"
     metadata = {
         "viability_screen_count": int(len(viability_screen)),
@@ -2668,14 +3432,10 @@ def select_next_round(
         "secondary_endpoint": "initial_stiffness_N_per_mm_per_needle",
         "screening_gate": "intact_patch_formation_pass",
         "active_phase": phase_resolution.active_phase,
-        "phase_resolution": {
-            "requested_phase_mode": phase_resolution.requested_phase_mode,
-            "active_phase": phase_resolution.active_phase,
-            "paired_observation_count": phase_resolution.paired_observation_count,
-            "distinct_formulation_count": phase_resolution.distinct_formulation_count,
-            "batch_count": phase_resolution.batch_count,
-            "reason": phase_resolution.reason,
-            "override_used": phase_resolution.override_used,
+        "phase_resolution": phase_resolution.to_metadata(),
+        "mechanics_transition": {
+            "policy_version": phase_resolution.transition_policy_version,
+            "anchor_selection": anchor_metadata,
         },
         "pool_selection_policy": pool_selection_metadata,
         "continuous_qlognehvi": continuous_metadata,
@@ -2877,15 +3637,41 @@ def _write_summary(
 ) -> None:
     zero_active_filtered = int(result.metadata.get("candidate_pool_rows_filtered_zero_active_at_entry", 0))
     active_phase = result.metadata.get("active_phase", PHASE_SCREENING)
-    mechanical_instruction = (
-        "3. Do not use this sheet for mechanical-test recommendations yet; the recommender stays off during screening_only."
-        if active_phase == PHASE_SCREENING
-        else (
-            "3. After intact results are known, follow mechanical_selection_rank "
-            "and run Instron on the first four rows that actually pass intact; "
-            "skip failed primaries and promote the next intact ordered backup."
-        )
+    phase_resolution = result.metadata.get("phase_resolution", {})
+    mechanical_policy = result.metadata.get("mechanical_policy", {})
+    mechanical_instruction_by_phase = {
+        PHASE_SCREENING: (
+            "3. Leave mechanical fields blank; rows without a numeric "
+            "mechanical_selection_rank are not eligible for mechanical testing."
+        ),
+        PHASE_BOOTSTRAP: (
+            "3. After intact results are recorded, test the first four ranked "
+            "actual-intact rows. Remeasure viability, intact formation, and load "
+            "for a mechanics_anchor; promote backups only in numeric rank order."
+        ),
+        PHASE_HYBRID: (
+            "3. After intact results are recorded, test the first four ranked "
+            "actual-intact rows across the hybrid roles; promote backups only in "
+            "numeric rank order."
+        ),
+        PHASE_MECHANICS: (
+            "3. After intact results are recorded, run Instron on the first four "
+            "ranked actual-intact rows; skip failures and promote backups only in "
+            "numeric rank order."
+        ),
+    }
+    mechanical_instruction = mechanical_instruction_by_phase.get(
+        active_phase, mechanical_instruction_by_phase[PHASE_SCREENING]
     )
+    hybrid_gate = phase_resolution.get(
+        "hybrid_gate", phase_resolution.get("bootstrap_gate", {})
+    )
+    full_gate = phase_resolution.get("full_gate", {})
+    anchor = mechanical_policy.get("anchor", {})
+    transition_allocation = mechanical_policy.get("transition_allocation", {})
+    ranked_rows = selected.loc[
+        pd.to_numeric(selected.get("mechanical_selection_rank"), errors="coerce").notna()
+    ]
     lines = [
         "CryoMN v2 Next-Round Candidate Summary",
         "=" * 42,
@@ -2897,7 +3683,47 @@ def _write_summary(
         f"Mechanical tests requested: {int(selected['mechanical_test_recommended'].sum())}",
         f"Mechanical selection mode: {result.metadata['mechanical_policy']['mechanical_selection_mode']}",
         f"Mechanical observations in database: {result.metadata['mechanical_policy']['mechanical_observation_count']}",
+        f"Completed screening rounds: {phase_resolution.get('completed_screening_round_count', 0)}/{phase_resolution.get('minimum_completed_screening_rounds', 8)}",
+        "Hybrid evidence gate: "
+        f"paired={phase_resolution.get('paired_observation_count', 0)}/{hybrid_gate.get('min_paired_observations', 8)}, "
+        f"formulations={phase_resolution.get('distinct_formulation_count', 0)}/{hybrid_gate.get('min_distinct_formulations', 6)}, "
+        f"batches={phase_resolution.get('batch_count', 0)}/{hybrid_gate.get('min_batches', 2)}, "
+        f"met={bool(phase_resolution.get('hybrid_gate_met', phase_resolution.get('bootstrap_gate_met', False)))}",
+        "Full evidence gate: "
+        f"paired={phase_resolution.get('paired_observation_count', 0)}/{full_gate.get('min_paired_observations', 16)}, "
+        f"formulations={phase_resolution.get('distinct_formulation_count', 0)}/{full_gate.get('min_distinct_formulations', 12)}, "
+        f"batches={phase_resolution.get('batch_count', 0)}/{full_gate.get('min_batches', 3)}, "
+        f"met={bool(phase_resolution.get('full_gate_met', False))}",
+        f"Manual phase override: {bool(phase_resolution.get('override_used', False))}",
         f"Retest-priority formulations in slate: {int((selected.get('recommendation_type', pd.Series(dtype=str)) == 'retest_priority').sum())}",
+        f"Mechanically ranked rows: {len(ranked_rows)}",
+        "Mechanical roles: "
+        + (
+            ", ".join(
+                f"{row.candidate_id}={row.mechanical_transition_role or 'full_primary'}"
+                for row in ranked_rows[
+                    ["candidate_id", "mechanical_transition_role"]
+                ].itertuples(index=False)
+            )
+            if not ranked_rows.empty
+            else "none"
+        ),
+        "Anchor decision: "
+        f"selected={bool(anchor.get('selected', False))}; "
+        f"source_batch={anchor.get('source_batch_id', '') or 'none'}; "
+        f"score={anchor.get('selection_score')}; "
+        f"reason={result.metadata.get('mechanics_transition', {}).get('anchor_selection', {}).get('reason', 'not applicable')}",
+        "Transition fallbacks: "
+        + (
+            json.dumps(transition_allocation.get("role_fallbacks", []), sort_keys=True)
+            if transition_allocation.get("role_fallbacks")
+            else "none"
+        ),
+        "qLogNEHVI status: "
+        f"available={mechanical_policy.get('botorch_available', False)}; "
+        f"optimizer={result.metadata.get('optimizer_mode', '')}; "
+        f"fallback={result.metadata.get('optimizer_fallback_status', '')}; "
+        f"reason={result.metadata.get('continuous_qlognehvi', {}).get('continuous_optimizer_reason', 'not applicable')}",
         "",
         "Main database used by selector:",
         "- data/processed_v2/formulations.csv",
@@ -2921,9 +3747,8 @@ def _write_summary(
     ]
     if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
         policy_lines = [
-            "Forward-only formulation policy:",
+            "Formulation feasibility policy:",
             f"- Version: {result.metadata.get('formulation_feasibility_policy_version', '')}",
-            f"- Activation round: ROUND_{int(result.metadata.get('formulation_feasibility_policy_start_round', 2)):03d}",
             f"- Support radius: {float(result.metadata.get('support_radius', float('nan'))):.4g}",
             f"- Rejected pool rows: {int(result.metadata.get('candidate_pool_rows_rejected_by_feasibility', 0))}",
             f"- Optimizer mode: {result.metadata.get('optimizer_mode', '')}",
@@ -2940,7 +3765,6 @@ def _write_summary(
             "Formulation similarity policy:",
             f"- Version: {similarity_metadata.get('policy_version', '')}",
             f"- Status: {'active' if similarity_metadata.get('active', False) else 'inactive'}",
-            f"- Activation round: ROUND_{int(similarity_metadata.get('start_round', 3)):03d}",
             f"- Bounds-normalized distance threshold: {float(similarity_metadata.get('distance_threshold', 0.05)):.4g}",
             "- Same-single-ingredient minimum relative difference: "
             f"{float(similarity_metadata.get('single_ingredient_min_relative_difference', 0.50)):.0%}",
@@ -3131,15 +3955,20 @@ def write_selection_result(
     selected["mechanical_selection_rank"] = ""
     selected["mechanical_selection_mode"] = ""
     selected["mechanical_backup_status"] = ""
+    selected["mechanical_transition_role"] = ""
     if not result.mechanical_tests.empty:
         rank_map = result.mechanical_tests.set_index("candidate_id")["mechanical_selection_rank"].to_dict()
         mode_map = result.mechanical_tests.set_index("candidate_id")["mechanical_selection_mode"].to_dict()
         backup_map = result.mechanical_tests.set_index("candidate_id")[
             "mechanical_backup_status"
         ].to_dict()
+        role_map = result.mechanical_tests.set_index("candidate_id")[
+            "mechanical_transition_role"
+        ].to_dict()
         selected["mechanical_selection_rank"] = selected["candidate_id"].map(rank_map).fillna("")
         selected["mechanical_selection_mode"] = selected["candidate_id"].map(mode_map).fillna("")
         selected["mechanical_backup_status"] = selected["candidate_id"].map(backup_map).fillna("")
+        selected["mechanical_transition_role"] = selected["candidate_id"].map(role_map).fillna("")
 
     wetlab_result_columns = [
         "formulation_id",
@@ -3151,6 +3980,7 @@ def write_selection_result(
         "mechanical_selection_rank",
         "mechanical_selection_mode",
         "mechanical_backup_status",
+        "mechanical_transition_role",
         "batch_id",
         "replicate_id",
         "viability_percent",
@@ -3253,6 +4083,13 @@ def write_selection_result(
         "screening_acquisition_penalty",
         "screening_phase_score",
         "mechanics_phase_score",
+        "hybrid_phase_score",
+        "bootstrap_utility",
+        "prior_mechanical_observation_count",
+        "mechanical_repeat_status",
+        "mechanical_repeat_allowed",
+        "mechanics_anchor_source_batch",
+        "mechanics_anchor_selection_score",
         "selection_role",
     ]
     if (
@@ -3315,6 +4152,7 @@ def write_selection_result(
     total_pool["mechanical_selection_rank"] = ""
     total_pool["mechanical_selection_mode"] = ""
     total_pool["mechanical_backup_status"] = ""
+    total_pool["mechanical_transition_role"] = ""
     if not result.mechanical_tests.empty:
         mech_rank_map = result.mechanical_tests.set_index("candidate_id")[
             "mechanical_selection_rank"
@@ -3325,6 +4163,9 @@ def write_selection_result(
         mech_backup_map = result.mechanical_tests.set_index("candidate_id")[
             "mechanical_backup_status"
         ].to_dict()
+        mech_role_map = result.mechanical_tests.set_index("candidate_id")[
+            "mechanical_transition_role"
+        ].to_dict()
         total_pool["mechanical_selection_rank"] = (
             total_pool["candidate_id"].map(mech_rank_map).fillna("")
         )
@@ -3333,6 +4174,9 @@ def write_selection_result(
         )
         total_pool["mechanical_backup_status"] = (
             total_pool["candidate_id"].map(mech_backup_map).fillna("")
+        )
+        total_pool["mechanical_transition_role"] = (
+            total_pool["candidate_id"].map(mech_role_map).fillna("")
         )
     total_pool_output = (
         Path(total_candidate_pool_path)

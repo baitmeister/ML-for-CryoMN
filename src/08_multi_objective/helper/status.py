@@ -68,17 +68,21 @@ def build_current_round_status(
     phase_reason: str = "",
     proposed_batch_id: str = "",
     proposed_batch_override_used: bool = False,
+    phase_resolution: dict[str, Any] | None = None,
+    proposal_policy: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     tracker = derive_round_tracker(observations)
     proposed = str(proposed_batch_id).strip() if proposed_batch_id else ""
     return {
-        "status_version": 1,
+        "status_version": 2,
         "source_of_truth": "observations_csv",
         "source_observations_path": str(Path(source_observations_path)),
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         **tracker,
         "active_phase": str(active_phase).strip(),
         "phase_reason": str(phase_reason).strip(),
+        "phase_resolution": phase_resolution or {},
+        "proposal_policy": proposal_policy or {},
         "proposed_batch_id": proposed,
         "proposed_batch_override_used": bool(proposed_batch_override_used),
         "proposed_batch_matches_next_round": (
@@ -95,6 +99,8 @@ def write_current_round_status(
     phase_reason: str = "",
     proposed_batch_id: str = "",
     proposed_batch_override_used: bool = False,
+    phase_resolution: dict[str, Any] | None = None,
+    proposal_policy: dict[str, Any] | None = None,
 ) -> Path:
     path = Path(output_path)
     payload = build_current_round_status(
@@ -104,7 +110,19 @@ def write_current_round_status(
         phase_reason=phase_reason,
         proposed_batch_id=proposed_batch_id,
         proposed_batch_override_used=proposed_batch_override_used,
+        phase_resolution=phase_resolution,
+        proposal_policy=proposal_policy,
     )
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(
+            payload,
+            indent=2,
+            default=lambda value: (
+                value.item() if hasattr(value, "item") else str(value)
+            ),
+        )
+        + "\n",
+        encoding="utf-8",
+    )
     return path

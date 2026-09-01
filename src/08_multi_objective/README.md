@@ -128,31 +128,225 @@ least-recently-tested, registry order. Remaining positions may provide a second
 distinct active set. All availability, feasibility, support, similarity,
 combination, pair, universal-frequency, and origin-allocation rules remain hard.
 
-### Phase-specific behavior
+## Evidence-gated mechanics transition
 
-| Phase | Viability/intact rows | Program-requested mechanics | Intact role in selection |
-|---|---:|---:|---|
-| `screening_only` | 12 | 0; ranks and backup status blank | Exact-combination deduction affects screening ranking; classifier is diagnostic. |
-| `mechanics_enabled` | 12 | 4 primaries plus 8 ordered backups | `p_combo` feasibility-weights qLogNEHVI/proxy; actual intact formation decides which four reach Instron. |
+`mechanics_transition_v1` resolves the proposal phase from completed screening
+and paired mechanical evidence. The proposal round label is recorded for audit,
+but it does not satisfy an evidence gate. Manual `--phase-mode` values bypass
+automatic resolution for audit or debugging and are marked as overrides in
+metadata.
 
-In mechanics, viability and critical axial load per needle remain the two Pareto
-objectives. BoTorch uses `qLogNEHVI + log(max(p_combo,1e-9))`; the finite-pool
-fallback uses `log1p(raw hypervolume-like improvement × p_combo)`. The prior
-classifier threshold and `0.80 × (1-p_classifier)` deduction are available only
-as `classifier_threshold_penalty` compatibility behavior.
+| Phase | Automatic entry condition | Screening slate | Mechanical allocation |
+|---|---|---:|---:|
+| `screening_only` | Fewer than 8 completed screening rounds | 12 | None |
+| `mechanics_bootstrap` | Screening entry met; hybrid 8/6/2 gate not met | 12 | Four diversity-oriented tests |
+| `mechanics_hybrid` | At least 8 paired observations, 6 distinct paired formulations, and 2 paired batches; full gate not met | 12 | Two qLogNEHVI, one local, one coverage |
+| `mechanics_enabled` | At least 16 paired observations, 12 distinct paired formulations, and 3 paired batches | 12 | Four full mechanics primaries plus ordered backups |
 
-After fabrication, test the first four mechanics-priority rows that actually
-pass intact. A failed primary is skipped and the next intact backup is promoted.
-If fewer than four of the 12 pass, test all intact rows and record the shortfall.
-Stage 03 rejects mechanical values without a measured intact pass and archives
-the execution audit.
+A completed screening round is a `ROUND_###` batch containing measured
+`viability_percent` and `intact_patch_formation_pass` endpoints. A paired
+mechanical observation is one formulation–batch training row containing both
+`viability_percent` and `critical_axial_load_N_per_needle` under the same
+`batch_id`. Technical replicates are aggregated before gate counts, so they do
+not create additional formulation–batch pairs. Repeating a formulation in a
+later batch creates another pair without overwriting its earlier evidence.
 
-Round 6 remains `screening_only`, so it requests 12 viability/intact experiments
-and no Instron tests. Automatic transition thresholds are unchanged: eight
-paired observations, six distinct formulations, and two batches. This leaves a
-known bootstrap circularity: the automatic workflow cannot reach mechanics
-without externally collected mechanical evidence or a manual phase override.
-No mechanical-bootstrap phase was introduced.
+The resolver evaluates conditions in this order:
+
+1. Keep `screening_only` until the screening-entry requirement is met.
+2. Use `mechanics_bootstrap` while the 8/6/2 hybrid gate is incomplete.
+3. Use `mechanics_hybrid` after the hybrid gate and while the 16/12/3 full gate
+   is incomplete.
+4. Use `mechanics_enabled` after the full gate is satisfied.
+
+### Changing the transition policy
+
+No campaign round is hard-coded as a mechanics phase. With the default
+`minimum_completed_screening_rounds: 8`, completion of `ROUND_001` through
+`ROUND_008` makes the following proposal eligible for bootstrap; that proposal
+will ordinarily be `ROUND_009`. If the minimum is set to `10`, the first
+bootstrap-eligible proposal will ordinarily follow ten completed screening
+rounds instead.
+
+Edit only the `mechanics_transition` block in
+`config_v2/optimization.yaml` for future automatic proposals:
+
+```yaml
+mechanics_transition:
+  entry:
+    minimum_completed_screening_rounds: 8
+  hybrid_gate:
+    min_paired_observations: 8
+    min_distinct_formulations: 6
+    min_batches: 2
+  full_gate:
+    min_paired_observations: 16
+    min_distinct_formulations: 12
+    min_batches: 3
+```
+
+All three values within an evidence gate are joined by **AND**. Raising or
+lowering one value changes only that requirement; the other two must still be
+satisfied. Keep `phase_mode: auto` for normal operation. The CLI phase choices
+are temporary audit/debug overrides and do not rewrite the configured gates.
+
+The same configuration block controls mechanical capacity, bootstrap score
+weights, anchor timing and repeat limit, hybrid slate weights, hybrid slot
+allocation, coverage floors, and repeat exclusions. When changing hybrid slot
+counts, keep their sum equal to the configured mechanical capacity unless a
+deliberately underfilled allocation is intended.
+
+Configuration changes apply when a future proposal is generated. Do not edit
+or regenerate a started or completed proposal to apply a different gate. After
+selection, verify `current_round_status.json`, `next_round_summary.txt`, and
+`next_round_metadata.json`; each reports the resolved phase, gate counts,
+requirements, remaining deficits, and override status.
+
+Every phase retains the 12-row viability/intact slate and its feasibility,
+support, formulation-similarity, ingredient-combination, shared-pair,
+marginal-frequency, cold-start, rescue, and evidence-based retest rules.
+Mechanical rank is a separate eligibility layer; an unranked screening row
+cannot provide mechanical data or serve as a mechanical backup.
+
+### Bootstrap selection
+
+Ordinary bootstrap eligibility excludes `retest_priority` rows and any
+formulation with a prior critical-load observation. For each eligible slate
+row:
+
+```text
+bootstrap utility =
+  0.70 × minmax(screening_phase_score)
+  + 0.30 × empirical_combination_pass_probability
+```
+
+The first fresh primary maximizes bootstrap utility. Remaining fresh primaries
+and backups are selected greedily with composition diversity:
+
+```text
+bootstrap rank score =
+  0.60 × minmax(bootstrap utility)
+  + 0.40 × minmax(distance to nearest selected formulation)
+```
+
+Distance is Euclidean distance over the complete formulation vector after each
+ingredient is scaled by its registry bounds. The first fresh row is labeled
+`bootstrap_utility`; later fresh rows are labeled `bootstrap_coverage`.
+Bootstrap does not invoke qLogNEHVI.
+
+The second mechanically active bootstrap batch may contain one
+`mechanics_anchor` and three fresh primaries. The anchor is drawn only from the
+immediately preceding mechanical batch and must have same-batch viability,
+critical load, and an actual intact pass. Technical replicates are aggregated
+before scoring. The score is:
+
+```text
+anchor score =
+  0.50 × minmax(observed mean viability)
+  + 0.50 × minmax(observed mean critical load)
+```
+
+Ties use lower viability replicate SD and then formulation ID. The formulation
+must remain chemically feasible, use available ingredients, and have no
+recorded preparation failure. The anchor receives mechanical rank 1,
+`recommendation_type=mechanics_anchor`, `candidate_origin=mechanics_anchor`,
+and transition role `anchor`. Its wet-lab fields are blank because viability,
+intact formation, and load must all be measured again. No other mechanically
+observed formulation can enter the slate for mechanical testing. If no anchor
+qualifies, the batch contains four fresh primaries and metadata records the
+reason. Automatic selection permits no more than one exact anchor repeat and
+does not schedule it in another bootstrap batch.
+
+### Hybrid selection
+
+Hybrid mode trains the mechanical surrogate, attempts continuous qLogNEHVI
+generation, preserves `candidate_origin` values such as
+`local_perturbation`, and computes the empirical-feasibility-weighted mechanics
+score. The 12-row slate score is:
+
+```text
+hybrid_phase_score =
+  0.50 × minmax(screening_phase_score)
+  + 0.50 × minmax(mechanics_phase_score)
+```
+
+Four mechanically untested, non-retest primaries are allocated in this order:
+
+1. the highest feasibility-weighted mechanics score;
+2. a second high mechanics score chosen by the established diversity-aware
+   picker;
+3. the highest-scoring unused `local_perturbation` row;
+4. the maximum-distance coverage row relative to prior mechanical observations
+   and the first three selections.
+
+The coverage row must be in the upper half of the slate's screening scores,
+have empirical intact probability at least `0.50`, have no prior critical-load
+observation, and satisfy the slate's feasibility and diversity constraints. A
+missing local or coverage role is filled deterministically by the highest
+unused hybrid score. Metadata retains the requested role, fallback reason, and
+candidate used. Remaining mechanically eligible rows are ordered backups by
+mechanics score.
+
+### Full mechanics selection
+
+`mechanics_enabled` retains continuous qLogNEHVI generation when BoTorch is
+available and reports optimization failures before falling back to the finite
+pool. Viability and critical axial load per needle are the two Pareto
+objectives; initial stiffness remains diagnostic. Empirical intact probability
+is feasibility, not a third objective:
+
+```text
+BoTorch constrained log acquisition =
+  qLogNEHVI + log(max(p_combo, 1e-9))
+
+finite-pool fallback =
+  log1p(raw hypervolume-like improvement × p_combo)
+```
+
+The first four mechanically eligible rows are primaries and the remaining
+eligible rows are ordered backups. Exact mechanically observed formulations
+and `retest_priority` rows are unranked. An explicit confirmation policy would
+be required to allow any repeat beyond the one bootstrap anchor.
+
+### Actual-intact execution and shortfalls
+
+Stage 03 considers only rows with a numeric `mechanical_selection_rank`.
+Operators fabricate and screen all 12 rows, then test the first four ranked rows
+that actually pass intact. Failed or blank-intact rows are skipped, and backups
+are promoted strictly in ascending mechanical rank. Mechanical fields on an
+unranked, failed-intact, blank-intact, out-of-order, or over-capacity row cause
+validation to fail. If fewer than four ranked rows pass intact, test every
+ranked passing row and leave the remaining capacity unused; the completion
+manifest records the shortfall.
+
+The anchor follows the same rule and must be remeasured rather than carrying
+forward values from its source batch. A mechanical result is ingested under the
+proposal batch ID, preserving one training row per formulation–batch after
+technical-replicate aggregation.
+
+### Worksheet, metadata, and operator contract
+
+The proposal and total pool expose:
+
+- `mechanical_transition_role`
+- `prior_mechanical_observation_count`
+- `mechanical_repeat_status`
+- `mechanical_repeat_allowed`
+
+Transition roles are `anchor`, `bootstrap_utility`, `bootstrap_coverage`,
+`hybrid_qlognehvi`, `hybrid_local`, `hybrid_coverage`, `ordered_backup`, or
+blank for a mechanically ineligible row. Full-mechanics primaries use a blank
+transition role because the workflow is no longer transitioning; their numeric
+rank and `mechanical_backup_status=primary` define execution priority.
+
+Proposal metadata, the operator summary, current status, and the mechanical
+execution manifest report the resolved phase and reason, both gate counts and
+requirements, override status, bootstrap batch index, transition roles,
+anchor decision and source batch, repeat/retest exclusions, hybrid quota
+fallbacks, qLogNEHVI availability and errors, actual-intact promotions, and
+test shortfalls. Operators fill only editable preparation, viability, intact,
+Instron/load, replicate, and note fields. Candidate identity, composition,
+ranks, roles, model diagnostics, and policy metadata remain unchanged.
 
 ### Round 3 uncertainty and retest policy
 
@@ -208,24 +402,24 @@ availability filtering. It includes model predictions, penalties, selection
 scores, and flags showing which rows were promoted into the wet-lab slate.
 
 `current_round_status.json` is a derived status file for operators. It records
-the highest observed `ROUND_###`, the proposed round ID, the active phase,
-and whether the proposal matches the round implied by
-`observations.csv`.
+the highest observed `ROUND_###`, proposed round ID, phase resolution and
+evidence gates, proposed transition roles, optimizer fallback information, and
+whether the proposal matches the round implied by `observations.csv`.
 
 `next_round_candidates.csv` is the one detailed CSV. It contains the candidate
 identity, formulation concentrations, model predictions, soft-constraint
 diagnostics, mechanical-test recommendation flags, and blank wet-lab result
-columns to fill. Those mechanical flags stay off until the selector reaches
-`mechanics_enabled`.
+columns to fill. Only numeric-ranked rows are eligible for mechanics in
+bootstrap, hybrid, or full mechanics phases.
 
 `next_round_summary.txt` is the human-friendly validation sheet. Use it to see
 the batch ID, which formulations to make, which rows are recommended for
 Instron testing once mechanics is enabled, and what command to run after
 results are filled.
 
-`next_round_metadata.json` records the active policy version, activation round,
-support radius, optimizer mode, fallback status, and detailed qLogNEHVI
-diagnostics for reproducibility.
+`next_round_metadata.json` records transition-policy version, phase evidence,
+anchor and repeat decisions, hybrid quota fulfillment, support radius,
+optimizer mode, fallback status, and qLogNEHVI diagnostics for reproducibility.
 
 ## Round-Scoped Artifacts
 

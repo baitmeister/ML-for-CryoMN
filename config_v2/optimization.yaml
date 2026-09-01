@@ -47,8 +47,8 @@ formulation_feasibility:
     - hsa_pct
     - human_serum_pct
     # Keep feasibility chemistry independent of temporary lab availability.
-    # Sericin is currently unavailable, but must contribute to the protein /
-    # crowding burden as soon as availability is restored.
+    # Sericin contributes to protein/crowding burden independently of whether
+    # availability permits it to be sampled.
     - sericin_pct
   sugar_features:
     - trehalose_M
@@ -119,21 +119,46 @@ continuous_qlognehvi:
 
 phase_mode: auto
 
-phase_transition:
-  mechanics_enable_min_paired_observations: 8
-  mechanics_enable_min_distinct_formulations: 6
-  mechanics_enable_min_batches: 2
+mechanics_transition:
+  policy_version: mechanics_transition_v1
+  entry:
+    minimum_completed_screening_rounds: 8
+  hybrid_gate:
+    min_paired_observations: 8
+    min_distinct_formulations: 6
+    min_batches: 2
+  full_gate:
+    min_paired_observations: 16
+    min_distinct_formulations: 12
+    min_batches: 3
+  bootstrap:
+    mechanical_capacity: 4
+    screening_utility_weight: 0.70
+    empirical_intact_weight: 0.30
+    diversity_weight: 0.40
+  anchor:
+    enabled_for_bootstrap_batch_index: 2
+    maximum_exact_repeats: 1
+    viability_weight: 0.50
+    critical_load_weight: 0.50
+  hybrid:
+    screening_slate_weight: 0.50
+    mechanics_slate_weight: 0.50
+    qlognehvi_slots: 2
+    local_slots: 1
+    coverage_slots: 1
+    coverage_min_screening_quantile: 0.50
+    coverage_min_empirical_intact_probability: 0.50
+  repeat_policy:
+    allow_bootstrap_anchor: true
+    allow_other_prior_mechanical_formulations: false
+    allow_retest_priority_for_mechanics: false
 
 round_policy:
   viability_screens_per_round: 12
-  mechanical_tests_per_round: 4
-  mechanical_min_tests_per_round: 3
-  allow_one_novelty_exception: true
-  # Used only by intact_combination_policy.compatibility_mode. The active
-  # empirical-feasibility mechanics mode ranks all 12 rows and uses actual
-  # intact results to promote ordered backups.
+  # Used only by intact_combination_policy.compatibility_mode. Evidence-gated
+  # mechanics uses empirical feasibility and actual-intact rank promotion.
   intact_probability_threshold: 0.50
-  mechanics_startup_observation_threshold: 8
 
 penalties:
   active_ingredient_soft_limit: 8
@@ -141,7 +166,7 @@ penalties:
   single_molar_ingredient_limit_M: 0.5
   single_molar_excess_weight: 0.20
   # Retained for the documented classifier-compatibility mechanics mode.
-  # The active Round-6 empirical policy does not use this term.
+  # The empirical mechanics policy does not use this term.
   intact_failure_weight: 0.80
 
 intact_combination_policy:
@@ -157,7 +182,6 @@ intact_combination_policy:
   mechanics_mode: empirical_feasibility_weighted
   compatibility_mode: classifier_threshold_penalty
   numerical_probability_floor: 1.0e-9
-  mechanics_primary_test_count: 4
   mechanics_backup_behavior: actual_intact_priority_promotion
 
 cold_start_policy:
@@ -201,7 +225,6 @@ selection:
   viability_ucb_kappa: 0.35
   mechanical_ucb_kappa: 0.50
   diversity_weight: 0.10
-  novelty_exception_probability_floor: 0.25
   # Max number of selected candidates in a round that may share the exact
   # same *pair* (2-ingredient) active-ingredient set. Prevents the slate
   # from being dominated by repeats of one high-viability-scoring pair
@@ -227,15 +250,6 @@ selection:
   reference_point:
     viability_percent: 0.0
     critical_axial_load_N_per_needle: 0.0
-
-# NOTE: viability_weight/intact_weight below are unused by the active
-# screening path and retained only as a record of the pre-Round-6 scheme.
-# Screening now uses normalized viability UCB minus chemistry, support, and
-# empirical exact-combination intact deductions. The additive intact
-# classifier remains diagnostic except in compatibility mechanics mode.
-screening_phase:
-  viability_weight: 0.75
-  intact_weight: 0.25
 
 retest:
   enabled: true

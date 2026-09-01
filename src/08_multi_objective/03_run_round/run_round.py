@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import pandas as pd
 import subprocess
 import sys
@@ -78,7 +79,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument(
         "--phase-mode",
-        choices=["auto", "screening_only", "mechanics_enabled"],
+        choices=[
+            "auto",
+            "screening_only",
+            "mechanics_bootstrap",
+            "mechanics_hybrid",
+            "mechanics_enabled",
+        ],
         default=None,
         help="Optional phase override for debugging/audits. Default behavior is automatic.",
     )
@@ -285,20 +292,22 @@ def main() -> None:
             f"{validation['proposal_candidate_count']} candidates, "
             f"{validation['completed_row_count']} completed row(s)."
         )
+        proposal_metadata = {}
+        if round_paths.proposal_metadata.exists():
+            proposal_metadata = json.loads(
+                round_paths.proposal_metadata.read_text(encoding="utf-8")
+            )
         mechanics_audit = validate_mechanics_execution(
             current_candidates,
             pd.read_csv(round_paths.proposal_csv),
             primary_capacity=int(
                 nested_get(
                     optimization_config,
-                    "intact_combination_policy.mechanics_primary_test_count",
-                    nested_get(
-                        optimization_config,
-                        "round_policy.mechanical_tests_per_round",
-                        4,
-                    ),
+                    "mechanics_transition.bootstrap.mechanical_capacity",
+                    4,
                 )
             ),
+            proposal_metadata=proposal_metadata,
         )
 
     if round_progressed:
@@ -381,6 +390,7 @@ def main() -> None:
             source_observations_path=args.observations,
             active_phase=phase_resolution.active_phase,
             phase_reason=phase_resolution.reason,
+            phase_resolution=phase_resolution.to_metadata(),
         )
 
     if not args.skip_generate:
