@@ -5,7 +5,7 @@ import math
 import yaml
 
 CONFIG_PATH = Path(__file__).resolve().parents[3] / 'config_v2' / 'group10.yaml'
-ROLES = {'campaign_control', 'screened_hit_mechanics', 'mechanics_confirmation'}
+ROLES = {'campaign_control', 'screened_hit_mechanics'}
 METADATA_FIELDS = ['preparation_id', 'specimen_id', 'readout_id', 'cell_batch_id',
                    'protocol_id', 'mechanical_test_id', 'mechanical_test_attempted',
                    'mechanical_definition_id', 'raw_file_hash']
@@ -34,7 +34,7 @@ def validate_group10_config(c):
             raise ValueError('Invalid reference '+k)
     if r.get('purity_fraction') is not None and r['purity_fraction']>1:
         raise ValueError('purity_fraction must not exceed 1')
-    for k in ['independent_preparations','specimens_per_preparation']:
+    for k in ['replicate_count']:
         if r.get(k) is not None and (type(r[k]) is not int or r[k]<1):
             raise ValueError(k+' must be a positive integer')
     req=c['application_requirements']
@@ -48,17 +48,18 @@ def validate_group10_config(c):
     e=c['mechanical_endpoint']
     if e['displacement_limit_mm']!=1 or e['relative_drop']!=.1 or e['supplementary_only'] is not True:
         raise ValueError('Endpoint must remain supplementary, contact-relative 1 mm, 10% drop')
-    if c['confirmation'].get('enabled'):
-        for k in ['cadence','minimum_independent_batches']:
-            if type(c['confirmation'].get(k)) is not int or c['confirmation'][k]<1:
-                raise ValueError('Confirmation requires positive '+k)
+    replicas=c.get('mechanical_replicates_per_formulation')
+    if replicas is not None and (type(replicas) is not int or replicas<1):
+        raise ValueError('mechanical_replicates_per_formulation must be a positive integer')
+    if c.get('production_decision_boundary') != 'beginning_of_full_mechanics':
+        raise ValueError('Production decision belongs before the first full-mechanics proposal')
 
 def active(c, round_number):
     return c.get('activation_round') is not None and round_number is not None and round_number >= c['activation_round']
 
 def reference_readiness(c):
     r=c['reference']
-    missing=[k for k in ['density_g_mL','purity_fraction','base_medium','independent_preparations','specimens_per_preparation'] if r.get(k) in (None,'')]
+    missing=[k for k in ['density_g_mL','purity_fraction','replicate_count'] if r.get(k) in (None,'')]
     return {'ready':not missing,'missing_settings':missing}
 
 def production_observations(obs):

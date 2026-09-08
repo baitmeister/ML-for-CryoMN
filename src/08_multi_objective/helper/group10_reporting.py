@@ -37,7 +37,7 @@ def additional_reports(observations, prospective_table, results_root, output_dir
                 if row.candidate_id not in proposal.index:continue
                 r=proposal.loc[row.candidate_id];role=r.get('experimental_role',r.get('recommendation_type',''))
                 status=r.get('viability_prediction_status','unclassified_historical')
-                t.loc[i,'diagnostic_cohort']=role if role in ('campaign_control','screened_hit_mechanics','mechanics_confirmation','retest_priority') else str(status)
+                t.loc[i,'diagnostic_cohort']=role if role in ('campaign_control','screened_hit_mechanics','retest_priority') else str(status)
         for keys,g in t.groupby(['endpoint','diagnostic_cohort']):
             valid=g.loc[g.evaluation_eligible.eq(True)].dropna(subset=['prediction_mean','observed_mean'])
             if valid.empty:continue

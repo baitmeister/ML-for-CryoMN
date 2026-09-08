@@ -27,6 +27,19 @@ class Group10Tests(unittest.TestCase):
         for k,v in [('activation_round',9),('production_model_revision',True),('production_noise_revision',True),('production_endpoint_revision',True)]:
             c=deepcopy(self.c);c[k]=v
             with self.assertRaises(ValueError):validate_group10_config(c)
+    def test_simplified_replicates_and_no_confirmation(self):
+        self.assertNotIn('confirmation',self.c)
+        self.assertNotIn('base_medium',self.c['reference'])
+        self.assertNotIn('independent_preparations',self.c['reference'])
+        c=deepcopy(self.c);c['reference']['replicate_count']=3
+        self.assertTrue(reference_readiness(c)['ready'])
+        for key in ('replicate_count','mechanical_replicates_per_formulation'):
+            bad=deepcopy(c)
+            if key=='replicate_count': bad['reference'][key]=0
+            else: bad[key]=0
+            with self.assertRaises(ValueError): validate_group10_config(bad)
+        self.assertEqual(c['production_decision_boundary'],'beginning_of_full_mechanics')
+
     def test_requirements(self):
         req=self.c['application_requirements'];r={'viability_percent':60,'mechanical_value':.1,'intact_patch_formation_pass':1,'mechanical_definition_id':'supported_load_1mm_v1'}
         self.assertEqual(assess_acceptance(r,req)['application_status'],'requirements_pending')
@@ -58,7 +71,7 @@ class Group10Tests(unittest.TestCase):
         r=estimate_noise(o).iloc[0];self.assertEqual(r.n_independent,2);self.assertGreater(r.mean_variance,0)
         r=estimate_noise(o.drop(columns='preparation_id')).iloc[0];self.assertEqual(r.n_independent,1);self.assertEqual(r.noise_source,'pooled_conservative_fallback')
     def test_reference_only_exception_and_training_exclusion(self):
-        c=deepcopy(self.c);c['reference'].update(density_g_mL=1.1,purity_fraction=1.,base_medium='test medium',independent_preparations=2,specimens_per_preparation=2)
+        c=deepcopy(self.c);c['reference'].update(density_g_mL=1.1,purity_fraction=1.,replicate_count=3)
         reg=load_registry();f,state=reference_candidate(c,reg)
         self.assertTrue(state['ready']);self.assertGreater(f.iloc[0].dmso_M,.1)
         self.assertTrue(reference_feasibility(f,reg,load_optimization_config(),c).iloc[0].feasibility_pass)

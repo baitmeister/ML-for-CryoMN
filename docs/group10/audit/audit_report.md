@@ -19,6 +19,6 @@ The correction uncertainty uses an independent-component approximation; it is di
 No repeated configured controls or supplementary mechanical endpoints exist in this snapshot: batch adjustment and mechanical-target comparison are not estimable.
 The separate ModelListGP implementation is tested on synthetic unequal endpoint datasets; it has not replaced production acquisition.
 Failed fits: 0. Details and convergence warnings are retained in CSV/JSON.
-User decision during full mechanics is required before any production switch.
+User decision before the first full-mechanics proposal is required before any production switch.
 
 For model definitions, metric interpretation, per-group qualifications, and uncertainty/noise limitations, read [the explained comparison](explained_comparison.md).

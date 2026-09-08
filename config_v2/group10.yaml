@@ -1,4 +1,4 @@
-policy_version: group10_workflow_v1
+policy_version: group10_workflow_v2
 activation_round: 10
 proposal_schema_version: 3
 production_model_revision: false
@@ -13,15 +13,12 @@ reference:
   # User-specified 100% purity, 2026-09-08.
   purity_fraction: 1.0
   molecular_weight_g_mol: 78.13
-  base_medium: null
-  independent_preparations: null
-  specimens_per_preparation: null
+  # Same base medium as every campaign formulation; one preparation.
+  replicate_count: null
   mechanical: true
-confirmation:
-  enabled: false
-  cadence: null
-  minimum_independent_batches: null
-mechanical_specimens_per_formulation: null
+mechanical_replicates_per_formulation: null
+# Select and freeze the model before the first full-mechanics proposal.
+production_decision_boundary: beginning_of_full_mechanics
 mechanical_endpoint:
   definition_id: supported_load_1mm_v1
   detector_version: force_drop_v1

@@ -802,7 +802,7 @@ def _mechanical_eligibility_mask(
             False,
         )
     )
-    typed_repeat = recommendation.isin(["campaign_control", "mechanics_confirmation"]) & frame.get("mechanical_repeat_allowed", pd.Series(False, index=frame.index)).fillna(False).astype(bool)
+    typed_repeat = recommendation.isin(["campaign_control"]) & frame.get("mechanical_repeat_allowed", pd.Series(False, index=frame.index)).fillna(False).astype(bool)
     repeat_eligible = prior_count.eq(0) | is_anchor | allow_prior | typed_repeat
     retest_eligible = ~is_retest | allow_retests
     mask = repeat_eligible & retest_eligible

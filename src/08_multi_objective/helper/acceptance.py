@@ -22,7 +22,7 @@ def assess_acceptance(row, requirements):
             'viability_margin':None if v is None or vt is None else v-vt,
             'mechanical_margin':None if f is None or ft is None or not compatible else f-ft,
             'mechanical_compatibility_status':'compatible' if compatible else 'unknown_or_incompatible',
-            'confirmation_status':'not_configured', 'application_status':'requirements_pending'}
+            'application_status':'requirements_pending'}
     if result['requirements_status']!='complete': return result
     if v is None or f is None or intact is None or not compatible:
         result['application_status']='insufficient_evidence'

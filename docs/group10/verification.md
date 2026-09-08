@@ -27,8 +27,12 @@ All **269** baseline data/frozen-artifact hashes matched in both the original ch
 
 - No production GP, noise, acquisition, or mechanical-target revision was activated.
 - The offline audit uses Rounds 3–8 only; no Group 9 outcome was inspected. Replay compares prediction, not counterfactual discovery policies.
-- Reference preparation/replication and detector settings remain unresolved. They disable their dependent capabilities independently.
+- Reference replicate count and detector settings remain unresolved. They disable their dependent capabilities independently.
 - Detector synthetic tests establish software behavior; instrument traces are still needed to choose contact, absolute noise, and persistence settings. No imaging validation is required or claimed.
 - Repeated real reference groups and adequate mechanical outcomes do not yet exist for empirical batch-adjustment/new-target acquisition comparisons. These are explicitly pending in the audit; software smoke tests are not substitutes.
-- Independent confirmation/reliability claims remain disabled pending a user-defined scientific rule.
+- The separate confirmation feature was subsequently removed at user request; acceptance reports measured requirements only.
 - Incorporate actual completed Group 9 data and regenerate an isolated preview before any live Group 10 activation.
+
+## Workflow v2 simplification verification
+
+After removing the separate base-medium/preparation planning requirements and confirmation feature, the full suite passed **89 tests in 22.756 seconds**. The additional regression verifies that an ordinary reference replicate count alone completes reference readiness, invalid replicate counts fail validation, and the decision boundary is the beginning of full mechanics. All 269 protected hashes still match in both checkouts. The earlier synthetic previews above are historical workflow-v1 evidence; they were not regenerated or relabeled as workflow-v2 proposals.

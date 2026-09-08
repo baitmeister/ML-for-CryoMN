@@ -52,4 +52,4 @@ No real repeated reference-control groups or supplementary mechanical outcomes e
 
 ## Decision implication
 
-Keep the production method unchanged under the agreed transition policy. During full mechanics, compare the simple campaign-only GP first against the bounded variant using fresh, frozen evaluation. Review MAE, bias, within-group ranking, and properly specified uncertainty together. The present audit identifies source treatment as the biggest modeling concern; it does not yet establish that any replacement reliably predicts absolute viability or improves the viability–load trade-off.
+Keep the production method unchanged under the agreed transition policy. Before full mechanics begins, compare the simple campaign-only GP first against the bounded variant using fresh, frozen evaluation. Review MAE, bias, within-group ranking, and properly specified uncertainty together. The present audit identifies source treatment as the biggest modeling concern; it does not yet establish that any replacement reliably predicts absolute viability or improves the viability–load trade-off.

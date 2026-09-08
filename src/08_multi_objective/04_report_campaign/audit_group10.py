@@ -72,7 +72,7 @@ def run(root,output):
         'No repeated configured controls or supplementary mechanical endpoints exist in this snapshot: batch adjustment and mechanical-target comparison are not estimable.',
         'The separate ModelListGP implementation is tested on synthetic unequal endpoint datasets; it has not replaced production acquisition.',
         f'Failed fits: {len(failures)}. Details and convergence warnings are retained in CSV/JSON.',
-        'User decision during full mechanics is required before any production switch.']
+        'User decision before the first full-mechanics proposal is required before any production switch.']
     (output/'audit_report.md').write_text('\n'.join(report)+'\n')
     return summary
 

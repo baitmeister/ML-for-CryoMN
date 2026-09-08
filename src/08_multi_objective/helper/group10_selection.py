@@ -28,7 +28,7 @@ def reference_candidate(config, registry):
     key=','.join(f'{f}:{row[f]:.12g}' for f in registry.feature_names)
     row.update(formulation_id='reference_'+hashlib.sha256(key.encode()).hexdigest()[:12],candidate_id='reference_control',
                recommendation_type='campaign_control',experimental_role='campaign_control',candidate_origin='campaign_control',
-               preparation_basis='2.5% v/v DMSO + 100 mM sucrose; final volume; '+str(r['base_medium']))
+               preparation_basis='2.5% v/v DMSO + 100 mM sucrose; final volume; common campaign base medium')
     return pd.DataFrame([row]),state
 
 def reference_feasibility(frame, registry, optimization, config):
@@ -57,14 +57,10 @@ def apply_group10(result, formulations, observations, registry, optimization, co
     load='critical_axial_load_N_per_needle'
     prior=set(frame.loc[frame[load].notna(),'formulation_id']) if load in frame else set()
     failed=set(frame.loc[frame.preparation_feasibility_pass.eq(0),'formulation_id']) if 'preparation_feasibility_pass' in frame else set()
-    confirmations=[]
-    confirmation_cfg=config['confirmation']
-    confirmation_due=confirmation_cfg.get('enabled',False) and round_number % confirmation_cfg['cadence']==0
     hits=[]
     for fid,g in frame.groupby('formulation_id',sort=True):
         if fid in failed or not g.intact_patch_formation_pass.ge(.5).any(): continue
-        confirmation = fid in prior
-        if confirmation and not confirmation_due: continue
+        if fid in prior: continue
         row=g.iloc[0].to_dict()
         if any(row.get(f,0)>0 for f in unavailable): continue
         # Rank means across batches; retain disagreements in provenance.
@@ -75,34 +71,22 @@ def apply_group10(result, formulations, observations, registry, optimization, co
         # No old endpoint values may survive into a fresh worksheet.
         for k in ['viability_percent','intact_patch_formation_pass',load,'initial_stiffness_N_per_mm_per_needle']:
             row.pop(k,None)
-        if confirmation:
-            measured_pairs=g.dropna(subset=[load])
-            if len(measured_pairs)<1: continue
-            row.update(recommendation_type='mechanics_confirmation',experimental_role='mechanics_confirmation',
-                       candidate_origin='mechanics_confirmation',candidate_id='confirm_'+str(fid),
-                       observed_load_mean=float(measured_pairs[load].mean()))
-            confirmations.append(row)
-        else:
-            hits.append(row)
+        hits.append(row)
     hits=pd.DataFrame(hits)
     if not hits.empty:
         hits=annotate_feasibility(hits,registry,optimization,policy_active=True)
         hits=hits.loc[hits.feasibility_pass].sort_values(['observed_hit_mean','observed_hit_sd','formulation_id'],ascending=[False,True,True])
     policy=resolve_intact_combination_policy(optimization,round_number)
-    confirmations=pd.DataFrame(confirmations)
-    if not confirmations.empty:
-        confirmations=annotate_feasibility(confirmations,registry,optimization,policy_active=True)
-        confirmations=confirmations.loc[confirmations.feasibility_pass].sort_values(['observed_hit_mean','observed_load_mean','formulation_id'],ascending=[False,False,True]).head(1)
     legacy_anchor=result.viability_screen.loc[result.viability_screen.recommendation_type.eq('mechanics_anchor')].copy() if reference.empty else pd.DataFrame()
     if not legacy_anchor.empty: legacy_anchor['experimental_role']='mechanics_anchor'
-    extra=pd.concat([reference,legacy_anchor,hits,confirmations],ignore_index=True,sort=False)
+    extra=pd.concat([reference,legacy_anchor,hits],ignore_index=True,sort=False)
     if not extra.empty:
         evidence=build_intact_evidence(formulations,observations,registry,policy,round_number)
         extra=annotate_intact_combination_evidence(extra,evidence,registry,policy)
         extra=annotate_candidates(extra,models,registry,optimization,policy_active=True)
         history_counts=frame.loc[frame[load].notna()].groupby('formulation_id').size() if load in frame else pd.Series(dtype=int)
         extra['prior_mechanical_observation_count']=extra.formulation_id.map(history_counts).fillna(0).astype(int)
-        extra['mechanical_repeat_allowed']=extra.experimental_role.isin(['campaign_control','mechanics_confirmation','mechanics_anchor'])
+        extra['mechanical_repeat_allowed']=extra.experimental_role.isin(['campaign_control','mechanics_anchor'])
         extra['mechanical_repeat_status']='intentional_followup'
         extra['viability_prediction_status']='observed_followup'
         extra.loc[extra.experimental_role.eq('campaign_control'),'viability_prediction_status']='reference_not_modeled'
@@ -138,8 +122,8 @@ def apply_group10(result, formulations, observations, registry, optimization, co
     if not extra.empty:
         for _,r in extra.loc[extra.experimental_role.eq('campaign_control')].iterrows():
             if not add(r): raise ValueError('Reference conflicts with slate constraints')
-        for _,r in extra.loc[extra.experimental_role.isin(['mechanics_anchor','mechanics_confirmation'])].iterrows(): add(r)
-        hit_target=max(0,(1 if len(reference) else 2)-len(confirmations)-len(legacy_anchor))
+        for _,r in extra.loc[extra.experimental_role.isin(['mechanics_anchor'])].iterrows(): add(r)
+        hit_target=max(0,(1 if len(reference) else 2)-len(legacy_anchor))
         for _,r in extra.loc[extra.experimental_role.eq('screened_hit_mechanics')].iterrows():
             if sum(x['experimental_role']=='screened_hit_mechanics' for x in selected)>=hit_target: break
             add(r)
@@ -180,8 +164,9 @@ def apply_group10(result, formulations, observations, registry, optimization, co
     metadata=deepcopy(result.metadata)
     metadata['group10']={'policy_version':config['policy_version'],'effective_config':deepcopy(config),
         'reference_readiness':state,'reserved_screen_rows':reserved,'ordinary_origin_quotas':quotas,
-        'confirmation_status':('scheduled' if confirmation_due else 'inactive_or_not_due'),'model_revision':'unchanged',
-        'mechanical_formulation_capacity':4,'specimens_per_formulation':config['mechanical_specimens_per_formulation'],
+        'model_revision':'unchanged',
+        'mechanical_formulation_capacity':4,'mechanical_replicates_per_formulation':config['mechanical_replicates_per_formulation'],
+        'reference_replicate_count':config['reference']['replicate_count'],
         'training_cutoff':f'completed observations before ROUND_{round_number:03d}',
         'reference_exception':'exact recipe DMSO ceiling only','supplementary_definition':'supported_load_1mm_v1'}
     metadata['group10']['effective_optimization_config']=deepcopy(optimization)

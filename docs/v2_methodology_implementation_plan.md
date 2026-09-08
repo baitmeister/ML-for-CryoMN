@@ -1,6 +1,6 @@
 # CryoMN v2 Group 10 implementation handoff
 
-Implemented on `codex/v2-methodology-group10`; production model revision remains deferred until an explicit decision during full mechanics.
+Implemented on `codex/v2-methodology-group10`; production model revision remains deferred until an explicit decision before the first full-mechanics proposal.
 
 The detailed maintained implementation is split into:
 
@@ -11,4 +11,4 @@ The detailed maintained implementation is split into:
 - [Offline audit and decision evidence](group10/audit/audit_report.md)
 - [Verification and limitations](group10/verification.md)
 
-Reference monitoring uses 2.5% v/v DMSO + 100 mM sucrose, with preparation and replicate settings pending. Application thresholds remain null. The 1 mm endpoint is supplementary and does not replace the production target. The original checkout and Group 9 frozen artifacts are preserved.
+Reference monitoring uses 2.5% v/v DMSO + 100 mM sucrose, with its ordinary replicate count pending. Application thresholds remain null. The 1 mm endpoint is supplementary and does not replace the production target. The original checkout and Group 9 frozen artifacts are preserved.
