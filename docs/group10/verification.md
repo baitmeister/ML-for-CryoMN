@@ -36,3 +36,7 @@ All **269** baseline data/frozen-artifact hashes matched in both the original ch
 ## Workflow v2 simplification verification
 
 After removing the separate base-medium/preparation planning requirements and confirmation feature, the full suite passed **89 tests in 22.756 seconds**. The additional regression verifies that an ordinary reference replicate count alone completes reference readiness, invalid replicate counts fail validation, and the decision boundary is the beginning of full mechanics. All 269 protected hashes still match in both checkouts. The earlier synthetic previews above are historical workflow-v1 evidence; they were not regenerated or relabeled as workflow-v2 proposals.
+
+## Workflow v3: no preset replicate counts
+
+All 90 tests passed in 23.381 seconds. The new report test verifies endpoint-specific CSV-derived counts and repeated-ID deduplication. Reference readiness no longer depends on a supplied replicate count. Both checkouts retain all 269 protected hashes. The live proposal remains Group 9; no live Group 10 slate was generated.

@@ -11,4 +11,4 @@ The detailed maintained implementation is split into:
 - [Offline audit and decision evidence](group10/audit/audit_report.md)
 - [Verification and limitations](group10/verification.md)
 
-Reference monitoring uses 2.5% v/v DMSO + 100 mM sucrose, with its ordinary replicate count pending. Application thresholds remain null. The 1 mm endpoint is supplementary and does not replace the production target. The original checkout and Group 9 frozen artifacts are preserved.
+Reference monitoring uses 2.5% v/v DMSO + 100 mM sucrose, with actual replicate counts derived from the completed round CSV. Application thresholds remain null. The 1 mm endpoint is supplementary and does not replace the production target. The original checkout and Group 9 frozen artifacts are preserved.

@@ -34,9 +34,6 @@ def validate_group10_config(c):
             raise ValueError('Invalid reference '+k)
     if r.get('purity_fraction') is not None and r['purity_fraction']>1:
         raise ValueError('purity_fraction must not exceed 1')
-    for k in ['replicate_count']:
-        if r.get(k) is not None and (type(r[k]) is not int or r[k]<1):
-            raise ValueError(k+' must be a positive integer')
     req=c['application_requirements']
     for k, upper in [('minimum_viability_percent',100),('minimum_fracture_force_N_per_needle',float('inf'))]:
         v=req.get(k)
@@ -48,9 +45,6 @@ def validate_group10_config(c):
     e=c['mechanical_endpoint']
     if e['displacement_limit_mm']!=1 or e['relative_drop']!=.1 or e['supplementary_only'] is not True:
         raise ValueError('Endpoint must remain supplementary, contact-relative 1 mm, 10% drop')
-    replicas=c.get('mechanical_replicates_per_formulation')
-    if replicas is not None and (type(replicas) is not int or replicas<1):
-        raise ValueError('mechanical_replicates_per_formulation must be a positive integer')
     if c.get('production_decision_boundary') != 'beginning_of_full_mechanics':
         raise ValueError('Production decision belongs before the first full-mechanics proposal')
 
@@ -59,7 +53,7 @@ def active(c, round_number):
 
 def reference_readiness(c):
     r=c['reference']
-    missing=[k for k in ['density_g_mL','purity_fraction','replicate_count'] if r.get(k) in (None,'')]
+    missing=[k for k in ['density_g_mL','purity_fraction','molecular_weight_g_mol'] if r.get(k) in (None,'')]
     return {'ready':not missing,'missing_settings':missing}
 
 def production_observations(obs):

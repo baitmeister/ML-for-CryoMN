@@ -11,8 +11,8 @@ All pending settings below are intentional. Missing values disable only the depe
 | DMSO density/purity | 1.10 g/mL / 100% | Literature density / user-specified purity; approximately 0.352 M at 2.5% v/v |
 | DMSO molecular weight | 78.13 g/mol | Registry/reagent basis |
 | Base medium | Common to all formulations | No separate reference setting |
-| Reference replicate count | Pending | User; ordinary test replicates from one preparation |
-| Mechanical replicates/formulation | Pending | User; ordinary compression replicate count |
+| Reference replicates | Derived from completed CSV | No advance setting |
+| Mechanical replicates/formulation | Derived from completed CSV | No advance setting |
 | Minimum viability | Pending | User; acceptance pending |
 | Minimum force and definition ID | Pending | User; acceptance pending |
 | Operational stop | 1 mm from contact | Locked user decision |
@@ -36,6 +36,10 @@ All pending settings below are intentional. Missing values disable only the depe
 
 The reference does not normalize results. Its first groups establish baseline variability. Testing replicates share one preparation; they do not estimate independent preparation variability. Assay/cell state, CPA exposure, freezing/thawing/storage, processing order and viability timing should be recorded consistently.
 
-Density source: [Sigma-Aldrich DMSO 276855](https://www.sigmaaldrich.com/US/en/product/sial/276855), accessed 2026-09-08. This is a literature conversion value, not a measurement of the user’s reagent lot. Purity 100% is the user-specified preparation assumption. Final-volume convention: 2.5 mL neat DMSO per 100 mL final formulation. Only the ordinary replicate counts remain pending for the reference/workload setup.
+Density source: [Sigma-Aldrich DMSO 276855](https://www.sigmaaldrich.com/US/en/product/sial/276855), accessed 2026-09-08. This is a literature conversion value, not a measurement of the user’s reagent lot. Purity 100% is the user-specified preparation assumption. Final-volume convention: 2.5 mL neat DMSO per 100 mL final formulation. Replicate counts come from the completed CSV.
 
 Transition decision: review the audit and select/freeze any model, noise or endpoint revision before generating the first full-mechanics proposal. Full-phase entry does not select a model automatically. Production flags stay false until that decision is implemented.
+
+## Replicates from completed CSV (workflow v3)
+
+No advance replicate counts are required. The completed round CSV supplies actual replicates; reports count ingested replicate IDs separately by formulation, batch and endpoint. An aggregate mean counts as one recorded measurement; underlying unrecorded replicates are not guessed. These are test replicates, not independent preparations. The reference is ready for new proposals from Group 10 on this development branch, with no replicate-count gate. No live Group 10 proposal has been generated; the live checkout still has Group 9 frozen. The reference receives one screen slot and a mechanical slot conditional on actual intact formation.

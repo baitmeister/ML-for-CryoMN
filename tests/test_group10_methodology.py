@@ -23,7 +23,7 @@ class Group10Tests(unittest.TestCase):
         if d is None:d=[0,.1,.3,.5,.6,.7,.9,1.1]
         return analyze_curve(f,d,{**self.e,**kw},1)
     def test_config_gates(self):
-        self.assertFalse(reference_readiness(self.c)['ready'])
+        self.assertTrue(reference_readiness(self.c)['ready'])
         for k,v in [('activation_round',9),('production_model_revision',True),('production_noise_revision',True),('production_endpoint_revision',True)]:
             c=deepcopy(self.c);c[k]=v
             with self.assertRaises(ValueError):validate_group10_config(c)
@@ -31,14 +31,22 @@ class Group10Tests(unittest.TestCase):
         self.assertNotIn('confirmation',self.c)
         self.assertNotIn('base_medium',self.c['reference'])
         self.assertNotIn('independent_preparations',self.c['reference'])
-        c=deepcopy(self.c);c['reference']['replicate_count']=3
-        self.assertTrue(reference_readiness(c)['ready'])
-        for key in ('replicate_count','mechanical_replicates_per_formulation'):
-            bad=deepcopy(c)
-            if key=='replicate_count': bad['reference'][key]=0
-            else: bad[key]=0
-            with self.assertRaises(ValueError): validate_group10_config(bad)
-        self.assertEqual(c['production_decision_boundary'],'beginning_of_full_mechanics')
+        self.assertNotIn('replicate_count',self.c['reference'])
+        self.assertNotIn('mechanical_replicates_per_formulation',self.c)
+        self.assertTrue(reference_readiness(self.c)['ready'])
+        self.assertEqual(self.c['replicate_count_source'],'completed_round_csv')
+        self.assertEqual(self.c['production_decision_boundary'],'beginning_of_full_mechanics')
+
+    def test_replicate_report_uses_completed_records(self):
+        from helper.group10_reporting import additional_reports
+        rows=[dict(formulation_id='f',batch_id='ROUND_010',experimental_role='campaign_control',
+                   endpoint='viability_percent',replicate_id=r,value=50) for r in ['r1','r2','r2']]
+        rows.append(dict(rows[0],endpoint='critical_axial_load_N_per_needle',value=.1))
+        with tempfile.TemporaryDirectory() as td:
+            additional_reports(pd.DataFrame(rows),pd.DataFrame(),Path(td),Path(td)/'reports')
+            report=pd.read_csv(Path(td)/'reports/recorded_replicate_counts.csv').set_index('endpoint')
+            self.assertEqual(report.loc['viability_percent','recorded_replicate_count'],2)
+            self.assertEqual(report.loc['critical_axial_load_N_per_needle','recorded_replicate_count'],1)
 
     def test_requirements(self):
         req=self.c['application_requirements'];r={'viability_percent':60,'mechanical_value':.1,'intact_patch_formation_pass':1,'mechanical_definition_id':'supported_load_1mm_v1'}
@@ -71,7 +79,7 @@ class Group10Tests(unittest.TestCase):
         r=estimate_noise(o).iloc[0];self.assertEqual(r.n_independent,2);self.assertGreater(r.mean_variance,0)
         r=estimate_noise(o.drop(columns='preparation_id')).iloc[0];self.assertEqual(r.n_independent,1);self.assertEqual(r.noise_source,'pooled_conservative_fallback')
     def test_reference_only_exception_and_training_exclusion(self):
-        c=deepcopy(self.c);c['reference'].update(density_g_mL=1.1,purity_fraction=1.,replicate_count=3)
+        c=deepcopy(self.c);c['reference'].update(density_g_mL=1.1,purity_fraction=1.)
         reg=load_registry();f,state=reference_candidate(c,reg)
         self.assertTrue(state['ready']);self.assertGreater(f.iloc[0].dmso_M,.1)
         self.assertTrue(reference_feasibility(f,reg,load_optimization_config(),c).iloc[0].feasibility_pass)

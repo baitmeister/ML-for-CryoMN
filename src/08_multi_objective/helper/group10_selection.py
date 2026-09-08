@@ -165,8 +165,7 @@ def apply_group10(result, formulations, observations, registry, optimization, co
     metadata['group10']={'policy_version':config['policy_version'],'effective_config':deepcopy(config),
         'reference_readiness':state,'reserved_screen_rows':reserved,'ordinary_origin_quotas':quotas,
         'model_revision':'unchanged',
-        'mechanical_formulation_capacity':4,'mechanical_replicates_per_formulation':config['mechanical_replicates_per_formulation'],
-        'reference_replicate_count':config['reference']['replicate_count'],
+        'mechanical_formulation_capacity':4,'replicate_count_source':'completed_round_csv',
         'training_cutoff':f'completed observations before ROUND_{round_number:03d}',
         'reference_exception':'exact recipe DMSO ceiling only','supplementary_definition':'supported_load_1mm_v1'}
     metadata['group10']['effective_optimization_config']=deepcopy(optimization)

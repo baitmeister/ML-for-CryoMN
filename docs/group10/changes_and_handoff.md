@@ -51,3 +51,7 @@ No shared-model, adaptive-noise, batch-adjustment, or new mechanical-target acti
 ## User simplification, workflow v2
 
 Base medium is identical throughout the campaign, so it is not a reference setup field. One preparation supplies ordinary testing replicates. Reference `replicate_count` and `mechanical_replicates_per_formulation` replace the preparation/specimen planning hierarchy. Optional existing provenance columns and raw records remain readable. The confirmation feature, novelty/mechanical exceptions, and acceptance-status placeholder were removed. Test replicates are not treated as independent preparations by the offline uncertainty audit. The model decision boundary is now the first full-mechanics proposal, not a later group within that phase. Existing frozen manifests retain their recorded historical settings.
+
+## Replicates from completed CSV (workflow v3)
+
+No advance replicate counts are required. The completed round CSV supplies actual replicates; reports count ingested replicate IDs separately by formulation, batch and endpoint. An aggregate mean counts as one recorded measurement; underlying unrecorded replicates are not guessed. These are test replicates, not independent preparations. The reference is ready for new proposals from Group 10 on this development branch, with no replicate-count gate. No live Group 10 proposal has been generated; the live checkout still has Group 9 frozen. The reference receives one screen slot and a mechanical slot conditional on actual intact formation.

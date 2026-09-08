@@ -26,6 +26,14 @@ def additional_reports(observations, prospective_table, results_root, output_dir
         records.append(assess_acceptance(row,req))
     pd.DataFrame(records).to_csv(out/'application_acceptance.csv',index=False)
     control_diagnostics(observations).to_csv(out/'reference_monitoring.csv',index=False)
+    # Count ingested CSV replicates separately for each endpoint; do not invent
+    # the number underlying an already-averaged measurement.
+    counts=observations.loc[observations.experimental_role.fillna('').ne('')].copy()
+    counts=counts.loc[pd.to_numeric(counts.value,errors='coerce').notna()]
+    counts=counts.drop_duplicates(['formulation_id','batch_id','endpoint','replicate_id'])
+    counts=counts.groupby(['formulation_id','batch_id','experimental_role','endpoint']).size().reset_index(name='recorded_replicate_count')
+    counts['count_basis']='ingested_completed_csv_replicates; not independent preparations'
+    counts.to_csv(out/'recorded_replicate_counts.csv',index=False)
     cohorts=[]
     if not prospective_table.empty:
         t=prospective_table.copy();t['diagnostic_cohort']='unclassified_historical'
@@ -47,4 +55,4 @@ def additional_reports(observations, prospective_table, results_root, output_dir
                 'interval_95_coverage':pd.to_numeric(valid.interval_95_covered,errors='coerce').mean(),
                 'interval_95_width':(valid.interval_95_upper-valid.interval_95_lower).mean()})
     pd.DataFrame(cohorts).to_csv(out/'diagnostic_cohorts.csv',index=False)
-    return [out/n for n in ['application_acceptance.csv','reference_monitoring.csv','diagnostic_cohorts.csv']]
+    return [out/n for n in ['application_acceptance.csv','reference_monitoring.csv','diagnostic_cohorts.csv','recorded_replicate_counts.csv']]
