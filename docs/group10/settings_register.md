@@ -8,7 +8,7 @@ All pending settings below are intentional. Missing values disable only the depe
 | GP/noise/target revision | False | User decides after audit during full mechanics |
 | Mechanical capacity | Four formulations | Locked; specimen runs counted separately |
 | Reference composition | 2.5% v/v DMSO + 100 mM sucrose | Locked exact reference-only exception |
-| DMSO density/purity | Pending | User/reagent record; exact conversion disabled |
+| DMSO density/purity | 1.10 g/mL / 100% | Literature density / user-specified purity; approximately 0.352 M at 2.5% v/v |
 | DMSO molecular weight | 78.13 g/mol | Registry/reagent basis |
 | Base medium | Pending | User; reference readiness disabled |
 | Reference preparations/specimens | Pending | User; reference readiness disabled |
@@ -35,3 +35,7 @@ All pending settings below are intentional. Missing values disable only the depe
 | Learned audit kernel bounds | amplitude 0.1–10, shared length 0.1–10 | Bounded offline comparison, no automatic promotion |
 
 The reference does not normalize results. Its first groups establish baseline variability. Use independent preparations to distinguish preparation variability from repeated readout precision. Assay/cell state, CPA exposure, freezing/thawing/storage, processing order and viability timing should be recorded consistently.
+
+Density source: [Sigma-Aldrich DMSO 276855](https://www.sigmaaldrich.com/US/en/product/sial/276855), accessed 2026-09-08. This is a literature conversion value, not a measurement of the user’s reagent lot. Purity 100% is the user-specified preparation assumption. Final-volume convention: 2.5 mL neat DMSO per 100 mL final formulation. Base medium and replication remain pending.
+
+Implementation qualification: confirmation cadence currently schedules groups by `round_number % cadence == 0`. The `minimum_independent_batches` entry is validated when confirmation is enabled, but is not yet enforced as an independent-evidence criterion. Confirmation remains disabled, and no independently confirmed-acceptable claim is available. Candidate specimen counts are planned workload metadata; actual runs are recorded separately.

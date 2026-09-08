@@ -8,8 +8,10 @@ reference:
   role: campaign_control
   dmso_volume_percent: 2.5
   sucrose_M: 0.1
-  density_g_mL: null
-  purity_fraction: null
+  # Literature density; Sigma-Aldrich 276855, accessed 2026-09-08.
+  density_g_mL: 1.10
+  # User-specified 100% purity, 2026-09-08.
+  purity_fraction: 1.0
   molecular_weight_g_mol: 78.13
   base_medium: null
   independent_preparations: null
