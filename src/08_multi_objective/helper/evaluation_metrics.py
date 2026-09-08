@@ -9,6 +9,7 @@ from typing import Any, Mapping
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import GroupKFold
+from sklearn.metrics import r2_score
 
 from .artifacts import round_artifact_paths, validate_completed_against_proposal
 from .config import load_optimization_config
@@ -704,7 +705,13 @@ def build_round_prospective_table(
                     "classification_correct": classification_correct,
                 }
             )
-    return pd.DataFrame(rows, columns=PROSPECTIVE_TABLE_COLUMNS)
+    table = pd.DataFrame(rows, columns=PROSPECTIVE_TABLE_COLUMNS)
+    if "experimental_role" in proposal:
+        controls = set(proposal.loc[proposal.experimental_role.eq("campaign_control"), "candidate_id"].astype(str))
+        mask = table.candidate_id.astype(str).isin(controls)
+        table.loc[mask, ["evaluation_eligible", "formal_metric_eligible"]] = False
+        table.loc[mask, ["exclusion_reason", "formal_exclusion_reason"]] = "reference_control_not_modeled"
+    return table
 
 
 def _metric_row(

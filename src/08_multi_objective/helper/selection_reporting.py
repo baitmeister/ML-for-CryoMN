@@ -494,6 +494,9 @@ def write_selection_result(
         ]
         notes_index = wetlab_result_columns.index("notes")
         wetlab_result_columns[notes_index:notes_index] = preparation_columns
+    if "group10" in result.metadata:
+        from .group10_config import METADATA_FIELDS
+        wetlab_result_columns += ["experimental_role", "preparation_basis", *METADATA_FIELDS, "supplementary_analysis_file"]
     selected["batch_id"] = batch_id
     for column in wetlab_result_columns:
         if column not in selected.columns:
@@ -675,6 +678,14 @@ def write_selection_result(
     total_pool_output.parent.mkdir(parents=True, exist_ok=True)
     total_pool.to_csv(total_pool_output, index=False)
     _write_summary(result, selected, output / "next_round_summary.txt", registry=registry)
+    if "group10" in result.metadata:
+        details = result.metadata["group10"]
+        with (output / "next_round_summary.txt").open("a") as handle:
+            handle.write("\nGroup 10 workflow: production GP/noise/target unchanged.\n")
+            handle.write("Reference readiness: " + json.dumps(details["reference_readiness"]) + "\n")
+            handle.write("Mechanical budget: four formulations; specimens per formulation: " + str(details["specimens_per_formulation"]) + "\n")
+            handle.write("Roles: " + json.dumps(details["realized_roles"]) + "\n")
+            handle.write("Supplementary supported_load_1mm_v1 is not the production target.\n")
     if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
         metadata_path = output / "next_round_metadata.json"
         metadata_path.write_text(
@@ -686,4 +697,3 @@ def write_selection_result(
             + "\n",
             encoding="utf-8",
         )
-

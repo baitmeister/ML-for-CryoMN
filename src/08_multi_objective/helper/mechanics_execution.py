@@ -1,6 +1,7 @@
 """Validate actual-intact mechanical-test promotion and report its outcome."""
 
 from __future__ import annotations
+from .endpoints import parse_bool
 
 import json
 from pathlib import Path
@@ -25,6 +26,8 @@ def _is_blank(value: object) -> bool:
 
 
 def _row_has_mechanical_result(row: pd.Series) -> bool:
+    if parse_bool(row.get("mechanical_test_attempted")) is True or not _is_blank(row.get("supplementary_analysis_file")):
+        return True
     return any(not _is_blank(row.get(column)) for column in MECHANICAL_RESULT_COLUMNS)
 
 
@@ -244,6 +247,19 @@ def validate_mechanics_execution(
         primary_capacity,
         proposal_metadata=proposal_metadata,
     )
+    if "experimental_role" in proposal:
+        attempted = completed.loc[completed.apply(_row_has_mechanical_result, axis=1)].copy()
+        known = "mechanical_test_id" in attempted and attempted.mechanical_test_id.fillna("").ne("").all()
+        usable = completed.loc[pd.to_numeric(completed.get("critical_axial_load_N_per_needle", pd.Series(index=completed.index,dtype=float)),errors="coerce").notna()]
+        audit["workload"] = {
+            "formulations_selected": int(pd.to_numeric(proposal.mechanical_selection_rank,errors="coerce").le(primary_capacity).sum()),
+            "formulations_attempted": int(attempted.candidate_id.nunique()),
+            "specimen_runs_attempted": int(attempted.mechanical_test_id.nunique()) if known else None,
+            "run_count_status": "identified_runs" if known else "unknown_run_identifiers",
+            "interpretable_legacy_result_rows": int(len(usable)),
+            "usable_formulation_batch_observations": int(usable.candidate_id.nunique()),
+        }
+
     if audit["violations"]:
         raise ProposalValidationError(
             "Mechanical execution violates the actual-intact priority policy: "

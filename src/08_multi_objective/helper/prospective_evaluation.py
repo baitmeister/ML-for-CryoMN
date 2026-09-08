@@ -322,6 +322,8 @@ def generate_round_prospective_artifacts(
         )
         round_observations=observations.loc[observations.batch_id.astype(str).eq(batch_id)]
         write_prospective(round_observations,table,metrics,pd.DataFrame(),staging/'plots',f'{batch_id} only; frozen prospective evidence')
+        from .group10_reporting import additional_reports
+        additional_reports(observations, table, results_root, staging / "tables")
         return _promote_tree(staging, reports_dir)
 
 
@@ -378,6 +380,8 @@ def generate_campaign_prospective_artifacts(
         )
         write_prospective(observations,table,metrics,pd.DataFrame(),staging/'plots','Cumulative campaign; frozen prospective evidence',
                           include_publication_summary=include_publication_summary)
+        from .group10_reporting import additional_reports
+        additional_reports(observations, table, results_root, staging / "tables")
         return _promote_tree(staging, output_dir)
 
 

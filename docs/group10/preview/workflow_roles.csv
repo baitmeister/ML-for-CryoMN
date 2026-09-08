@@ -1,0 +1,13 @@
+candidate_id,formulation_id,experimental_role,mechanical_selection_rank,mechanical_transition_role,dmso_M,sucrose_M
+followup_v2_3e8ef993abba,v2_3e8ef993abba,screened_hit_mechanics,1.0,screened_hit_mechanics,0.0,0.0
+followup_v2_430e18c49d10,v2_430e18c49d10,screened_hit_mechanics,2.0,screened_hit_mechanics,0.0,0.0
+retest_v2_6f20e63adb1d,v2_6f20e63adb1d,retest_priority,,,0.0,0.0
+retest_v2_7371aa062562,v2_7371aa062562,retest_priority,,,0.0,0.0
+rescue_000010,v2_a288e68df07e,ordinary,10.0,bootstrap_coverage,0.0,0.0
+cand_001589,v2_4d49c0b641bb,ordinary,5.0,bootstrap_coverage,0.0,0.0
+cand_001940,v2_8d49b4ad8816,ordinary,6.0,bootstrap_coverage,0.0849807092540458,0.0
+cand_001747,v2_514e3e419007,ordinary,4.0,bootstrap_coverage,0.0737728568698325,0.0
+cand_001923,v2_ee0e6b6d09bd,ordinary,3.0,bootstrap_coverage,0.0930307537879173,0.0
+cand_001152,v2_958a475d561d,ordinary,9.0,bootstrap_coverage,0.0,0.0
+cand_000089,v2_b4ffc3e04ea0,ordinary,8.0,bootstrap_coverage,0.0,0.0
+cand_000735,v2_28d90d3ee947,ordinary,7.0,bootstrap_coverage,0.0,0.0

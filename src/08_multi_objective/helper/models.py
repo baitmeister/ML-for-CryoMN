@@ -151,7 +151,8 @@ def build_training_frame(
     observations: pd.DataFrame,
     registry: IngredientRegistry,
 ) -> pd.DataFrame:
-    frame = _pivot_observations(formulations, observations)
+    from .group10_config import production_observations
+    frame = _pivot_observations(formulations, production_observations(observations))
     for feature_name in registry.feature_names:
         if feature_name not in frame.columns:
             frame[feature_name] = 0.0

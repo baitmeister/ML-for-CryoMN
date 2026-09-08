@@ -314,6 +314,7 @@ def main() -> None:
             default_needles_compressed=args.default_needles_compressed,
             viability_noise=_resolve_viability_noise(optimization_config, args.viability_noise),
             observation_source_file=portable_source_path(round_paths.completed_csv),
+            proposal_metadata=proposal_metadata,
         )
 
         completed_path = archive_completed(

@@ -1,0 +1,39 @@
+policy_version: group10_workflow_v1
+activation_round: 10
+proposal_schema_version: 3
+production_model_revision: false
+production_noise_revision: false
+production_endpoint_revision: false
+reference:
+  role: campaign_control
+  dmso_volume_percent: 2.5
+  sucrose_M: 0.1
+  density_g_mL: null
+  purity_fraction: null
+  molecular_weight_g_mol: 78.13
+  base_medium: null
+  independent_preparations: null
+  specimens_per_preparation: null
+  mechanical: true
+confirmation:
+  enabled: false
+  cadence: null
+  minimum_independent_batches: null
+mechanical_specimens_per_formulation: null
+mechanical_endpoint:
+  definition_id: supported_load_1mm_v1
+  detector_version: force_drop_v1
+  supplementary_only: true
+  displacement_limit_mm: 1.0
+  relative_drop: 0.10
+  protocol_id: null
+  test_mode: null
+  contact_force_N: null
+  baseline_points: null
+  absolute_drop_N: null
+  drop_window_mm: null
+  persistence_points: null
+  force_unit: N
+  displacement_unit: mm
+  force_sign: null
+  smoothing: none

@@ -179,3 +179,17 @@ regenerate the requested round or campaign report using Stage 4 rather than
 re-entering or duplicating observations.
 
 Production plots use `helper/plot_data.py` for evidence preparation, `helper/campaign_plots.py` for rendering, and `helper/plot_reporting.py` for bundles. Rendering-only backfill is isolated in `helper/plot_backfill.py`. See [plotting contracts](04_report_campaign/PLOTTING.md).
+
+## Group 10 extension boundary
+
+Stage 2 calls `group10_selection.apply_group10` only under the forward workflow
+configuration; earlier proposals retain existing behavior. Typed control/follow-up
+reservations are separated from production scoring. `group10_config` controls
+readiness and reference evidence exclusions. Supplementary force extraction lives
+in `mechanical_events`, while `group10_reporting` adds evidence tables without
+replacing the historical prospective series.
+
+`audit_models`, `audit_acquisition`, `observation_noise`, and `batch_effects` are
+explicit offline/diagnostic components. Production acquisition does not import
+them. See `docs/group10/changes_and_handoff.md` for implementation decisions and
+activation boundaries.

@@ -1,0 +1,236 @@
+{
+  "manifest_version": 2,
+  "mechanics_active_in_proposal": true,
+  "mechanics_execution_mode": "actual_intact_priority_promotion",
+  "configured_mechanical_capacity": 4,
+  "program_requested_test_count": 4,
+  "proposal_primary_count": 4,
+  "proposal_backup_count": 6,
+  "actual_intact_measured_count": 12,
+  "actual_intact_pass_count": 11,
+  "actual_intact_fail_count": 1,
+  "ranked_actual_intact_pass_count": 9,
+  "expected_actual_intact_test_ids": [
+    "followup_v2_430e18c49d10",
+    "cand_001923",
+    "cand_001747",
+    "cand_001589"
+  ],
+  "recorded_mechanical_test_ids": [
+    "cand_001589",
+    "cand_001747",
+    "cand_001923",
+    "followup_v2_430e18c49d10"
+  ],
+  "promoted_backup_ids": [
+    "cand_001589"
+  ],
+  "promotion_count": 1,
+  "actual_pass_shortfall": 0,
+  "failed_intact_mechanical_ids": [],
+  "unconfirmed_intact_mechanical_ids": [],
+  "unranked_mechanical_ids": [],
+  "mechanical_transition_assignments": [
+    {
+      "candidate_id": "followup_v2_3e8ef993abba",
+      "formulation_id": "v2_3e8ef993abba",
+      "mechanical_selection_rank": 1,
+      "mechanical_transition_role": "screened_hit_mechanics",
+      "prior_mechanical_observation_count": 0,
+      "mechanical_repeat_status": "intentional_followup",
+      "mechanical_repeat_allowed": false
+    },
+    {
+      "candidate_id": "followup_v2_430e18c49d10",
+      "formulation_id": "v2_430e18c49d10",
+      "mechanical_selection_rank": 2,
+      "mechanical_transition_role": "screened_hit_mechanics",
+      "prior_mechanical_observation_count": 0,
+      "mechanical_repeat_status": "intentional_followup",
+      "mechanical_repeat_allowed": false
+    },
+    {
+      "candidate_id": "cand_001923",
+      "formulation_id": "v2_ee0e6b6d09bd",
+      "mechanical_selection_rank": 3,
+      "mechanical_transition_role": "bootstrap_coverage",
+      "prior_mechanical_observation_count": 0,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_repeat_allowed": true
+    },
+    {
+      "candidate_id": "cand_001747",
+      "formulation_id": "v2_514e3e419007",
+      "mechanical_selection_rank": 4,
+      "mechanical_transition_role": "bootstrap_coverage",
+      "prior_mechanical_observation_count": 0,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_repeat_allowed": true
+    },
+    {
+      "candidate_id": "cand_001589",
+      "formulation_id": "v2_4d49c0b641bb",
+      "mechanical_selection_rank": 5,
+      "mechanical_transition_role": "bootstrap_coverage",
+      "prior_mechanical_observation_count": 0,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_repeat_allowed": true
+    },
+    {
+      "candidate_id": "cand_001940",
+      "formulation_id": "v2_8d49b4ad8816",
+      "mechanical_selection_rank": 6,
+      "mechanical_transition_role": "bootstrap_coverage",
+      "prior_mechanical_observation_count": 0,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_repeat_allowed": true
+    },
+    {
+      "candidate_id": "cand_000735",
+      "formulation_id": "v2_28d90d3ee947",
+      "mechanical_selection_rank": 7,
+      "mechanical_transition_role": "bootstrap_coverage",
+      "prior_mechanical_observation_count": 0,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_repeat_allowed": true
+    },
+    {
+      "candidate_id": "cand_000089",
+      "formulation_id": "v2_b4ffc3e04ea0",
+      "mechanical_selection_rank": 8,
+      "mechanical_transition_role": "bootstrap_coverage",
+      "prior_mechanical_observation_count": 0,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_repeat_allowed": true
+    },
+    {
+      "candidate_id": "cand_001152",
+      "formulation_id": "v2_958a475d561d",
+      "mechanical_selection_rank": 9,
+      "mechanical_transition_role": "bootstrap_coverage",
+      "prior_mechanical_observation_count": 0,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_repeat_allowed": true
+    },
+    {
+      "candidate_id": "rescue_000010",
+      "formulation_id": "v2_a288e68df07e",
+      "mechanical_selection_rank": 10,
+      "mechanical_transition_role": "bootstrap_coverage",
+      "prior_mechanical_observation_count": 0,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_repeat_allowed": true
+    }
+  ],
+  "phase_resolution": {
+    "requested_phase_mode": "auto",
+    "active_phase": "mechanics_bootstrap",
+    "paired_observation_count": 0,
+    "distinct_formulation_count": 0,
+    "distinct_paired_formulation_count": 0,
+    "batch_count": 0,
+    "paired_mechanical_batch_count": 0,
+    "completed_screening_round_count": 8,
+    "bootstrap_gate_met": false,
+    "hybrid_gate_met": false,
+    "full_gate_met": false,
+    "bootstrap_batch_index": 1,
+    "transition_policy_version": "mechanics_transition_v1",
+    "target_proposal_round": 10,
+    "minimum_completed_screening_rounds": 8,
+    "bootstrap_gate": {
+      "min_paired_observations": 8,
+      "min_distinct_formulations": 6,
+      "min_batches": 2,
+      "met": false,
+      "remaining": {
+        "paired_observations": 8,
+        "distinct_formulations": 6,
+        "batches": 2
+      }
+    },
+    "hybrid_gate": {
+      "min_paired_observations": 8,
+      "min_distinct_formulations": 6,
+      "min_batches": 2,
+      "met": false,
+      "remaining": {
+        "paired_observations": 8,
+        "distinct_formulations": 6,
+        "batches": 2
+      }
+    },
+    "full_gate": {
+      "min_paired_observations": 16,
+      "min_distinct_formulations": 12,
+      "min_batches": 3,
+      "met": false,
+      "remaining": {
+        "paired_observations": 16,
+        "distinct_formulations": 12,
+        "batches": 3
+      }
+    },
+    "reason": "auto-selected mechanics_bootstrap: hybrid_gate paired_observations=0/8, distinct_formulations=0/6, batches=0/2",
+    "override_used": false
+  },
+  "mechanical_policy": {
+    "mechanical_selection_mode": "bootstrap_utility_diversity_with_actual_intact_backups",
+    "mechanical_observation_count": 0,
+    "intact_probability_threshold": 0.5,
+    "intact_probability_threshold_role": "empirical_probability_in_bootstrap_utility",
+    "pass_pool_size": 10,
+    "mechanically_ineligible_count": 2,
+    "primary_mechanical_capacity": 4,
+    "primary_recommendation_count": 4,
+    "backup_count": 6,
+    "actual_intact_backup_rule": "test the first ranked rows that actually pass intact until primary_mechanical_capacity is reached; unranked rows are ineligible",
+    "botorch_available": true,
+    "active_phase": "mechanics_bootstrap",
+    "classifier_probability_selection_role": "diagnostic_only",
+    "eligibility": {
+      "prior_mechanics_excluded_count": 0,
+      "retest_excluded_count": 2,
+      "allow_other_prior_mechanical_formulations": false,
+      "allow_retest_priority_for_mechanics": false
+    },
+    "transition_allocation": {
+      "anchor_selected": false,
+      "screening_utility_weight": 0.7,
+      "empirical_intact_weight": 0.3,
+      "diversity_weight": 0.4
+    },
+    "anchor": {
+      "selected": false,
+      "formulation_id": "",
+      "source_batch_id": "",
+      "selection_score": null
+    },
+    "botorch_metadata": {}
+  },
+  "mechanics_transition": {
+    "policy_version": "mechanics_transition_v1",
+    "anchor_selection": {
+      "enabled": false,
+      "selected": false,
+      "reason": "Group10 typed follow-up/control policy supersedes one-time anchor"
+    }
+  },
+  "continuous_qlognehvi": {
+    "continuous_optimizer_enabled": false,
+    "continuous_optimizer_used": false,
+    "continuous_optimizer_fallback": true,
+    "continuous_optimizer_reason": "continuous optimization is disabled during mechanics_bootstrap"
+  },
+  "optimizer_mode": "bootstrap_utility_diversity",
+  "optimizer_fallback_status": "not_applicable",
+  "violations": [],
+  "workload": {
+    "formulations_selected": 4,
+    "formulations_attempted": 4,
+    "specimen_runs_attempted": 4,
+    "run_count_status": "identified_runs",
+    "interpretable_legacy_result_rows": 4,
+    "usable_formulation_batch_observations": 4
+  }
+}

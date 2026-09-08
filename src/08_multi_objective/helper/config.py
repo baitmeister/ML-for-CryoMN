@@ -72,6 +72,16 @@ def validate_ingredients_config(config: Mapping[str, Any]) -> None:
 
 
 def validate_endpoints_config(config: Mapping[str, Any]) -> None:
+    requirements = config.get("application_requirements", {})
+    if not isinstance(requirements, Mapping):
+        raise ConfigValidationError("application_requirements must be a mapping")
+    for field, upper in (("minimum_viability_percent", 100.), ("minimum_fracture_force_N_per_needle", float("inf"))):
+        value = requirements.get(field)
+        if value is not None and (not _is_number(value) or not 0 <= value <= upper):
+            raise ConfigValidationError(f"Invalid application_requirements.{field}")
+    definition = requirements.get("fracture_force_definition")
+    if definition is not None and (not isinstance(definition, str) or not definition.strip()):
+        raise ConfigValidationError("fracture_force_definition must be null or nonempty")
     gate = _require_mapping(config, "screening_gate")
     if gate.get("name") != "intact_patch_formation_pass" or gate.get("type") != "binary":
         raise ConfigValidationError(

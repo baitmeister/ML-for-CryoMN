@@ -225,3 +225,14 @@ python3 src/08_multi_objective/04_report_campaign/report_campaign.py \
 
 The four-phase gates, anchor rules, and transition roles are defined in the
 [canonical mechanics policy](../src/08_multi_objective/README.md#evidence-gated-mechanics-transition).
+
+## Group 10 workflow additions
+
+See [Group 10 implementation and operator guide](group10/README.md),
+[manual settings register](group10/settings_register.md), and
+[supplementary mechanical SOP](group10/mechanical_sop.md).
+
+These additions preserve Group 9 and the production GP. The exact DMSO/sucrose
+reference is monitoring-only and remains inactive until its preparation and
+replication settings are complete. The new 1 mm endpoint is supplementary.
+The [offline model audit](group10/audit/audit_report.md) does not promote a model.
