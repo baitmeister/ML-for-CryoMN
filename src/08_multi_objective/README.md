@@ -7,6 +7,14 @@ implementation code lives in `helper/`.
 For a plain-language map of the data, model, selection, validation, and report
 modules, see [V2 Architecture](ARCHITECTURE.md).
 
+From Group 10, the [current workflow contract](../../docs/group10/README.md)
+adds the recurring reference and screened-hit follow-up and defines mechanics as
+**force at +0.8 mm after a sustained 1 N trigger**. The existing critical-load
+column is retained as a compatibility key for nominal terminal force per loaded
+needle. GP methodology changes remain deferred until a user decision before the
+first full-mechanics proposal. See the [endpoint SOP](../../docs/group10/mechanical_sop.md)
+and [transition instructions](../../docs/group10/transition_group9_to_10.md).
+
 ## Main Database
 
 The selector reads the v2 database from:
@@ -153,6 +161,9 @@ mechanical observation is one formulation–batch training row containing both
 `batch_id`. Technical replicates are aggregated before gate counts, so they do
 not create additional formulation–batch pairs. Repeating a formulation in a
 later batch creates another pair without overwriting its earlier evidence.
+From Group 10, gate counts use the terminal-force definition and exclude the
+reference. Historical maximum-force measurements remain stored but do not count
+as comparable terminal-force pairs; gate thresholds are unchanged.
 
 The resolver evaluates conditions in this order:
 
@@ -212,6 +223,12 @@ Mechanical rank is a separate eligibility layer; an unranked screening row
 cannot provide mechanical data or serve as a mechanical backup.
 
 ### Bootstrap selection
+
+With the configured Group 10 reference, primary mechanical positions are one
+reference, one screened-hit follow-up and two fresh candidates, subject to actual
+intact formation and ordered backups. The fresh-candidate scoring below is retained.
+The one-time anchor rule below applies to the earlier policy; the recurring
+reference supersedes it for newly activated Group 10 proposals.
 
 Ordinary bootstrap eligibility excludes `retest_priority` rows and any
 formulation with a prior critical-load observation. For each eligible slate
@@ -512,10 +529,10 @@ archived proposal or completed files, and do not edit `formulation_id` or
 | `intact_tip_count` | number | Optional; must be `0` to `total_tip_count`. |
 | `total_tip_count` | positive number | Optional; blank uses the 100-tip default logic. |
 | `instron_file` | path | Optional Bluehill CSV path for intact patches. |
-| `needles_compressed` | positive integer | Required with `instron_file` or total critical load. |
-| `critical_axial_load_N_per_needle` | number, `>= 0` | Use when entered manually. |
-| `critical_axial_load_N_total` | number, `>= 0` | Program divides by `needles_compressed`. |
-| `initial_stiffness_N_per_mm_per_needle` | number, `>= 0` | Secondary endpoint only. |
+| `needles_compressed` | positive integer | Actual loaded count. Group 10 can report total force without it, but needs it for a nominal per-needle model label; legacy imports require it. |
+| `critical_axial_load_N_per_needle` | number, `>= 0` | Group 10: leave blank for automatic terminal-force extraction. Historical contracts allow manual critical-load input. |
+| `critical_axial_load_N_total` | number, `>= 0` | Group 10: leave blank for automatic extraction; any supplied value must reproduce the raw-file terminal result. Legacy totals are divided by the loaded count. |
+| `initial_stiffness_N_per_mm_per_needle` | number, `>= 0` | Historical secondary endpoint; leave blank under the Group 10 terminal-force protocol. |
 | `notes` | free text | Optional handling/test notes. |
 
 ## Instron Files
@@ -526,8 +543,15 @@ Put Bluehill CSV exports under `data/raw/instron/`, preferably grouped by batch:
 data/raw/instron/ROUND_001/v2_50b41683dfd4_rep_001.csv
 ```
 
-You can either paste that path into `next_round_candidates.csv`, or let the
-helper parse and fill the mechanical columns:
+For Group 10, paste the raw path into `instron_file` in the frozen worksheet.
+Stage 3 automatically extracts the terminal endpoint using frozen settings; leave
+the legacy force/stiffness input columns blank. A lost attempt can be recorded with
+`mechanical_test_attempted=true` and no invented force. Actual replication comes
+from completed CSV rows, with no advance count setting.
+
+The helper below calculates the **legacy curve maximum** and is only appropriate
+for an earlier frozen contract, including Group 9. Do not use it to populate a
+Group 10 terminal-force worksheet:
 
 ```bash
 python3 src/08_multi_objective/helper/instron.py \

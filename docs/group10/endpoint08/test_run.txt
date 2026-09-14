@@ -1,0 +1,9 @@
+/Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/torch/jit/_script.py:1482: DeprecationWarning: `torch.jit.script` is not supported in Python 3.14+ and may break. Please switch to `torch.compile` or `torch.export`.
+  warnings.warn(
+./Library/Frameworks/Python.framework/Versions/3.14/lib/python3.14/site-packages/botorch/acquisition/multi_objective/logei.py:602: UserWarning: Failed to compile fused qLogEHVI C++ extension: [Errno 1] Operation not permitted: '/Users/doggonebastard/Library/Caches/torch_extensions/py314_cpu/logei_fused_ext/lock'. Falling back to the pure-Python implementation. To get ~3x speedup, ensure a C++ compiler and the `ninja` package are installed.
+  _try_load_fused_kernel()
+.....................................................................................................
+----------------------------------------------------------------------
+Ran 102 tests in 21.399s
+
+OK

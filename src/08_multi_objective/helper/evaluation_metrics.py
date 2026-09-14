@@ -9,6 +9,7 @@ from typing import Any, Mapping
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import GroupKFold
+from sklearn.metrics import r2_score
 
 from .artifacts import round_artifact_paths, validate_completed_against_proposal
 from .config import load_optimization_config
@@ -24,6 +25,7 @@ from .registry import IngredientRegistry
 
 PROSPECTIVE_TABLE_COLUMNS = [
     "evaluation_policy_version",
+    "mechanical_definition_id",
     "round_id",
     "round_number",
     "provenance_class",
@@ -58,6 +60,7 @@ PROSPECTIVE_TABLE_COLUMNS = [
 ]
 
 METRIC_COLUMNS = [
+    "mechanical_definition_id",
     "scope",
     "round_id",
     "provenance_class",
@@ -93,6 +96,8 @@ def _boolean_numeric(value: object) -> float:
 
 
 def _observed_endpoint_frame(formulations: pd.DataFrame, observations: pd.DataFrame) -> pd.DataFrame:
+    from .group10_config import production_observations
+    observations = production_observations(observations)
     if formulations.empty:
         return pd.DataFrame()
     frame = formulations.copy()
@@ -605,6 +610,12 @@ def build_round_prospective_table(
                 (round_observations["formulation_id"].astype(str) == formulation_id)
                 & (round_observations["endpoint"].astype(str) == str(endpoint))
             ].dropna(subset=["value"])
+            from .terminal_force import MODEL_FIELD, LEGACY_DEFINITION
+            endpoint_definition = ''
+            if endpoint == MODEL_FIELD:
+                endpoint_definition = str(proposal_row.get('mechanical_prediction_definition_id', LEGACY_DEFINITION))
+                actual_definitions = endpoint_observations.get('mechanical_definition_id', pd.Series('',index=endpoint_observations.index)).fillna('').replace('',LEGACY_DEFINITION)
+                endpoint_observations = endpoint_observations.loc[actual_definitions.eq(endpoint_definition)]
             if endpoint_observations.empty:
                 observed_mean = None
             elif str(endpoint) == INTACT_PATCH_ENDPOINT:
@@ -622,6 +633,8 @@ def build_round_prospective_table(
             exclusion_reason = ""
             if formulation_id in duplicate_formulations:
                 exclusion_reason = "ambiguous_duplicate_formulation"
+            elif endpoint == MODEL_FIELD and proposal_row.get('mechanical_prediction_status') == 'untrained_placeholder':
+                exclusion_reason = 'untrained_placeholder'
             elif prediction_mean is None:
                 exclusion_reason = "missing_frozen_prediction"
             elif observed_mean is None:
@@ -671,6 +684,7 @@ def build_round_prospective_table(
             rows.append(
                 {
                     "evaluation_policy_version": policy_version,
+                    "mechanical_definition_id": endpoint_definition,
                     "round_id": batch_id,
                     "round_number": round_number,
                     "provenance_class": provenance,
@@ -704,7 +718,13 @@ def build_round_prospective_table(
                     "classification_correct": classification_correct,
                 }
             )
-    return pd.DataFrame(rows, columns=PROSPECTIVE_TABLE_COLUMNS)
+    table = pd.DataFrame(rows, columns=PROSPECTIVE_TABLE_COLUMNS)
+    if "experimental_role" in proposal:
+        controls = set(proposal.loc[proposal.experimental_role.eq("campaign_control"), "candidate_id"].astype(str))
+        mask = table.candidate_id.astype(str).isin(controls)
+        table.loc[mask, ["evaluation_eligible", "formal_metric_eligible"]] = False
+        table.loc[mask, ["exclusion_reason", "formal_exclusion_reason"]] = "reference_control_not_modeled"
+    return table
 
 
 def _metric_row(
@@ -772,6 +792,7 @@ def _metric_row(
         "formal_cohort": formal_cohort,
         "endpoint": endpoint,
         "endpoint_role": endpoint_role,
+        "mechanical_definition_id": frame.iloc[0].get("mechanical_definition_id", ""),
         "n_proposed": n_proposed,
         "n_evaluated": n_evaluated,
         "completion_rate": float(n_evaluated / n_proposed) if n_proposed else np.nan,
@@ -792,11 +813,15 @@ def summarize_prospective_metrics(table: pd.DataFrame) -> pd.DataFrame:
     if table.empty:
         return pd.DataFrame(columns=METRIC_COLUMNS)
     rows: list[dict[str, object]] = []
+    table = table.copy()
+    if 'mechanical_definition_id' not in table:
+        table['mechanical_definition_id'] = np.where(table.endpoint.eq('critical_axial_load_N_per_needle'),'legacy_curve_maximum_v1','')
+    table['mechanical_definition_id'] = table.mechanical_definition_id.fillna('')
     ordered = table.assign(
         _round_sort=table["round_id"].map(_round_sort_key)
     ).sort_values(["_round_sort", "endpoint"])
-    for (round_id, endpoint), frame in ordered.groupby(
-        ["round_id", "endpoint"],
+    for (round_id, endpoint, endpoint_definition), frame in ordered.groupby(
+        ["round_id", "endpoint", "mechanical_definition_id"],
         sort=False,
     ):
         rows.append(
@@ -809,7 +834,7 @@ def summarize_prospective_metrics(table: pd.DataFrame) -> pd.DataFrame:
                 eligible_column="evaluation_eligible",
             )
         )
-    for endpoint, frame in ordered.groupby("endpoint", sort=False):
+    for (endpoint, endpoint_definition), frame in ordered.groupby(["endpoint", "mechanical_definition_id"], sort=False):
         rows.append(
             _metric_row(
                 frame,
@@ -831,6 +856,7 @@ def summarize_prospective_metrics(table: pd.DataFrame) -> pd.DataFrame:
             if provenance_frame.empty:
                 rows.append(
                     {
+                        "mechanical_definition_id": endpoint_definition,
                         "scope": provenance_scope,
                         "round_id": (
                             "FORMAL_COHORT"
@@ -900,7 +926,9 @@ def build_feasible_paired_objectives(
         )
         return empty.copy(), empty.assign(exclusion_reason=pd.Series(dtype=str))
 
-    frame = observations.copy()
+    from .group10_config import production_observations
+    frame = production_observations(observations)
+    selected_definition = frame.attrs.get('mechanical_definition_id','legacy_curve_maximum_v1')
     frame["value"] = pd.to_numeric(frame["value"], errors="coerce")
     grouping = ["formulation_id", "batch_id"]
     continuous = (
@@ -971,6 +999,7 @@ def build_feasible_paired_objectives(
         ],
         default="",
     )
+    paired["mechanical_definition_id"] = selected_definition
     paired["exclusion_reason"] = reasons
     feasible = paired.loc[paired["exclusion_reason"].eq("")].copy()
     excluded = paired.loc[~paired["exclusion_reason"].eq("")].copy()

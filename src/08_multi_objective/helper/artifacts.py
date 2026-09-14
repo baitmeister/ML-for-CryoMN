@@ -20,6 +20,9 @@ from .paths import RESULTS_V2_DIR
 
 EDITABLE_WETLAB_COLUMNS = frozenset(
     {
+        "preparation_id", "specimen_id", "readout_id", "cell_batch_id",
+        "protocol_id", "mechanical_test_id", "mechanical_test_attempted",
+        "mechanical_definition_id", "raw_file_hash", "supplementary_analysis_file",
         "replicate_id",
         "viability_percent",
         "intact_patch_formation_pass",

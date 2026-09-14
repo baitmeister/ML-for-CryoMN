@@ -1,6 +1,7 @@
 """Validate actual-intact mechanical-test promotion and report its outcome."""
 
 from __future__ import annotations
+from .endpoints import parse_bool
 
 import json
 from pathlib import Path
@@ -25,6 +26,8 @@ def _is_blank(value: object) -> bool:
 
 
 def _row_has_mechanical_result(row: pd.Series) -> bool:
+    if parse_bool(row.get("mechanical_test_attempted")) is True or not _is_blank(row.get("supplementary_analysis_file")):
+        return True
     return any(not _is_blank(row.get(column)) for column in MECHANICAL_RESULT_COLUMNS)
 
 
@@ -244,12 +247,46 @@ def validate_mechanics_execution(
         primary_capacity,
         proposal_metadata=proposal_metadata,
     )
+    if "experimental_role" in proposal:
+        attempted = completed.loc[completed.apply(_row_has_mechanical_result, axis=1)].copy()
+        known = "mechanical_test_id" in attempted and attempted.mechanical_test_id.fillna("").ne("").all()
+        usable = completed.loc[pd.to_numeric(completed.get("critical_axial_load_N_per_needle", pd.Series(index=completed.index,dtype=float)),errors="coerce").notna()]
+        audit["workload"] = {
+            "formulations_selected": int(pd.to_numeric(proposal.mechanical_selection_rank,errors="coerce").le(primary_capacity).sum()),
+            "formulations_attempted": int(attempted.candidate_id.nunique()),
+            "specimen_runs_attempted": int(attempted.mechanical_test_id.nunique()) if known else int(len(attempted)),
+            "run_count_status": "identified_runs" if known else "completed_csv_attempt_rows; not independent preparations",
+            "interpretable_legacy_result_rows": int(len(usable)),
+            "usable_formulation_batch_observations": int(usable.candidate_id.nunique()),
+        }
+
     if audit["violations"]:
         raise ProposalValidationError(
             "Mechanical execution violates the actual-intact priority policy: "
             + "; ".join(audit["violations"])
         )
     return audit
+
+
+def update_endpoint_workload(audit, observations, batch_id):
+    """Complete the execution report after reproducible raw-curve extraction."""
+    from .terminal_force import DEFINITION, MODEL_FIELD
+    rows = observations.loc[observations.batch_id.eq(batch_id)]
+    statuses = rows.loc[rows.endpoint.eq('terminal_force_08mm_status')]
+    if statuses.empty:
+        return audit
+    result = dict(audit)
+    result['workload'] = dict(audit.get('workload', {}))
+    usable = rows.loc[rows.endpoint.eq(MODEL_FIELD) & rows.get('mechanical_definition_id',pd.Series('',index=rows.index)).eq(DEFINITION)]
+    result['workload'].update(
+        mechanical_definition_id=DEFINITION,
+        tests_with_interpretable_terminal_force=int(statuses.value.eq(1).sum()),
+        incomplete_or_invalid_tests=int(statuses.value.eq(0).sum()),
+        attempts_without_raw_result=max(0, int(result['workload'].get('specimen_runs_attempted',len(statuses)))-len(statuses)),
+        usable_formulation_batch_observations=int(usable.formulation_id.nunique()),
+        complete_total_force_without_loaded_count=int(statuses.value.eq(1).sum()-len(usable)),
+    )
+    return result
 
 
 def freeze_mechanics_execution_manifest(

@@ -1,0 +1,13 @@
+{
+  "date": "2026-09-14",
+  "protected_files": 1050,
+  "mismatches": [],
+  "manifest_sha256": "ee4834fcaff847041a5a871475d2deef9d0eeb6188b836878d291c7154036c93",
+  "main_baseline_commit": "3acda604cde0bd731b20171e2628e66dd91f9865",
+  "branch_baseline_commit": "ac81f456863522cadb2b6f8fdaadbd0c3718083a",
+  "protected_categories": [
+    "Both checkouts: data and results, all files",
+    "Six supplied Group 9 raw Instron CSVs at current Group9 directory"
+  ],
+  "full_manifest": "/private/tmp/cryomn-endpoint08-protected.json"
+}

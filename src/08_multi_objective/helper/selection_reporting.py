@@ -494,6 +494,9 @@ def write_selection_result(
         ]
         notes_index = wetlab_result_columns.index("notes")
         wetlab_result_columns[notes_index:notes_index] = preparation_columns
+    if "group10" in result.metadata:
+        from .group10_config import METADATA_FIELDS
+        wetlab_result_columns += ["experimental_role", "preparation_basis", *METADATA_FIELDS, "supplementary_analysis_file"]
     selected["batch_id"] = batch_id
     for column in wetlab_result_columns:
         if column not in selected.columns:
@@ -501,6 +504,8 @@ def write_selection_result(
     for column in EDITABLE_WETLAB_COLUMNS:
         if column in selected.columns:
             selected[column] = ""
+    if "group10" in result.metadata:
+        selected['mechanical_definition_id']=result.metadata['group10']['mechanical_definition_id']
     result.metadata["batch_id"] = batch_id
     forward_diagnostic_columns = [
         *registry.feature_names,
@@ -675,6 +680,14 @@ def write_selection_result(
     total_pool_output.parent.mkdir(parents=True, exist_ok=True)
     total_pool.to_csv(total_pool_output, index=False)
     _write_summary(result, selected, output / "next_round_summary.txt", registry=registry)
+    if "group10" in result.metadata:
+        details = result.metadata["group10"]
+        with (output / "next_round_summary.txt").open("a") as handle:
+            handle.write("\nGroup 10 workflow: GP methodology and noise unchanged; mechanical endpoint versioned separately.\n")
+            handle.write("Reference readiness: " + json.dumps(details["reference_readiness"]) + "\n")
+            handle.write("Mechanical budget: four formulations. Replicate counts are derived from completed CSV rows.\n")
+            handle.write("Roles: " + json.dumps(details["realized_roles"]) + "\n")
+            handle.write("Mechanical endpoint: " + details["mechanical_definition_id"] + "; nominal N per loaded needle in compatibility force columns.\n")
     if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
         metadata_path = output / "next_round_metadata.json"
         metadata_path.write_text(
@@ -686,4 +699,3 @@ def write_selection_result(
             + "\n",
             encoding="utf-8",
         )
-

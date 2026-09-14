@@ -179,3 +179,27 @@ regenerate the requested round or campaign report using Stage 4 rather than
 re-entering or duplicating observations.
 
 Production plots use `helper/plot_data.py` for evidence preparation, `helper/campaign_plots.py` for rendering, and `helper/plot_reporting.py` for bundles. Rendering-only backfill is isolated in `helper/plot_backfill.py`. See [plotting contracts](04_report_campaign/PLOTTING.md).
+
+## Group 10 extension boundary
+
+Stage 2 applies `group10_selection.apply_group10` to proposals at or after the
+configured activation group and freezes the effective settings with each proposal.
+Group 9 retains its original contract. `group10_config` selects comparable mechanical
+definitions and excludes reference observations from production training.
+
+`terminal_force` extracts force at +0.8 mm after the sustained 1 N trigger from
+raw Instron files. Stage 3 dispatches using frozen proposal settings, stores total
+and nominal force with provenance, and counts attempted versus interpretable tests.
+`mechanical_events` provides standalone plotting and retains the historical drop
+detector for compatibility. The current Group 10 endpoint has no drop-event branch.
+
+`group10_reporting` adds acceptance, reference and replicate reports. Prospective
+metrics and observed Pareto evidence distinguish mechanical definitions; historical
+maximum-force labels are not pooled with Group 10 terminal-force labels. The
+compatibility output key `critical_axial_load_N_per_needle` does not imply fracture
+strength under the terminal-force definition.
+
+`audit_models`, `audit_acquisition`, `observation_noise`, and `batch_effects` are
+explicit offline/diagnostic components. Production acquisition does not import
+them. See `docs/group10/changes_and_handoff.md` for implementation decisions and
+activation boundaries.

@@ -314,8 +314,11 @@ def main() -> None:
             default_needles_compressed=args.default_needles_compressed,
             viability_noise=_resolve_viability_noise(optimization_config, args.viability_noise),
             observation_source_file=portable_source_path(round_paths.completed_csv),
+            proposal_metadata=proposal_metadata,
         )
 
+        from helper.mechanics_execution import update_endpoint_workload
+        mechanics_audit = update_endpoint_workload(mechanics_audit, observations, batch_id)
         completed_path = archive_completed(
             batch_id,
             args.candidates_csv,

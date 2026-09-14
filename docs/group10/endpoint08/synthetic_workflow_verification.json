@@ -1,0 +1,36 @@
+{
+  "synthetic_only": true,
+  "group9_original_contract_ingestible": true,
+  "group10_frozen_definition": "terminal_force_08mm_after_1N_v1",
+  "group10_roles": {
+    "ordinary": 8,
+    "retest_priority": 2,
+    "campaign_control": 1,
+    "screened_hit_mechanics": 1
+  },
+  "mechanical_primary_roles": {
+    "ordinary": 2,
+    "screened_hit_mechanics": 1,
+    "campaign_control": 1
+  },
+  "production_gp_methodology": "unchanged",
+  "legacy_mechanics_excluded_from_new_target": true,
+  "control_excluded_from_training": true,
+  "next_proposal": "ROUND_011",
+  "workload": {
+    "formulations_selected": 4,
+    "formulations_attempted": 4,
+    "specimen_runs_attempted": 8,
+    "run_count_status": "identified_runs",
+    "interpretable_legacy_result_rows": 0,
+    "usable_formulation_batch_observations": 4,
+    "mechanical_definition_id": "terminal_force_08mm_after_1N_v1",
+    "tests_with_interpretable_terminal_force": 6,
+    "incomplete_or_invalid_tests": 1,
+    "attempts_without_raw_result": 1,
+    "complete_total_force_without_loaded_count": 0
+  },
+  "protected_source_files": 516,
+  "protected_hash_mismatches": [],
+  "evidence_limitation": "Synthetic outcomes; not the final Group 10 slate after actual Group 9"
+}

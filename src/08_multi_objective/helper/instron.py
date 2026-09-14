@@ -1,4 +1,9 @@
-"""Instron/Bluehill CSV parsing and round-sheet update helpers."""
+"""Legacy maximum-force Instron/Bluehill parsing and round-sheet update helper.
+
+For Group 10 terminal-force worksheets, enter instron_file and the actual loaded
+count in the CSV and use the normal round update. Do not prefill them with this
+legacy maximum-force helper. Historical frozen contracts retain this behavior.
+"""
 
 from __future__ import annotations
 

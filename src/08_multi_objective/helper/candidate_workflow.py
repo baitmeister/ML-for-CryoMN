@@ -102,8 +102,10 @@ def run_candidate_selection(
     unavailable_features = unavailable_features_from_config(availability_config, registry)
     formulations = _read_or_empty(options.formulations_path)
     observations = _read_or_empty(options.observations_path)
+    from .group10_config import production_observations
     batch_id = options.batch_id or _next_round_id(options.observations_path)
     target_round_number = parse_round_number(batch_id)
+    observations = production_observations(observations, target_round_number=target_round_number)
     policy_active, policy_version, policy_start_round = policy_activation(
         optimization_config,
         target_round_number,
@@ -274,6 +276,11 @@ def run_candidate_selection(
         similarity_audit=similarity_audit,
         unavailable_feature_names=unavailable_features,
     )
+    from .group10_config import load_group10_config
+    from .group10_selection import apply_group10
+    result = apply_group10(result, formulations, observations, registry,
+                           optimization_config, load_group10_config(), target_round_number,
+                           unavailable_features)
     audit_excluded_candidates = pd.concat(
         [rejected_candidates, availability_excluded_candidates],
         ignore_index=True,

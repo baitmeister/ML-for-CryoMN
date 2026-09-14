@@ -135,8 +135,9 @@ Enter mechanical results only for rows with a numeric
 `mechanical_selection_rank` that actually pass intact. Follow numeric rank
 order until four passing rows have been tested. Leave unused capacity blank
 when fewer than four ranked rows pass; do not substitute an unranked row.
-Remeasure viability, intact formation, and load for a `mechanics_anchor` under
-the worksheet batch ID.
+Remeasure viability, intact formation, and mechanics for a screened-hit follow-up
+or reference under the worksheet batch ID. Earlier frozen proposals may instead
+use the one-time `mechanics_anchor` role.
 
 Do not change:
 
@@ -146,7 +147,18 @@ Do not change:
 - recommendations, ranks or selection diagnostics
 - CSV columns
 
-### Optional Instron import
+### Instron input by frozen endpoint policy
+
+For Group 10, enter each specimen's raw path in `instron_file` and its actual
+`needles_compressed` when known. Leave the compatibility force and old stiffness
+input columns blank. The normal round update extracts force at +0.8 mm after the
+sustained 1 N trigger using the proposal's frozen settings. Missing loaded count
+permits total-force reporting only; short traces supply no force training label.
+
+The helper command below computes **legacy maximum-force metrics**. Use it only
+for earlier frozen contracts such as Group 9, not for Group 10 terminal-force
+worksheets. For an optional standalone Group 10 plot/JSON review, use the
+[terminal-force analysis CLI](group10/mechanical_sop.md#round-csv-and-automatic-extraction).
 
 Store raw files under a batch directory such as:
 
@@ -223,5 +235,17 @@ python3 src/08_multi_objective/04_report_campaign/report_campaign.py \
 - `next_round/next_round_candidates.csv` is the only result-entry file.
 - `total_candidate_pool.csv` is an audit pool and must not receive results.
 
-The four-phase gates, anchor rules, and transition roles are defined in the
+The four-phase gates and ordinary mechanical scoring are defined in the
 [canonical mechanics policy](../src/08_multi_objective/README.md#evidence-gated-mechanics-transition).
+The Group 10 additions below supersede the earlier one-time anchor reservation.
+
+## Group 10 workflow additions
+
+See the [current Group 10 guide](group10/README.md), [settings register](group10/settings_register.md),
+[terminal-force SOP](group10/mechanical_sop.md), and [Group 9 transition instructions](group10/transition_group9_to_10.md).
+
+From Group 10, the endpoint is force at +0.8 mm after the sustained 1 N trigger. The existing mechanical output column is a compatibility name for nominal terminal force per loaded needle, not a fracture-strength claim. Raw whole-patch total force is also stored. Force drops do not select the endpoint.
+
+The exact DMSO/sucrose reference is configured for Group 10 without preset replicate counts; actual counts come from completed CSV rows. Reference observations are monitoring-only and excluded from production GP training. Group 9 remains under its frozen original contract. Configured branch policy is distinct from a live frozen Group 10 proposal.
+
+The [offline model audit](group10/audit/explained_comparison.md) does not promote a model. GP methodology changes remain deferred until a user decision before the first full-mechanics proposal. The mechanical endpoint revision is authorized separately and starts with Group 10.

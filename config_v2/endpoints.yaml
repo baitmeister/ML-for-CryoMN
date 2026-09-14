@@ -1,3 +1,10 @@
+# Application requirements are reporting-only; null means undecided.
+application_requirements:
+  policy_version: application_requirements_v1
+  minimum_viability_percent: null
+  minimum_fracture_force_N_per_needle: null
+  fracture_force_definition: null
+
 screening_gate:
   name: intact_patch_formation_pass
   type: binary
