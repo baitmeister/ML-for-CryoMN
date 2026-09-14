@@ -1,9 +1,9 @@
 {
   "style_version": "selected_v1",
-  "context": "Cumulative campaign; archived frozen evidence",
+  "context": "Cumulative campaign; frozen prospective evidence",
   "format": "transparent PNG",
   "dpi": 300,
-  "source_sha256": "b8bd46d9f738fa7ebd3744e028129bcdc222238e18be984354a67193ecf43996",
+  "source_sha256": "592d71c537645c43b87a3b3a4e755d1c010332a5685065cfe88013e0950c428e",
   "sources": [],
   "synthetic_data": false
 }

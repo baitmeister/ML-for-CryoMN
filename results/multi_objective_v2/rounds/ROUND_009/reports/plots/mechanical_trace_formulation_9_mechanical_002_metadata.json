@@ -1,0 +1,14 @@
+{
+  "style_version": "selected_v1",
+  "context": "State after ROUND_009; terminal_force_08mm_after_1N_v1",
+  "format": "transparent PNG",
+  "dpi": 300,
+  "source_sha256": "b9234e9659acc9ae33995eda9a0e15c8b7c61fddc0ce3006b4dfccc097f0340a",
+  "sources": [
+    {
+      "path": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group9/group_9-1.is_comp_Exports/group_9-1_5.csv",
+      "sha256": "fecfdc272e9d423dec3c10476cb881c08597fc34b81570d5d912e569c15d90d7"
+    }
+  ],
+  "synthetic_data": false
+}

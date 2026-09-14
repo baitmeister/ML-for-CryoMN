@@ -1,0 +1,34 @@
+{
+  "style_version": "selected_v1",
+  "context": "State after ROUND_009; terminal force and apparent secant stiffness",
+  "format": "transparent PNG",
+  "dpi": 300,
+  "source_sha256": "00ad8c5639d7224ce43c8804260672cfd12f77716782e2579e032a4967d1d334",
+  "sources": [
+    {
+      "path": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group9/group_9-1.is_comp_Exports/group_9-1_3.csv",
+      "sha256": "6b76817c4e45f5cd13e6adf418e097db17de00e6950a0bdc64ccc0ae8414bef3"
+    },
+    {
+      "path": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group9/group_9-1.is_comp_Exports/group_9-1_4.csv",
+      "sha256": "c8282515e45af16f46557ffcab28ab3b7fdb7fd76b8f5e30f908932255d128d2"
+    },
+    {
+      "path": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group9/group_9-1.is_comp_Exports/group_9-1_1.csv",
+      "sha256": "a9d37af4b2acde11264115fcfb7bef82161d42e10938c2fc4dbd8dab5821c225"
+    },
+    {
+      "path": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group9/group_9-1.is_comp_Exports/group_9-1_5.csv",
+      "sha256": "fecfdc272e9d423dec3c10476cb881c08597fc34b81570d5d912e569c15d90d7"
+    },
+    {
+      "path": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group9/group_9-1.is_comp_Exports/group_9-1_2.csv",
+      "sha256": "79d0085777a69b241e0aecfb8f846de17ec9f872695857e4dba45a777a7b9804"
+    },
+    {
+      "path": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group9/group_9-1.is_comp_Exports/group_9-1_6.csv",
+      "sha256": "1c039323c20ff8c8b939f4fcce55342f1d9e41b8c527c2f621b5ea82fd64a04e"
+    }
+  ],
+  "synthetic_data": false
+}
