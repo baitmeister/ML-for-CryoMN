@@ -254,8 +254,8 @@ def validate_mechanics_execution(
         audit["workload"] = {
             "formulations_selected": int(pd.to_numeric(proposal.mechanical_selection_rank,errors="coerce").le(primary_capacity).sum()),
             "formulations_attempted": int(attempted.candidate_id.nunique()),
-            "specimen_runs_attempted": int(attempted.mechanical_test_id.nunique()) if known else None,
-            "run_count_status": "identified_runs" if known else "unknown_run_identifiers",
+            "specimen_runs_attempted": int(attempted.mechanical_test_id.nunique()) if known else int(len(attempted)),
+            "run_count_status": "identified_runs" if known else "completed_csv_attempt_rows; not independent preparations",
             "interpretable_legacy_result_rows": int(len(usable)),
             "usable_formulation_batch_observations": int(usable.candidate_id.nunique()),
         }
@@ -266,6 +266,27 @@ def validate_mechanics_execution(
             + "; ".join(audit["violations"])
         )
     return audit
+
+
+def update_endpoint_workload(audit, observations, batch_id):
+    """Complete the execution report after reproducible raw-curve extraction."""
+    from .terminal_force import DEFINITION, MODEL_FIELD
+    rows = observations.loc[observations.batch_id.eq(batch_id)]
+    statuses = rows.loc[rows.endpoint.eq('terminal_force_08mm_status')]
+    if statuses.empty:
+        return audit
+    result = dict(audit)
+    result['workload'] = dict(audit.get('workload', {}))
+    usable = rows.loc[rows.endpoint.eq(MODEL_FIELD) & rows.get('mechanical_definition_id',pd.Series('',index=rows.index)).eq(DEFINITION)]
+    result['workload'].update(
+        mechanical_definition_id=DEFINITION,
+        tests_with_interpretable_terminal_force=int(statuses.value.eq(1).sum()),
+        incomplete_or_invalid_tests=int(statuses.value.eq(0).sum()),
+        attempts_without_raw_result=max(0, int(result['workload'].get('specimen_runs_attempted',len(statuses)))-len(statuses)),
+        usable_formulation_batch_observations=int(usable.formulation_id.nunique()),
+        complete_total_force_without_loaded_count=int(statuses.value.eq(1).sum()-len(usable)),
+    )
+    return result
 
 
 def freeze_mechanics_execution_manifest(

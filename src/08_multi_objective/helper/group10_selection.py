@@ -43,7 +43,7 @@ def reference_feasibility(frame, registry, optimization, config):
 
 def apply_group10(result, formulations, observations, registry, optimization, config, round_number, unavailable=()):
     if not active(config,round_number): return result
-    observations=production_observations(observations)
+    observations=production_observations(observations,target_round_number=round_number)
     models=train_endpoint_models(formulations,observations,registry,optimization)
     phase=resolve_phase_mode(formulations,observations,registry,optimization,target_round_number=round_number)
     reference,state=reference_candidate(config,registry)
@@ -167,11 +167,17 @@ def apply_group10(result, formulations, observations, registry, optimization, co
         'model_revision':'unchanged',
         'mechanical_formulation_capacity':4,'replicate_count_source':'completed_round_csv',
         'training_cutoff':f'completed observations before ROUND_{round_number:03d}',
-        'reference_exception':'exact recipe DMSO ceiling only','supplementary_definition':'supported_load_1mm_v1'}
+        'reference_exception':'exact recipe DMSO ceiling only',
+        'mechanical_definition_id':config['mechanical_endpoint']['definition_id'],
+        'endpoint_revision':config['production_endpoint_revision']}
     metadata['group10']['effective_optimization_config']=deepcopy(optimization)
     metadata['group10']['feature_bounds']={f:[registry.get_by_feature(f).lower_bound,registry.get_by_feature(f).upper_bound] for f in registry.feature_names}
     metadata['group10']['training_observations_sha256']=hashlib.sha256(observations.to_csv(index=False).encode()).hexdigest()
-    metadata['proposal_schema_version']=3
+    metadata['proposal_schema_version']=config['proposal_schema_version']
+    slate['mechanical_definition_id']=config['mechanical_endpoint']['definition_id']
+    slate['mechanical_prediction_definition_id']=config['mechanical_endpoint']['definition_id']
+    slate['mechanical_prediction_status']='fitted' if models.critical_load.fitted else 'untrained_placeholder'
+    mechanical['mechanical_definition_id']=config['mechanical_endpoint']['definition_id']
     metadata['selected_candidate_ids']=slate.candidate_id.tolist()
     metadata['mechanical_test_count']=int(mechanical.mechanical_primary_recommended.sum()) if not mechanical.empty else 0
     metadata['group10']['realized_roles']=slate.experimental_role.value_counts().to_dict()

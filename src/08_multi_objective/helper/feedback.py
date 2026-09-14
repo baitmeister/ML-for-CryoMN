@@ -191,6 +191,7 @@ def ingest_feedback(
     auto_replicate_counts: dict[str, int] = {}
 
     metadata_by_prefix = {}
+    terminal_source_hashes = set()
     for index, row in feedback.iterrows():
         row_number = int(index) + 1
         candidate = _resolve_candidate(row, candidates)
@@ -211,7 +212,17 @@ def ingest_feedback(
             }
 
 
-        if not _blank(row.get("supplementary_analysis_file")):
+        frozen_endpoint = (proposal_metadata or {}).get("group10", {}).get("effective_config", {}).get("mechanical_endpoint", {})
+        from .terminal_force import DEFINITION as TERMINAL_DEFINITION
+        terminal_policy = frozen_endpoint.get("definition_id") == TERMINAL_DEFINITION
+        if terminal_policy:
+            from .terminal_force import validate_settings
+            validate_settings(frozen_endpoint)
+            batch_match = re.fullmatch(r"ROUND_(\d+)", batch_id)
+            if batch_match is None or int(batch_match.group(1)) < 10:
+                raise ValueError("Terminal endpoint policy cannot reinterpret a pre-Group-10 worksheet")
+
+        if not terminal_policy and not _blank(row.get("supplementary_analysis_file")):
             import json, hashlib, math
             analysis = json.loads(Path(str(row["supplementary_analysis_file"])).read_text())
             frozen = (proposal_metadata or {}).get("group10", {}).get("effective_config", {}).get("mechanical_endpoint")
@@ -385,7 +396,45 @@ def ingest_feedback(
 
         instron_file = row.get("instron_file")
         parsed_instron_file = False
-        if not _blank(instron_file):
+        if terminal_policy and has_mechanical:
+            import json, hashlib
+            from .terminal_force import analyze_file, MODEL_FIELD
+            if needles is not None and int(needles) != needles:
+                raise ValueError(f"Row {row_number} loaded needle count must be an integer")
+            if _blank(instron_file):
+                raise ValueError(f"Row {row_number}: the frozen terminal endpoint requires instron_file; unlabeled manual maxima are not accepted")
+            analysis = analyze_file(instron_file, frozen_endpoint, int(needles) if needles is not None else None)
+            if analysis['source_file_hash'] in terminal_source_hashes:
+                raise ValueError('A raw compression file cannot represent multiple specimens or formulations')
+            terminal_source_hashes.add(analysis['source_file_hash'])
+            if not _blank(row.get('initial_stiffness_N_per_mm_per_needle')):
+                raise ValueError('Leave the legacy stiffness column blank under the terminal-force protocol')
+            if not _blank(row.get("supplementary_analysis_file")):
+                supplied = json.loads(Path(str(row['supplementary_analysis_file'])).read_text())
+                for key in ('settings', 'source_file_hash', 'loaded_needle_count', 'status', 'endpoint_N_total', 'endpoint_N_per_needle'):
+                    if supplied.get(key) != analysis.get(key):
+                        raise ValueError('Terminal analysis does not reproduce from source: ' + key)
+            for field, expected in [('critical_axial_load_N_per_needle', analysis['endpoint_N_per_needle']),
+                                    ('critical_axial_load_N_total', analysis['endpoint_N_total'])]:
+                if not _blank(row.get(field)):
+                    supplied = _safe_float(row[field])
+                    if expected is None or supplied is None or abs(supplied-expected) > 1e-6:
+                        raise ValueError(f"Row {row_number} {field} conflicts with frozen terminal endpoint; leave it blank for automatic extraction")
+            record = _observation_row(f'{observation_prefix}_terminal_status', formulation_id, batch_id, replicate_id,
+                'terminal_force_08mm_status', 1.0 if analysis['status']=='complete' else 0.0,
+                'status_flag', 'instron_5942_terminal_v1', str(instron_file), notes=analysis['status'])
+            record.update(mechanical_definition_id=TERMINAL_DEFINITION, detector_version=analysis['detector_version'],
+                          protocol_id=frozen_endpoint['protocol_id'], raw_file_hash=analysis['source_file_hash'],
+                          analysis_provenance=json.dumps(analysis, sort_keys=True, allow_nan=False))
+            new_observations.append(record)
+            if analysis['status'] == 'complete':
+                new_observations.append({**record, 'observation_id':f'{observation_prefix}_terminal_total',
+                    'endpoint':'terminal_force_08mm_N_total', 'value':analysis['endpoint_N_total'], 'unit':'N'})
+                if analysis['endpoint_N_per_needle'] is not None:
+                    new_observations.append({**record, 'observation_id':f'{observation_prefix}_terminal_per_needle',
+                        'endpoint':MODEL_FIELD, 'value':analysis['endpoint_N_per_needle'], 'unit':'N_per_needle'})
+            parsed_instron_file = True
+        elif not _blank(instron_file):
             if needles is None:
                 raise ValueError(f"Row {row_number} needs needles_compressed for Instron import.")
             metrics = parse_instron_csv(instron_file, needles_compressed=int(needles))
@@ -480,9 +529,9 @@ def ingest_feedback(
         prefix = record["observation_id"]
         matching = [k for k in metadata_by_prefix if prefix.startswith(k + "_")]
         if matching:
-            identity = record.get("mechanical_definition_id")
+            provenance = {k: record[k] for k in ('mechanical_definition_id','protocol_id','raw_file_hash') if record.get(k)}
             record.update(metadata_by_prefix[max(matching, key=len)])
-            if identity: record["mechanical_definition_id"] = identity
+            record.update(provenance)
     new_observations_frame = pd.DataFrame(new_observations)
     if observations.empty:
         combined_observations = new_observations_frame

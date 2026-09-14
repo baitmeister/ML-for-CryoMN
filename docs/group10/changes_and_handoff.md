@@ -1,4 +1,23 @@
-# Implementation handoff and policy changes
+# Current completion ledger — workflow v4 (2026-09-14)
+
+The current contract is [README.md](README.md) and [mechanical_sop.md](mechanical_sop.md). The historical ledger below records earlier decisions; its 1 mm, supplementary-only, pending-replicate and endpoint-deferral statements are superseded by this entry.
+
+| Component | Current implementation |
+|---|---|
+| Workflow / proposal schema | `group10_workflow_v4` / 4; frozen per proposal |
+| Endpoint / extraction / protocol | `terminal_force_08mm_after_1N_v1` / `terminal_force_v1` / `whole_patch_1N_08mm_v1` |
+| GP / noise / acquisition methodology | Existing production methods unchanged; later decision before full mechanics |
+| Mechanical target | New terminal-force endpoint from Group 10; old maximum labels retained outside the new training cohort |
+| Proposal writer | Removed stale required specimen-count lookup; actual CSV-derived counts and endpoint labels displayed |
+| Raw ingestion | Automatic frozen-rule extraction; recognized units row; provenance/hash; incomplete status; no drop termination |
+| Training and evidence | Reference excluded; one mechanical definition per training/Pareto cohort; metric pools separated by definition |
+| Workload | Four formulations; CSV attempts, interpretable terminal results and usable formulation-batch endpoints reported separately |
+| Pending experimental setup | No preset replicas or drop-detector tuning; actual loaded count/raw file come from CSV |
+| Readiness | Read-only CLI distinguishes configured branch from live worksheet/proposal; actual Group 9 update remains necessary |
+| Verification | See [verification.md](verification.md), actual trace replay and isolated campaign evidence |
+
+## Historical implementation ledger (superseded where specified above)
+
 
 ## Completion ledger
 

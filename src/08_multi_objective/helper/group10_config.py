@@ -3,6 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 import math
 import yaml
+import pandas as pd
 
 CONFIG_PATH = Path(__file__).resolve().parents[3] / 'config_v2' / 'group10.yaml'
 ROLES = {'campaign_control', 'screened_hit_mechanics'}
@@ -22,7 +23,7 @@ def validate_group10_config(c):
     activation = c.get('activation_round')
     if activation is not None and (type(activation) is not int or activation < 10):
         raise ValueError('Group 10 activation must be null or an integer >= 10')
-    for k in ['production_model_revision','production_noise_revision','production_endpoint_revision']:
+    for k in ['production_model_revision','production_noise_revision']:
         if c.get(k) is not False:
             raise ValueError(k + ' must remain false pending the user decision')
     r=c['reference']
@@ -43,8 +44,16 @@ def validate_group10_config(c):
     if definition is not None and (not isinstance(definition,str) or not definition.strip()):
         raise ValueError('fracture_force_definition must be null or nonempty')
     e=c['mechanical_endpoint']
-    if e['displacement_limit_mm']!=1 or e['relative_drop']!=.1 or e['supplementary_only'] is not True:
-        raise ValueError('Endpoint must remain supplementary, contact-relative 1 mm, 10% drop')
+    from .terminal_force import DEFINITION, validate_settings
+    if e.get('definition_id') == DEFINITION:
+        validate_settings(e)
+        if c.get('production_endpoint_revision') is not True:
+            raise ValueError('The authorized terminal endpoint must be active for Group 10')
+    elif e.get('definition_id') == 'supported_load_1mm_v1':
+        if e.get('displacement_limit_mm') != 1 or e.get('relative_drop') != .1 or e.get('supplementary_only') is not True or c.get('production_endpoint_revision') is not False:
+            raise ValueError('Historical supplementary definition must remain unchanged')
+    else:
+        raise ValueError('Unknown mechanical endpoint definition')
     if c.get('production_decision_boundary') != 'beginning_of_full_mechanics':
         raise ValueError('Production decision belongs before the first full-mechanics proposal')
 
@@ -56,12 +65,26 @@ def reference_readiness(c):
     missing=[k for k in ['density_g_mL','purity_fraction','molecular_weight_g_mol'] if r.get(k) in (None,'')]
     return {'ready':not missing,'missing_settings':missing}
 
-def production_observations(obs):
+def production_observations(obs, target_round_number=None, mechanical_definition=None):
+    """Select a comparable endpoint cohort without changing stored measurements.
+
+    Explicit proposal round wins. Otherwise retain an upstream selected cohort or
+    use the new definition once it is present; historical-only data stay historical.
+    """
+    from .terminal_force import DEFINITION, LEGACY_DEFINITION, MODEL_FIELD
     result = obs
     if 'experimental_role' in result:
         result = result.loc[~result.experimental_role.fillna('').eq('campaign_control')]
-    if 'mechanical_definition_id' in result:
-        definition = result.mechanical_definition_id.fillna('')
-        incompatible = result.endpoint.eq('critical_axial_load_N_per_needle') & ~definition.isin(['', 'legacy_curve_maximum_v1'])
-        result = result.loc[~incompatible]
-    return result.copy() if result is not obs else obs
+    definition = result.get('mechanical_definition_id', pd.Series('', index=result.index)).fillna('')
+    selected = mechanical_definition or obs.attrs.get('mechanical_definition_id')
+    if target_round_number is not None:
+        config = load_group10_config()
+        selected = DEFINITION if active(config, target_round_number) and config['production_endpoint_revision'] else LEGACY_DEFINITION
+    if selected is None:
+        selected = DEFINITION if definition.eq(DEFINITION).any() else LEGACY_DEFINITION
+    if 'endpoint' in result:
+        compatible = definition.eq(DEFINITION) if selected == DEFINITION else definition.isin(['', LEGACY_DEFINITION])
+        result = result.loc[~result.endpoint.eq(MODEL_FIELD) | compatible]
+    result = result.copy()
+    result.attrs['mechanical_definition_id'] = selected
+    return result

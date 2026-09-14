@@ -16,7 +16,8 @@ from helper.models import build_training_frame
 class Group10Tests(unittest.TestCase):
     def setUp(self):
         self.c=load_group10_config()
-        self.e={**self.c['mechanical_endpoint'],'protocol_id':'test','test_mode':'single_needle',
+        self.e={'definition_id':'supported_load_1mm_v1','detector_version':'force_drop_v1','supplementary_only':True,
+            'displacement_limit_mm':1.,'relative_drop':.1,'force_unit':'N','displacement_unit':'mm','smoothing':'none','protocol_id':'test','test_mode':'single_needle',
             'contact_force_N':.1,'baseline_points':1,'absolute_drop_N':.01,'drop_window_mm':.25,
             'persistence_points':2,'force_sign':1}
     def analyze(self,f,d=None,**kw):
@@ -24,7 +25,7 @@ class Group10Tests(unittest.TestCase):
         return analyze_curve(f,d,{**self.e,**kw},1)
     def test_config_gates(self):
         self.assertTrue(reference_readiness(self.c)['ready'])
-        for k,v in [('activation_round',9),('production_model_revision',True),('production_noise_revision',True),('production_endpoint_revision',True)]:
+        for k,v in [('activation_round',9),('production_model_revision',True),('production_noise_revision',True),('production_endpoint_revision',False)]:
             c=deepcopy(self.c);c[k]=v
             with self.assertRaises(ValueError):validate_group10_config(c)
     def test_simplified_replicates_and_no_confirmation(self):

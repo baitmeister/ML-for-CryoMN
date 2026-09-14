@@ -228,11 +228,11 @@ The four-phase gates, anchor rules, and transition roles are defined in the
 
 ## Group 10 workflow additions
 
-See [Group 10 implementation and operator guide](group10/README.md),
-[manual settings register](group10/settings_register.md), and
-[supplementary mechanical SOP](group10/mechanical_sop.md).
+See the [current Group 10 guide](group10/README.md), [settings register](group10/settings_register.md),
+[terminal-force SOP](group10/mechanical_sop.md), and [Group 9 transition instructions](group10/transition_group9_to_10.md).
 
-These additions preserve Group 9 and the production GP. The exact DMSO/sucrose
-reference is monitoring-only and remains inactive until its preparation and
-replication settings are complete. The new 1 mm endpoint is supplementary.
-The [offline model audit](group10/audit/audit_report.md) does not promote a model.
+From Group 10, the endpoint is force at +0.8 mm after the sustained 1 N trigger. The existing mechanical output column is a compatibility name for nominal terminal force per loaded needle, not a fracture-strength claim. Raw whole-patch total force is also stored. Force drops do not select the endpoint.
+
+The exact DMSO/sucrose reference is configured for Group 10 without preset replicate counts; actual counts come from completed CSV rows. Reference observations are monitoring-only and excluded from production GP training. Group 9 remains under its frozen original contract. Configured branch policy is distinct from a live frozen Group 10 proposal.
+
+The [offline model audit](group10/audit/explained_comparison.md) does not promote a model. GP methodology changes remain deferred until a user decision before the first full-mechanics proposal. The mechanical endpoint revision is authorized separately and starts with Group 10.

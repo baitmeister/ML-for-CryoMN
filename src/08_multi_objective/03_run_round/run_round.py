@@ -317,6 +317,8 @@ def main() -> None:
             proposal_metadata=proposal_metadata,
         )
 
+        from helper.mechanics_execution import update_endpoint_workload
+        mechanics_audit = update_endpoint_workload(mechanics_audit, observations, batch_id)
         completed_path = archive_completed(
             batch_id,
             args.candidates_csv,

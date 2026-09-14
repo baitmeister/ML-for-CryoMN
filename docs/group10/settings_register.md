@@ -1,45 +1,39 @@
-# Settings register
+# Current settings register — workflow v4
 
-All pending settings below are intentional. Missing values disable only the dependent capability. No experimental settings were fabricated for live use.
+Updated 2026-09-14. Missing settings disable only their dependent capability.
 
-| Setting | Value/status | Owner and consequence |
+| Setting | Current value/source | Consequence |
 |---|---|---|
-| Workflow activation | Group 10 | Locked user decision; later unstarted group if not ready |
-| GP/noise/target revision | False | User decides after audit before the first full-mechanics proposal |
-| Mechanical capacity | Four formulations | Locked; specimen runs counted separately |
-| Reference composition | 2.5% v/v DMSO + 100 mM sucrose | Locked exact reference-only exception |
-| DMSO density/purity | 1.10 g/mL / 100% | Literature density / user-specified purity; approximately 0.352 M at 2.5% v/v |
-| DMSO molecular weight | 78.13 g/mol | Registry/reagent basis |
-| Base medium | Common to all formulations | No separate reference setting |
-| Reference replicates | Derived from completed CSV | No advance setting |
-| Mechanical replicates/formulation | Derived from completed CSV | No advance setting |
-| Minimum viability | Pending | User; acceptance pending |
-| Minimum force and definition ID | Pending | User; acceptance pending |
-| Operational stop | 1 mm from contact | Locked user decision |
-| Relative drop | 10% | Locked operational rule |
-| Contact force/baseline points | Pending | User/instrument trace review |
-| Absolute drop/noise threshold | Pending | User/instrument trace review |
-| Window/persistence | Pending | User/instrument trace review |
-| Smoothing | None | Implementation default; no hidden filtering |
-| Force/displacement units | N/mm | Required supported units |
-| Force sign | Pending | User/instrument export |
-| Protocol/test mode | Pending | User; detector disabled |
-| Loaded-needle count | Per result, pending | User; positive count, one for single needle |
-| Speed, temperature, geometry, handling | Record in protocol | User; comparability must be documented |
-| Preparation/specimen/readout hierarchy | Per result | User; unknown historical independence remains unknown |
-| Adaptive-noise floor/fallback/shrinkage | 1 point / 5 points / 4 degrees | Offline modeling assumptions, not production settings |
-| Additive batch adjustment | Diagnostic only | More repeated controls and user decision needed |
-| Confirmation feature | Removed | No cadence, batch-count requirement, or reserved slot |
-| Acceptance claim | Measured requirements only | No separate confirmation classification |
-| Seed | 42 | Software reproducibility |
-| Learned audit kernel bounds | amplitude 0.1–10, shared length 0.1–10 | Bounded offline comparison, no automatic promotion |
+| Earliest workflow/endpoint activation | Group 10, user | Frozen per proposal; no retroactive Group 9 edit |
+| GP methodology / adaptive noise switch | Deferred, user | Review audit and decide before first full-mechanics proposal; no automatic switch |
+| Mechanical endpoint revision | Active in Group 10 configuration, user | F at +0.8 mm after sustained 1 N |
+| Endpoint definition | `terminal_force_08mm_after_1N_v1` | Different definitions cannot share a mechanical training cohort |
+| Mechanical capacity | Four formulations, user | Replicate runs counted separately |
+| Reference | 2.5% v/v DMSO + 100 mM sucrose, user | One screen slot; mechanics conditional on actual intact |
+| DMSO density/purity/MW | 1.10 g/mL / 100% / 78.13 g/mol | Approximately 0.352 M; exact recipe-only domain exception |
+| Base medium | Common throughout campaign, user | No separate setup entry |
+| Reference/candidate replicate numbers | Actual completed CSV records | No advance input required; aggregate means do not reveal hidden replicate counts |
+| Minimum viability | **Pending user value**, percent | Acceptance stays pending |
+| Minimum force and requirement definition | **Pending user value and named definition**, nominal N/loaded needle | Existing `minimum_fracture_force_N_per_needle` key retained; new value is not proven fracture strength |
+| Trigger | >=1 N for >=5 samples spanning >=0.100 s | First sample of first sustained run defines displacement origin |
+| Terminal displacement | +0.800 mm from that origin, user | Force interpolated at terminal, not maximum |
+| Force drops | No endpoint role, user | No drop threshold, drop window or early termination setting needed |
+| Baseline/smoothing | Instrument export / no extra subtraction / none | Software convention matching the reviewed traces |
+| Force/displacement/time units | N/mm/s from CSV | Known units row automatically handled; no guessed conversion |
+| Force sign/mode | Positive compression / whole patch array | Supported protocol checked |
+| Sampling gap tolerance | 0.0375 s, software | Based on observed 40 Hz; slower acquisition requires protocol review |
+| Displacement reversal tolerance | 0.0001 mm, software | One export resolution step; larger reversal is ambiguous |
+| Floating comparison tolerance | 1e-9, software | Arithmetic boundary handling only |
+| Nominal needle height | 1.6 mm, user | Descriptive geometry, not specimen strain |
+| Loaded-needle count | Actual `needles_compressed` in result CSV | Positive integer; not inferred from intact count or a default array size; missing permits total force only |
+| Compression speed | Approximately 0.75 mm/min in reviewed traces | Keep actual protocol consistent; no claim of constant temperature from CSV |
+| Temperature, handling, zeroing, array loading convention | Actual protocol/notes | Cannot reliably fetch from these three measurement columns; no invented values |
+| Optional replicate/test/cell-batch IDs | Actual result rows, when available | No independent-preparation requirement; unknown history stays unknown |
+| Confirmation feature | Removed, user | No cadence or batch-count setup |
+| Batch adjustment/control normalization | Inactive | Raw monitoring; evidence and later decision required |
+| Candidate/random seed | 42, software | Frozen reproducibility; does not alter raw endpoint calculation |
+| Adaptive noise audit assumptions | Floor 1, fallback 5 viability points, shrinkage 4 degrees | Offline only; unchanged production noise |
 
-The reference does not normalize results. Its first groups establish baseline variability. Testing replicates share one preparation; they do not estimate independent preparation variability. Assay/cell state, CPA exposure, freezing/thawing/storage, processing order and viability timing should be recorded consistently.
+Density source: [Sigma-Aldrich DMSO 276855](https://www.sigmaaldrich.com/US/en/product/sial/276855), recorded in this project on 2026-09-08. The value is a literature preparation conversion, not a lot-specific measurement. Purity 100% is user supplied. Final-volume basis: 2.5 mL neat DMSO in 100 mL final formulation. Sucrose is an existing model feature.
 
-Density source: [Sigma-Aldrich DMSO 276855](https://www.sigmaaldrich.com/US/en/product/sial/276855), accessed 2026-09-08. This is a literature conversion value, not a measurement of the user’s reagent lot. Purity 100% is the user-specified preparation assumption. Final-volume convention: 2.5 mL neat DMSO per 100 mL final formulation. Replicate counts come from the completed CSV.
-
-Transition decision: review the audit and select/freeze any model, noise or endpoint revision before generating the first full-mechanics proposal. Full-phase entry does not select a model automatically. Production flags stay false until that decision is implemented.
-
-## Replicates from completed CSV (workflow v3)
-
-No advance replicate counts are required. The completed round CSV supplies actual replicates; reports count ingested replicate IDs separately by formulation, batch and endpoint. An aggregate mean counts as one recorded measurement; underlying unrecorded replicates are not guessed. These are test replicates, not independent preparations. The reference is ready for new proposals from Group 10 on this development branch, with no replicate-count gate. No live Group 10 proposal has been generated; the live checkout still has Group 9 frozen. The reference receives one screen slot and a mechanical slot conditional on actual intact formation.
+The remaining decision inputs are the application thresholds and the future GP/noise/acquisition methodology. Experimental metadata such as raw file, loaded count and actual replicas comes from the completed round CSV. Thermal history cannot be reconstructed from force/displacement/time alone.

@@ -40,7 +40,16 @@ def write_pareto(formulations,observations,candidates,directory,prefix='',contex
     prefix = prefix.rstrip('_')+'_' if prefix else ''
     feasible,excluded=build_feasible_paired_objectives(formulations,observations)
     table=pd.concat([feasible.assign(evidence_kind='feasible_observed'),excluded.assign(evidence_kind='excluded_observed'),candidates.assign(evidence_kind='proposal_prediction')],ignore_index=True)
-    return write_plot(plots.pareto_figure(feasible,excluded,candidates),table,directory,prefix+'observed_tradeoff',context)
+    definition = feasible.get('mechanical_definition_id',pd.Series(dtype=str)).dropna().unique()
+    fig = plots.pareto_figure(feasible,excluded,candidates)
+    if len(definition):
+        context += '; mechanical definition: ' + ', '.join(definition)
+        fig.text(.5,.005,', '.join(definition),ha='center',fontsize=7)
+        if list(definition) == ['terminal_force_08mm_after_1N_v1']:
+            for ax in fig.axes:
+                if 'load' in ax.get_ylabel().lower():
+                    ax.set_ylabel('Terminal compression resistance\n(nominal N per loaded needle)')
+    return write_plot(fig,table,directory,prefix+'observed_tradeoff',context)
 
 
 def prepare_diagnostics(formulations,observations,frames=None):

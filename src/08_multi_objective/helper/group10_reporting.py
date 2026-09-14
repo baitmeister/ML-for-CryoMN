@@ -21,8 +21,13 @@ def additional_reports(observations, prospective_table, results_root, output_dir
         intact=g.loc[g.endpoint.eq('intact_patch_formation_pass'),'value']
         definition=req.get('fracture_force_definition')
         endpoint='supported_axial_load_1mm_N_per_needle' if definition=='supported_load_1mm_v1' else 'critical_axial_load_N_per_needle'
+        mechanics=g.loc[g.endpoint.eq(endpoint)]
+        actual=mechanics.get('mechanical_definition_id',pd.Series('',index=mechanics.index)).fillna('').replace('','legacy_curve_maximum_v1')
+        identities=actual.unique()
+        actual_definition=str(identities[0]) if len(identities)==1 else 'mixed_or_missing_definition'
+        mechanical_value=vals.get(endpoint) if len(identities)==1 else None
         row={'formulation_id':fid,'batch_id':batch,**vals,'intact_patch_formation_pass':aggregate_intact_patch_replicates(intact),
-             'mechanical_value':vals.get(endpoint),'mechanical_definition_id':'supported_load_1mm_v1' if endpoint.startswith('supported') else 'legacy_curve_maximum_v1'}
+             'mechanical_value':mechanical_value,'mechanical_definition_id':actual_definition}
         records.append(assess_acceptance(row,req))
     pd.DataFrame(records).to_csv(out/'application_acceptance.csv',index=False)
     control_diagnostics(observations).to_csv(out/'reference_monitoring.csv',index=False)
@@ -34,6 +39,16 @@ def additional_reports(observations, prospective_table, results_root, output_dir
     counts=counts.groupby(['formulation_id','batch_id','experimental_role','endpoint']).size().reset_index(name='recorded_replicate_count')
     counts['count_basis']='ingested_completed_csv_replicates; not independent preparations'
     counts.to_csv(out/'recorded_replicate_counts.csv',index=False)
+    terminal=observations.loc[observations.endpoint.eq('terminal_force_08mm_status')].copy()
+    if not terminal.empty:
+        details=[]
+        for row in terminal.itertuples():
+            analysis=json.loads(row.analysis_provenance)
+            details.append({'formulation_id':row.formulation_id,'batch_id':row.batch_id,'replicate_id':row.replicate_id,
+                'experimental_role':row.experimental_role, 'mechanical_definition_id':analysis['definition_id'],
+                **{k:analysis.get(k) for k in ('status','reason','endpoint_N_total','endpoint_N_per_needle',
+                    'loaded_needle_count','trigger_time_s','loading_duration_s','source_file','source_file_hash')}})
+        pd.DataFrame(details).to_csv(out/'terminal_force_measurements.csv',index=False)
     cohorts=[]
     if not prospective_table.empty:
         t=prospective_table.copy();t['diagnostic_cohort']='unclassified_historical'
@@ -46,11 +61,14 @@ def additional_reports(observations, prospective_table, results_root, output_dir
                 r=proposal.loc[row.candidate_id];role=r.get('experimental_role',r.get('recommendation_type',''))
                 status=r.get('viability_prediction_status','unclassified_historical')
                 t.loc[i,'diagnostic_cohort']=role if role in ('campaign_control','screened_hit_mechanics','retest_priority') else str(status)
-        for keys,g in t.groupby(['endpoint','diagnostic_cohort']):
+        if 'mechanical_definition_id' not in t:
+            t['mechanical_definition_id']=''
+        t['mechanical_definition_id']=t.mechanical_definition_id.fillna('')
+        for keys,g in t.groupby(['endpoint','diagnostic_cohort','mechanical_definition_id']):
             valid=g.loc[g.evaluation_eligible.eq(True)].dropna(subset=['prediction_mean','observed_mean'])
             if valid.empty:continue
             e=valid.prediction_mean-valid.observed_mean;spread=((valid.observed_mean-valid.observed_mean.mean())**2).sum()
-            cohorts.append({'endpoint':keys[0],'cohort':keys[1],'n':len(valid),'mae':e.abs().mean(),'bias':e.mean(),
+            cohorts.append({'endpoint':keys[0],'cohort':keys[1],'mechanical_definition_id':keys[2],'n':len(valid),'mae':e.abs().mean(),'bias':e.mean(),
                 'rmse':np.sqrt((e**2).mean()),'r2':1-(e**2).sum()/spread if spread>0 and len(valid)>1 else None,
                 'interval_95_coverage':pd.to_numeric(valid.interval_95_covered,errors='coerce').mean(),
                 'interval_95_width':(valid.interval_95_upper-valid.interval_95_lower).mean()})

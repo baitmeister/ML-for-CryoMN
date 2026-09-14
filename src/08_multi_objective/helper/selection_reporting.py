@@ -504,6 +504,8 @@ def write_selection_result(
     for column in EDITABLE_WETLAB_COLUMNS:
         if column in selected.columns:
             selected[column] = ""
+    if "group10" in result.metadata:
+        selected['mechanical_definition_id']=result.metadata['group10']['mechanical_definition_id']
     result.metadata["batch_id"] = batch_id
     forward_diagnostic_columns = [
         *registry.feature_names,
@@ -681,11 +683,11 @@ def write_selection_result(
     if "group10" in result.metadata:
         details = result.metadata["group10"]
         with (output / "next_round_summary.txt").open("a") as handle:
-            handle.write("\nGroup 10 workflow: production GP/noise/target unchanged.\n")
+            handle.write("\nGroup 10 workflow: GP methodology and noise unchanged; mechanical endpoint versioned separately.\n")
             handle.write("Reference readiness: " + json.dumps(details["reference_readiness"]) + "\n")
-            handle.write("Mechanical budget: four formulations; specimens per formulation: " + str(details["specimens_per_formulation"]) + "\n")
+            handle.write("Mechanical budget: four formulations. Replicate counts are derived from completed CSV rows.\n")
             handle.write("Roles: " + json.dumps(details["realized_roles"]) + "\n")
-            handle.write("Supplementary supported_load_1mm_v1 is not the production target.\n")
+            handle.write("Mechanical endpoint: " + details["mechanical_definition_id"] + "; nominal N per loaded needle in compatibility force columns.\n")
     if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
         metadata_path = output / "next_round_metadata.json"
         metadata_path.write_text(

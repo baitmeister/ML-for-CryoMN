@@ -1,0 +1,35 @@
+{
+  "code_root": "/Users/doggonebastard/Antigravity/ML for CryoMN-group10",
+  "code_branch": "codex/v2-methodology-group10",
+  "campaign_root": "/Users/doggonebastard/Antigravity/ML for CryoMN",
+  "policy_version": "group10_workflow_v4",
+  "earliest_activation_group": 10,
+  "configured_endpoint": "terminal_force_08mm_after_1N_v1",
+  "endpoint_code_configured": true,
+  "reference": {
+    "ready": true,
+    "missing_settings": []
+  },
+  "gp_methodology_revision": false,
+  "noise_revision": false,
+  "latest_observed_group": 8,
+  "active_worksheet_groups": [
+    "ROUND_009"
+  ],
+  "campaign_has_group10_code": false,
+  "campaign_code_matches_reviewed": false,
+  "group10_frozen_with_current_endpoint": false,
+  "ready_for_group10_wetlab": false,
+  "blockers": [
+    "Group 9 results are not yet ingested; no final Group 10 slate can be approved from this evidence snapshot",
+    "No Group 10 proposal frozen with the current terminal endpoint in this campaign",
+    "The active worksheet is not Group 10",
+    "This campaign checkout does not contain the Group 10 implementation; run the reviewed branch against the intended campaign only after transition"
+  ],
+  "settings_from_round_csv": [
+    "replicate_id / repeated result rows",
+    "instron_file",
+    "needles_compressed"
+  ],
+  "no_files_modified": true
+}

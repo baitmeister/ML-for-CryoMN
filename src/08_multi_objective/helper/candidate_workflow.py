@@ -103,9 +103,9 @@ def run_candidate_selection(
     formulations = _read_or_empty(options.formulations_path)
     observations = _read_or_empty(options.observations_path)
     from .group10_config import production_observations
-    observations = production_observations(observations)
     batch_id = options.batch_id or _next_round_id(options.observations_path)
     target_round_number = parse_round_number(batch_id)
+    observations = production_observations(observations, target_round_number=target_round_number)
     policy_active, policy_version, policy_start_round = policy_activation(
         optimization_config,
         target_round_number,

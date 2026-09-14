@@ -1,4 +1,4 @@
-"""Supplementary contact-relative 1 mm load capacity; never changes legacy loads."""
+"""Versioned terminal extraction and backward-compatible supplementary analysis."""
 import hashlib
 import json
 from pathlib import Path
@@ -7,7 +7,10 @@ import numpy as np
 REQUIRED=('protocol_id','test_mode','contact_force_N','baseline_points','absolute_drop_N',
           'drop_window_mm','persistence_points','force_sign')
 
-def analyze_curve(force, displacement, config, needles_compressed):
+def analyze_curve(force, displacement, config, needles_compressed, time=None):
+    from .terminal_force import DEFINITION, analyze_terminal
+    if config.get('definition_id') == DEFINITION:
+        return analyze_terminal(force, displacement, time, config, needles_compressed)
     result={'definition_id':'supported_load_1mm_v1','detector_version':'force_drop_v1',
             'status':'protocol_incomplete','endpoint_N_total':None,'endpoint_N_per_needle':None,
             'full_window_maximum_N':None,'event_displacement_mm':None,'pre_event_peak_N':None,
@@ -68,23 +71,35 @@ def analyze_curve(force, displacement, config, needles_compressed):
     return {**result,'status':'no_event_detected','reason':'Completed 1 mm; no qualifying drop detected',
             'endpoint_N_total':endpoint,'endpoint_N_per_needle':endpoint/needles_compressed}
 
-def export_analysis(frame, force_column, displacement_column, config, needles_compressed, source, output_dir):
+def export_analysis(frame, force_column, displacement_column, config, needles_compressed, source, output_dir, time_column=None):
     """Explicit output only. Original files and production endpoint are untouched."""
     import matplotlib
     matplotlib.use('Agg')
     import matplotlib.pyplot as plt
     output=Path(output_dir); output.mkdir(parents=True,exist_ok=True)
-    result=analyze_curve(frame[force_column],frame[displacement_column],config,needles_compressed)
+    from .terminal_force import DEFINITION, analyze_frame, numeric_curve
+    if config.get('definition_id') == DEFINITION:
+        result=analyze_frame(frame,config,needles_compressed,force_column,displacement_column,time_column)
+        force_column=result['force_column']; displacement_column=result['displacement_column']
+        arrays,_=numeric_curve(frame,[force_column,displacement_column,result['time_column']],config)
+        force,displacement=arrays[:2]
+    else:
+        arrays,_=numeric_curve(frame,[force_column,displacement_column],config)
+        force,displacement=arrays
+        result=analyze_curve(force,displacement,config,needles_compressed)
     result['source_file_hash']=hashlib.sha256(Path(source).read_bytes()).hexdigest()
     result['source_file']=str(Path(source).resolve())
     result['force_column']=force_column
     result['displacement_column']=displacement_column
     (output/'mechanical_analysis.json').write_text(json.dumps(result,indent=2,allow_nan=False)+'\n')
-    fig,ax=plt.subplots(); ax.plot(frame[displacement_column],frame[force_column])
+    fig,ax=plt.subplots(); ax.plot(displacement,force)
     contact=result.get('contact_displacement_mm')
     if contact is not None:
-        ax.axvline(contact,color='grey'); ax.axvline(contact+1,color='grey',linestyle='--')
+        ax.axvline(contact,color='grey'); ax.axvline(contact+config['displacement_limit_mm'],color='grey',linestyle='--')
         if result['event_displacement_mm'] is not None: ax.axvline(contact+result['event_displacement_mm'],color='red')
+        if result.get('terminal_displacement_mm') is not None:
+            ax.scatter([result['terminal_displacement_mm']],[result['endpoint_N_total']],color='red',label='F at +0.8 mm')
+            ax.legend()
     ax.set(xlabel='Recorded displacement (mm)',ylabel='Recorded force (N)',title=result['status'])
     fig.savefig(output/'mechanical_analysis.png',dpi=160,bbox_inches='tight'); plt.close(fig)
     return result
