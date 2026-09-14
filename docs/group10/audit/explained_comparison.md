@@ -48,7 +48,7 @@ The legacy correction covers 98.6%, but its average interval width is 98.21 poin
 
 Every historical noise estimate used the conservative fallback because preparation independence was not recorded. The adaptive row therefore demonstrates sensitivity to fallback noise assignment, not the benefit of learning preparation variability from replicates. Its MAE gain over campaign existing is 0.26 points and its bias slightly worsens; there is no strong adoption case here.
 
-No real repeated reference-control groups or supplementary mechanical outcomes exist in this snapshot. Batch correction, the operational mechanical target, and real shared-GP mechanical acquisition performance cannot yet be compared empirically. The ModelListGP tests establish software operation on synthetic unequal datasets, not experimental superiority.
+The Groups 3–8 audit contains no repeated reference-control groups or comparable terminal-force outcomes. Batch correction and real shared-GP mechanical acquisition performance cannot be assessed from that snapshot. The endpoint is already defined for Group 10; this historical viability audit does not defer that endpoint decision. The ModelListGP tests establish software operation on synthetic unequal datasets, not experimental superiority.
 
 ## Decision implication
 

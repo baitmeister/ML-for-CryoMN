@@ -2,7 +2,7 @@
 
 Branch: **`codex/v2-methodology-group10`**. Current policy/schema: **`group10_workflow_v4` / 4**. Updated 2026-09-14.
 
-The user clarified that **the endpoint changes from Group 10**, while **changes to GP methodology wait for the beginning of full mechanics and a user decision after the audit**. These are separate controls. The configured mechanical endpoint is force at **+0.8 mm after a sustained 1 N trigger**. The original 1 mm/force-drop proposal is historical and is superseded for new proposals.
+**The endpoint changes from Group 10. Changes to GP methodology require a user decision after the audit, before the first full-mechanics proposal.** The configured mechanical endpoint is force at **+0.8 mm after a sustained 1 N trigger**. Endpoint and GP methodology have separate activation controls.
 
 ## Configured versus live
 
@@ -41,4 +41,4 @@ GP architecture, Matérn kernel, scaling, source treatment, fixed observation no
 5. `evaluation_metrics.py` separates endpoint definitions in prospective pools and observed evidence; `group10_reporting.py` adds raw total-force records, acceptance, reference monitoring, replicate counts and role cohorts.
 6. `check_group10_readiness.py` inspects configuration and live artifacts without writing. `tests/verify_group10_endpoint_workflow.py` exercises a complete synthetic campaign in an explicit empty output directory.
 
-Details: [settings register](settings_register.md), [change ledger](changes_and_handoff.md), [verification](verification.md), [transition instructions](transition_group9_to_10.md). Historical preview files are labeled synthetic and are never experimental recommendations.
+Details: [settings register](settings_register.md), [change ledger](changes_and_handoff.md), [verification](verification.md), [transition instructions](transition_group9_to_10.md). The retained [synthetic workflow verification](endpoint08/synthetic_workflow_verification.json) validates the current contract; it is not an experimental recommendation.

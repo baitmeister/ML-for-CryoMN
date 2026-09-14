@@ -182,12 +182,22 @@ Production plots use `helper/plot_data.py` for evidence preparation, `helper/cam
 
 ## Group 10 extension boundary
 
-Stage 2 calls `group10_selection.apply_group10` only under the forward workflow
-configuration; earlier proposals retain existing behavior. Typed control/follow-up
-reservations are separated from production scoring. `group10_config` controls
-readiness and reference evidence exclusions. Supplementary force extraction lives
-in `mechanical_events`, while `group10_reporting` adds evidence tables without
-replacing the historical prospective series.
+Stage 2 applies `group10_selection.apply_group10` to proposals at or after the
+configured activation group and freezes the effective settings with each proposal.
+Group 9 retains its original contract. `group10_config` selects comparable mechanical
+definitions and excludes reference observations from production training.
+
+`terminal_force` extracts force at +0.8 mm after the sustained 1 N trigger from
+raw Instron files. Stage 3 dispatches using frozen proposal settings, stores total
+and nominal force with provenance, and counts attempted versus interpretable tests.
+`mechanical_events` provides standalone plotting and retains the historical drop
+detector for compatibility. The current Group 10 endpoint has no drop-event branch.
+
+`group10_reporting` adds acceptance, reference and replicate reports. Prospective
+metrics and observed Pareto evidence distinguish mechanical definitions; historical
+maximum-force labels are not pooled with Group 10 terminal-force labels. The
+compatibility output key `critical_axial_load_N_per_needle` does not imply fracture
+strength under the terminal-force definition.
 
 `audit_models`, `audit_acquisition`, `observation_noise`, and `batch_effects` are
 explicit offline/diagnostic components. Production acquisition does not import

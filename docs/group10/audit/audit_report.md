@@ -16,9 +16,9 @@ Group 9 outcomes are not used. This is not a replay of alternative experimental 
 Review the simplest campaign-only alternatives first; the observed prior/source mismatch is material. Learned-kernel and correction variants require fresh prospective validation.
 Adaptive noise assumes independent preparations only when explicitly identified. Historical unknown independence uses a conservative fallback.
 The correction uncertainty uses an independent-component approximation; it is diagnostic, not validated calibration.
-No repeated configured controls or supplementary mechanical endpoints exist in this snapshot: batch adjustment and mechanical-target comparison are not estimable.
+The Groups 3–8 audit includes no repeated reference-control groups or comparable terminal-force outcomes; batch adjustment and mechanical-acquisition performance cannot be assessed from that snapshot.
 The separate ModelListGP implementation is tested on synthetic unequal endpoint datasets; it has not replaced production acquisition.
 Failed fits: 0. Details and convergence warnings are retained in CSV/JSON.
-User decision before the first full-mechanics proposal is required before any production switch.
+GP methodology changes require a user decision before the first full-mechanics proposal. The terminal-force endpoint is separately authorized from Group 10.
 
 For model definitions, metric interpretation, per-group qualifications, and uncertainty/noise limitations, read [the explained comparison](explained_comparison.md).
