@@ -6,7 +6,7 @@ from itertools import combinations
 import hashlib
 import numpy as np
 import pandas as pd
-from .group10_config import active, reference_readiness, production_observations, ROLES
+from .group10_config import active, assert_group10_can_proceed, reference_readiness, production_observations, ROLES
 from .models import train_endpoint_models, build_training_frame
 from .registry import IngredientRegistry, presence_threshold
 from .feasibility import annotate_feasibility
@@ -42,6 +42,7 @@ def reference_feasibility(frame, registry, optimization, config):
     return annotate_feasibility(frame,modified,optimization,policy_active=True)
 
 def apply_group10(result, formulations, observations, registry, optimization, config, round_number, unavailable=()):
+    assert_group10_can_proceed(config, round_number, observations)
     if not active(config,round_number): return result
     observations=production_observations(observations,target_round_number=round_number)
     models=train_endpoint_models(formulations,observations,registry,optimization)

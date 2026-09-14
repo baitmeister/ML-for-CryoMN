@@ -17,6 +17,11 @@ if str(V2_ROOT) not in sys.path:
 
 from helper.artifacts import validate_completed_against_proposal  # noqa: E402
 from helper.mechanics_execution import validate_mechanics_execution  # noqa: E402
+from helper.group10_config import (  # noqa: E402
+    Group10HardStop,
+    assert_frozen_group10_protocol,
+    load_group10_config,
+)
 
 
 def _load_run_round_module():
@@ -90,6 +95,15 @@ class V2RoundWorkflowCharacterizationTests(unittest.TestCase):
         completed.loc[ranked, "critical_axial_load_N_per_needle"] = 1.0
         with self.assertRaisesRegex(ValueError, "without a measured intact pass"):
             validate_mechanics_execution(completed, proposal, primary_capacity=4)
+
+    def test_group10_ingestion_requires_complete_matching_frozen_protocol(self) -> None:
+        config = load_group10_config()
+        with self.assertRaisesRegex(Group10HardStop, "no complete Group 10 effective_config"):
+            assert_frozen_group10_protocol(config, 10, {})
+        metadata = {"group10": {"effective_config": json.loads(json.dumps(config))}}
+        metadata["group10"]["effective_config"]["mechanical_endpoint"].pop("protocol_id")
+        with self.assertRaisesRegex(Group10HardStop, "settings/protocol are invalid"):
+            assert_frozen_group10_protocol(config, 10, metadata)
 
 
 if __name__ == "__main__":

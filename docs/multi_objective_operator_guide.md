@@ -108,6 +108,10 @@ Stage 02:
 An identical selector rerun is idempotent. Stage 02 refuses to replace a
 different frozen proposal for the same round.
 
+For Group 10 and later, Stage 02 also hard-stops before writing unless the
+reviewed Group 10 settings/protocol are complete, activation is fixed at Group
+10, and the immediately preceding round has validated observations.
+
 ## Stage 03: Enter Results and Advance
 
 ### Result entry
@@ -246,6 +250,6 @@ See the [current Group 10 guide](group10/README.md), [settings register](group10
 
 From Group 10, the endpoint is force at +0.8 mm after the sustained 1 N trigger. The existing mechanical output column is a compatibility name for nominal terminal force per loaded needle, not a fracture-strength claim. Raw whole-patch total force is also stored. Force drops do not select the endpoint.
 
-The exact DMSO/sucrose reference is configured for Group 10 without preset replicate counts; actual counts come from completed CSV rows. Reference observations are monitoring-only and excluded from production GP training. Group 9 remains under its frozen original contract. Configured branch policy is distinct from a live frozen Group 10 proposal.
+The exact DMSO/sucrose reference is configured for Group 10 without preset replicate counts; actual counts come from completed CSV rows. Reference observations are monitoring-only and excluded from production GP training. Group 9 remains under its frozen original contract. The reviewed policy is deployed on `main`, but it is distinct from a live frozen Group 10 proposal. Stage 03 hard-stops before Group 10 ingestion if the frozen effective configuration is missing, incomplete, or different from the live reviewed configuration.
 
 The [offline model audit](group10/audit/explained_comparison.md) does not promote a model. GP methodology changes remain deferred until a user decision before the first full-mechanics proposal. The mechanical endpoint revision is authorized separately and starts with Group 10.

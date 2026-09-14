@@ -4,7 +4,7 @@ import sys,tempfile,unittest,json
 import numpy as np
 import pandas as pd
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src/08_multi_objective'))
-from helper.group10_config import load_group10_config,validate_group10_config,reference_readiness,production_observations
+from helper.group10_config import Group10HardStop,assert_group10_can_proceed,load_group10_config,validate_group10_config,reference_readiness,production_observations
 from helper.acceptance import assess_acceptance
 from helper.mechanical_events import analyze_curve
 from helper.observation_noise import estimate_noise
@@ -28,6 +28,20 @@ class Group10Tests(unittest.TestCase):
         for k,v in [('activation_round',9),('production_model_revision',True),('production_noise_revision',True),('production_endpoint_revision',False)]:
             c=deepcopy(self.c);c[k]=v
             with self.assertRaises(ValueError):validate_group10_config(c)
+        for path in [('policy_version',),('density_g_mL','reference'),('protocol_id','mechanical_endpoint'),('nominal_needle_height_mm','mechanical_endpoint')]:
+            c=deepcopy(self.c);key=path[0];target=c if len(path)==1 else c[path[1]];target.pop(key)
+            with self.assertRaisesRegex(ValueError,'incomplete'):
+                validate_group10_config(c)
+
+    def test_group10_hard_stop_requires_activation_and_group9_results(self):
+        observations=pd.DataFrame({'batch_id':['ROUND_008']})
+        with self.assertRaisesRegex(Group10HardStop,'ROUND_009 validated results'):
+            assert_group10_can_proceed(self.c,10,observations)
+        observations.loc[len(observations)]={'batch_id':'ROUND_009'}
+        assert_group10_can_proceed(self.c,10,observations)
+        disabled=deepcopy(self.c);disabled['activation_round']=None
+        with self.assertRaisesRegex(Group10HardStop,'activation_round must be 10'):
+            assert_group10_can_proceed(disabled,10,observations)
     def test_simplified_replicates_and_no_confirmation(self):
         self.assertNotIn('confirmation',self.c)
         self.assertNotIn('base_medium',self.c['reference'])

@@ -1,20 +1,22 @@
 # Group 10 workflow release — current contract
 
-Branch: **`codex/v2-methodology-group10`**. Current policy/schema: **`group10_workflow_v4` / 4**. Updated 2026-09-14.
+Released on **`main`** by merge commit `3e54384` (PR #10 from `codex/v2-methodology-group10`). Current policy/schema: **`group10_workflow_v4` / 4**. Updated 2026-09-14.
 
 **The endpoint changes from Group 10. Changes to GP methodology require a user decision after the audit, before the first full-mechanics proposal.** The configured mechanical endpoint is force at **+0.8 mm after a sustained 1 N trigger**. Endpoint and GP methodology have separate activation controls.
 
 ## Configured versus live
 
-This branch is configured to reserve the reference and apply the new endpoint from Group 10. That does not retroactively change a frozen proposal or deploy this branch into another checkout. At the last readiness check, main still contained the blank frozen Group 9 worksheet, observed data ended at Group 8, and main did not contain `config_v2/group10.yaml`. No live Group 10 slate was generated or replaced.
+The reviewed code and configuration are live on local and remote `main`; they reserve the reference and apply the new endpoint from Group 10. This does not retroactively change Group 9's frozen proposal. The current campaign data still contain the blank Group 9 worksheet, observations end at Group 8, and no live Group 10 proposal has been frozen. The software release is live, but the Group 10 wet-lab start is not ready until Group 9 results are validated and ingested.
 
-Run the read-only readiness check from this branch, pointing it at the campaign of interest:
+Run the read-only readiness check from the reviewed checkout, pointing it at the campaign of interest:
 
 ```sh
 python3 src/08_multi_objective/04_report_campaign/check_group10_readiness.py --campaign-root '/Users/doggonebastard/Antigravity/ML for CryoMN'
 ```
 
 The result distinguishes configured code, the active worksheet, completed evidence, and whether Group 10 is frozen with the latest rule. `--require-ready` returns exit code 2 if a live Group 10 start is not ready. See [transition instructions](transition_group9_to_10.md).
+
+The production path is also fail-closed. Stage 02 refuses to create any Group 10-or-later proposal unless the reviewed Group 10 configuration/protocol is complete, activation remains fixed at Group 10, and the immediately preceding round has validated observations. Stage 03 refuses to ingest Group 10-or-later results unless the frozen proposal contains a complete effective configuration matching the live reviewed configuration. These checks run before proposal artifacts or observation tables are written.
 
 ## What starts at Group 10
 

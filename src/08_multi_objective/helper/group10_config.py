@@ -2,6 +2,7 @@
 from copy import deepcopy
 from pathlib import Path
 import math
+from collections.abc import Mapping
 import yaml
 import pandas as pd
 
@@ -11,6 +12,21 @@ METADATA_FIELDS = ['preparation_id', 'specimen_id', 'readout_id', 'cell_batch_id
                    'protocol_id', 'mechanical_test_id', 'mechanical_test_attempted',
                    'mechanical_definition_id', 'raw_file_hash']
 
+
+class Group10HardStop(RuntimeError):
+    """Raised before artifacts or observations can advance under an unsafe contract."""
+
+
+def _missing_settings(config, required, prefix=''):
+    if not isinstance(config, Mapping):
+        return [prefix.rstrip('.') or 'configuration']
+    return [
+        prefix + key
+        for key in required
+        if key not in config or config.get(key) is None
+        or (isinstance(config.get(key), str) and not config.get(key).strip())
+    ]
+
 def load_group10_config(path=CONFIG_PATH):
     with Path(path).open() as f:
         config = yaml.safe_load(f)
@@ -19,14 +35,70 @@ def load_group10_config(path=CONFIG_PATH):
     validate_group10_config(config)
     return config
 
+
+def load_group10_config_for_round(round_number, path=CONFIG_PATH):
+    """Load the contract with a Group 10-specific fail-closed error."""
+    try:
+        return load_group10_config(path)
+    except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError) as exc:
+        if round_number is not None and round_number >= 10:
+            raise Group10HardStop(
+                'GROUP 10 HARD STOP: settings/protocol could not be loaded and validated: '
+                + str(exc)
+            ) from exc
+        raise
+
 def validate_group10_config(c):
+    if not isinstance(c, Mapping):
+        raise ValueError('Group 10 configuration must be a mapping')
+    missing = _missing_settings(
+        c,
+        [
+            'policy_version', 'activation_round', 'proposal_schema_version',
+            'production_model_revision', 'production_noise_revision',
+            'production_endpoint_revision', 'reference', 'replicate_count_source',
+            'production_decision_boundary', 'mechanical_endpoint',
+            'application_requirements',
+        ],
+    )
+    missing += _missing_settings(
+        c.get('reference'),
+        [
+            'role', 'dmso_volume_percent', 'sucrose_M', 'density_g_mL',
+            'purity_fraction', 'molecular_weight_g_mol', 'mechanical',
+        ],
+        'reference.',
+    )
+    missing += _missing_settings(
+        c.get('mechanical_endpoint'),
+        [
+            'definition_id', 'detector_version', 'protocol_id',
+            'supplementary_only', 'displacement_limit_mm', 'trigger_force_N',
+            'trigger_minimum_samples', 'trigger_duration_s', 'force_unit',
+            'displacement_unit', 'time_unit', 'force_sign', 'baseline',
+            'smoothing', 'test_mode', 'max_sample_gap_s',
+            'displacement_reversal_tolerance_mm', 'nominal_needle_height_mm',
+        ],
+        'mechanical_endpoint.',
+    )
+    if missing:
+        raise ValueError(
+            'Group 10 settings/protocol are incomplete; missing: '
+            + ', '.join(sorted(set(missing)))
+        )
     activation = c.get('activation_round')
     if activation is not None and (type(activation) is not int or activation < 10):
         raise ValueError('Group 10 activation must be null or an integer >= 10')
+    if c.get('policy_version') != 'group10_workflow_v4':
+        raise ValueError('Group 10 requires policy_version=group10_workflow_v4')
+    if c.get('proposal_schema_version') != 4:
+        raise ValueError('Group 10 requires proposal_schema_version=4')
     for k in ['production_model_revision','production_noise_revision']:
         if c.get(k) is not False:
             raise ValueError(k + ' must remain false pending the user decision')
     r=c['reference']
+    if r.get('role') != 'campaign_control' or r.get('mechanical') is not True:
+        raise ValueError('Group 10 reference must be an active mechanical campaign_control')
     if r['dmso_volume_percent'] != 2.5 or r['sucrose_M'] != .1:
         raise ValueError('Reference exception is restricted to 2.5% v/v DMSO + 100 mM sucrose')
     for k in ['density_g_mL','purity_fraction','molecular_weight_g_mol']:
@@ -54,6 +126,11 @@ def validate_group10_config(c):
             raise ValueError('Historical supplementary definition must remain unchanged')
     else:
         raise ValueError('Unknown mechanical endpoint definition')
+    height = e.get('nominal_needle_height_mm')
+    if isinstance(height, bool) or not isinstance(height, (int, float)) or not math.isfinite(height) or height <= 0:
+        raise ValueError('mechanical_endpoint.nominal_needle_height_mm must be a positive number')
+    if c.get('replicate_count_source') != 'completed_round_csv':
+        raise ValueError('Group 10 replicate counts must come from completed_round_csv')
     if c.get('production_decision_boundary') != 'beginning_of_full_mechanics':
         raise ValueError('Production decision belongs before the first full-mechanics proposal')
 
@@ -62,8 +139,67 @@ def active(c, round_number):
 
 def reference_readiness(c):
     r=c['reference']
-    missing=[k for k in ['density_g_mL','purity_fraction','molecular_weight_g_mol'] if r.get(k) in (None,'')]
+    missing=[k for k in ['role','dmso_volume_percent','sucrose_M','density_g_mL','purity_fraction','molecular_weight_g_mol','mechanical'] if r.get(k) in (None,'')]
     return {'ready':not missing,'missing_settings':missing}
+
+
+def assert_group10_can_proceed(c, round_number, observations=None):
+    """Fail closed before selecting or running Group 10+.
+
+    The round CSV ingestion path is the validation boundary for prior wet-lab
+    evidence. Requiring the immediately preceding observed round prevents an
+    explicit batch override from bypassing the Group 9 -> Group 10 transition.
+    """
+    if round_number is None or round_number < 10:
+        return
+    blockers = []
+    try:
+        validate_group10_config(c)
+    except (KeyError, TypeError, ValueError) as exc:
+        blockers.append(str(exc))
+    if c.get('activation_round') != 10:
+        blockers.append('activation_round must be 10 so the reviewed rules are live for Group 10')
+    try:
+        state = reference_readiness(c)
+    except (KeyError, TypeError):
+        state = {'ready': False, 'missing_settings': ['reference']}
+    if not state['ready']:
+        blockers.append('reference settings are incomplete: ' + ', '.join(state['missing_settings']))
+    if observations is not None:
+        observed_rounds = set()
+        if not observations.empty and 'batch_id' in observations:
+            parsed = pd.to_numeric(
+                observations.batch_id.astype(str).str.extract(r'^ROUND_(\d+)$')[0],
+                errors='coerce',
+            ).dropna()
+            observed_rounds = set(parsed.astype(int).tolist())
+        required_round = round_number - 1
+        if required_round not in observed_rounds:
+            blockers.append(
+                f'ROUND_{required_round:03d} validated results are not present in observations.csv'
+            )
+    if blockers:
+        raise Group10HardStop('GROUP 10 HARD STOP: ' + '; '.join(dict.fromkeys(blockers)))
+
+
+def assert_frozen_group10_protocol(c, round_number, proposal_metadata):
+    """Require a complete, current frozen contract before Group 10+ ingestion."""
+    if round_number is None or round_number < 10:
+        return
+    assert_group10_can_proceed(c, round_number)
+    frozen = (proposal_metadata or {}).get('group10', {}).get('effective_config')
+    blockers = []
+    if not isinstance(frozen, Mapping):
+        blockers.append('frozen proposal metadata has no complete Group 10 effective_config')
+    else:
+        try:
+            validate_group10_config(frozen)
+        except (KeyError, TypeError, ValueError) as exc:
+            blockers.append('frozen proposal settings/protocol are invalid: ' + str(exc))
+        if frozen != c:
+            blockers.append('frozen proposal settings/protocol do not match the live reviewed configuration')
+    if blockers:
+        raise Group10HardStop('GROUP 10 HARD STOP: ' + '; '.join(dict.fromkeys(blockers)))
 
 def production_observations(obs, target_round_number=None, mechanical_definition=None):
     """Select a comparable endpoint cohort without changing stored measurements.

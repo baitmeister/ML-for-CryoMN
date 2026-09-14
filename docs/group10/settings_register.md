@@ -1,6 +1,6 @@
 # Current settings register — workflow v4
 
-Updated 2026-09-14. Missing settings disable only their dependent capability.
+Updated 2026-09-14. Missing required Group 10 workflow or protocol settings now hard-stop proposal generation and ingestion. Pending application thresholds remain reporting-only and do not disable the reviewed acquisition contract.
 
 | Setting | Current value/source | Consequence |
 |---|---|---|

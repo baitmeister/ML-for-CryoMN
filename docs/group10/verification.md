@@ -1,10 +1,10 @@
 # Endpoint v4 verification — 2026-09-14
 
-Branch: `codex/v2-methodology-group10`. Endpoint: `terminal_force_08mm_after_1N_v1`.
+Release: `main` at merge commit `3e54384` (from `codex/v2-methodology-group10`). Endpoint: `terminal_force_08mm_after_1N_v1`.
 
 ## Current verification
 
-**All 102 tests passed in 21.399 seconds in the separate branch worktree.** `git diff --check` passed. The suite covers historical workflow behavior and includes 12 endpoint/readiness tests for the new definition, historical dispatch, production cohort separation and data protection. All test outputs used isolated directories; no live artifact is an output of these tests.
+**All 105 tests pass on merged `main`.** `git diff --check` passes. The suite covers historical workflow behavior, endpoint/readiness behavior, hard-stop enforcement, historical dispatch, production cohort separation and data protection. All test outputs use isolated directories; no live artifact is an output of these tests.
 
 Coverage includes sustained trigger equality/duration/sample count, pretrigger spikes and motion, no reset after a later drop, terminal interpolation, postterminal maxima/nonfinite values, incomplete windows, missing triggers, acquisition gaps, reversals, units rows, strain-column ambiguity, loaded counts, immutable settings, automatic ingestion, manual-value conflicts, duplicate raw files, Group 9 legacy parsing, definition-separated training/Pareto/metrics and configured-versus-live readiness. No live artifact is an output of these tests.
 
@@ -42,7 +42,7 @@ The final complete run passed. See [synthetic_workflow_verification.json](endpoi
 
 All **1050 protected file hashes** matched: data/results in both main and the development worktree, plus all six actual raw Instron files. [Verification record](endpoint08/protected_files.json). No raw data, Group 9 worksheet/proposal/predictions, archive, or legacy-lane file changed. The original campaign baseline and dependency versions are retained in [baseline_manifest.json](baseline_manifest.json).
 
-The [read-only readiness result](endpoint08/live_readiness.json) shows main still has **ROUND_009**, blank result inputs, observed data through Group 8, no Group 10 code configuration and no frozen Group 10 proposal with the new endpoint. **Configured/tested branch policy is ready; starting the actual Group 10 experiment is not yet ready.** Complete the actual Group 9 update and use the reviewed branch for the actual Group 10 freeze.
+The retained [read-only readiness result](endpoint08/live_readiness.json) is the pre-merge capture: at that time main had no Group 10 code configuration. After PR #10, local and remote `main` contain the reviewed configuration and implementation. The campaign itself still has **ROUND_009** with blank result inputs, observed data through Group 8, and no frozen Group 10 proposal with the new endpoint. **The code policy is live; starting the actual Group 10 experiment is not yet ready.** Complete the actual Group 9 update, freeze the real Group 10 proposal, and require a clean readiness result.
 
 ## Limits
 

@@ -19,7 +19,7 @@ The current operator contract is [README.md](README.md), with the exact extracti
 | Model/noise/control audit | Historical forward replay, uncertainty diagnostics and raw control monitoring | Offline/diagnostic only |
 | Multiple-GP acquisition | Shared endpoint-specific models, qLogNEHVI and explicit fallbacks | Offline only |
 | Reporting | Definition-separated training/Pareto/prospective cohorts, control exclusion and placeholder-prediction exclusion | Group 10 evidence |
-| Readiness | Read-only comparison of code, campaign settings, active worksheet and frozen proposal | Run before Group 10 wet lab |
+| Readiness | Read-only status plus fail-closed selection/ingestion checks for complete current settings, prior-round evidence and frozen protocol | Enforced from Group 10 |
 
 ## Compatibility and behavior
 
@@ -39,4 +39,4 @@ The [explained model audit](audit/explained_comparison.md) compares Groups 3–8
 
 Application viability and force thresholds remain unset. The force requirement must name its endpoint. No advance replicate count, separate base-medium setting, independent-preparation requirement or confirmation cadence is requested. Actual specimen count and raw paths come from the completed CSV; temperature/handling remain experimental protocol metadata.
 
-See [verification.md](verification.md) for 102 passing tests, actual trace replay, data-hash checks and synthetic Group 9→10→11 verification. The [settings register](settings_register.md) lists resolved and remaining inputs. Follow [transition_group9_to_10.md](transition_group9_to_10.md) to incorporate actual Group 9 evidence and freeze the real Group 10 proposal.
+See [verification.md](verification.md) for 105 passing tests, actual trace replay, data-hash checks and synthetic Group 9→10→11 verification. The [settings register](settings_register.md) lists resolved and remaining inputs. Follow [transition_group9_to_10.md](transition_group9_to_10.md) to incorporate actual Group 9 evidence and freeze the real Group 10 proposal.

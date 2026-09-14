@@ -16,6 +16,7 @@ from helper.candidate_workflow import (
     CandidateSelectionWorkflowResult,
     run_candidate_selection,
 )
+from helper.group10_config import Group10HardStop
 from helper.paths import (
     AVAILABILITY_CONFIG,
     FORMULATIONS_PATH,
@@ -163,4 +164,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Group10HardStop as exc:
+        raise SystemExit(str(exc)) from None

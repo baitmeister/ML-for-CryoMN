@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import json
 import pandas as pd
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -40,6 +41,11 @@ from helper.config import (
     nested_get,
 )
 from helper.feedback import ingest_feedback
+from helper.group10_config import (
+    Group10HardStop,
+    assert_frozen_group10_protocol,
+    load_group10_config_for_round,
+)
 from helper.mechanics_execution import (
     freeze_mechanics_execution_manifest,
     validate_mechanics_execution,
@@ -256,6 +262,19 @@ def main() -> None:
     current_observations = _read_or_empty(args.observations)
     results_root = Path(args.output_dir).parent
     round_paths = round_artifact_paths(batch_id, results_root)
+    proposal_metadata = {}
+    if round_paths.proposal_metadata.exists():
+        proposal_metadata = json.loads(
+            round_paths.proposal_metadata.read_text(encoding="utf-8")
+        )
+    round_match = re.fullmatch(r'ROUND_(\d+)', batch_id)
+    round_number = int(round_match.group(1)) if round_match else None
+    if round_number is not None and round_number >= 10:
+        assert_frozen_group10_protocol(
+            load_group10_config_for_round(round_number),
+            round_number,
+            proposal_metadata,
+        )
 
     round_progressed = _round_has_new_results(args.candidates_csv)
     if not round_progressed:
@@ -284,11 +303,6 @@ def main() -> None:
             f"{validation['proposal_candidate_count']} candidates, "
             f"{validation['completed_row_count']} completed row(s)."
         )
-        proposal_metadata = {}
-        if round_paths.proposal_metadata.exists():
-            proposal_metadata = json.loads(
-                round_paths.proposal_metadata.read_text(encoding="utf-8")
-            )
         mechanics_audit = validate_mechanics_execution(
             current_candidates,
             pd.read_csv(round_paths.proposal_csv),
@@ -416,4 +430,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Group10HardStop as exc:
+        raise SystemExit(str(exc)) from None

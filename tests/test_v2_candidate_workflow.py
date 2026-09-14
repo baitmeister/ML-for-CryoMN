@@ -145,6 +145,23 @@ class V2CandidateWorkflowTests(unittest.TestCase):
             ):
                 self.assertTrue(outcome.artifact_paths[name].exists(), name)
 
+    def test_group10_override_hard_stops_without_group9_observations(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary_name:
+            root = Path(temporary_name)
+            output_dir = root / "next_round"
+            with self.assertRaisesRegex(RuntimeError, "GROUP 10 HARD STOP.*ROUND_009"):
+                run_candidate_selection(
+                    CandidateSelectionOptions(
+                        formulations_path=FORMULATIONS_PATH,
+                        observations_path=OBSERVATIONS_PATH,
+                        output_dir=output_dir,
+                        total_candidate_pool_path=root / "total_candidate_pool.csv",
+                        seed=42,
+                        batch_id="ROUND_010",
+                    )
+                )
+            self.assertFalse(output_dir.exists())
+
     def test_supplied_pool_outside_registry_bounds_is_rejected(self) -> None:
         registry = load_registry()
         with tempfile.TemporaryDirectory() as temporary_name:
