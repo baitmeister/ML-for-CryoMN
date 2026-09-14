@@ -9,6 +9,9 @@ import pandas as pd
 DEFINITION = 'terminal_force_08mm_after_1N_v1'
 LEGACY_DEFINITION = 'legacy_curve_maximum_v1'
 MODEL_FIELD = 'critical_axial_load_N_per_needle'  # Compatibility key, not a fracture claim.
+STIFFNESS_MODEL_FIELD = 'initial_stiffness_N_per_mm_per_needle'  # Compatibility key.
+STIFFNESS_DEFINITION = 'apparent_secant_stiffness_08mm_after_1N_v1'
+STIFFNESS_FORMULA = '(terminal_force_N-trigger_force_N)/0.8_mm'
 
 
 def validate_settings(c):
@@ -29,6 +32,11 @@ def analyze_terminal(force, displacement, time, config, needles_compressed=None)
     """Return total force even when the worksheet's loaded-needle count is absent."""
     result = dict(definition_id=DEFINITION, detector_version='terminal_force_v1',
                   status='protocol_incomplete', endpoint_N_total=None, endpoint_N_per_needle=None,
+                  apparent_secant_stiffness_N_per_mm_total=None,
+                  apparent_secant_stiffness_N_per_mm_per_needle=None,
+                  stiffness_definition_id=STIFFNESS_DEFINITION,
+                  stiffness_formula=STIFFNESS_FORMULA,
+                  stiffness_qc='not_calculated',
                   event_displacement_mm=None, settings=dict(config), loaded_needle_count=needles_compressed,
                   interpretation='Whole-patch terminal compression resistance; nominal N per loaded needle when count is supplied')
     try:
@@ -86,9 +94,15 @@ def analyze_terminal(force, displacement, time, config, needles_compressed=None)
     terminal_time = float(t[end-1] + weight*(t[end]-t[end-1]))
     if value < 0:
         return {**result, 'status': 'ambiguous_curve', 'reason': 'Negative terminal compressive force'}
+    stiffness = (value-float(f[trigger]))/config['displacement_limit_mm']
+    # A force drop can produce a negative secant without invalidating the
+    # measured terminal force. Preserve the signed result and flag it for QC.
     return {**result, 'status': 'complete', 'reason': 'Interpolated force at +0.8 mm after sustained 1 N',
             'endpoint_N_total': value,
             'endpoint_N_per_needle': value/needles_compressed if needles_compressed else None,
+            'apparent_secant_stiffness_N_per_mm_total': stiffness,
+            'apparent_secant_stiffness_N_per_mm_per_needle': stiffness/needles_compressed if needles_compressed else None,
+            'stiffness_qc': 'negative_secant' if stiffness < 0 else 'ok',
             'terminal_time_s': terminal_time, 'loading_duration_s': terminal_time-t[trigger],
             'terminal_displacement_mm': float(x), 'terminal_bracket_indices': [end-1, end],
             'analyzed_displacement_mm': 0.8,

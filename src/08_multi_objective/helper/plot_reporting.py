@@ -2,6 +2,7 @@
 from __future__ import annotations
 import json
 import hashlib
+import re
 from pathlib import Path
 import pandas as pd
 from . import campaign_plots as plots
@@ -109,4 +110,121 @@ def write_prospective(observations,table,metrics,candidates,directory,context,
     for stem,fig,source in figures:
         fig.text(.5,.008,context,ha='center',fontsize=8,color=plots.GRAY)
         generated+=write_plot(fig,source,directory,stem,context)
+    return generated
+
+
+def mechanical_report_table(observations, candidates=None, batch_id=None):
+    """Build replicate-level terminal-force evidence with visible QC summaries."""
+    status = observations.loc[
+        observations.get('endpoint', pd.Series('', index=observations.index)).eq('terminal_force_08mm_status')
+    ].copy()
+    if batch_id is not None and 'batch_id' in status:
+        status = status.loc[status.batch_id.astype(str).eq(str(batch_id))]
+    if status.empty or 'analysis_provenance' not in status:
+        return pd.DataFrame()
+    rank_by_formulation = {}
+    if candidates is not None and not candidates.empty:
+        ranks = candidates[['formulation_id', 'selection_rank']].drop_duplicates('formulation_id')
+        rank_by_formulation = dict(zip(ranks.formulation_id.astype(str), ranks.selection_rank))
+    rows = []
+    for row in status.itertuples():
+        if not isinstance(row.analysis_provenance, str) or not row.analysis_provenance.strip():
+            continue
+        analysis = json.loads(row.analysis_provenance)
+        if analysis.get('status') != 'complete':
+            continue
+        notes = str(getattr(row, 'notes', '') or '')
+        rows.append({
+            'formulation_id': str(row.formulation_id),
+            'formulation_number': rank_by_formulation.get(str(row.formulation_id), str(row.formulation_id)),
+            'batch_id': str(row.batch_id),
+            'replicate_id': str(row.replicate_id),
+            'terminal_force_N_total': analysis['endpoint_N_total'],
+            'terminal_force_N_per_needle': analysis['endpoint_N_per_needle'],
+            'apparent_secant_stiffness_N_per_mm_total': analysis['apparent_secant_stiffness_N_per_mm_total'],
+            'apparent_secant_stiffness_N_per_mm_per_needle': analysis['apparent_secant_stiffness_N_per_mm_per_needle'],
+            'loaded_needle_count': analysis['loaded_needle_count'],
+            'trigger_force_N': analysis['trigger_force_N'],
+            'trigger_displacement_mm': analysis['contact_displacement_mm'],
+            'terminal_displacement_mm': analysis['terminal_displacement_mm'],
+            'mechanical_definition_id': analysis['definition_id'],
+            'stiffness_definition_id': analysis['stiffness_definition_id'],
+            'stiffness_formula': analysis['stiffness_formula'],
+            'stiffness_qc': analysis.get('stiffness_qc', 'not_recorded'),
+            'source_file': analysis['source_file'],
+            'source_file_hash': analysis['source_file_hash'],
+            'replicate_lost': 'lost' in notes.lower(),
+            'notes': notes,
+            'analysis_provenance': row.analysis_provenance,
+        })
+    table = pd.DataFrame(rows)
+    if table.empty:
+        return table
+    table['_sort'] = pd.to_numeric(table.formulation_number, errors='coerce')
+    table = table.sort_values(['_sort', 'replicate_id'], kind='mergesort').drop(columns='_sort')
+    for column, prefix in [
+        ('terminal_force_N_per_needle', 'terminal_force'),
+        ('apparent_secant_stiffness_N_per_mm_per_needle', 'apparent_secant_stiffness'),
+    ]:
+        grouped = table.groupby('formulation_id')[column]
+        table[prefix + '_replicate_count'] = grouped.transform('count')
+        table[prefix + '_mean'] = grouped.transform('mean')
+        table[prefix + '_sample_sd'] = grouped.transform('std')
+        table[prefix + '_min'] = grouped.transform('min')
+        table[prefix + '_max'] = grouped.transform('max')
+    return table
+
+
+def write_mechanical(observations, candidates, directory, batch_id=None, context='Completed round'):
+    """Write trace-level QC and formulation-level terminal-method figures."""
+    table = mechanical_report_table(observations, candidates, batch_id)
+    if table.empty:
+        return []
+    from .instron import _read_bluehill_csv
+    from .terminal_force import numeric_curve
+    generated = []
+    directory = Path(directory)
+    # Verify and parse every source before overwriting any report artifact.
+    traces = []
+    for row in table.itertuples():
+        analysis = json.loads(row.analysis_provenance)
+        source = Path(analysis['source_file'])
+        frame = _read_bluehill_csv(source, expected_sha256=analysis['source_file_hash'])
+        columns = [analysis['force_column'], analysis['displacement_column'], analysis['time_column']]
+        arrays, _ = numeric_curve(frame, columns, analysis['settings'])
+        traces.append((row, analysis, arrays))
+    for row, analysis, arrays in traces:
+        force, displacement, time = arrays
+        terminal_end = int(analysis['terminal_bracket_indices'][1])
+        indexes = pd.Series(range(len(force)))
+        trace = pd.DataFrame({
+            'sample_index': indexes,
+            'time_s': time,
+            'displacement_mm': displacement,
+            'force_N': force,
+            'analysis_window': indexes.between(int(analysis['trigger_index']), terminal_end),
+            'formulation_number': row.formulation_number,
+            'replicate_id': row.replicate_id,
+            'source_file_hash': analysis['source_file_hash'],
+        })
+        token = re.sub(r'[^A-Za-z0-9_.-]+', '_', str(row.replicate_id)).strip('_')
+        stem = f'mechanical_trace_formulation_{row.formulation_number}_{token}'
+        fig = plots.mechanical_trace_figure(trace, analysis, row.formulation_number, row.replicate_id)
+        generated += write_plot(
+            fig, trace, directory, stem,
+            context=f'{context}; {analysis["definition_id"]}',
+            sources=[{'path': analysis['source_file'], 'sha256': analysis['source_file_hash']}],
+        )
+    summary_source = table.drop(columns='analysis_provenance')
+    generated += write_plot(
+        plots.mechanical_summary_figure(summary_source, context),
+        summary_source,
+        directory,
+        'mechanical_summary',
+        context=f'{context}; terminal force and apparent secant stiffness',
+        sources=[
+            {'path': row.source_file, 'sha256': row.source_file_hash}
+            for row in summary_source.itertuples()
+        ],
+    )
     return generated

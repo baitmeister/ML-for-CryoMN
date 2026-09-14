@@ -23,9 +23,9 @@ The current operator contract is [README.md](README.md), with the exact extracti
 
 ## Compatibility and behavior
 
-Frozen Group 9 proposals keep their original worksheet contract and mechanical interpretation. The implementation preserves raw data, observation IDs and archives. Historical rows without definition metadata retain the legacy maximum-force meaning.
+Frozen Group 9 proposal CSV/metadata keep their original bytes. A separate hash-bound addendum now applies the terminal endpoint when the newly staged Group 9 worksheet is validated/ingested. Historical rows without definition metadata retain the legacy maximum-force meaning.
 
-The existing `critical_axial_load_N_per_needle` field is a compatibility key. Under the Group 10 definition it holds nominal terminal force per loaded needle, with total patch force stored separately. The mechanical training view selects one comparable definition; old maxima remain stored outside the new target's cohort. Eligible viability/intact information remains usable. Phase thresholds are unchanged, but fewer comparable mechanical observations can postpone phase progression.
+The existing `critical_axial_load_N_per_needle` field is a compatibility key. Under the Group 9 terminal addendum and Group 10 definition it holds nominal terminal force per loaded needle, with total patch force stored separately. The existing stiffness key holds the terminal-window apparent secant and carries its formula in provenance. The mechanical training view selects one comparable definition for both metrics; old maxima/slopes remain outside the new target's cohort. Eligible viability/intact information remains usable. Phase thresholds are unchanged, but fewer comparable mechanical observations can postpone phase progression.
 
 The final slate is assembled after ordinary candidate generation and scoring. Protected roles, retests and rescues count toward slate/chemistry limits. Residual ordinary-origin quotas and existing similarity/diversity limits remain enforced; conflicts fail before a proposal is written. The recurring reference supersedes the one-time bootstrap anchor for newly activated proposals.
 

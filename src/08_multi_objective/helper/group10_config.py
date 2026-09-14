@@ -1,6 +1,8 @@
 """Forward-only workflow settings. No production model switch is implemented."""
 from copy import deepcopy
 from pathlib import Path
+import hashlib
+import json
 import math
 from collections.abc import Mapping
 import yaml
@@ -11,6 +13,7 @@ ROLES = {'campaign_control', 'screened_hit_mechanics'}
 METADATA_FIELDS = ['preparation_id', 'specimen_id', 'readout_id', 'cell_batch_id',
                    'protocol_id', 'mechanical_test_id', 'mechanical_test_attempted',
                    'mechanical_definition_id', 'raw_file_hash']
+ROUND_ENDPOINT_ADDENDUM = 'mechanical_endpoint_addendum.json'
 
 
 class Group10HardStop(RuntimeError):
@@ -47,6 +50,49 @@ def load_group10_config_for_round(round_number, path=CONFIG_PATH):
                 + str(exc)
             ) from exc
         raise
+
+
+def load_round_mechanical_endpoint(proposal_dir, batch_id):
+    """Load a hash-bound pre-Group-10 endpoint addendum, if one exists."""
+    proposal_dir = Path(proposal_dir)
+    path = proposal_dir / ROUND_ENDPOINT_ADDENDUM
+    if not path.exists():
+        return None
+    try:
+        addendum = json.loads(path.read_text(encoding='utf-8'))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise Group10HardStop(f'ROUND ENDPOINT HARD STOP: invalid {path}: {exc}') from exc
+    blockers = []
+    if addendum.get('schema_version') != 1:
+        blockers.append('schema_version must be 1')
+    if addendum.get('batch_id') != batch_id:
+        blockers.append(f'batch_id must be {batch_id}')
+    if addendum.get('effective_at') != 'validation_and_ingestion':
+        blockers.append('effective_at must be validation_and_ingestion')
+    bound = addendum.get('bound_files')
+    if not isinstance(bound, Mapping) or not bound:
+        blockers.append('bound_files must contain proposal artifact hashes')
+    else:
+        for name, expected in bound.items():
+            source = proposal_dir / str(name)
+            if Path(str(name)).name != str(name) or not source.is_file():
+                blockers.append(f'bound proposal file is missing or unsafe: {name}')
+                continue
+            actual = hashlib.sha256(source.read_bytes()).hexdigest()
+            if actual != expected:
+                blockers.append(f'bound proposal file hash mismatch: {name}')
+    endpoint = addendum.get('mechanical_endpoint')
+    try:
+        current = load_group10_config()['mechanical_endpoint']
+        from .terminal_force import validate_settings
+        validate_settings(endpoint)
+        if endpoint != current:
+            blockers.append('mechanical_endpoint does not match the reviewed Group 10 endpoint')
+    except (KeyError, TypeError, ValueError) as exc:
+        blockers.append('mechanical_endpoint is invalid: ' + str(exc))
+    if blockers:
+        raise Group10HardStop('ROUND ENDPOINT HARD STOP: ' + '; '.join(blockers))
+    return deepcopy(endpoint)
 
 def validate_group10_config(c):
     if not isinstance(c, Mapping):
@@ -207,7 +253,9 @@ def production_observations(obs, target_round_number=None, mechanical_definition
     Explicit proposal round wins. Otherwise retain an upstream selected cohort or
     use the new definition once it is present; historical-only data stay historical.
     """
-    from .terminal_force import DEFINITION, LEGACY_DEFINITION, MODEL_FIELD
+    from .terminal_force import (
+        DEFINITION, LEGACY_DEFINITION, MODEL_FIELD, STIFFNESS_MODEL_FIELD,
+    )
     result = obs
     if 'experimental_role' in result:
         result = result.loc[~result.experimental_role.fillna('').eq('campaign_control')]
@@ -220,7 +268,8 @@ def production_observations(obs, target_round_number=None, mechanical_definition
         selected = DEFINITION if definition.eq(DEFINITION).any() else LEGACY_DEFINITION
     if 'endpoint' in result:
         compatible = definition.eq(DEFINITION) if selected == DEFINITION else definition.isin(['', LEGACY_DEFINITION])
-        result = result.loc[~result.endpoint.eq(MODEL_FIELD) | compatible]
+        mechanical = result.endpoint.isin([MODEL_FIELD, STIFFNESS_MODEL_FIELD])
+        result = result.loc[~mechanical | compatible]
     result = result.copy()
     result.attrs['mechanical_definition_id'] = selected
     return result

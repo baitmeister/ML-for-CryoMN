@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "batch_id": "ROUND_009",
+  "effective_at": "validation_and_ingestion",
+  "reason": "Apply the reviewed terminal compression endpoint to the first mechanical evidence batch while preserving the original frozen proposal artifacts.",
+  "bound_files": {
+    "proposal.csv": "658fd5fd00414e2c373d90e5f05bf4a8897458ebf8c14002ab15818f34f06132",
+    "selection_metadata.json": "f2074a8f100599d62d8c5dc3eee63ae7c356c9216a1293b09806331b8fdb69d4"
+  },
+  "mechanical_endpoint": {
+    "definition_id": "terminal_force_08mm_after_1N_v1",
+    "detector_version": "terminal_force_v1",
+    "protocol_id": "whole_patch_1N_08mm_v1",
+    "supplementary_only": false,
+    "displacement_limit_mm": 0.8,
+    "trigger_force_N": 1.0,
+    "trigger_minimum_samples": 5,
+    "trigger_duration_s": 0.1,
+    "force_unit": "N",
+    "displacement_unit": "mm",
+    "time_unit": "s",
+    "force_sign": 1,
+    "baseline": "instrument_export_no_additional_subtraction",
+    "smoothing": "none",
+    "test_mode": "array",
+    "max_sample_gap_s": 0.0375,
+    "displacement_reversal_tolerance_mm": 0.0001,
+    "nominal_needle_height_mm": 1.6
+  }
+}

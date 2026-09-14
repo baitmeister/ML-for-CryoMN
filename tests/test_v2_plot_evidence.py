@@ -13,7 +13,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'src/08_multi_objective'))
 from helper import plot_data as original
 from helper import campaign_plots as review
-from helper.paths import OBSERVATIONS_PATH, NEXT_ROUND_CANDIDATES_PATH, RESULTS_V2_DIR
+from helper.paths import OBSERVATIONS_PATH, RESULTS_V2_DIR
 from helper.evaluation_metrics import compute_fixed_reference_hypervolume
 
 
@@ -22,7 +22,7 @@ class ProductionEvidenceTests(unittest.TestCase):
     def setUpClass(cls):
         cls.prospective=pd.read_csv(RESULTS_V2_DIR/'reports/prospective/tables/prospective_evaluation_table.csv')
         cls.metrics=pd.read_csv(RESULTS_V2_DIR/'reports/prospective/tables/prospective_metrics.csv')
-        cls.candidates=pd.read_csv(NEXT_ROUND_CANDIDATES_PATH)
+        cls.candidates=pd.read_csv(RESULTS_V2_DIR/'rounds/ROUND_009/proposal/proposal.csv')
         cls.observations=pd.read_csv(OBSERVATIONS_PATH)
 
     def tearDown(self):

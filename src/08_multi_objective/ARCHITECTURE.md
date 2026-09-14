@@ -184,8 +184,10 @@ Production plots use `helper/plot_data.py` for evidence preparation, `helper/cam
 
 Stage 2 applies `group10_selection.apply_group10` to proposals at or after the
 configured activation group and freezes the effective settings with each proposal.
-Group 9 retains its original contract. `group10_config` selects comparable mechanical
-definitions and excludes reference observations from production training.
+Group 9 retains its original proposal CSV and metadata, while a hash-bound endpoint
+addendum applies the reviewed terminal method at validation/ingestion. `group10_config`
+selects comparable mechanical definitions and excludes reference observations from
+production training.
 
 `terminal_force` extracts force at +0.8 mm after the sustained 1 N trigger from
 raw Instron files. Stage 3 dispatches using frozen proposal settings, stores total

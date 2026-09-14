@@ -530,9 +530,9 @@ archived proposal or completed files, and do not edit `formulation_id` or
 | `total_tip_count` | positive number | Optional; blank uses the 100-tip default logic. |
 | `instron_file` | path | Optional Bluehill CSV path for intact patches. |
 | `needles_compressed` | positive integer | Actual loaded count. Group 10 can report total force without it, but needs it for a nominal per-needle model label; legacy imports require it. |
-| `critical_axial_load_N_per_needle` | number, `>= 0` | Group 10: leave blank for automatic terminal-force extraction. Historical contracts allow manual critical-load input. |
-| `critical_axial_load_N_total` | number, `>= 0` | Group 10: leave blank for automatic extraction; any supplied value must reproduce the raw-file terminal result. Legacy totals are divided by the loaded count. |
-| `initial_stiffness_N_per_mm_per_needle` | number, `>= 0` | Historical secondary endpoint; leave blank under the Group 10 terminal-force protocol. |
+| `critical_axial_load_N_per_needle` | number, `>= 0` | Group 9 terminal addendum and Group 10+: may be blank for automatic extraction; any supplied value must reproduce the raw-file terminal result. |
+| `critical_axial_load_N_total` | number, `>= 0` | Group 9 terminal addendum and Group 10+: may be blank for automatic extraction; any supplied value must reproduce the raw-file terminal result. Legacy totals are divided by the loaded count. |
+| `initial_stiffness_N_per_mm_per_needle` | number, `>= 0` | Compatibility field. Under the terminal protocol it stores `(F_terminal-F_trigger)/0.8 mm` per loaded needle and must reproduce from the raw file. |
 | `notes` | free text | Optional handling/test notes. |
 
 ## Instron Files
@@ -543,15 +543,15 @@ Put Bluehill CSV exports under `data/raw/instron/`, preferably grouped by batch:
 data/raw/instron/ROUND_001/v2_50b41683dfd4_rep_001.csv
 ```
 
-For Group 10, paste the raw path into `instron_file` in the frozen worksheet.
+For Group 9 under its hash-bound endpoint addendum and for Group 10+, paste the raw path into `instron_file` in the worksheet.
 Stage 3 automatically extracts the terminal endpoint using frozen settings; leave
-the legacy force/stiffness input columns blank. A lost attempt can be recorded with
+calculated fields blank or enter values that reproduce exactly. A lost attempt can be recorded with
 `mechanical_test_attempted=true` and no invented force. Actual replication comes
 from completed CSV rows, with no advance count setting.
 
 The helper below calculates the **legacy curve maximum** and is only appropriate
-for an earlier frozen contract, including Group 9. Do not use it to populate a
-Group 10 terminal-force worksheet:
+when explicitly reproducing an earlier historical contract. Do not use it for
+Group 9+ terminal-method evidence:
 
 ```bash
 python3 src/08_multi_objective/helper/instron.py \
@@ -559,7 +559,8 @@ python3 src/08_multi_objective/helper/instron.py \
   --formulation-id v2_50b41683dfd4 \
   --batch-id ROUND_001 \
   --replicate-id rep_001 \
-  --needles-compressed 100
+  --needles-compressed 100 \
+  --allow-legacy-maximum
 ```
 
 The normal output of `instron.py` is an updated

@@ -45,6 +45,7 @@ from helper.group10_config import (
     Group10HardStop,
     assert_frozen_group10_protocol,
     load_group10_config_for_round,
+    load_round_mechanical_endpoint,
 )
 from helper.mechanics_execution import (
     freeze_mechanics_execution_manifest,
@@ -102,6 +103,17 @@ def parse_args() -> argparse.Namespace:
         help="Skip post-ingestion round reports (advanced/debug use only).",
     )
     parser.add_argument("--skip-generate", action="store_true", help="Skip Stage 02 candidate generation.")
+    parser.add_argument(
+        '--validate-only', action='store_true',
+        help=(
+            'Validate and parse the completed worksheet in memory, then exit before '
+            'archival, canonical table writes, reports, candidate generation, or round advancement.'
+        ),
+    )
+    parser.add_argument(
+        '--validation-output-dir', type=Path, default=None,
+        help='Optional noncanonical directory for mechanical validation-preview plots; requires --validate-only.',
+    )
     parser.add_argument(
         "--supersede-unstarted-proposal",
         action="store_true",
@@ -251,6 +263,8 @@ def _resolve_viability_noise(optimization_config: dict, cli_viability_noise: flo
 
 def main() -> None:
     args = parse_args()
+    if args.validation_output_dir is not None and not args.validate_only:
+        raise SystemExit('--validation-output-dir requires --validate-only')
     select_script = V2_ROOT / "02_select_candidates" / "select_candidates.py"
     registry = load_registry()
     optimization_config = load_optimization_config()
@@ -267,6 +281,9 @@ def main() -> None:
         proposal_metadata = json.loads(
             round_paths.proposal_metadata.read_text(encoding="utf-8")
         )
+    round_mechanical_endpoint = load_round_mechanical_endpoint(
+        round_paths.proposal_dir, batch_id
+    )
     round_match = re.fullmatch(r'ROUND_(\d+)', batch_id)
     round_number = int(round_match.group(1)) if round_match else None
     if round_number is not None and round_number >= 10:
@@ -278,6 +295,12 @@ def main() -> None:
 
     round_progressed = _round_has_new_results(args.candidates_csv)
     if not round_progressed:
+        if args.validate_only:
+            print(
+                f'No new wet-lab results found in {Path(args.candidates_csv).resolve()}. '
+                'Validation-only complete: no files were changed and no candidates were generated.'
+            )
+            return
         print(
             f"No new wet-lab results found in {Path(args.candidates_csv).resolve()}; "
             "round has not progressed. Skipping completed-sheet archival, reports, and "
@@ -329,10 +352,34 @@ def main() -> None:
             viability_noise=_resolve_viability_noise(optimization_config, args.viability_noise),
             observation_source_file=portable_source_path(round_paths.completed_csv),
             proposal_metadata=proposal_metadata,
+            round_mechanical_endpoint=round_mechanical_endpoint,
         )
 
         from helper.mechanics_execution import update_endpoint_workload
         mechanics_audit = update_endpoint_workload(mechanics_audit, observations, batch_id)
+        if args.validate_only:
+            current = observations.loc[observations.batch_id.astype(str).eq(batch_id)]
+            counts = current.groupby('endpoint').size().to_dict()
+            print('Validation-only prospective observation counts:')
+            for endpoint in sorted(counts):
+                print(f'  {endpoint}: {counts[endpoint]}')
+            mechanical = current.loc[current.endpoint.eq('critical_axial_load_N_per_needle')]
+            if not mechanical.empty:
+                print('Mechanical replicate counts by formulation:')
+                for formulation_id, group in mechanical.groupby('formulation_id', sort=True):
+                    print(f'  {formulation_id}: {group.replicate_id.astype(str).nunique()}')
+            if args.validation_output_dir is not None:
+                from helper.plot_reporting import write_mechanical
+                paths = write_mechanical(
+                    observations, current_candidates, args.validation_output_dir,
+                    batch_id=batch_id, context=f'Validation preview for {batch_id}',
+                )
+                print(
+                    f'Generated {len(paths)} noncanonical mechanical validation artifact(s): '
+                    f'{args.validation_output_dir.resolve()}'
+                )
+            print('Validation-only complete: no canonical files were changed and the round was not advanced.')
+            return
         completed_path = archive_completed(
             batch_id,
             args.candidates_csv,

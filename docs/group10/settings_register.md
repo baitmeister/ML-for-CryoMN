@@ -4,9 +4,10 @@ Updated 2026-09-14. Missing required Group 10 workflow or protocol settings now 
 
 | Setting | Current value/source | Consequence |
 |---|---|---|
-| Earliest workflow/endpoint activation | Group 10, user | Frozen per proposal; no retroactive Group 9 edit |
+| Earliest endpoint evidence | Group 9 validation/ingestion, user | Hash-bound addendum preserves the original proposal CSV/metadata while applying the terminal method to new Group 9 results |
 | GP methodology / adaptive noise switch | Deferred, user | Review audit and decide before first full-mechanics proposal; no automatic switch |
-| Mechanical endpoint revision | Active in Group 10 configuration, user | F at +0.8 mm after sustained 1 N |
+| Mechanical endpoint revision | Group 9 addendum plus active Group 10 configuration, user | F at +0.8 mm after sustained 1 N |
+| Apparent secant stiffness | `(F_terminal-F_trigger)/0.8 mm`, user | Stored in the compatibility stiffness field with terminal-method provenance |
 | Endpoint definition | `terminal_force_08mm_after_1N_v1` | Different definitions cannot share a mechanical training cohort |
 | Mechanical capacity | Four formulations, user | Replicate runs counted separately |
 | Reference | 2.5% v/v DMSO + 100 mM sucrose, user | One screen slot; mechanics conditional on actual intact |

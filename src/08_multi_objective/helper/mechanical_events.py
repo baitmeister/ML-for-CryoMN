@@ -92,14 +92,39 @@ def export_analysis(frame, force_column, displacement_column, config, needles_co
     result['force_column']=force_column
     result['displacement_column']=displacement_column
     (output/'mechanical_analysis.json').write_text(json.dumps(result,indent=2,allow_nan=False)+'\n')
-    fig,ax=plt.subplots(); ax.plot(displacement,force)
-    contact=result.get('contact_displacement_mm')
-    if contact is not None:
-        ax.axvline(contact,color='grey'); ax.axvline(contact+config['displacement_limit_mm'],color='grey',linestyle='--')
-        if result['event_displacement_mm'] is not None: ax.axvline(contact+result['event_displacement_mm'],color='red')
-        if result.get('terminal_displacement_mm') is not None:
-            ax.scatter([result['terminal_displacement_mm']],[result['endpoint_N_total']],color='red',label='F at +0.8 mm')
-            ax.legend()
-    ax.set(xlabel='Recorded displacement (mm)',ylabel='Recorded force (N)',title=result['status'])
-    fig.savefig(output/'mechanical_analysis.png',dpi=160,bbox_inches='tight'); plt.close(fig)
+    from .plot_reporting import write_plot
+    if config.get('definition_id') == DEFINITION and result.get('status') == 'complete':
+        import pandas as pd
+        end = int(result['terminal_bracket_indices'][1])
+        indexes = pd.Series(range(len(force)))
+        table = pd.DataFrame({
+            'sample_index': indexes,
+            'time_s': arrays[2],
+            'displacement_mm': displacement,
+            'force_N': force,
+            'analysis_window': indexes.between(int(result['trigger_index']), end),
+            'source_file_hash': result['source_file_hash'],
+        })
+        from .campaign_plots import mechanical_trace_figure
+        fig = mechanical_trace_figure(
+            table, result, Path(source).stem, 'standalone review'
+        )
+    else:
+        import pandas as pd
+        from .campaign_plots import style, finish_axis
+        style()
+        table = pd.DataFrame({'displacement_mm': displacement, 'force_N': force,
+                              'source_file_hash': result['source_file_hash']})
+        fig,ax=plt.subplots(figsize=(11.5,7.5)); ax.plot(displacement,force)
+        contact=result.get('contact_displacement_mm')
+        if contact is not None:
+            ax.axvline(contact,color='grey'); ax.axvline(contact+config['displacement_limit_mm'],color='grey',linestyle='--')
+            if result['event_displacement_mm'] is not None: ax.axvline(contact+result['event_displacement_mm'],color='red')
+        ax.set(xlabel='Recorded displacement (mm)',ylabel='Recorded force (N)',title=result['status'])
+        finish_axis(ax)
+    write_plot(
+        fig, table, output, 'mechanical_analysis',
+        context=f"Standalone review; {result['definition_id']}",
+        sources=[{'path': result['source_file'], 'sha256': result['source_file_hash']}],
+    )
     return result

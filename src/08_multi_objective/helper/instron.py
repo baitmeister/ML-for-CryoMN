@@ -1,14 +1,17 @@
 """Legacy maximum-force Instron/Bluehill parsing and round-sheet update helper.
 
-For Group 10 terminal-force worksheets, enter instron_file and the actual loaded
-count in the CSV and use the normal round update. Do not prefill them with this
-legacy maximum-force helper. Historical frozen contracts retain this behavior.
+For Group 9+ terminal-force worksheets, enter instron_file and the actual loaded
+count in the CSV and use the normal round validation/update. This module retains
+the Bluehill reader and an explicit legacy-only calculation for historical frozen
+contracts; it is not an active-round endpoint calculator.
 """
 
 from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
+import hashlib
+from io import BytesIO
 from pathlib import Path
 import sys
 from typing import Iterable
@@ -63,23 +66,26 @@ def _find_column(columns: Iterable[str], patterns: Iterable[str]) -> str | None:
     return None
 
 
-def _read_bluehill_csv(path: str | Path) -> pd.DataFrame:
-    """Read Bluehill-like CSVs, allowing short metadata preambles."""
+def _read_bluehill_csv(path: str | Path, *, expected_sha256: str | None = None) -> pd.DataFrame:
+    """Read one byte snapshot, optionally verifying its recorded source hash."""
     path = Path(path)
+    content = path.read_bytes()
+    if expected_sha256 is not None and hashlib.sha256(content).hexdigest() != expected_sha256:
+        raise ValueError(f'Raw source hash mismatch: {path}; source changed since analysis')
     try:
-        df = pd.read_csv(path)
+        df = pd.read_csv(BytesIO(content))
         if _find_column(df.columns, FORCE_PATTERNS) and _find_column(df.columns, DISPLACEMENT_PATTERNS):
             return df
     except pd.errors.ParserError:
         pass
 
-    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    lines = content.decode('utf-8', errors='replace').splitlines()
     for index, line in enumerate(lines[:100]):
         clean = line.lower()
         if any(pattern in clean for pattern in FORCE_PATTERNS) and any(
             pattern in clean for pattern in DISPLACEMENT_PATTERNS
         ):
-            return pd.read_csv(path, skiprows=index)
+            return pd.read_csv(BytesIO(content), skiprows=index)
     raise ValueError(f"Could not find force and displacement columns in {path}")
 
 
@@ -372,8 +378,10 @@ def append_observations(
     output = Path(output_path)
     if output.exists() and output.stat().st_size > 0:
         existing = pd.read_csv(output)
+        collisions = sorted(set(existing.observation_id.astype(str)) & set(new_rows.observation_id.astype(str)))
+        if collisions:
+            raise ValueError(f'Observation IDs already exist: {collisions}')
         combined = pd.concat([existing, new_rows], ignore_index=True)
-        combined = combined.drop_duplicates("observation_id", keep="last")
     else:
         combined = new_rows
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -406,11 +414,21 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--force-column", default=None, help="Optional force/load column override.")
     parser.add_argument("--displacement-column", default=None, help="Optional displacement/extension column override.")
+    parser.add_argument(
+        '--allow-legacy-maximum', action='store_true',
+        help='Explicitly authorize the historical whole-curve maximum and early-slope calculation.',
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
+    if not args.allow_legacy_maximum:
+        raise SystemExit(
+            'This is a legacy maximum-force helper. For Group 9+ enter instron_file and '
+            'needles_compressed in the worksheet and use run_round.py --validate-only or the normal round update. '
+            'Use --allow-legacy-maximum only to reproduce a historical frozen contract.'
+        )
     metrics = parse_instron_csv(
         args.csv,
         needles_compressed=args.needles_compressed,

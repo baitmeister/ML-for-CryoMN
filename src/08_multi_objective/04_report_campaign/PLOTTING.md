@@ -11,6 +11,8 @@ All new exports are transparent-background PNGs at 300 dpi, intended for light b
 | `diagnostics_1.png` | How do cross-validated models perform? | All-data viability/mechanics parity and intact classifier evaluations; the R² trend separately uses cumulative paired cohorts. |
 | `diagnostics_2.png` | How do paired models and observed objective-space progress compare? | Paired-cohort parity; existing normalized hypervolume and IGD relative to the final observed frontier in the report. These are retrospective diagnostics, not proposal-time benchmarks or a known optimum. |
 | `publication_summary.png` (E, optional) | What compact figure summarizes current campaign evidence? | Actual feasible pairs, formal prospective parity and tested batch outcomes. |
+| `mechanical_trace_formulation_*.png` | Where were the sustained trigger, terminal point and apparent secant extracted on each raw curve? | Recorded trajectory with the fixed trigger-to-+0.8 mm window and source hash. |
+| `mechanical_summary.png` | How do terminal force and apparent secant stiffness compare across tested formulations? | Every replicate, means, sample SD only for `n>=2`, and explicit lost-replicate annotations. |
 
 The diagnostic intact classifier is distinct from the empirical combination probability that drives selection. Cross-validation is distinct from prospective evaluation. Negative R² values and extreme finite errors/interval widths remain visible. Missing mechanical evidence receives an explicit unavailable panel, not a fabricated frontier.
 
@@ -47,3 +49,9 @@ Backfill uses archived prospective aggregates and metrics, frozen proposal field
 The corrected fixed-reference hypervolume helper retains its API: absent finite paired evidence returns `not_estimable` and a missing value; valid measurements contributing no area beyond the reference return `estimated` and zero. Its positive-area calculation is unchanged. The separate legacy normalized HV/IGD diagnostic calculation is preserved.
 
 No optimizer policy, canonical observations, frozen proposals, or compatibility selection bridges are changed by this plotting integration.
+
+Mechanical figures use the same selected publication theme and bundle contract:
+transparent 300 dpi PNG, source CSV and metadata JSON. Generate these during
+completed-round reporting after ingestion. Pre-ingestion staging uses
+`run_round.py --validate-only` without an output directory and does not generate
+mechanical graph bundles.

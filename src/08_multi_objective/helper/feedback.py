@@ -8,7 +8,11 @@ import re
 
 import pandas as pd
 
-from .endpoints import intact_patch_formation_pass, parse_bool
+from .endpoints import (
+    aggregate_intact_patch_replicates,
+    intact_patch_formation_pass,
+    parse_bool,
+)
 from .instron import parse_instron_csv
 from .paths import portable_source_path
 from .penalties import count_active_ingredients
@@ -177,6 +181,7 @@ def ingest_feedback(
     viability_noise: float = 5.0,
     observation_source_file: str | Path | None = None,
     proposal_metadata: dict | None = None,
+    round_mechanical_endpoint: dict | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Append one wet-lab feedback CSV into the v2 tables."""
     feedback_path = Path(feedback_path)
@@ -189,17 +194,50 @@ def ingest_feedback(
     candidates = load_candidate_lookup(candidate_files, registry)
     new_observations: list[dict] = []
     auto_replicate_counts: dict[str, int] = {}
+    allocated_replicate_ids: dict[str, set[str]] = {}
+    reserved_replicate_ids: dict[str, set[str]] = {}
+    resolved_rows: list[tuple[int, pd.Series, pd.Series, str]] = []
+
+    for index, row in feedback.iterrows():
+        candidate = _resolve_candidate(row, candidates)
+        formulation_id = str(candidate['formulation_id'])
+        resolved_rows.append((int(index) + 1, row, candidate, formulation_id))
+        if not _blank(row.get('replicate_id')):
+            reserved_replicate_ids.setdefault(formulation_id, set()).add(
+                _safe_id(row.get('replicate_id'), 'rep_001')
+            )
 
     metadata_by_prefix = {}
     terminal_source_hashes = set()
-    for index, row in feedback.iterrows():
-        row_number = int(index) + 1
-        candidate = _resolve_candidate(row, candidates)
+    intact_measurements: dict[str, list[bool]] = {}
+    preparation_failed_formulations: set[str] = set()
+    mechanical_rows: dict[str, int] = {}
+
+    frozen_endpoint = round_mechanical_endpoint or (
+        (proposal_metadata or {}).get('group10', {}).get('effective_config', {}).get('mechanical_endpoint', {})
+    )
+    from .terminal_force import DEFINITION as TERMINAL_DEFINITION
+    terminal_policy = frozen_endpoint.get('definition_id') == TERMINAL_DEFINITION
+    if terminal_policy:
+        from .terminal_force import validate_settings
+        validate_settings(frozen_endpoint)
+        batch_match = re.fullmatch(r'ROUND_(\d+)', batch_id)
+        if (batch_match is None or int(batch_match.group(1)) < 10) and round_mechanical_endpoint is None:
+            raise ValueError('Terminal endpoint policy cannot reinterpret a pre-Group-10 worksheet without a validated round addendum')
+
+    for row_number, row, candidate, formulation_id in resolved_rows:
         formulations = _upsert_formulation(formulations, candidate, registry, source=f"wetlab_feedback:{batch_id}")
-        formulation_id = str(candidate["formulation_id"])
         if _blank(row.get("replicate_id")):
-            auto_replicate_counts[formulation_id] = auto_replicate_counts.get(formulation_id, 0) + 1
-            replicate_id = f"rep_{auto_replicate_counts[formulation_id]:03d}"
+            reserved = reserved_replicate_ids.setdefault(formulation_id, set())
+            allocated = allocated_replicate_ids.setdefault(formulation_id, set())
+            counter = auto_replicate_counts.get(formulation_id, 0)
+            while True:
+                counter += 1
+                replicate_id = f'rep_{counter:03d}'
+                if replicate_id not in reserved and replicate_id not in allocated:
+                    break
+            auto_replicate_counts[formulation_id] = counter
+            allocated.add(replicate_id)
         else:
             replicate_id = _safe_id(row.get("replicate_id"), "rep_001")
         observation_prefix = f"obs_{_safe_id(batch_id, 'batch')}_{_safe_id(formulation_id, 'formulation')}_{replicate_id}"
@@ -210,18 +248,6 @@ def ingest_feedback(
                 "experimental_role": str(candidate.get("experimental_role", "ordinary")),
                 **{key: "" if _blank(row.get(key)) else row.get(key) for key in METADATA_FIELDS},
             }
-
-
-        frozen_endpoint = (proposal_metadata or {}).get("group10", {}).get("effective_config", {}).get("mechanical_endpoint", {})
-        from .terminal_force import DEFINITION as TERMINAL_DEFINITION
-        terminal_policy = frozen_endpoint.get("definition_id") == TERMINAL_DEFINITION
-        if terminal_policy:
-            from .terminal_force import validate_settings
-            validate_settings(frozen_endpoint)
-            batch_match = re.fullmatch(r"ROUND_(\d+)", batch_id)
-            if batch_match is None or int(batch_match.group(1)) < 10:
-                raise ValueError("Terminal endpoint policy cannot reinterpret a pre-Group-10 worksheet")
-
         if not terminal_policy and not _blank(row.get("supplementary_analysis_file")):
             import json, hashlib, math
             analysis = json.loads(Path(str(row["supplementary_analysis_file"])).read_text())
@@ -314,6 +340,8 @@ def ingest_feedback(
             any(value is False for value in preparation_values.values())
             or bool(preparation_reason)
         )
+        if preparation_failed:
+            preparation_failed_formulations.add(formulation_id)
 
         viability = _safe_float(row.get("viability_percent"))
         _require_range(viability, "viability_percent", row_number, minimum=0.0, maximum=100.0)
@@ -353,6 +381,7 @@ def ingest_feedback(
             if intact_tip_count is not None and total_tip_count is not None and intact_tip_count > total_tip_count:
                 raise ValueError(f"Row {row_number} intact_tip_count cannot exceed total_tip_count.")
             intact = intact_patch_formation_pass(row)
+            intact_measurements.setdefault(formulation_id, []).append(bool(intact))
             new_observations.append(
                 _observation_row(
                     f"{observation_prefix}_intact_patch",
@@ -379,15 +408,8 @@ def ingest_feedback(
                 "initial_stiffness_N_per_mm_per_needle",
             ]
         )
-        if has_mechanical and preparation_failed:
-            raise ValueError(
-                f"Row {row_number} supplies mechanical data for preparation-failed formulation "
-                f"{formulation_id}."
-            )
-        if has_mechanical and intact is not True:
-            raise ValueError(
-                f"Row {row_number} supplies mechanical data without a measured intact pass for formulation {formulation_id}."
-            )
+        if has_mechanical:
+            mechanical_rows.setdefault(formulation_id, row_number)
 
         needles = _safe_float(row.get("needles_compressed"))
         _require_range(needles, "needles_compressed", row_number, minimum=1.0)
@@ -398,7 +420,10 @@ def ingest_feedback(
         parsed_instron_file = False
         if terminal_policy and has_mechanical:
             import json, hashlib
-            from .terminal_force import analyze_file, MODEL_FIELD
+            from .terminal_force import (
+                analyze_file, MODEL_FIELD, STIFFNESS_DEFINITION,
+                STIFFNESS_MODEL_FIELD,
+            )
             if needles is not None and int(needles) != needles:
                 raise ValueError(f"Row {row_number} loaded needle count must be an integer")
             if _blank(instron_file):
@@ -407,22 +432,24 @@ def ingest_feedback(
             if analysis['source_file_hash'] in terminal_source_hashes:
                 raise ValueError('A raw compression file cannot represent multiple specimens or formulations')
             terminal_source_hashes.add(analysis['source_file_hash'])
-            if not _blank(row.get('initial_stiffness_N_per_mm_per_needle')):
-                raise ValueError('Leave the legacy stiffness column blank under the terminal-force protocol')
             if not _blank(row.get("supplementary_analysis_file")):
                 supplied = json.loads(Path(str(row['supplementary_analysis_file'])).read_text())
                 for key in ('settings', 'source_file_hash', 'loaded_needle_count', 'status', 'endpoint_N_total', 'endpoint_N_per_needle'):
                     if supplied.get(key) != analysis.get(key):
                         raise ValueError('Terminal analysis does not reproduce from source: ' + key)
-            for field, expected in [('critical_axial_load_N_per_needle', analysis['endpoint_N_per_needle']),
-                                    ('critical_axial_load_N_total', analysis['endpoint_N_total'])]:
+            for field, expected in [
+                ('critical_axial_load_N_per_needle', analysis['endpoint_N_per_needle']),
+                ('critical_axial_load_N_total', analysis['endpoint_N_total']),
+                ('initial_stiffness_N_per_mm_per_needle', analysis['apparent_secant_stiffness_N_per_mm_per_needle']),
+            ]:
                 if not _blank(row.get(field)):
                     supplied = _safe_float(row[field])
                     if expected is None or supplied is None or abs(supplied-expected) > 1e-6:
-                        raise ValueError(f"Row {row_number} {field} conflicts with frozen terminal endpoint; leave it blank for automatic extraction")
+                        raise ValueError(f'Row {row_number} {field} conflicts with the calculated terminal-method value')
+            terminal_notes = '; '.join(value for value in [analysis['status'], notes] if value)
             record = _observation_row(f'{observation_prefix}_terminal_status', formulation_id, batch_id, replicate_id,
                 'terminal_force_08mm_status', 1.0 if analysis['status']=='complete' else 0.0,
-                'status_flag', 'instron_5942_terminal_v1', str(instron_file), notes=analysis['status'])
+                'status_flag', 'instron_5942_terminal_v1', str(instron_file), notes=terminal_notes)
             record.update(mechanical_definition_id=TERMINAL_DEFINITION, detector_version=analysis['detector_version'],
                           protocol_id=frozen_endpoint['protocol_id'], raw_file_hash=analysis['source_file_hash'],
                           analysis_provenance=json.dumps(analysis, sort_keys=True, allow_nan=False))
@@ -433,6 +460,13 @@ def ingest_feedback(
                 if analysis['endpoint_N_per_needle'] is not None:
                     new_observations.append({**record, 'observation_id':f'{observation_prefix}_terminal_per_needle',
                         'endpoint':MODEL_FIELD, 'value':analysis['endpoint_N_per_needle'], 'unit':'N_per_needle'})
+                if analysis['apparent_secant_stiffness_N_per_mm_per_needle'] is not None:
+                    new_observations.append({**record,
+                        'observation_id':f'{observation_prefix}_apparent_secant_stiffness',
+                        'endpoint':STIFFNESS_MODEL_FIELD,
+                        'value':analysis['apparent_secant_stiffness_N_per_mm_per_needle'],
+                        'unit':'N_per_mm_per_needle',
+                        'metric_definition_id':STIFFNESS_DEFINITION})
             parsed_instron_file = True
         elif not _blank(instron_file):
             if needles is None:
@@ -522,6 +556,47 @@ def ingest_feedback(
                     )
                 )
 
+    for formulation_id, row_number in mechanical_rows.items():
+        if formulation_id in preparation_failed_formulations:
+            raise ValueError(
+                f'Row {row_number} supplies mechanical data for preparation-failed formulation {formulation_id}.'
+            )
+        intact = aggregate_intact_patch_replicates(intact_measurements.get(formulation_id, []))
+        if intact != 1.0:
+            raise ValueError(
+                f'Row {row_number} supplies mechanical data without a formulation-level all-pass intact result for {formulation_id}.'
+            )
+
+    new_observations_frame = pd.DataFrame(new_observations)
+    if not new_observations_frame.empty:
+        identity = ['formulation_id', 'batch_id', 'endpoint', 'replicate_id']
+        duplicate_identity = new_observations_frame.duplicated(identity, keep=False)
+        if duplicate_identity.any():
+            keys = new_observations_frame.loc[duplicate_identity, identity].drop_duplicates().to_dict('records')
+            raise ValueError(f'Duplicate observation keys in feedback: {keys}')
+        duplicate_ids = new_observations_frame.observation_id.duplicated(keep=False)
+        if duplicate_ids.any():
+            ids = sorted(new_observations_frame.loc[duplicate_ids, 'observation_id'].astype(str).unique())
+            raise ValueError(f'Duplicate observation_id values in feedback: {ids}')
+        if not observations.empty and 'observation_id' in observations:
+            collisions = sorted(
+                set(new_observations_frame.observation_id.astype(str))
+                & set(observations.observation_id.astype(str))
+            )
+            if collisions:
+                raise ValueError(f'Feedback observation_id values already exist: {collisions}')
+        if not observations.empty:
+            existing_keys = pd.MultiIndex.from_frame(
+                observations.reindex(columns=identity).fillna('').astype(str)
+            )
+            incoming_keys = pd.MultiIndex.from_frame(
+                new_observations_frame[identity].fillna('').astype(str)
+            )
+            collisions = incoming_keys.isin(existing_keys)
+            if collisions.any():
+                keys = new_observations_frame.loc[collisions, identity].to_dict('records')
+                raise ValueError(f'Feedback observation keys already exist: {keys}')
+
     for column in OBSERVATION_COLUMNS:
         if column not in observations.columns:
             observations[column] = ""
@@ -542,6 +617,5 @@ def ingest_feedback(
     for column in OBSERVATION_COLUMNS:
         if column not in combined_observations.columns:
             combined_observations[column] = ""
-    combined_observations = combined_observations.drop_duplicates("observation_id", keep="last")
     extras = [c for c in combined_observations if c not in OBSERVATION_COLUMNS]
     return formulations, combined_observations[OBSERVATION_COLUMNS + extras]

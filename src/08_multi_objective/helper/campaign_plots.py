@@ -308,6 +308,102 @@ def save_png(fig, path):
     return path
 
 
+def mechanical_trace_figure(table, analysis, formulation_number, replicate_id):
+    """Render one terminal-method trace with its trigger, endpoint and secant."""
+    style()
+    fig = plt.figure(figsize=(11.5, 7.5))
+    gs = fig.add_gridspec(2, 1, height_ratios=[.9, 5], left=.10,
+                          right=.96, top=.88, bottom=.14, hspace=.12)
+    head, ax = fig.add_subplot(gs[0]), fig.add_subplot(gs[1])
+    ax.plot(table.displacement_mm, table.force_N, color=GRAY, lw=.8,
+            alpha=.55, label='Recorded trajectory')
+    window = table.loc[table.analysis_window]
+    ax.plot(window.displacement_mm, window.force_N, color=BLUE, lw=1.8,
+            label='Trigger-to-terminal window')
+    x0 = analysis['contact_displacement_mm']
+    y0 = analysis['trigger_force_N']
+    x1 = analysis['terminal_displacement_mm']
+    y1 = analysis['endpoint_N_total']
+    ax.scatter([x0], [y0], color=GREEN, marker='o', s=48, zorder=4)
+    ax.scatter([x1], [y1], color=RED, marker='s', s=48, zorder=4)
+    ax.plot([x0, x1], [y0, y1], color=RED, ls='--', lw=1.3,
+            label='Apparent secant')
+    ax.axvline(x0, color=GREEN, lw=.8, ls=':')
+    ax.axvline(x1, color=RED, lw=.8, ls=':')
+    ax.set(xlabel='Recorded displacement (mm)', ylabel='Recorded force (N)')
+    finish_axis(ax)
+    handles = [
+        line_handle('Recorded trajectory', GRAY, '', '-'),
+        line_handle('Trigger-to-terminal window', BLUE, '', '-'),
+        line_handle('Sustained 1 N origin', GREEN, 'o', 'None'),
+        line_handle('Force at +0.8 mm', RED, 's', 'None'),
+        line_handle('Apparent secant', RED, '', '--'),
+    ]
+    header(head, f'Formulation {formulation_number}, {replicate_id}', handles=handles)
+    fig.suptitle('Mechanical trace | terminal compression method', x=.10,
+                 ha='left', y=.98, fontsize=15)
+    fig.text(.10, .065,
+             f"Terminal force {y1:.3f} N total | apparent secant stiffness "
+             f"{analysis['apparent_secant_stiffness_N_per_mm_total']:.3f} N/mm total",
+             fontsize=9)
+    fig.text(.10, .037,
+             'Secant = (terminal force − trigger-origin force) / 0.8 mm. '
+             'Markers show interpolated protocol positions.', fontsize=9, color=GRAY)
+    return fig
+
+
+def mechanical_summary_figure(table, context='Completed round'):
+    """Show individual replicate evidence and formulation summaries."""
+    style()
+    fig = plt.figure(figsize=(12, 8.5))
+    gs = fig.add_gridspec(2, 2, height_ratios=[.8, 5], left=.09,
+                          right=.97, top=.88, bottom=.15, hspace=.12, wspace=.28)
+    heads = [fig.add_subplot(gs[0, 0]), fig.add_subplot(gs[0, 1])]
+    axes = [fig.add_subplot(gs[1, 0]), fig.add_subplot(gs[1, 1])]
+    panels = [
+        ('terminal_force_N_per_needle', 'Terminal force', 'N per loaded needle', BLUE),
+        ('apparent_secant_stiffness_N_per_mm_per_needle', 'Apparent secant stiffness',
+         'N/mm per loaded needle', RED),
+    ]
+    positions = {value: index for index, value in enumerate(table.formulation_number.unique(), 1)}
+    for head, ax, (column, title, ylabel, color) in zip(heads, axes, panels):
+        for formulation, group in table.groupby('formulation_number', sort=False):
+            x = positions[formulation]
+            values = pd.to_numeric(group[column], errors='coerce').dropna().to_numpy()
+            if not len(values):
+                ax.annotate('per-needle unavailable', (x, .5),
+                            xycoords=('data', 'axes fraction'), ha='center',
+                            fontsize=8, color=GRAY, rotation=90)
+                continue
+            offsets = np.linspace(-.07, .07, len(values)) if len(values) > 1 else np.array([0.])
+            ax.scatter(x + offsets, values, color=color, s=42, alpha=.75, zorder=3)
+            mean = float(np.mean(values))
+            if len(values) >= 2:
+                ax.scatter([x], [mean], facecolors='white', edgecolors=color,
+                           marker='D', s=58, linewidth=1.4, zorder=4)
+                ax.errorbar([x], [mean], yerr=[float(np.std(values, ddof=1))],
+                            fmt='none', ecolor=color, capsize=4, lw=1.3, zorder=2)
+            ax.annotate(f'n={len(values)}', (x, max(values)), xytext=(0, 8),
+                        textcoords='offset points', ha='center', fontsize=8, color=GRAY)
+            if bool(group.replicate_lost.any()):
+                ax.annotate('replicate lost', (x, min(values)), xytext=(0, -17),
+                            textcoords='offset points', ha='center', fontsize=7.5, color=GRAY)
+        ax.set_xticks(list(positions.values()), [str(value) for value in positions])
+        ax.set(xlabel='Formulation number', ylabel=ylabel)
+        finish_axis(ax)
+        header(head, title, handles=[
+            line_handle('Replicate', color, 'o', 'None'),
+            line_handle('Mean; bars = sample SD when n≥2', color, 'D', 'None'),
+        ])
+    fig.suptitle('Mechanical results | terminal compression method', x=.09,
+                 ha='left', y=.98, fontsize=15)
+    fig.text(.09, .07, context, fontsize=9)
+    fig.text(.09, .04,
+             'No error bar is drawn for n=1. Missing specimens are documented and are not imputed.',
+             fontsize=9, color=GRAY)
+    return fig
+
+
 def pareto_figure(feasible, excluded, candidates):
     """Real feasible evidence defines the frontier; predictions never do."""
     style()

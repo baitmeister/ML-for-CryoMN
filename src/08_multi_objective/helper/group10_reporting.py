@@ -47,7 +47,10 @@ def additional_reports(observations, prospective_table, results_root, output_dir
             details.append({'formulation_id':row.formulation_id,'batch_id':row.batch_id,'replicate_id':row.replicate_id,
                 'experimental_role':row.experimental_role, 'mechanical_definition_id':analysis['definition_id'],
                 **{k:analysis.get(k) for k in ('status','reason','endpoint_N_total','endpoint_N_per_needle',
-                    'loaded_needle_count','trigger_time_s','loading_duration_s','source_file','source_file_hash')}})
+                    'apparent_secant_stiffness_N_per_mm_total',
+                    'apparent_secant_stiffness_N_per_mm_per_needle',
+                    'stiffness_definition_id','stiffness_formula','stiffness_qc','loaded_needle_count',
+                    'trigger_time_s','loading_duration_s','source_file','source_file_hash')}})
         pd.DataFrame(details).to_csv(out/'terminal_force_measurements.csv',index=False)
     cohorts=[]
     if not prospective_table.empty:

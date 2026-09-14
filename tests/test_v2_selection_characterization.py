@@ -24,8 +24,10 @@ PROPOSAL = (
     PROJECT_ROOT
     / "results"
     / "multi_objective_v2"
-    / "next_round"
-    / "next_round_candidates.csv"
+    / "rounds"
+    / "ROUND_009"
+    / "proposal"
+    / "proposal.csv"
 )
 
 

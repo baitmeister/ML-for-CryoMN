@@ -97,10 +97,10 @@ else:
 
 if __package__ in (None, ""):
     from helper.evaluation_plots import _artifact_path, _format_metric
-    from helper.plot_reporting import write_decision, write_pareto, write_diagnostics, prepare_diagnostics
+    from helper.plot_reporting import write_decision, write_pareto, write_diagnostics, write_mechanical, prepare_diagnostics
 else:
     from .evaluation_plots import _artifact_path, _format_metric
-    from .plot_reporting import write_decision, write_pareto, write_diagnostics, prepare_diagnostics
+    from .plot_reporting import write_decision, write_pareto, write_diagnostics, write_mechanical, prepare_diagnostics
 
 PAGE_BG = "#f7f2e8"
 AX_BG = "#fffdf8"
@@ -562,6 +562,8 @@ def generate_completed_round_artifacts(formulations, observations, completed_can
                                       candidate_heading=f"{batch_id} completed-round candidates:"),
         _write_model_evaluation_table(frames,tables_dir)] if p is not None]
     generated+=write_pareto(formulations,observations,pd.DataFrame(),plots_dir,context=f'State after {batch_id}')
+    generated+=write_mechanical(observations,completed_candidates,plots_dir,batch_id=batch_id,
+                                context=f'State after {batch_id}')
     generated+=write_diagnostics(prepare_diagnostics(formulations,observations,frames),plots_dir,context=f'State after {batch_id}')
     generated.append(_write_visualization_summary(formulations,observations,completed_candidates,generated,
                      reports_dir,review_label=f'state_after_ingest_{batch_id}',base_name='report_summary'))
@@ -631,5 +633,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
 

@@ -20,6 +20,11 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
 Optional controls:
 
 ```bash
+# Parse and validate results without ingesting or advancing the round
+python3 src/08_multi_objective/03_run_round/run_round.py \
+  results/multi_objective_v2/next_round/next_round_candidates.csv \
+  --validate-only
+
 # Stop after validation, ingestion, archival, and reporting
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv \
@@ -36,6 +41,13 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
 manual overrides; `auto` evaluates the configured screening, hybrid, and full
 evidence gates.
 
+For pre-ingestion staging, use `--validate-only` without
+`--validation-output-dir`. This parses prospective observations in memory and
+prints QC counts without writing files, archiving a completed worksheet,
+updating canonical tables, generating candidates, or advancing campaign status.
+Generate mechanical graphs and their source/metadata bundles through
+completed-round reporting after ingestion is authorized.
+
 ## Worksheet entry
 
 Edit only:
@@ -48,16 +60,16 @@ Fill the result fields that were measured:
 
 | Column | Operator action |
 |---|---|
-| `replicate_id` | Give duplicated technical-replicate rows distinct IDs. |
+| `replicate_id` | Give every endpoint-specific row an explicit ID; duplicate endpoint keys are rejected. |
 | `viability_percent` | Enter post-thaw viability from `0` to `100`. |
 | `intact_patch_formation_pass` | Enter `yes/no`, `pass/fail`, `true/false`, or `1/0`. |
 | `no_slurry`, `no_collapse` | Optional formation details used by the intact gate. |
 | `intact_tip_count`, `total_tip_count` | Optional quantitative formation details. |
 | preparation fields | Record preparation, homogeneity, fillability, and failure reason when assessed. |
-| `instron_file` | Enter the raw Bluehill CSV path only for an eligible actual-intact row. |
+| `instron_file` | Enter the raw Bluehill CSV path on a mechanical row for an eligible formulation-level actual-intact pass. |
 | `needles_compressed` | Required with an Instron file or total-load entry. |
 | critical-load fields | Enter per-needle load, or total load with needle count. |
-| initial-stiffness field | Optional diagnostic endpoint. |
+| initial-stiffness field | Compatibility column: under the terminal protocol this is `(F_terminal-F_trigger)/0.8 mm` per loaded needle. |
 | `notes` | Record handling, deviations, or test context. |
 
 Leave unmeasured fields blank. Duplicate a proposal row for technical
@@ -76,8 +88,11 @@ A mechanics training pair requires `viability_percent` and
 accepted. Measurements copied from another batch do not form a same-batch
 pair.
 
-Technical replicates may supply multiple worksheet rows. Continuous endpoints
-aggregate by mean and intact replicates use the conservative all-pass rule.
+Technical replicates and endpoint-specific measurements may supply multiple
+worksheet rows. Mechanical eligibility uses the formulation/batch all-pass
+intact result, so the intact gate need not be duplicated on each mechanical row.
+Continuous endpoints aggregate by mean and intact replicates use the
+conservative all-pass rule.
 The database therefore creates one formulation–batch training row, not one
 paired observation per technical replicate.
 
@@ -128,7 +143,7 @@ mechanical fields blank, and let the completion manifest report the unused
 capacity. Do not fill a failed, unranked, or disallowed-repeat formulation to
 reach the nominal capacity.
 
-## Optional Instron import
+## Instron import and terminal endpoint
 
 Store raw files under a batch directory:
 
@@ -136,7 +151,19 @@ Store raw files under a batch directory:
 data/raw/instron/ROUND_###/
 ```
 
-The helper can parse one file into the active worksheet:
+Group 9 is bound to the reviewed Group 10 terminal endpoint by
+`proposal/mechanical_endpoint_addendum.json`. The addendum hashes the original
+proposal CSV and selection metadata; either original file changing makes
+validation fail closed. It does not change the global Group 10 activation rule.
+
+For Group 9 and later, enter the raw path and loaded-needle count in the
+worksheet. Validation calculates force at +0.8 mm after the sustained 1 N
+trigger and the apparent secant stiffness. Filled calculated fields are accepted
+only when they reproduce from the raw trace within tolerance.
+
+`helper/instron.py` retains the robust Bluehill reader. Its whole-curve maximum
+and early-linear slope are legacy metrics and require an explicit historical-use
+flag:
 
 ```bash
 python3 src/08_multi_objective/helper/instron.py \
@@ -144,11 +171,11 @@ python3 src/08_multi_objective/helper/instron.py \
   --formulation-id v2_example \
   --batch-id ROUND_### \
   --replicate-id rep_001 \
-  --needles-compressed 100
+  --needles-compressed 100 \
+  --allow-legacy-maximum
 ```
 
-The worksheet is still subject to frozen-proposal and mechanical-execution
-validation when Stage 03 runs.
+Do not use that legacy calculation for Group 9+ terminal-method evidence.
 
 ## Validation and progression order
 
@@ -156,17 +183,19 @@ Stage 03 performs these operations in order:
 
 1. compare the working worksheet with the frozen proposal;
 2. validate actual-intact mechanics rank promotion and capacity;
-3. ingest formulations and endpoint observations;
-4. archive the exact worksheet bytes as `completed/completed.csv`;
-5. freeze `completed/mechanical_execution_manifest.json`;
-6. generate replicate-aggregated descriptive, formulation-grouped
+3. reproduce raw mechanical files and calculate terminal force and secant stiffness;
+4. ingest formulations and endpoint observations;
+5. archive the exact worksheet bytes as `completed/completed.csv`;
+6. freeze `completed/mechanical_execution_manifest.json`;
+7. generate replicate-aggregated descriptive, formulation-grouped
    cross-validation, and frozen-proposal prospective reports;
-7. refresh cumulative prospective reports;
-8. run Stage 02 for the following proposal unless `--skip-generate` is set.
+8. refresh cumulative prospective reports;
+9. run Stage 02 for the following proposal unless `--skip-generate` is set.
 
 If reporting fails after ingestion, the database update and completed archive
-remain available and proposal generation does not proceed. Re-running the
-command is safe because archive compatibility is verified.
+remain available and proposal generation does not proceed. Regenerate the
+report with Stage 04; duplicate observation IDs are rejected rather than
+silently overwritten by a second ingestion attempt.
 
 ## Completion manifest
 
@@ -207,6 +236,12 @@ results/multi_objective_v2/rounds/ROUND_###/
     ├── tables/
     └── plots/
 ```
+
+Completed-round plots include one terminal-method QC trace per mechanical
+replicate plus a formulation summary for terminal force and apparent secant
+stiffness. Each transparent 300 dpi PNG has a source CSV and hash-bearing
+metadata JSON. Sample SD is shown only for formulations with at least two
+recorded replicates; missing specimens are never imputed.
 
 `completed.csv` is the exact ingested worksheet. Proposal-time prospective
 reports read frozen predictions and do not retrain. Model-evaluation reports

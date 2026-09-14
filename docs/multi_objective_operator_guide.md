@@ -153,14 +153,14 @@ Do not change:
 
 ### Instron input by frozen endpoint policy
 
-For Group 10, enter each specimen's raw path in `instron_file` and its actual
+For Group 9 under its endpoint addendum and for Group 10+, enter each specimen's raw path in `instron_file` and its actual
 `needles_compressed` when known. Leave the compatibility force and old stiffness
-input columns blank. The normal round update extracts force at +0.8 mm after the
+input columns blank or enter values that reproduce from the raw trace. The normal round update extracts force at +0.8 mm after the
 sustained 1 N trigger using the proposal's frozen settings. Missing loaded count
 permits total-force reporting only; short traces supply no force training label.
 
 The helper command below computes **legacy maximum-force metrics**. Use it only
-for earlier frozen contracts such as Group 9, not for Group 10 terminal-force
+to reproduce earlier historical contracts, not for Group 9+ terminal-force
 worksheets. For an optional standalone Group 10 plot/JSON review, use the
 [terminal-force analysis CLI](group10/mechanical_sop.md#round-csv-and-automatic-extraction).
 
@@ -203,8 +203,9 @@ The command order is:
 8. replace the operator workspace with the editable slate
 
 Proposal generation occurs only if reporting succeeds. A reporting failure
-retains the database update and completed worksheet so the command can be
-rerun safely.
+retains the database update and completed worksheet. Regenerate reporting with
+Stage 04; Stage 03 rejects a second set of colliding observation IDs rather
+than silently replacing the first ingestion.
 
 To omit proposal generation:
 
@@ -248,8 +249,8 @@ The Group 10 additions below supersede the earlier one-time anchor reservation.
 See the [current Group 10 guide](group10/README.md), [settings register](group10/settings_register.md),
 [terminal-force SOP](group10/mechanical_sop.md), and [Group 9 transition instructions](group10/transition_group9_to_10.md).
 
-From Group 10, the endpoint is force at +0.8 mm after the sustained 1 N trigger. The existing mechanical output column is a compatibility name for nominal terminal force per loaded needle, not a fracture-strength claim. Raw whole-patch total force is also stored. Force drops do not select the endpoint.
+Group 9 validation/ingestion is the first use of force at +0.8 mm after the sustained 1 N trigger, bound by an addendum that hashes its frozen proposal artifacts. Group 10 keeps this endpoint under its configured activation. The existing mechanical output column is a compatibility name for nominal terminal force per loaded needle, not a fracture-strength claim. Raw whole-patch total force and apparent secant stiffness are also stored. Force drops do not select the endpoint.
 
-The exact DMSO/sucrose reference is configured for Group 10 without preset replicate counts; actual counts come from completed CSV rows. Reference observations are monitoring-only and excluded from production GP training. Group 9 remains under its frozen original contract. The reviewed policy is deployed on `main`, but it is distinct from a live frozen Group 10 proposal. Stage 03 hard-stops before Group 10 ingestion if the frozen effective configuration is missing, incomplete, or different from the live reviewed configuration.
+The exact DMSO/sucrose reference is configured for Group 10 without preset replicate counts; actual counts come from completed CSV rows. Reference observations are monitoring-only and excluded from production GP training. Stage 03 hard-stops if the Group 9 addendum hashes/settings fail or, from Group 10 onward, if the frozen effective configuration is missing, incomplete, or different from the live reviewed configuration.
 
-The [offline model audit](group10/audit/explained_comparison.md) does not promote a model. GP methodology changes remain deferred until a user decision before the first full-mechanics proposal. The mechanical endpoint revision is authorized separately and starts with Group 10.
+The [offline model audit](group10/audit/explained_comparison.md) does not promote a model. GP methodology changes remain deferred until a user decision before the first full-mechanics proposal. The mechanical endpoint revision is authorized separately and starts when Group 9 results are validated.

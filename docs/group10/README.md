@@ -2,11 +2,11 @@
 
 Released on **`main`** by merge commit `3e54384` (PR #10 from `codex/v2-methodology-group10`). Current policy/schema: **`group10_workflow_v4` / 4**. Updated 2026-09-14.
 
-**The endpoint changes from Group 10. Changes to GP methodology require a user decision after the audit, before the first full-mechanics proposal.** The configured mechanical endpoint is force at **+0.8 mm after a sustained 1 N trigger**. Endpoint and GP methodology have separate activation controls.
+**Group 9 validation/ingestion is the first terminal-endpoint evidence batch. Changes to GP methodology still require a separate user decision before the first full-mechanics proposal.** The configured mechanical endpoint is force at **+0.8 mm after a sustained 1 N trigger**. A hash-bound Group 9 addendum and the Group 10 workflow activation are separate controls.
 
 ## Configured versus live
 
-The reviewed code and configuration are live on local and remote `main`; they reserve the reference and apply the new endpoint from Group 10. This does not retroactively change Group 9's frozen proposal. The current campaign data still contain the blank Group 9 worksheet, observations end at Group 8, and no live Group 10 proposal has been frozen. The software release is live, but the Group 10 wet-lab start is not ready until Group 9 results are validated and ingested.
+The reviewed code and configuration are live on `main`. Group 9's original proposal artifacts remain frozen, while a hash-bound addendum applies the endpoint when its staged results are validated/ingested. The active Group 9 worksheet is populated but canonical observations still end at Group 8. No live Group 10 proposal has been frozen, so the Group 10 wet-lab start remains blocked until Group 9 is explicitly ingested.
 
 Run the read-only readiness check from the reviewed checkout, pointing it at the campaign of interest:
 
@@ -28,7 +28,7 @@ The production path is also fail-closed. Stage 02 refuses to create any Group 10
 
 ## Endpoint meaning and model boundary
 
-The mechanical GP keeps the existing compatibility output key `critical_axial_load_N_per_needle`. For Group 10, that value means **nominal terminal force per loaded needle**, tagged `terminal_force_08mm_after_1N_v1`. Total whole-patch force is stored separately. It does not mean fracture force. See the [exact endpoint SOP](mechanical_sop.md).
+The mechanical GP keeps the existing compatibility output key `critical_axial_load_N_per_needle`. For Group 9 terminal ingestion and Group 10+, that value means **nominal terminal force per loaded needle**, tagged `terminal_force_08mm_after_1N_v1`. Total whole-patch force and apparent secant stiffness are stored separately. It does not mean fracture force. See the [exact endpoint SOP](mechanical_sop.md).
 
 Training includes comparable new-definition mechanical labels and all otherwise eligible viability evidence, including screening observations. Old mechanical maxima remain stored but are excluded from the Group 10 target's training set. This can postpone an evidence-gated mechanical phase; it does not modify the gate thresholds. Unsupported zero-placeholder mechanical predictions are not scored as genuine forecasts.
 

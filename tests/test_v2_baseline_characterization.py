@@ -17,8 +17,10 @@ PROPOSAL_PATH = (
     PROJECT_ROOT
     / "results"
     / "multi_objective_v2"
-    / "next_round"
-    / "next_round_candidates.csv"
+    / "rounds"
+    / "ROUND_009"
+    / "proposal"
+    / "proposal.csv"
 )
 CANDIDATE_POOL_PATH = (
     PROJECT_ROOT / "results" / "multi_objective_v2" / "total_candidate_pool.csv"
