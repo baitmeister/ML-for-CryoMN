@@ -30,13 +30,18 @@ REFERENCE = {
 
 
 class V2EvaluationMetricTests(unittest.TestCase):
-    def test_current_no_load_state_is_not_estimable(self) -> None:
+    def test_no_load_fixture_is_not_estimable(self) -> None:
         formulations = pd.read_csv(
             PROJECT_ROOT / "data" / "processed_v2" / "formulations.csv"
         )
         observations = pd.read_csv(
             PROJECT_ROOT / "data" / "processed_v2" / "observations.csv"
         )
+        # Construct the no-mechanics condition explicitly; the live campaign
+        # now contains Group 9 mechanical measurements.
+        observations = observations.loc[
+            ~observations.endpoint.eq('critical_axial_load_N_per_needle')
+        ].copy()
         feasible, excluded = build_feasible_paired_objectives(
             formulations,
             observations,

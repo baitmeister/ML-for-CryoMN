@@ -87,7 +87,8 @@ def apply_group10(result, formulations, observations, registry, optimization, co
         extra=annotate_candidates(extra,models,registry,optimization,policy_active=True)
         history_counts=frame.loc[frame[load].notna()].groupby('formulation_id').size() if load in frame else pd.Series(dtype=int)
         extra['prior_mechanical_observation_count']=extra.formulation_id.map(history_counts).fillna(0).astype(int)
-        extra['mechanical_repeat_allowed']=extra.experimental_role.isin(['campaign_control','mechanics_anchor'])
+        extra['mechanical_reference_eligible']=extra.experimental_role.eq('campaign_control') & bool(config['reference']['mechanical'])
+        extra['mechanical_repeat_allowed']=extra.experimental_role.eq('mechanics_anchor') | extra.mechanical_reference_eligible
         extra['mechanical_repeat_status']='intentional_followup'
         extra['viability_prediction_status']='observed_followup'
         extra.loc[extra.experimental_role.eq('campaign_control'),'viability_prediction_status']='reference_not_modeled'
@@ -166,6 +167,8 @@ def apply_group10(result, formulations, observations, registry, optimization, co
     metadata['group10']={'policy_version':config['policy_version'],'effective_config':deepcopy(config),
         'reference_readiness':state,'reserved_screen_rows':reserved,'ordinary_origin_quotas':quotas,
         'model_revision':'unchanged',
+        'reference_scope':'viability_and_mechanics_historical' if config['reference']['mechanical'] else 'viability_only',
+        'mechanical_control':bool(config['reference']['mechanical']),
         'mechanical_formulation_capacity':4,'replicate_count_source':'completed_round_csv',
         'training_cutoff':f'completed observations before ROUND_{round_number:03d}',
         'reference_exception':'exact recipe DMSO ceiling only',
@@ -195,6 +198,6 @@ def apply_group10(result, formulations, observations, registry, optimization, co
     metadata['formulation_similarity']['final_validation']=validate_selected_similarity(slate,formulations,observations,registry,resolve_similarity_policy(optimization,round_number))
     metadata['mechanical_policy']=meta
     if not reference.empty:
-        metadata['mechanics_transition']['anchor_selection']={'enabled':False,'selected':False,'reason':'Recurring reference supersedes one-time anchor'}
+        metadata['mechanics_transition']['anchor_selection']={'enabled':False,'selected':False,'reason':('Recurring reference supersedes one-time anchor' if config['reference']['mechanical'] else 'Group 11+ uses four experimental mechanical slots; the reference is viability-only and no mechanical anchor is reserved')}
     return replace(result,viability_screen=slate,mechanical_tests=mechanical,
                    candidate_pool=pd.concat([ordinary,extra],ignore_index=True),metadata=metadata)

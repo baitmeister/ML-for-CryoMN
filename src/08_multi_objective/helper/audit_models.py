@@ -9,10 +9,20 @@ from .models import _fit_regression
 VARIANTS=('current_mixed','campaign_mean','campaign_median','campaign_existing',
           'campaign_bounds_learned','legacy_correction')
 
-def fit_predict(variant, frame, x, registry, use_adaptive=False):
+def fit_predict(variant, frame, x, registry, use_adaptive=False, endpoint='viability_percent'):
+    if variant not in VARIANTS:
+        raise ValueError('Unknown audit variant: ' + str(variant))
+    if endpoint != 'viability_percent':
+        if variant == 'legacy_correction':
+            raise ValueError('Legacy correction is defined for viability only')
+        # Reuse the same comparison architectures without mixing target units.
+        frame = frame.drop(columns=['viability_percent', 'viability_percent__noise'], errors='ignore').rename(
+            columns={endpoint: 'viability_percent', endpoint + '__noise': 'viability_percent__noise'})
     f=frame.dropna(subset=['viability_percent']).copy()
     campaign=f.batch_id.astype(str).str.startswith('ROUND_')
     if variant!='current_mixed' and variant!='legacy_correction': f=f.loc[campaign]
+    if len(f) < 2:
+        raise ValueError('At least two preceding measured formulation-batch rows are required')
     cols=registry.feature_names
     xx=f[cols].to_numpy(float); y=f.viability_percent
     noise=f.viability_percent__noise.copy()

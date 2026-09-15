@@ -9,14 +9,14 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from helper.group10_config import load_group10_config, reference_readiness
+from helper.group10_config import load_group10_config_for_round, reference_readiness
 from helper.terminal_force import DEFINITION
 
 
 def inspect_readiness(campaign_root, code_root=None):
     code_root = Path(code_root or Path(__file__).resolve().parents[3])
     campaign_root = Path(campaign_root).resolve()
-    config = load_group10_config(code_root/'config_v2/group10.yaml')
+    config = load_group10_config_for_round(10, code_root/'config_v2/group10.yaml')
     observations_path = campaign_root/'data/processed_v2/observations.csv'
     observations = pd.read_csv(observations_path)
     rounds = pd.to_numeric(observations.batch_id.astype(str).str.extract(r'^ROUND_(\d+)$')[0],errors='coerce')
@@ -26,7 +26,7 @@ def inspect_readiness(campaign_root, code_root=None):
     sheet = pd.read_csv(worksheet) if worksheet.exists() else pd.DataFrame()
     batches = sheet.get('batch_id',pd.Series(dtype=str)).dropna().unique().tolist()
     live_config_exists = (campaign_root/'config_v2/group10.yaml').exists()
-    live_config = load_group10_config(campaign_root/'config_v2/group10.yaml') if live_config_exists else {}
+    live_config = load_group10_config_for_round(10, campaign_root/'config_v2/group10.yaml') if live_config_exists else {}
     relevant_code = ['helper/terminal_force.py','helper/feedback.py','helper/group10_config.py',
                      'helper/candidate_workflow.py','helper/group10_selection.py','helper/selection_reporting.py']
     code_matches = all((campaign_root/'src/08_multi_objective'/name).exists() and

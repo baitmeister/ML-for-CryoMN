@@ -111,7 +111,7 @@ def _pivot_observations(formulations: pd.DataFrame, observations: pd.DataFrame) 
     obs["batch_id"] = obs["batch_id"].fillna("").astype(str)
     grouping = ["formulation_id", "batch_id", "endpoint"]
     continuous = (
-        obs[obs["endpoint"].astype(str) != INTACT_PATCH_ENDPOINT]
+        obs[~obs["endpoint"].astype(str).isin([INTACT_PATCH_ENDPOINT, "mechanical_pair_intact_patch_formation_pass"])]
         .groupby(grouping, dropna=False, as_index=False)
         .agg(
             value=("value", "mean"),
@@ -119,7 +119,7 @@ def _pivot_observations(formulations: pd.DataFrame, observations: pd.DataFrame) 
         )
     )
     intact = (
-        obs[obs["endpoint"].astype(str) == INTACT_PATCH_ENDPOINT]
+        obs[obs["endpoint"].astype(str).isin([INTACT_PATCH_ENDPOINT, "mechanical_pair_intact_patch_formation_pass"])]
         .groupby(grouping, dropna=False, as_index=False)
         .agg(
             value=("value", aggregate_intact_patch_replicates),
@@ -160,6 +160,17 @@ def build_training_frame(
         frame["batch_id"] = ""
     frame["batch_id"] = frame["batch_id"].fillna("").astype(str)
     return frame
+
+
+def paired_objective_frame(frame: pd.DataFrame) -> pd.DataFrame:
+    """Pair observed objectives without adding controls to viability GP labels."""
+    from .group10_config import PAIR_CONTEXT_ENDPOINTS
+    result = frame.copy()
+    for companion, endpoint in PAIR_CONTEXT_ENDPOINTS.items():
+        if companion in result:
+            current = result.get(endpoint, pd.Series(np.nan, index=result.index))
+            result[endpoint] = current.combine_first(result[companion])
+    return result
 
 
 def _fit_regression(

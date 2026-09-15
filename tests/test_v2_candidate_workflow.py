@@ -35,6 +35,22 @@ def _load_selection_cli_module():
 
 
 class V2CandidateWorkflowTests(unittest.TestCase):
+    def setUp(self):
+        # These characterization cases exercise selection before Group 9.
+        # Later live ingestion must not alter their input evidence cutoff.
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        self.observations_path = Path(temporary.name) / 'observations.csv'
+        observations = pd.read_csv(OBSERVATIONS_PATH)
+        rounds = pd.to_numeric(observations.batch_id.astype(str).str.extract(r'^ROUND_(\d+)$')[0], errors='coerce')
+        observations = observations.loc[rounds.isna() | rounds.lt(9)]
+        observations.to_csv(self.observations_path, index=False)
+        self.formulations_path = Path(temporary.name) / 'formulations.csv'
+        formulations = pd.read_csv(FORMULATIONS_PATH)
+        formulations.loc[formulations.formulation_id.isin(observations.formulation_id)].to_csv(
+            self.formulations_path, index=False
+        )
+
     def test_options_are_immutable(self) -> None:
         options = CandidateSelectionOptions()
         with self.assertRaises(FrozenInstanceError):
@@ -93,7 +109,7 @@ class V2CandidateWorkflowTests(unittest.TestCase):
                 run_candidate_selection(
                     CandidateSelectionOptions(
                         formulations_path=empty_formulations,
-                        observations_path=OBSERVATIONS_PATH,
+                        observations_path=self.observations_path,
                         output_dir=output_dir,
                         total_candidate_pool_path=root / "total_candidate_pool.csv",
                         seed=42,
@@ -107,8 +123,8 @@ class V2CandidateWorkflowTests(unittest.TestCase):
             root = Path(temporary_name)
             outcome = run_candidate_selection(
                 CandidateSelectionOptions(
-                    formulations_path=FORMULATIONS_PATH,
-                    observations_path=OBSERVATIONS_PATH,
+                    formulations_path=self.formulations_path,
+                    observations_path=self.observations_path,
                     output_dir=root / "next_round",
                     total_candidate_pool_path=root / "total_candidate_pool.csv",
                     seed=42,
@@ -152,8 +168,8 @@ class V2CandidateWorkflowTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "GROUP 10 HARD STOP.*ROUND_009"):
                 run_candidate_selection(
                     CandidateSelectionOptions(
-                        formulations_path=FORMULATIONS_PATH,
-                        observations_path=OBSERVATIONS_PATH,
+                        formulations_path=self.formulations_path,
+                        observations_path=self.observations_path,
                         output_dir=output_dir,
                         total_candidate_pool_path=root / "total_candidate_pool.csv",
                         seed=42,
@@ -179,8 +195,8 @@ class V2CandidateWorkflowTests(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, "empty after applying registry bounds"):
                 run_candidate_selection(
                     CandidateSelectionOptions(
-                        formulations_path=FORMULATIONS_PATH,
-                        observations_path=OBSERVATIONS_PATH,
+                        formulations_path=self.formulations_path,
+                        observations_path=self.observations_path,
                         candidate_pool_path=pool,
                         output_dir=root / "next_round",
                         total_candidate_pool_path=root / "total.csv",
@@ -205,8 +221,8 @@ class V2CandidateWorkflowTests(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, "temporary availability restrictions"):
                 run_candidate_selection(
                     CandidateSelectionOptions(
-                        formulations_path=FORMULATIONS_PATH,
-                        observations_path=OBSERVATIONS_PATH,
+                        formulations_path=self.formulations_path,
+                        observations_path=self.observations_path,
                         candidate_pool_path=pool,
                         output_dir=root / "next_round",
                         total_candidate_pool_path=root / "total.csv",

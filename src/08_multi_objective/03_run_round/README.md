@@ -114,6 +114,8 @@ The execution sequence is:
 2. Ignore every row whose mechanical rank is blank.
 3. Read numeric mechanical ranks in ascending order.
 4. Run Instron on the first four ranked rows that actually pass intact.
+   From Group 11 the viability reference is unranked and cannot consume a mechanical
+   position. Group 10 retains its original frozen ranks.
 5. Skip a failed or blank-intact primary and promote the next ranked
    actual-intact backup.
 6. If fewer than four ranked rows pass intact, test every ranked passing row and

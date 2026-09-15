@@ -224,11 +224,12 @@ cannot provide mechanical data or serve as a mechanical backup.
 
 ### Bootstrap selection
 
-With the configured Group 10 reference, primary mechanical positions are one
-reference, one screened-hit follow-up and two fresh candidates, subject to actual
-intact formation and ordered backups. The fresh-candidate scoring below is retained.
-The one-time anchor rule below applies to the earlier policy; the recurring
-reference supersedes it for newly activated Group 10 proposals.
+Frozen Group 10 retains one reference, one screened-hit follow-up and two fresh
+mechanical primaries. From Group 11 (workflow v5), the reference is strictly
+viability-only and is absent from mechanical primaries and backups. The usual
+allocation is one eligible screened hit and three fresh candidates, subject to
+actual-intact formation. No recurring mechanical control or anchor is reserved.
+The one-time anchor rule below applies only to the earlier policy.
 
 Ordinary bootstrap eligibility excludes `retest_priority` rows and any
 formulation with a prior critical-load observation. For each eligible slate

@@ -9,7 +9,7 @@ from typing import Mapping
 import pandas as pd
 
 from .config import nested_get
-from .models import build_training_frame
+from .models import build_training_frame, paired_objective_frame
 from .registry import IngredientRegistry
 
 
@@ -179,7 +179,7 @@ def resolve_phase_mode(
             f"phase mode must be one of {sorted(VALID_PHASE_MODES)}, got {configured!r}"
         )
 
-    frame = build_training_frame(formulations, observations, registry)
+    frame = paired_objective_frame(build_training_frame(formulations, observations, registry))
     paired_mask = (
         frame.get("viability_percent", pd.Series(index=frame.index, dtype=float)).notna()
         & frame.get("critical_axial_load_N_per_needle", pd.Series(index=frame.index, dtype=float)).notna()

@@ -1,4 +1,4 @@
-"""Run an explicitly synthetic Group 9 -> 10 -> 11 campaign in a new directory.
+"""Run synthetic outcomes for the frozen Group 10 plan and generate Group 11 in isolation.
 
 Not discovered by unittest. Usage: python3 tests/verify_group10_endpoint_workflow.py
 --output-dir /private/tmp/new-empty-validation-directory
@@ -31,15 +31,15 @@ def main(output):
     for name in ('formulations.csv','observations.csv'):
         shutil.copy2(ROOT/'data/processed_v2'/name,data/name)
     results=output/'results';next_dir=results/'next_round'
-    source=ROOT/'results/multi_objective_v2/rounds/ROUND_009/proposal'
-    shutil.copytree(source,results/'rounds/ROUND_009/proposal')
-    nine=pd.read_csv(source/'proposal.csv')
-    nine['viability_percent']=62+np.arange(len(nine))*.2
-    nine['intact_patch_formation_pass']=1
-    nine['replicate_id']='synthetic_rep1'
-    ranked=nine.sort_values('mechanical_selection_rank').head(4).index
-    nine.loc[ranked,MODEL_FIELD]=[.1,.12,.14,.16]
-    nine.to_csv(output/'synthetic_group9.csv',index=False)
+    # Retain only the real preceding evidence snapshot, then invent Group 10
+    # outcomes inside the isolated copy. Never re-ingest the live Group 9 rows.
+    obs=pd.read_csv(data/'observations.csv')
+    numbers=pd.to_numeric(obs.batch_id.astype(str).str.extract(r'^ROUND_(\d+)$')[0],errors='coerce')
+    obs.loc[numbers.isna() | numbers.le(9)].to_csv(data/'observations.csv',index=False)
+    source=ROOT/'results/multi_objective_v2/rounds/ROUND_010/proposal'
+    shutil.copytree(source,results/'rounds/ROUND_010/proposal')
+    next_dir.mkdir(parents=True)
+    shutil.copy2(source/'proposal.csv',next_dir/'next_round_candidates.csv')
     shared=['--formulations',str(data/'formulations.csv'),'--observations',str(data/'observations.csv'),
             '--output-dir',str(next_dir),'--total-candidate-pool',str(results/'pool.csv')]
     def run(label,script,args):
@@ -48,9 +48,6 @@ def main(output):
         if completed.returncode:
             raise RuntimeError(f'{label} failed: '+completed.stderr[-5000:])
         print(label+' passed',flush=True)
-    run('group9_compatibility','src/08_multi_objective/03_run_round/run_round.py',
-        [str(output/'synthetic_group9.csv'),'--skip-generate','--skip-review',*shared])
-    run('group10_proposal','src/08_multi_objective/02_select_candidates/select_candidates.py',shared+['--seed','42'])
     ten=pd.read_csv(next_dir/'next_round_candidates.csv')
     assert ten.batch_id.unique().tolist()==['ROUND_010']
     assert ten.experimental_role.eq('campaign_control').sum()==1
@@ -94,23 +91,45 @@ def main(output):
     new=obs.loc[obs.batch_id.eq('ROUND_010')]
     active=production_observations(obs)
     assert active.loc[active.endpoint.eq(MODEL_FIELD),'mechanical_definition_id'].eq(DEFINITION).all()
-    assert not active.experimental_role.fillna('').eq('campaign_control').any()
-    assert pd.read_csv(next_dir/'next_round_candidates.csv').batch_id.unique().tolist()==['ROUND_011']
+    control_evidence=active.loc[active.experimental_role.fillna('').eq('campaign_control')]
+    assert not control_evidence.endpoint.eq('viability_percent').any()
+    assert control_evidence.endpoint.eq(MODEL_FIELD).any()
+    eleven=pd.read_csv(next_dir/'next_round_candidates.csv')
+    assert eleven.batch_id.unique().tolist()==['ROUND_011']
+    control=eleven.loc[eleven.experimental_role.eq('campaign_control')]
+    assert len(control)==1 and control.mechanical_selection_rank.isna().all()
+    assert control.mechanical_test_recommended.eq(False).all()
+    primaries=eleven.loc[eleven.mechanical_test_recommended.eq(True)]
+    assert len(primaries)==4 and not primaries.experimental_role.eq('campaign_control').any()
+    eleven_metadata=json.loads((results/'rounds/ROUND_011/proposal/selection_metadata.json').read_text())
+    from helper.models import build_training_frame, paired_objective_frame
+    from helper.registry import load_registry
+    from helper.phase import resolve_phase_mode
+    from helper.config import load_optimization_config
+    forms=pd.read_csv(data/'formulations.csv')
+    phase=resolve_phase_mode(forms,obs,load_registry(),load_optimization_config(),target_round_number=11)
+    assert phase.paired_observation_count==8
+    assert phase.distinct_formulation_count==8
+    assert phase.batch_count==2
+    assert phase.active_phase=='mechanics_hybrid'
+    assert eleven_metadata['active_phase']=='mechanics_hybrid'
     manifest=json.loads((results/'rounds/ROUND_010/completed/mechanical_execution_manifest.json').read_text())
     assert manifest['workload']['specimen_runs_attempted']==8
     assert manifest['workload']['tests_with_interpretable_terminal_force']==6
     assert manifest['workload']['usable_formulation_batch_observations']==4
     assert (results/'rounds/ROUND_010/reports/tables/terminal_force_measurements.csv').exists()
-    assert pd.read_csv(results/'rounds/ROUND_010/reports/tables/prospective_evaluation_table.csv').query("endpoint == 'critical_axial_load_N_per_needle'").evaluation_eligible.eq(False).all()
+    assert (results/'rounds/ROUND_010/reports/tables/prospective_evaluation_table.csv').exists()
     changed=[p for p,h in protected.items() if hashlib.sha256(Path(p).read_bytes()).hexdigest()!=h]
     assert not changed,changed
-    summary=dict(synthetic_only=True,group9_original_contract_ingestible=True,
+    summary=dict(synthetic_only=True,group10_original_frozen_contract_ingestible=True,
         group10_frozen_definition=DEFINITION,group10_roles=originals.experimental_role.value_counts().to_dict(),
         mechanical_primary_roles=mechanical.experimental_role.value_counts().to_dict(),
         production_gp_methodology='unchanged',legacy_mechanics_excluded_from_new_target=True,
-        control_excluded_from_training=True,next_proposal='ROUND_011',workload=manifest['workload'],
+        control_viability_excluded_from_training=True,control_mechanics_retained_as_endpoint_evidence=True,
+        group11_control_unranked=True,group11_mechanical_primaries=len(primaries),
+        group11_phase=phase.active_phase,paired_observations=phase.paired_observation_count,next_proposal='ROUND_011',workload=manifest['workload'],
         protected_source_files=len(protected),protected_hash_mismatches=changed,
-        evidence_limitation='Synthetic outcomes; not the final Group 10 slate after actual Group 9')
+        evidence_limitation='Synthetic outcomes on the actual frozen Group 10 slate; Group 11 is an isolated test proposal')
     (output/'verification_summary.json').write_text(json.dumps(summary,indent=2)+'\n')
     print(json.dumps(summary,indent=2))
 

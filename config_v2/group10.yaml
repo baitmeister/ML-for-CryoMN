@@ -1,7 +1,8 @@
 # Endpoint authorized 2026-09-14; GP methodology remains unchanged.
-policy_version: group10_workflow_v4
+# Workflow v5 applies from Group 11. The round loader preserves frozen Group 10 v4.
+policy_version: group10_workflow_v5
 activation_round: 10
-proposal_schema_version: 4
+proposal_schema_version: 5
 production_model_revision: false
 production_noise_revision: false
 production_endpoint_revision: true
@@ -12,7 +13,8 @@ reference:
   density_g_mL: 1.1
   purity_fraction: 1.0
   molecular_weight_g_mol: 78.13
-  mechanical: true
+  # Viability-only reference: never allocate a mechanical slot or normalize force.
+  mechanical: false
 replicate_count_source: completed_round_csv
 production_decision_boundary: beginning_of_full_mechanics
 mechanical_endpoint:

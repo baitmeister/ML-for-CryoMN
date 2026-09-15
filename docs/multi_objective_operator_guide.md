@@ -140,8 +140,10 @@ Enter mechanical results only for rows with a numeric
 order until four passing rows have been tested. Leave unused capacity blank
 when fewer than four ranked rows pass; do not substitute an unranked row.
 Remeasure viability, intact formation, and mechanics for a screened-hit follow-up
-or reference under the worksheet batch ID. Earlier frozen proposals may instead
-use the one-time `mechanics_anchor` role.
+under the worksheet batch ID. Group 10 retains its already-planned reference
+mechanical test. From Group 11 the reference is viability-only: it has no mechanical
+rank or backup position, and all four mechanical positions are experimental candidates.
+Earlier frozen proposals may instead use the one-time `mechanics_anchor` role.
 
 Do not change:
 
@@ -251,6 +253,19 @@ See the [current Group 10 guide](group10/README.md), [settings register](group10
 
 Group 9 validation/ingestion is the first use of force at +0.8 mm after the sustained 1 N trigger, bound by an addendum that hashes its frozen proposal artifacts. Group 10 keeps this endpoint under its configured activation. The existing mechanical output column is a compatibility name for nominal terminal force per loaded needle, not a fracture-strength claim. Raw whole-patch total force and apparent secant stiffness are also stored. Force drops do not select the endpoint.
 
-The exact DMSO/sucrose reference is configured for Group 10 without preset replicate counts; actual counts come from completed CSV rows. Reference observations are monitoring-only and excluded from production GP training. Stage 03 hard-stops if the Group 9 addendum hashes/settings fail or, from Group 10 onward, if the frozen effective configuration is missing, incomplete, or different from the live reviewed configuration.
+The exact DMSO/sucrose reference is configured for Group 10 without preset replicate counts; actual counts come from completed CSV rows. Control viability is monitoring-only and excluded from viability GP training. From Group 11 the reference receives no mechanical rank; valid mechanical measurements already collected on that recipe remain ordinary endpoint evidence without control-based normalization. Stage 03 hard-stops if the Group 9 addendum hashes/settings fail or, from Group 10 onward, if the frozen effective configuration is missing, incomplete, or different from the reviewed configuration for that round (Group 10 v4; Group 11+ v5).
 
 The [offline model audit](group10/audit/explained_comparison.md) does not promote a model. GP methodology changes remain deferred until a user decision before the first full-mechanics proposal. The mechanical endpoint revision is authorized separately and starts when Group 9 results are validated.
+
+
+### Group 10 mechanical evidence clarification
+
+The DMSO/sucrose row is a viability control only. Its valid Group 10 mechanical
+result and measured same-batch viability/intact companions count as an ordinary
+mechanical pair for phase progression, paired acquisition and observed trade-offs.
+Control viability remains outside standalone viability-GP training/ordinary viability
+metrics. Four valid Group 10 pairs plus four Group 9 pairs yield **8 pairs / 8
+formulations / 2 batches**, meeting the unchanged hybrid gate for Group 11.
+Group 10's planned tests stay unchanged; Group 11+ allocates no mechanical rank
+to the recurring viability reference. Technical replicates still aggregate within
+formulation/batch and do not inflate gate counts.

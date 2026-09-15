@@ -19,7 +19,7 @@ from .endpoints import (
     parse_bool,
 )
 from .feasibility import annotate_feasibility
-from .models import build_training_frame, train_endpoint_models
+from .models import build_training_frame, train_endpoint_models, paired_objective_frame
 from .paths import RESULTS_V2_DIR
 from .registry import IngredientRegistry
 
@@ -136,7 +136,7 @@ def _observed_endpoint_frame(formulations: pd.DataFrame, observations: pd.DataFr
 
 
 def _paired_frame(formulations: pd.DataFrame, observations: pd.DataFrame, registry: IngredientRegistry) -> pd.DataFrame:
-    frame = build_training_frame(formulations, observations, registry)
+    frame = paired_objective_frame(build_training_frame(formulations, observations, registry))
     required = ["formulation_id", "batch_id", "viability_percent", "critical_axial_load_N_per_needle"]
     if any(column not in frame.columns for column in required):
         return pd.DataFrame()
@@ -721,7 +721,9 @@ def build_round_prospective_table(
     table = pd.DataFrame(rows, columns=PROSPECTIVE_TABLE_COLUMNS)
     if "experimental_role" in proposal:
         controls = set(proposal.loc[proposal.experimental_role.eq("campaign_control"), "candidate_id"].astype(str))
-        mask = table.candidate_id.astype(str).isin(controls)
+        mask = table.candidate_id.astype(str).isin(controls) & ~table.endpoint.isin(
+            ["critical_axial_load_N_per_needle", "initial_stiffness_N_per_mm_per_needle"]
+        )
         table.loc[mask, ["evaluation_eligible", "formal_metric_eligible"]] = False
         table.loc[mask, ["exclusion_reason", "formal_exclusion_reason"]] = "reference_control_not_modeled"
     return table
@@ -926,8 +928,8 @@ def build_feasible_paired_objectives(
         )
         return empty.copy(), empty.assign(exclusion_reason=pd.Series(dtype=str))
 
-    from .group10_config import production_observations
-    frame = production_observations(observations)
+    from .group10_config import paired_objective_observations
+    frame = paired_objective_observations(observations)
     selected_definition = frame.attrs.get('mechanical_definition_id','legacy_curve_maximum_v1')
     frame["value"] = pd.to_numeric(frame["value"], errors="coerce")
     grouping = ["formulation_id", "batch_id"]
@@ -1165,7 +1167,7 @@ def endpoint_r2_history(formulations, observations, metrics, registry):
     rows = []
     for round_id in rounds:
         cumulative_obs = observations.loc[observations["batch_id"].map(_round_sort_key) <= _round_sort_key(round_id)].copy()
-        cumulative_frame = build_training_frame(formulations, cumulative_obs, registry)
+        cumulative_frame = paired_objective_frame(build_training_frame(formulations, cumulative_obs, registry))
         paired_keys = cumulative_frame.dropna(subset=["viability_percent", "critical_axial_load_N_per_needle"])[["formulation_id", "batch_id"]]
         if paired_keys.empty:
             rows.append({"batch_id": round_id, "viability_r2": np.nan, "load_r2": np.nan})

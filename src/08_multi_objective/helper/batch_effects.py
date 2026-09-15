@@ -3,7 +3,7 @@ import pandas as pd
 
 def control_diagnostics(observations):
     if 'experimental_role' not in observations: return pd.DataFrame()
-    c=observations.loc[observations.experimental_role.eq('campaign_control')].copy()
+    c=observations.loc[observations.experimental_role.eq('campaign_control') & observations.endpoint.eq('viability_percent')].copy()
     if c.empty: return pd.DataFrame()
     t=c.groupby(['formulation_id','batch_id','endpoint']).value.agg(['mean','std','count']).reset_index()
     t['conditional_shift']=float('nan'); t['reference_mean']=float('nan')

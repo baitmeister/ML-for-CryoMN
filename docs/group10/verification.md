@@ -1,8 +1,50 @@
-# Endpoint v4 verification — 2026-09-14
+# Verification history and current control-policy update
+
+## 2026-09-15 — Eight-pair hybrid progression correction
+
+The Group 10 reference's measured same-batch viability and intact status now accompany
+its mechanical measurement for phase gates, acquisition and observed trade-off evidence.
+They remain excluded from standalone viability-GP training and ordinary viability metrics.
+No evidence threshold was reduced and no frozen Group 10 record was changed.
+
+The isolated Group 10 ingestion → Group 11 generation check now verifies **8 paired
+observations, 8 distinct formulations, 2 batches**, and `mechanics_hybrid` in the actual
+next-proposal metadata. The new proposal retains four experimental mechanical primaries
+and no mechanical rank for the recurring viability reference. All 579 protected campaign
+files retain their original hashes. Synthetic outcomes are verification only.
+
+Regression checks cover same-batch pairing, technical replicate aggregation, repeated
+filtering, eight-row acquisition inputs, control viability exclusion and preserving the
+reference's actual DMSO coordinate outside the ordinary candidate bounds. The related
+checks total 53 passing tests (including eight control/audit tests), plus ten subtests.
+
+## 2026-09-15 — Group 10 preserved; Group 11 viability-only control
+
+The unchanged Group 10 frozen configuration passes the read-only readiness check.
+An isolated synthetic ingestion of its original four mechanical primaries successfully
+generates Group 11 under workflow v5. The Group 11 reference has no mechanical rank;
+four experimental mechanical primaries remain. All 579 protected data/results files
+retained their SHA-256 hashes. This is software verification with synthetic outcomes,
+not validation of an experimentally superior GP or formulation.
+
+The former two failing terminal/readiness tests now use isolated historical states.
+The endpoint/transition suite passes 47 tests (plus ten subtests). Six additional
+control-policy/dynamic-audit tests cover the forward policy and cutoff behavior.
+The targeted checks total 75 passing tests (plus ten subtests).
+The candidate-workflow and evaluation fixtures also pin their historical evidence
+conditions rather than assuming the live campaign still ends at Group 8. The dynamic audit discovers Groups 3–9
+in the current live snapshot, reports no failed fits, and explicitly skips a Group 9
+mechanical forecast because there are no preceding comparable force labels.
+Group 10 will enter the audit when its measured outcomes are ingested.
+
+See [the decision guide](readiness_and_gp_decisions.md) for the unchanged Group 10
+formulation list and the distinction between prospective reports and strategy audits.
+
+## Archived endpoint v4 verification — 2026-09-14
 
 Release: `main` at merge commit `3e54384` (from `codex/v2-methodology-group10`). Endpoint: `terminal_force_08mm_after_1N_v1`.
 
-## Current verification
+### Verification recorded at that release
 
 **All 105 tests pass on merged `main`.** `git diff --check` passes. The suite covers historical workflow behavior, endpoint/readiness behavior, hard-stop enforcement, historical dispatch, production cohort separation and data protection. All test outputs use isolated directories; no live artifact is an output of these tests.
 

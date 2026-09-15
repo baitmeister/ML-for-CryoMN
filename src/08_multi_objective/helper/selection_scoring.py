@@ -40,7 +40,7 @@ from .feasibility import (
     ingredient_upper_bound_for_policy,
     policy_activation,
 )
-from .models import EndpointModels, train_endpoint_models
+from .models import EndpointModels, train_endpoint_models, paired_objective_frame
 from .intact_policy import (
     IntactCombinationPolicy,
     annotate_intact_combination_evidence,
@@ -280,7 +280,7 @@ def _mechanics_phase_scores(
     optimization_config: Mapping,
     intact_policy: IntactCombinationPolicy | None = None,
 ) -> tuple[np.ndarray, dict]:
-    train_frame = models.training_frame.copy()
+    train_frame = paired_objective_frame(models.training_frame)
     for objective_column in ["viability_percent", "critical_axial_load_N_per_needle"]:
         if objective_column not in train_frame.columns:
             train_frame[objective_column] = np.nan
@@ -425,7 +425,7 @@ def _continuous_mechanics_candidates(
         metadata["continuous_optimizer_reason"] = "policy inactive or optimizer disabled"
         return candidate_pool.head(0).copy(), metadata
 
-    train_frame = models.training_frame.copy()
+    train_frame = paired_objective_frame(models.training_frame)
     paired = train_frame[
         train_frame.get("viability_percent", pd.Series(index=train_frame.index, dtype=float)).notna()
         & train_frame.get(

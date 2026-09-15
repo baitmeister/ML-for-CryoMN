@@ -802,11 +802,18 @@ def _mechanical_eligibility_mask(
             False,
         )
     )
-    typed_repeat = recommendation.isin(["campaign_control"]) & frame.get("mechanical_repeat_allowed", pd.Series(False, index=frame.index)).fillna(False).astype(bool)
-    repeat_eligible = prior_count.eq(0) | is_anchor | allow_prior | typed_repeat
+    is_viability_control = recommendation.eq("campaign_control") | frame.get(
+        "experimental_role", pd.Series("", index=frame.index)
+    ).eq("campaign_control")
+    historical_mechanical_reference = is_viability_control & frame.get(
+        "mechanical_reference_eligible", pd.Series(False, index=frame.index)
+    ).fillna(False).astype(bool)
+    is_viability_control = is_viability_control & ~historical_mechanical_reference
+    repeat_eligible = prior_count.eq(0) | is_anchor | allow_prior | historical_mechanical_reference
     retest_eligible = ~is_retest | allow_retests
-    mask = repeat_eligible & retest_eligible
+    mask = repeat_eligible & retest_eligible & ~is_viability_control
     return mask, {
+        "viability_control_excluded_count": int(is_viability_control.sum()),
         "prior_mechanics_excluded_count": int((~repeat_eligible).sum()),
         "retest_excluded_count": int((~retest_eligible).sum()),
         "allow_other_prior_mechanical_formulations": allow_prior,

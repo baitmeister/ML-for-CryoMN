@@ -135,12 +135,31 @@ class TerminalForceTests(unittest.TestCase):
         import importlib.util
         spec=importlib.util.spec_from_file_location('readiness',ROOT/'src/08_multi_objective/04_report_campaign/check_group10_readiness.py')
         module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
-        state=module.inspect_readiness(ROOT)
-        self.assertTrue(state['endpoint_code_configured'])
-        self.assertTrue(state['reference']['ready'])
-        self.assertFalse(state['ready_for_group10_wetlab'])
-        self.assertEqual(state['active_worksheet_groups'],['ROUND_009'])
-        self.assertFalse(state['group10_frozen_with_current_endpoint'])
+        import shutil
+        from helper.group10_config import load_group10_config_for_round
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp)
+            shutil.copytree(ROOT/'config_v2',root/'config_v2')
+            source=root/'src/08_multi_objective/helper'; source.mkdir(parents=True)
+            for name in ('terminal_force.py','feedback.py','group10_config.py',
+                         'candidate_workflow.py','group10_selection.py','selection_reporting.py'):
+                shutil.copy2(ROOT/'src/08_multi_objective/helper'/name,source/name)
+            data=root/'data/processed_v2';data.mkdir(parents=True)
+            results=root/'results/multi_objective_v2'
+            (results/'next_round').mkdir(parents=True)
+            pd.DataFrame({'batch_id':['ROUND_008']}).to_csv(data/'observations.csv',index=False)
+            pd.DataFrame({'batch_id':['ROUND_009']}).to_csv(results/'next_round/next_round_candidates.csv',index=False)
+            state=module.inspect_readiness(root)
+            self.assertTrue(state['endpoint_code_configured'])
+            self.assertTrue(state['reference']['ready'])
+            self.assertFalse(state['ready_for_group10_wetlab'])
+            self.assertEqual(state['active_worksheet_groups'],['ROUND_009'])
+            self.assertFalse(state['group10_frozen_with_current_endpoint'])
+            pd.DataFrame({'batch_id':['ROUND_009']}).to_csv(data/'observations.csv',index=False)
+            pd.DataFrame({'batch_id':['ROUND_010']}).to_csv(results/'next_round/next_round_candidates.csv',index=False)
+            proposal=results/'rounds/ROUND_010/proposal';proposal.mkdir(parents=True)
+            (proposal/'selection_metadata.json').write_text(json.dumps({'group10':{'effective_config':load_group10_config_for_round(10)}}))
+            self.assertTrue(module.inspect_readiness(root)['ready_for_group10_wetlab'])
 
     def test_training_and_pareto_never_mix_endpoint_definitions(self):
         rows=[]
@@ -177,6 +196,7 @@ class TerminalForceTests(unittest.TestCase):
     def test_ingestion_dispatch_count_missing_and_legacy_preservation(self):
         forms=pd.read_csv(ROOT/'data/processed_v2/formulations.csv')
         old=pd.read_csv(ROOT/'data/processed_v2/observations.csv')
+        old=old.loc[~old.batch_id.isin(['ROUND_009','ROUND_010'])].copy()
         candidate=forms.iloc[[0]].copy();candidate['experimental_role']='ordinary'
         with tempfile.TemporaryDirectory() as tmp:
             p=Path(tmp)

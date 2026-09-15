@@ -42,7 +42,14 @@ def load_group10_config(path=CONFIG_PATH):
 def load_group10_config_for_round(round_number, path=CONFIG_PATH):
     """Load the contract with a Group 10-specific fail-closed error."""
     try:
-        return load_group10_config(path)
+        config = load_group10_config(path)
+        # Group 10 is already planned under v4. Preserve its exact effective
+        # contract; the user-authorized viability-only allocation starts at 11.
+        if round_number is not None and round_number <= 10 and config['policy_version'] == 'group10_workflow_v5':
+            config = deepcopy(config)
+            config.update(policy_version='group10_workflow_v4', proposal_schema_version=4)
+            config['reference']['mechanical'] = True
+        return config
     except (OSError, KeyError, TypeError, ValueError, yaml.YAMLError) as exc:
         if round_number is not None and round_number >= 10:
             raise Group10HardStop(
@@ -135,16 +142,18 @@ def validate_group10_config(c):
     activation = c.get('activation_round')
     if activation is not None and (type(activation) is not int or activation < 10):
         raise ValueError('Group 10 activation must be null or an integer >= 10')
-    if c.get('policy_version') != 'group10_workflow_v4':
-        raise ValueError('Group 10 requires policy_version=group10_workflow_v4')
-    if c.get('proposal_schema_version') != 4:
-        raise ValueError('Group 10 requires proposal_schema_version=4')
+    versions = {'group10_workflow_v4': 4, 'group10_workflow_v5': 5}
+    if c.get('policy_version') not in versions:
+        raise ValueError('Unknown Group 10 workflow policy')
+    if c.get('proposal_schema_version') != versions[c['policy_version']]:
+        raise ValueError('Group 10 proposal schema must match its workflow policy')
     for k in ['production_model_revision','production_noise_revision']:
         if c.get(k) is not False:
             raise ValueError(k + ' must remain false pending the user decision')
     r=c['reference']
-    if r.get('role') != 'campaign_control' or r.get('mechanical') is not True:
-        raise ValueError('Group 10 reference must be an active mechanical campaign_control')
+    historical = c['policy_version'] == 'group10_workflow_v4'
+    if r.get('role') != 'campaign_control' or r.get('mechanical') is not historical:
+        raise ValueError('Reference must be viability-only (mechanical=false) in workflow v5; v4 is historical')
     if r['dmso_volume_percent'] != 2.5 or r['sucrose_M'] != .1:
         raise ValueError('Reference exception is restricted to 2.5% v/v DMSO + 100 mM sucrose')
     for k in ['density_g_mL','purity_fraction','molecular_weight_g_mol']:
@@ -203,6 +212,9 @@ def assert_group10_can_proceed(c, round_number, observations=None):
         validate_group10_config(c)
     except (KeyError, TypeError, ValueError) as exc:
         blockers.append(str(exc))
+    expected_policy = 'group10_workflow_v4' if round_number == 10 else 'group10_workflow_v5'
+    if c.get('policy_version') != expected_policy:
+        blockers.append('Round requires policy ' + expected_policy)
     if c.get('activation_round') != 10:
         blockers.append('activation_round must be 10 so the reviewed rules are live for Group 10')
     try:
@@ -257,8 +269,6 @@ def production_observations(obs, target_round_number=None, mechanical_definition
         DEFINITION, LEGACY_DEFINITION, MODEL_FIELD, STIFFNESS_MODEL_FIELD,
     )
     result = obs
-    if 'experimental_role' in result:
-        result = result.loc[~result.experimental_role.fillna('').eq('campaign_control')]
     definition = result.get('mechanical_definition_id', pd.Series('', index=result.index)).fillna('')
     selected = mechanical_definition or obs.attrs.get('mechanical_definition_id')
     if target_round_number is not None:
@@ -271,5 +281,38 @@ def production_observations(obs, target_round_number=None, mechanical_definition
         mechanical = result.endpoint.isin([MODEL_FIELD, STIFFNESS_MODEL_FIELD])
         result = result.loc[~mechanical | compatible]
     result = result.copy()
+    if {'experimental_role', 'endpoint'}.issubset(result.columns):
+        control = result.experimental_role.fillna('').eq('campaign_control')
+        mechanical = result.endpoint.isin([MODEL_FIELD, STIFFNESS_MODEL_FIELD])
+        # Preserve same-batch control viability/intact solely as mechanical-pair
+        # context. Different endpoint names keep them out of viability training,
+        # screening selection and ordinary viability metrics, even after filters
+        # are applied repeatedly upstream of phase resolution or acquisition.
+        context = pd.Series(False, index=result.index)
+        if {'formulation_id', 'batch_id', 'value'}.issubset(result.columns):
+            measured = result.endpoint.eq(MODEL_FIELD) & pd.to_numeric(result.value, errors='coerce').map(
+                lambda value: pd.notna(value) and math.isfinite(value))
+            keys = pd.MultiIndex.from_frame(result[['formulation_id', 'batch_id']])
+            measured_keys = pd.MultiIndex.from_frame(result.loc[measured, ['formulation_id', 'batch_id']])
+            context = control & keys.isin(measured_keys) & result.endpoint.isin(PAIR_CONTEXT_ENDPOINTS.values())
+            aliases = {endpoint: alias for alias, endpoint in PAIR_CONTEXT_ENDPOINTS.items()}
+            result.loc[context, 'endpoint'] = result.loc[context, 'endpoint'].map(aliases)
+        retained_context = result.endpoint.isin(PAIR_CONTEXT_ENDPOINTS)
+        result = result.loc[~control | mechanical | context | retained_context].copy()
     result.attrs['mechanical_definition_id'] = selected
+    return result
+
+
+# Internal views only: never written back as acquired measurement endpoints.
+PAIR_CONTEXT_ENDPOINTS = {
+    'mechanical_pair_viability_percent': 'viability_percent',
+    'mechanical_pair_intact_patch_formation_pass': 'intact_patch_formation_pass',
+}
+
+
+def paired_objective_observations(observations):
+    """Expose measured control companions only for mechanical pairing consumers."""
+    result = production_observations(observations)
+    if 'endpoint' in result:
+        result['endpoint'] = result.endpoint.replace(PAIR_CONTEXT_ENDPOINTS)
     return result

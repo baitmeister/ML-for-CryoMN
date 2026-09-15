@@ -200,6 +200,14 @@ def ingest_feedback(
 
     for index, row in feedback.iterrows():
         candidate = _resolve_candidate(row, candidates)
+        reference = (proposal_metadata or {}).get('group10', {}).get('effective_config', {}).get('reference', {})
+        if reference.get('mechanical') is False and candidate.get('experimental_role') == 'campaign_control':
+            mechanical_values = ('instron_file', 'critical_axial_load_N_per_needle',
+                                 'critical_axial_load_N_total', 'initial_stiffness_N_per_mm_per_needle',
+                                 'mechanical_test_id', 'supplementary_analysis_file')
+            attempted = str(row.get('mechanical_test_attempted', '')).strip().lower() in {'true', 'yes', '1', '1.0'}
+            if attempted or any(not _blank(row.get(key)) for key in mechanical_values):
+                raise ValueError('Viability-only reference is ineligible for mechanical testing under workflow v5')
         formulation_id = str(candidate['formulation_id'])
         resolved_rows.append((int(index) + 1, row, candidate, formulation_id))
         if not _blank(row.get('replicate_id')):

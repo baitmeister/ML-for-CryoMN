@@ -63,7 +63,11 @@ def additional_reports(observations, prospective_table, results_root, output_dir
                 if row.candidate_id not in proposal.index:continue
                 r=proposal.loc[row.candidate_id];role=r.get('experimental_role',r.get('recommendation_type',''))
                 status=r.get('viability_prediction_status','unclassified_historical')
-                t.loc[i,'diagnostic_cohort']=role if role in ('campaign_control','screened_hit_mechanics','retest_priority') else str(status)
+                mechanical = row.endpoint in ('critical_axial_load_N_per_needle','initial_stiffness_N_per_mm_per_needle')
+                if mechanical and role == 'campaign_control':
+                    t.loc[i,'diagnostic_cohort']='ordinary_mechanics'
+                else:
+                    t.loc[i,'diagnostic_cohort']=role if role in ('campaign_control','screened_hit_mechanics','retest_priority') else str(status)
         if 'mechanical_definition_id' not in t:
             t['mechanical_definition_id']=''
         t['mechanical_definition_id']=t.mechanical_definition_id.fillna('')

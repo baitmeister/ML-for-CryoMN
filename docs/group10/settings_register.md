@@ -1,6 +1,6 @@
-# Current settings register — workflow v4
+# Current settings register — Group 10 v4 / Group 11+ v5
 
-Updated 2026-09-14. Missing required Group 10 workflow or protocol settings now hard-stop proposal generation and ingestion. Pending application thresholds remain reporting-only and do not disable the reviewed acquisition contract.
+Updated 2026-09-15. Missing required Group 10 workflow or protocol settings now hard-stop proposal generation and ingestion. Pending application thresholds remain reporting-only and do not disable the reviewed acquisition contract.
 
 | Setting | Current value/source | Consequence |
 |---|---|---|
@@ -10,7 +10,7 @@ Updated 2026-09-14. Missing required Group 10 workflow or protocol settings now 
 | Apparent secant stiffness | `(F_terminal-F_trigger)/0.8 mm`, user | Stored in the compatibility stiffness field with terminal-method provenance |
 | Endpoint definition | `terminal_force_08mm_after_1N_v1` | Different definitions cannot share a mechanical training cohort |
 | Mechanical capacity | Four formulations, user | Replicate runs counted separately |
-| Reference | 2.5% v/v DMSO + 100 mM sucrose, user | One screen slot; mechanics conditional on actual intact |
+| Reference | 2.5% v/v DMSO + 100 mM sucrose, user | One viability screen slot; no mechanical rank from Group 11. Frozen Group 10 test retained |
 | DMSO density/purity/MW | 1.10 g/mL / 100% / 78.13 g/mol | Approximately 0.352 M; exact recipe-only domain exception |
 | Base medium | Common throughout campaign, user | No separate setup entry |
 | Reference/candidate replicate numbers | Actual completed CSV records | No advance input required; aggregate means do not reveal hidden replicate counts |
@@ -31,10 +31,25 @@ Updated 2026-09-14. Missing required Group 10 workflow or protocol settings now 
 | Temperature, handling, zeroing, array loading convention | Actual protocol/notes | Cannot reliably fetch from these three measurement columns; no invented values |
 | Optional replicate/test/cell-batch IDs | Actual result rows, when available | No independent-preparation requirement; unknown history stays unknown |
 | Confirmation feature | Removed, user | No cadence or batch-count setup |
-| Batch adjustment/control normalization | Inactive | Raw monitoring; evidence and later decision required |
+| Batch adjustment/control normalization | Inactive | Viability-only reference monitoring; no mechanical control or force normalization |
 | Candidate/random seed | 42, software | Frozen reproducibility; does not alter raw endpoint calculation |
 | Adaptive noise audit assumptions | Floor 1, fallback 5 viability points, shrinkage 4 degrees | Offline only; unchanged production noise |
 
 Density source: [Sigma-Aldrich DMSO 276855](https://www.sigmaaldrich.com/US/en/product/sial/276855), recorded in this project on 2026-09-08. The value is a literature preparation conversion, not a lot-specific measurement. Purity 100% is user supplied. Final-volume basis: 2.5 mL neat DMSO in 100 mL final formulation. Sucrose is an existing model feature.
 
 The remaining decision inputs are the application thresholds and the future GP/noise/acquisition methodology. Experimental metadata such as raw file, loaded count and actual replicas comes from the completed round CSV. Thermal history cannot be reconstructed from force/displacement/time alone.
+
+Decision timing and the unchanged Group 10 mechanical list: [readiness and GP decisions](readiness_and_gp_decisions.md).
+
+
+### Group 10 mechanical evidence clarification
+
+The DMSO/sucrose row is a viability control only. Its valid Group 10 mechanical
+result and measured same-batch viability/intact companions count as an ordinary
+mechanical pair for phase progression, paired acquisition and observed trade-offs.
+Control viability remains outside standalone viability-GP training/ordinary viability
+metrics. Four valid Group 10 pairs plus four Group 9 pairs yield **8 pairs / 8
+formulations / 2 batches**, meeting the unchanged hybrid gate for Group 11.
+Group 10's planned tests stay unchanged; Group 11+ allocates no mechanical rank
+to the recurring viability reference. Technical replicates still aggregate within
+formulation/batch and do not inflate gate counts.

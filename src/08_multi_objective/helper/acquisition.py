@@ -164,7 +164,10 @@ def try_botorch_optimize_qlognehvi(
         lower = np.asarray(lower_bounds, dtype=float)
         upper = np.asarray(upper_bounds, dtype=float)
         ranges = np.maximum(upper - lower, 1e-12)
-        train_scaled = np.clip((train_x - lower) / ranges, 0.0, 1.0)
+        # Measured recipes may lie outside the proposal domain (the Group 10
+        # DMSO reference). Preserve their actual coordinates; only new candidate
+        # search is bounded to the ordinary formulation domain.
+        train_scaled = (train_x - lower) / ranges
 
         train_X = torch.tensor(train_scaled, dtype=torch.double)
         train_Y = torch.tensor(train_y, dtype=torch.double)

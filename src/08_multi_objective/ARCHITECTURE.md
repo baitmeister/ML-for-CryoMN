@@ -186,8 +186,10 @@ Stage 2 applies `group10_selection.apply_group10` to proposals at or after the
 configured activation group and freezes the effective settings with each proposal.
 Group 9 retains its original proposal CSV and metadata, while a hash-bound endpoint
 addendum applies the reviewed terminal method at validation/ingestion. `group10_config`
-selects comparable mechanical definitions and excludes reference observations from
-production training.
+selects comparable mechanical definitions and excludes control viability from
+production viability training. Comparable mechanics already measured on that recipe
+remain ordinary mechanical evidence. Workflow v5 starts at Group 11 and excludes
+the viability reference from all mechanical ranks; frozen Group 10 v4 is preserved.
 
 `terminal_force` extracts force at +0.8 mm after the sustained 1 N trigger from
 raw Instron files. Stage 3 dispatches using frozen proposal settings, stores total
@@ -205,3 +207,16 @@ strength under the terminal-force definition.
 explicit offline/diagnostic components. Production acquisition does not import
 them. See `docs/group10/changes_and_handoff.md` for implementation decisions and
 activation boundaries.
+
+
+### Group 10 mechanical evidence clarification
+
+The DMSO/sucrose row is a viability control only. Its valid Group 10 mechanical
+result and measured same-batch viability/intact companions count as an ordinary
+mechanical pair for phase progression, paired acquisition and observed trade-offs.
+Control viability remains outside standalone viability-GP training/ordinary viability
+metrics. Four valid Group 10 pairs plus four Group 9 pairs yield **8 pairs / 8
+formulations / 2 batches**, meeting the unchanged hybrid gate for Group 11.
+Group 10's planned tests stay unchanged; Group 11+ allocates no mechanical rank
+to the recurring viability reference. Technical replicates still aggregate within
+formulation/batch and do not inflate gate counts.

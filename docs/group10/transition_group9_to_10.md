@@ -26,3 +26,24 @@ The round update verifies that the frozen settings are complete and match the li
 ## Before the first full-mechanics proposal
 
 Review the existing model/noise/acquisition audit and explicitly choose any GP methodology change. Phase entry alone does not perform that switch. The endpoint decision has already been made for Group 10 and is independent of this later modeling decision. Mechanical phase gates count comparable paired evidence; retaining the old labels in the archive does not make them comparable to the new endpoint.
+
+
+## Group 11 viability-only reference clarification (2026-09-15)
+
+Group 10 remains unchanged at the user's request. From Group 11, workflow v5/schema 5
+retains the reference for viability only and allocates no mechanical rank to it.
+There is no mechanical control or reference-based force normalization. Already measured
+comparable mechanics remain endpoint evidence. See [the current guide](readiness_and_gp_decisions.md).
+
+
+### Group 10 mechanical evidence clarification
+
+The DMSO/sucrose row is a viability control only. Its valid Group 10 mechanical
+result and measured same-batch viability/intact companions count as an ordinary
+mechanical pair for phase progression, paired acquisition and observed trade-offs.
+Control viability remains outside standalone viability-GP training/ordinary viability
+metrics. Four valid Group 10 pairs plus four Group 9 pairs yield **8 pairs / 8
+formulations / 2 batches**, meeting the unchanged hybrid gate for Group 11.
+Group 10's planned tests stay unchanged; Group 11+ allocates no mechanical rank
+to the recurring viability reference. Technical replicates still aggregate within
+formulation/batch and do not inflate gate counts.

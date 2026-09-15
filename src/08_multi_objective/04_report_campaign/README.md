@@ -63,3 +63,22 @@ creates the next proposal. Use this CLI only to refresh or backfill reports.
 ## Selected plotting suite
 
 See [plotting documentation](PLOTTING.md) for A/B1/C3/D, the two diagnostic sheets, optional E, transparent PNG exports, and safe rendering-only backfill.
+
+
+## Dynamic GP-strategy audit (separate from staged prospective reports)
+
+`audit_group10.py` refits alternative strategies at preceding training cutoffs;
+`report_campaign.py` evaluates frozen production predictions without refitting.
+The audit discovers observed rounds and available frozen proposals automatically,
+starting at Group 3 by default. Viability and mechanical definitions are evaluated
+separately; insufficient training is recorded as skipped evidence.
+
+```sh
+python3 src/08_multi_objective/04_report_campaign/audit_group10.py \
+  --output-dir /private/tmp/cryomn-gp-audit-new
+```
+
+Use a new empty directory. Optional `--start-round`, `--end-round`, and `--endpoints`
+restrict the comparison. This never promotes a strategy or rewrites production data.
+It is a retrospective forward refit, not a frozen prospective challenger trial.
+See [decision guidance](../../../docs/group10/readiness_and_gp_decisions.md).

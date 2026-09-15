@@ -4,7 +4,7 @@ import sys,tempfile,unittest,json
 import numpy as np
 import pandas as pd
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src/08_multi_objective'))
-from helper.group10_config import Group10HardStop,assert_group10_can_proceed,load_group10_config,validate_group10_config,reference_readiness,production_observations
+from helper.group10_config import Group10HardStop,assert_group10_can_proceed,load_group10_config,load_group10_config_for_round,validate_group10_config,reference_readiness,production_observations
 from helper.acceptance import assess_acceptance
 from helper.mechanical_events import analyze_curve
 from helper.observation_noise import estimate_noise
@@ -15,7 +15,7 @@ from helper.models import build_training_frame
 
 class Group10Tests(unittest.TestCase):
     def setUp(self):
-        self.c=load_group10_config()
+        self.c=load_group10_config_for_round(10)
         self.e={'definition_id':'supported_load_1mm_v1','detector_version':'force_drop_v1','supplementary_only':True,
             'displacement_limit_mm':1.,'relative_drop':.1,'force_unit':'N','displacement_unit':'mm','smoothing':'none','protocol_id':'test','test_mode':'single_needle',
             'contact_force_N':.1,'baseline_points':1,'absolute_drop_N':.01,'drop_window_mm':.25,
@@ -127,7 +127,8 @@ class Group10Tests(unittest.TestCase):
             new=updated[updated.batch_id=='ROUND_010']
             self.assertEqual(new.loc[new.endpoint=='supported_axial_load_1mm_N_per_needle','value'].iloc[0],1)
             self.assertEqual(new.loc[new.endpoint=='critical_axial_load_N_per_needle','value'].iloc[0],4)
-            self.assertTrue(production_observations(new).empty)
+            self.assertFalse(production_observations(new).endpoint.eq('viability_percent').any())
+            self.assertTrue(production_observations(new).endpoint.eq('critical_axial_load_N_per_needle').any())
             analysis_path=td/'analysis/mechanical_analysis.json'
             analysis=json.loads(analysis_path.read_text());analysis['endpoint_N_total']=9
             analysis_path.write_text(json.dumps(analysis))
