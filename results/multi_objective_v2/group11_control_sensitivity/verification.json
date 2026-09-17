@@ -1,0 +1,11 @@
+{
+  "protected_files_unchanged": 138,
+  "official_candidates": 12,
+  "mechanical_primaries": 4,
+  "control_mechanical_slot": false,
+  "mechanical_max_numerical_difference_N_per_needle": 4.055163184690791e-07,
+  "mechanical_tolerance_N_per_needle": 1e-06,
+  "viability_acquisition_parity": true,
+  "frozen_alternatives_match_slate": true,
+  "training_cutoff": 10
+}

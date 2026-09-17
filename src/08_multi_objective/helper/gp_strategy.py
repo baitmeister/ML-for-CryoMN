@@ -24,6 +24,11 @@ def validate_decision(path,round_number):
     expected='current_paired_qlognehvi' if d['viability_strategy']=='current' else 'shared_qlognehvi_finite_pool'
     if d['acquisition']!=expected:raise StrategyDecisionRequired('GP and acquisition configuration mismatch')
     if d['acceptance_thresholds'] not in ({},None):raise StrategyDecisionRequired('New selection thresholds need explicit policy implementation; use null for no new threshold')
+    exception=d.get('sparse_control_exception')
+    if exception is not None and exception != {'authorized': True, 'round': 11, 'minimum_control_batches': 1}:
+        raise StrategyDecisionRequired('Invalid sparse-control exception')
+    if d.get('control_reference_sd_pp',50.) != 50.:
+        raise StrategyDecisionRequired('Production control baseline prior must remain 50 percentage points')
     d['sha256']=hashlib.sha256(Path(path).read_bytes()).hexdigest()
     return d
 
@@ -43,10 +48,10 @@ def viability_rows(forms,obs,features,campaign=True):
     return rows.merge(forms[['formulation_id']+list(features)].drop_duplicates('formulation_id'),on='formulation_id',validate='many_to_one')
 
 
-def fit_viability(forms,obs,features,strategy):
+def fit_viability(forms,obs,features,strategy,reference_sd=50.):
     rows=viability_rows(forms,obs,features,campaign=strategy!='current')
     model=BatchGP.fit(rows[features].to_numpy(float),rows.value.to_numpy(),rows.batch_id.to_numpy(),
-        rows.is_control.to_numpy(),strategy=strategy,noise=rows.noise.to_numpy())
+        rows.is_control.to_numpy(),strategy=strategy,noise=rows.noise.to_numpy(),reference_sd=reference_sd)
     return model
 
 
@@ -57,8 +62,8 @@ def install_strategy(endpoint_models,forms,obs,registry,config):
     strategy=decision['viability_strategy']
     raw=(config or {}).get('_gp_raw_observations',obs)
     v=fit_viability(forms,raw,registry.feature_names,strategy)
-    if strategy=='control' and v.calibration_status!='supported by repeated reference batches':
-        raise StrategyDecisionRequired('Control calibration has fewer than two historical control batches; select another supported strategy or collect ordinary scheduled evidence.')
+    if strategy=='control':
+        check_control_history(v,decision,config.get('_gp_target_round'))
     # Reconstruct the Current GP mechanical posterior exactly (no force noise floor added).
     frame=endpoint_models.training_frame
     target='critical_axial_load_N_per_needle'
@@ -96,3 +101,11 @@ def snapshot_current(surrogate,x,y,batches):
         scaler.mean_.copy(),scaler.scale_.copy(),float(gp._y_train_mean),float(gp._y_train_std),
         0.,0.,np.broadcast_to(np.asarray(gp.alpha,float),(n,)).copy()*float(gp._y_train_std)**2,strategy='current')
     m.refresh();return m
+
+
+def check_control_history(model,decision,target_round):
+    count=len(np.unique(model.batches[model.controls]))
+    if count>=2:return
+    exception=decision.get('sparse_control_exception',{})
+    if (count==1 and target_round==11 and exception=={'authorized':True,'round':11,'minimum_control_batches':1}):return
+    raise StrategyDecisionRequired('Control-informed GP requires two historical control batches, or the explicit Group 11 single-batch exception.')

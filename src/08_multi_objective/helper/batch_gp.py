@@ -17,7 +17,7 @@ NAMES = {
  'campaign': 'Proposed GP — campaign-only',
  'campaign_noise': 'Proposed GP — campaign-only + fitted residual noise (matched comparison)',
  'batch': 'Proposed GP — campaign-only + batch effect',
- 'control': 'Proposed GP — campaign-only + batch effect + control calibration',
+ 'control': 'Proposed GP — campaign-only + batch effect, informed by viability controls',
 }
 
 def matern(a,b):
@@ -43,7 +43,7 @@ class BatchGP:
     future_noise_variance: float | None = None
 
     @classmethod
-    def fit(cls,x,y,batches,controls=None,strategy='batch',noise=None):
+    def fit(cls,x,y,batches,controls=None,strategy='batch',noise=None,reference_sd=50.):
         x=np.asarray(x,float);y=np.asarray(y,float);batches=np.asarray(batches,str)
         c=np.zeros(len(y),bool) if controls is None else np.asarray(controls,bool)
         if strategy!='control':
@@ -57,7 +57,7 @@ class BatchGP:
         amp=max(float(y[ordinary].std()),1.)
         sd=np.ones(len(y)) if noise is None else np.asarray(noise,float)
         sd=np.where(np.isfinite(sd)&(sd>0),sd,amp)
-        model=cls(x,y,batches,c,center,scale,float(y[ordinary].mean()),amp,0.,0.,sd**2,strategy=strategy)
+        model=cls(x,y,batches,c,center,scale,float(y[ordinary].mean()),amp,0.,0.,sd**2,strategy=strategy,reference_sd=float(reference_sd))
         if strategy in ('batch','control','campaign_noise'):
             # Fit one total residual SD; do not double count recorded per-row noise.
             model.known_variance=np.zeros(len(y))

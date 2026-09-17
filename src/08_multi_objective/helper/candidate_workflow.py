@@ -120,6 +120,7 @@ def run_candidate_selection(
             if old['decision_id'] == decision['decision_id'] and old['sha256'] != decision['sha256']:
                 raise StrategyDecisionRequired('Changed configuration requires a new decision_id')
         optimization_config['gp_strategy_decision'] = decision
+        optimization_config['_gp_target_round'] = target_round_number
         optimization_config['_gp_raw_observations'] = observations.copy()
     group10_config = load_group10_config_for_round(target_round_number)
     assert_group10_can_proceed(group10_config, target_round_number, observations)
@@ -280,6 +281,11 @@ def run_candidate_selection(
             raise SystemExit(
                 "Candidate pool is empty after applying formulation-similarity rules."
             )
+
+    if target_round_number == 11 and optimization_config.get('gp_strategy_decision',{}).get('sparse_control_exception'):
+        from .control_sensitivity import check_sensitivity
+        check_sensitivity(formulations, observations, candidate_pool, registry, optimization_config,
+                          Path(options.output_dir).parent / 'group11_control_sensitivity')
 
     result = select_next_round(
         formulations=formulations,

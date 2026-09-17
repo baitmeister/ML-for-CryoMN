@@ -2,7 +2,7 @@
   "status_version": 2,
   "source_of_truth": "observations_csv",
   "source_observations_path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/processed_v2/observations.csv",
-  "generated_at_utc": "2026-09-17T07:37:39.729328+00:00",
+  "generated_at_utc": "2026-09-17T11:01:47.232057+00:00",
   "latest_observed_round_id": "ROUND_010",
   "latest_observed_round_number": 10,
   "next_round_id": "ROUND_011",
@@ -39,7 +39,7 @@
     "full_gate_met": false,
     "bootstrap_batch_index": 3,
     "transition_policy_version": "mechanics_transition_v1",
-    "target_proposal_round": null,
+    "target_proposal_round": 11,
     "minimum_completed_screening_rounds": 8,
     "bootstrap_gate": {
       "min_paired_observations": 8,
@@ -77,8 +77,119 @@
     "reason": "auto-selected mechanics_hybrid: hybrid_gate met; full_gate paired_observations=8/16, distinct_formulations=8/12, batches=2/3",
     "override_used": false
   },
-  "proposal_policy": {},
-  "proposed_batch_id": "",
-  "proposed_batch_override_used": false,
-  "proposed_batch_matches_next_round": null
+  "proposal_policy": {
+    "mechanics_transition": {
+      "policy_version": "mechanics_transition_v1",
+      "anchor_selection": {
+        "enabled": false,
+        "selected": false,
+        "reason": "Group 11+ uses four experimental mechanical slots; the reference is viability-only and no mechanical anchor is reserved"
+      }
+    },
+    "mechanical_policy": {
+      "mechanical_selection_mode": "hybrid_2qlognehvi_1local_1coverage_with_actual_intact_backups",
+      "mechanical_observation_count": 8,
+      "intact_probability_threshold": 0.5,
+      "intact_probability_threshold_role": "compatibility_only_not_applied",
+      "pass_pool_size": 9,
+      "mechanically_ineligible_count": 3,
+      "primary_mechanical_capacity": 4,
+      "primary_recommendation_count": 4,
+      "backup_count": 5,
+      "actual_intact_backup_rule": "test the first ranked rows that actually pass intact until primary_mechanical_capacity is reached; unranked rows are ineligible",
+      "botorch_available": true,
+      "active_phase": "mechanics_hybrid",
+      "classifier_probability_selection_role": "diagnostic_only",
+      "eligibility": {
+        "viability_control_excluded_count": 1,
+        "prior_mechanics_excluded_count": 1,
+        "retest_excluded_count": 2,
+        "allow_other_prior_mechanical_formulations": false,
+        "allow_retest_priority_for_mechanics": false
+      },
+      "transition_allocation": {
+        "qlognehvi_slots": 2,
+        "local_slots": 1,
+        "coverage_slots": 1,
+        "role_fallbacks": []
+      },
+      "anchor": {
+        "selected": false,
+        "formulation_id": "",
+        "source_batch_id": "",
+        "selection_score": null
+      },
+      "botorch_metadata": {
+        "backend": "shared_formulation_posterior",
+        "strategy": "control"
+      }
+    },
+    "continuous_qlognehvi": {
+      "continuous_optimizer_enabled": false,
+      "continuous_optimizer_used": false,
+      "continuous_optimizer_fallback": true,
+      "continuous_optimizer_reason": "Recorded strategy uses shared-model finite-pool qLogNEHVI"
+    },
+    "optimizer_mode": "hybrid_finite_pool_fallback",
+    "optimizer_fallback_status": "used",
+    "ranked_candidates": [
+      {
+        "candidate_id": "followup_v2_430e18c49d10",
+        "mechanical_selection_rank": 1,
+        "mechanical_transition_role": "screened_hit_mechanics",
+        "mechanical_backup_status": "primary"
+      },
+      {
+        "candidate_id": "cand_000002",
+        "mechanical_selection_rank": 2,
+        "mechanical_transition_role": "hybrid_qlognehvi",
+        "mechanical_backup_status": "primary"
+      },
+      {
+        "candidate_id": "rescue_000012",
+        "mechanical_selection_rank": 3,
+        "mechanical_transition_role": "hybrid_qlognehvi",
+        "mechanical_backup_status": "primary"
+      },
+      {
+        "candidate_id": "cand_000586",
+        "mechanical_selection_rank": 4,
+        "mechanical_transition_role": "hybrid_local",
+        "mechanical_backup_status": "primary"
+      },
+      {
+        "candidate_id": "cand_000153",
+        "mechanical_selection_rank": 5,
+        "mechanical_transition_role": "ordered_backup",
+        "mechanical_backup_status": "ordered_backup"
+      },
+      {
+        "candidate_id": "cand_000016",
+        "mechanical_selection_rank": 6,
+        "mechanical_transition_role": "ordered_backup",
+        "mechanical_backup_status": "ordered_backup"
+      },
+      {
+        "candidate_id": "cand_000095",
+        "mechanical_selection_rank": 7,
+        "mechanical_transition_role": "ordered_backup",
+        "mechanical_backup_status": "ordered_backup"
+      },
+      {
+        "candidate_id": "cand_000072",
+        "mechanical_selection_rank": 8,
+        "mechanical_transition_role": "ordered_backup",
+        "mechanical_backup_status": "ordered_backup"
+      },
+      {
+        "candidate_id": "cand_000350",
+        "mechanical_selection_rank": 9,
+        "mechanical_transition_role": "ordered_backup",
+        "mechanical_backup_status": "ordered_backup"
+      }
+    ]
+  },
+  "proposed_batch_id": "ROUND_011",
+  "proposed_batch_override_used": true,
+  "proposed_batch_matches_next_round": true
 }
