@@ -1,0 +1,9 @@
+{
+  "scope": "Groups 1\u201310; historical and frozen evidence kept separate",
+  "inputs": {
+    "docs/group10/audit/campaign_through_group10_20260917/historical_groups1_9/metrics.csv": "aa85e7ffb5fecb988880a0144ee6878c6863712c2f12937c34564808ad4caf78",
+    "docs/group10/audit/campaign_through_group10_20260917/historical_groups1_9/manifest.json": "48697f26bbe78791fcf19f0e34c7d995932948f3eccb87d59df77aecc9a25b14",
+    "results/multi_objective_v2/rounds/ROUND_010/reports/gp_comparison/metrics.csv": "09221a31379c34987cba8ed29e56d4c0c3cac09e129cfbb7d94ec34c4aa6ddec",
+    "results/multi_objective_v2/rounds/ROUND_010/reports/gp_comparison/manifest.json": "5723f5d3990047d5015521b8f900abf4c1473d2a17c09df2e1f295a6e5178310"
+  }
+}

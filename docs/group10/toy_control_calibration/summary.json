@@ -1,0 +1,45 @@
+{
+  "synthetic_only": true,
+  "models": {
+    "batch": {
+      "batch_sd": 9.209764049618958,
+      "residual_sd": 1.045570682886115
+    },
+    "control": {
+      "batch_sd": 9.391336293043953,
+      "residual_sd": 1.075788522325139
+    }
+  },
+  "conditioned_batch_offset": [
+    {
+      "batch_id": "TOY_NEW",
+      "offset": -15.359195017667421,
+      "sd": 3.4618682165929404,
+      "controls": 1,
+      "ordinary": 0
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario": "Shared batch shift: calibration helps",
+      "stage": "before",
+      "mae": 18.552584917612027
+    },
+    {
+      "scenario": "Shared batch shift: calibration helps",
+      "stage": "after",
+      "mae": 1.0143034702723384
+    },
+    {
+      "scenario": "Control-only assay error: calibration misleads",
+      "stage": "before",
+      "mae": 0.5525849176120268
+    },
+    {
+      "scenario": "Control-only assay error: calibration misleads",
+      "stage": "after",
+      "mae": 16.98569652972766
+    }
+  ],
+  "mechanical_posterior_unchanged": true
+}

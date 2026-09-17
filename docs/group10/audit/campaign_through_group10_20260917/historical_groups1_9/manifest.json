@@ -1,0 +1,86 @@
+{
+  "version": "batch_gp_v1",
+  "stage": "historical_forward_refit",
+  "start": 1,
+  "end": 9,
+  "fit_errors": [
+    {
+      "batch_id": "ROUND_001",
+      "strategy": "campaign",
+      "reason": "At least two finite ordinary labels required"
+    },
+    {
+      "batch_id": "ROUND_001",
+      "strategy": "campaign_noise",
+      "reason": "At least two finite ordinary labels required"
+    },
+    {
+      "batch_id": "ROUND_001",
+      "strategy": "batch",
+      "reason": "At least two finite ordinary labels required"
+    },
+    {
+      "batch_id": "ROUND_001",
+      "strategy": "control",
+      "reason": "At least two finite ordinary labels required"
+    }
+  ],
+  "slate_sources": [
+    {
+      "batch_id": "ROUND_001",
+      "path": "results/multi_objective_v2/rounds/ROUND_001/proposal/proposal_reconstructed.csv",
+      "sha256": "823accdc9da2e9590f4ef0b07ea19046898f24877eac531c3be36bbb7b6d1eda",
+      "reconstructed": true
+    },
+    {
+      "batch_id": "ROUND_002",
+      "path": "results/multi_objective_v2/rounds/ROUND_002/proposal/proposal.csv",
+      "sha256": "baeb6f805826f3bc45887978dceb7d53a1d041ffc391d6824ea3ba80f5af359b",
+      "reconstructed": false
+    },
+    {
+      "batch_id": "ROUND_003",
+      "path": "results/multi_objective_v2/rounds/ROUND_003/proposal/proposal.csv",
+      "sha256": "5d653b12dece1ff6efef09ba6a5772a821f4efda938c0a96edfc05ab340d706c",
+      "reconstructed": false
+    },
+    {
+      "batch_id": "ROUND_004",
+      "path": "results/multi_objective_v2/rounds/ROUND_004/proposal/proposal.csv",
+      "sha256": "0ed4a6f10b411521cf61b63ac06661036ecd9148392c338f98605c10680841e7",
+      "reconstructed": false
+    },
+    {
+      "batch_id": "ROUND_005",
+      "path": "results/multi_objective_v2/rounds/ROUND_005/proposal/proposal.csv",
+      "sha256": "56dd84af6706581c65610a451e0314bae15fa4fdcc61523715d8629f169c9cdf",
+      "reconstructed": false
+    },
+    {
+      "batch_id": "ROUND_006",
+      "path": "results/multi_objective_v2/rounds/ROUND_006/proposal/proposal.csv",
+      "sha256": "0d95d8abde6178e483ace84f6156fe7f5201e0326d2b4928a05c2a38a956893f",
+      "reconstructed": false
+    },
+    {
+      "batch_id": "ROUND_007",
+      "path": "results/multi_objective_v2/rounds/ROUND_007/proposal/proposal.csv",
+      "sha256": "12f70a40ce417cd6a0ae5d24238821077c69f26a1ce7368e5af7999d2f412a7e",
+      "reconstructed": false
+    },
+    {
+      "batch_id": "ROUND_008",
+      "path": "results/multi_objective_v2/rounds/ROUND_008/proposal/proposal.csv",
+      "sha256": "ce6c5e5f7d6e75e45183ff2d4d7ba540d0ca544451553136475258fa08da1c10",
+      "reconstructed": false
+    },
+    {
+      "batch_id": "ROUND_009",
+      "path": "results/multi_objective_v2/rounds/ROUND_009/proposal/proposal.csv",
+      "sha256": "658fd5fd00414e2c373d90e5f05bf4a8897458ebf8c14002ab15818f34f06132",
+      "reconstructed": false
+    }
+  ],
+  "observations_sha256": "a7a5ce429c7c4247ad803c546a1d5c35392bac5aab57d2c2feb08fedc7b51e48",
+  "assumptions": "Empirical Bayes; fixed formulation kernel; parameter uncertainty not integrated"
+}

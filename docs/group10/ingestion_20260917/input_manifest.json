@@ -1,0 +1,86 @@
+{
+  "files": [
+    {
+      "source": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group10/Group10_1.csv",
+      "archive": "data/raw/instron/ROUND_010/Group10_1.csv",
+      "sha256": "f26ef65ee280620396c41a50b010791658f78b8e720fd552cccaac2c4dbba318"
+    },
+    {
+      "source": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group10/Group10_2.csv",
+      "archive": "data/raw/instron/ROUND_010/Group10_2.csv",
+      "sha256": "5d9e599272f7debe42d9faf9ee68c67cbef8ead7fd12696dab2dccbe9a164d6a"
+    },
+    {
+      "source": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group10/Group10_3.csv",
+      "archive": "data/raw/instron/ROUND_010/Group10_3.csv",
+      "sha256": "559489fd2804c5ba4ed5831c315843f0cb38bd6f0cee9a46064a8925e6f4a0ab"
+    },
+    {
+      "source": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group10/Group10_4.csv",
+      "archive": "data/raw/instron/ROUND_010/Group10_4.csv",
+      "sha256": "694e94943eba5ec86f88e0f45b9a3be0ea739723f70d5cd41dfd57894d84bdea"
+    },
+    {
+      "source": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group10/Group10_5.csv",
+      "archive": "data/raw/instron/ROUND_010/Group10_5.csv",
+      "sha256": "876a82dbf67375c031869ee285b46f05282b359882d403184d86d48008dd2714"
+    },
+    {
+      "source": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group10/Group10_6.csv",
+      "archive": "data/raw/instron/ROUND_010/Group10_6.csv",
+      "sha256": "8703516edff364de7eff194680423f3411938d78165d9731209dc23172196649"
+    },
+    {
+      "source": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group10/Group10_7.csv",
+      "archive": "data/raw/instron/ROUND_010/Group10_7.csv",
+      "sha256": "690f83f9bda335bef418db54d015978cdaf4146ad90eb1032d625ae0dd41ebfa"
+    },
+    {
+      "source": "/Users/doggonebastard/Documents/City U/Research/ML for Cryo Formulation/Multi-objective/Group10/viability.csv",
+      "archive": "data/raw/viability/ROUND_010/viability.csv",
+      "sha256": "96eeeb50075515c05ba40c612d8a322536bc70ecff54b46fd5734dbdcd05ddd2"
+    }
+  ],
+  "mechanical_mapping": [
+    {
+      "file": "Group10_1.csv",
+      "selection_rank": 1,
+      "replicate": 1
+    },
+    {
+      "file": "Group10_2.csv",
+      "selection_rank": 2,
+      "replicate": 1
+    },
+    {
+      "file": "Group10_3.csv",
+      "selection_rank": 6,
+      "replicate": 1
+    },
+    {
+      "file": "Group10_4.csv",
+      "selection_rank": 7,
+      "replicate": 1
+    },
+    {
+      "file": "Group10_5.csv",
+      "selection_rank": 1,
+      "replicate": 2
+    },
+    {
+      "file": "Group10_6.csv",
+      "selection_rank": 2,
+      "replicate": 2
+    },
+    {
+      "file": "Group10_7.csv",
+      "selection_rank": 6,
+      "replicate": 2
+    }
+  ],
+  "all_intact_pass": "user-confirmed",
+  "needle_counts": {
+    "all_seven_tests": 100,
+    "source": "explicit user confirmation"
+  }
+}

@@ -181,14 +181,20 @@ def evaluate(frozen,obs,output):
     render(output);return output
 
 
-def audit(root,output,start=3,end=9):
+def audit(root,output,start=1,end=None):
     root=Path(root);output=Path(output)
     if output.exists():raise FileExistsError('Audit output already exists')
     forms,obs,registry=load_inputs(root);numbers=round_numbers(obs)
-    records=[];offsets=[];errors=[]
+    if end is None:end=int(numbers.max())
+    records=[];offsets=[];errors=[];slate_sources=[]
     for n in range(start,end+1):
         batch=f'ROUND_{n:03d}';path=root/f'results/multi_objective_v2/rounds/{batch}/proposal/proposal.csv'
-        if not path.exists() or not numbers.eq(n).any():continue
+        if not path.exists():
+            path=path.with_name('proposal_reconstructed.csv')
+        if not path.exists() or not numbers.eq(n).any():
+            errors.append({'batch_id':batch,'strategy':'all','reason':'Missing slate or outcomes'})
+            continue
+        slate_sources.append({'batch_id':batch,'path':str(path.relative_to(root)),'sha256':digest(path),'reconstructed':path.name=='proposal_reconstructed.csv'})
         slate=pd.read_csv(path).drop_duplicates('formulation_id')
         prior=obs.loc[numbers.lt(n)|numbers.isna()]
         models,failures=fit_models(forms,prior,registry);errors.extend([{'batch_id':batch,**e} for e in failures])
@@ -197,7 +203,7 @@ def audit(root,output,start=3,end=9):
         records.extend(rows);offsets.extend(off)
     output.mkdir(parents=True);pd.DataFrame(records).to_csv(output/'predictions.csv',index=False)
     pd.DataFrame(offsets).to_csv(output/'offsets.csv',index=False)
-    (output/'manifest.json').write_text(json.dumps(dict(version=VERSION,stage='historical_forward_refit',start=start,end=end,fit_errors=errors,
+    (output/'manifest.json').write_text(json.dumps(dict(version=VERSION,stage='historical_forward_refit',start=start,end=end,fit_errors=errors,slate_sources=slate_sources,
         observations_sha256=digest(root/'data/processed_v2/observations.csv'),assumptions='Empirical Bayes; fixed formulation kernel; parameter uncertainty not integrated'),indent=2))
     from .gp_comparison_plots import render
     render(output);return output

@@ -1,0 +1,49 @@
+CryoMN v2 Round Review Summary
+==============================
+
+Review label: state_after_ingest_ROUND_010
+Formulation rows: 411
+Observation rows: 965
+Candidate worksheet rows: 67
+Unique candidates: 12
+Retest-priority candidates in current slate: 2
+Formulations with observed viability: 410
+Formulations with observed critical load: 8
+Formulations with observed intact-patch gate: 106
+
+Generated files:
+- best_performers_summary.txt
+- model_evaluation_table.csv
+- observed_tradeoff.png
+- observed_tradeoff_source.csv
+- observed_tradeoff_metadata.json
+- mechanical_trace_formulation_1_mechanical_002.png
+- mechanical_trace_formulation_1_mechanical_002_source.csv
+- mechanical_trace_formulation_1_mechanical_002_metadata.json
+- mechanical_trace_formulation_2_mechanical_001.png
+- mechanical_trace_formulation_2_mechanical_001_source.csv
+- mechanical_trace_formulation_2_mechanical_001_metadata.json
+- mechanical_trace_formulation_2_mechanical_002.png
+- mechanical_trace_formulation_2_mechanical_002_source.csv
+- mechanical_trace_formulation_2_mechanical_002_metadata.json
+- mechanical_trace_formulation_6_mechanical_001.png
+- mechanical_trace_formulation_6_mechanical_001_source.csv
+- mechanical_trace_formulation_6_mechanical_001_metadata.json
+- mechanical_trace_formulation_6_mechanical_002.png
+- mechanical_trace_formulation_6_mechanical_002_source.csv
+- mechanical_trace_formulation_6_mechanical_002_metadata.json
+- mechanical_trace_formulation_7_mechanical_001.png
+- mechanical_trace_formulation_7_mechanical_001_source.csv
+- mechanical_trace_formulation_7_mechanical_001_metadata.json
+- mechanical_summary.png
+- mechanical_summary_source.csv
+- mechanical_summary_metadata.json
+- diagnostics_1.png
+- diagnostics_1_source.csv
+- diagnostics_1_metadata.json
+- diagnostics_2.png
+- diagnostics_2_source.csv
+- diagnostics_2_metadata.json
+
+Reader note:
+This review snapshot captures one specific state of the round workflow.

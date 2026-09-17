@@ -13,7 +13,7 @@ def main():
     p.add_argument('--root',type=Path,default=Path(__file__).resolve().parents[3])
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--batch',default='ROUND_010');p.add_argument('--frozen',type=Path)
-    p.add_argument('--start',type=int,default=3);p.add_argument('--end',type=int,default=9)
+    p.add_argument('--start',type=int,default=1);p.add_argument('--end',type=int,default=None,help='Latest ingested Group when omitted; retrospective audit only')
     a=p.parse_args()
     if a.mode=='audit':audit(a.root,a.output,a.start,a.end)
     elif a.mode=='freeze':freeze(a.root,a.batch,a.output)

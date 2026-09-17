@@ -1,0 +1,17 @@
+{
+  "groups": [
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+  ],
+  "weighting": "equal Group",
+  "evaluation": "before_batch/full_slate",
+  "source_sha256": "e46102f972847294aa782e057c5f991af71012dbcfbfd4b8ac1478a90f33404b",
+  "provenance": "historical forward refits Groups2\u20139; frozen challengers Group10"
+}

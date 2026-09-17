@@ -6,11 +6,11 @@ Formal prospective cohort starts: ROUND_003
 Prediction source: archived proposal-time means and uncertainties
 Technical replicate handling: continuous endpoints use the mean; the intact-patch gate uses all-pass within formulation and round
 
-Completed rounds included: ROUND_001, ROUND_002, ROUND_003, ROUND_004, ROUND_005, ROUND_006, ROUND_007, ROUND_008, ROUND_009
-Formal rounds included: 7
+Completed rounds included: ROUND_001, ROUND_002, ROUND_003, ROUND_004, ROUND_005, ROUND_006, ROUND_007, ROUND_008, ROUND_009, ROUND_010
+Formal rounds included: 8
 
-Primary pooled formal viability MAE: 26.721 percentage points (n=84)
-Primary pooled formal 95% interval: coverage=0.655; mean width=68.675 percentage points
+Primary pooled formal viability MAE: 27.268 percentage points (n=95)
+Primary pooled formal 95% interval: coverage=0.642; mean width=66.861 percentage points
 
 Interpretation:
 - Reconstructed and migration-frozen rounds are reported separately from the formal pooled metric.

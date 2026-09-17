@@ -1,0 +1,5 @@
+scenario,stage,mae
+Shared batch shift: calibration helps,before,18.552584917612027
+Shared batch shift: calibration helps,after,1.0143034702723384
+Control-only assay error: calibration misleads,before,0.5525849176120268
+Control-only assay error: calibration misleads,after,16.98569652972766

@@ -1,0 +1,2 @@
+formulation_id,batch_id,endpoint,mean,std,count,conditional_shift,reference_mean,interpretation
+reference_b5a5b7b1176f,ROUND_010,viability_percent,35.555,6.768153367056631,4,,,post-control diagnostic only; not a pre-bench forecast or normalization
