@@ -321,7 +321,7 @@ def generate_round_prospective_artifacts(
             encoding="utf-8",
         )
         round_observations=observations.loc[observations.batch_id.astype(str).eq(batch_id)]
-        write_prospective(round_observations,table,metrics,pd.DataFrame(),staging/'plots',f'{batch_id} only; frozen prospective evidence')
+        write_prospective(round_observations,table,metrics,pd.DataFrame(),staging/'plots',f'{batch_id} only; frozen prospective evidence',strategy_decisions=_strategy_decisions(results_root))
         from .group10_reporting import additional_reports
         additional_reports(observations, table, results_root, staging / "tables")
         return _promote_tree(staging, reports_dir)
@@ -337,6 +337,11 @@ def _completed_round_ids(results_root: Path) -> list[str]:
         if path.is_dir() and (path / "completed" / "completed.csv").exists()
     ]
     return sorted(round_ids, key=_round_sort_key)
+
+
+def _strategy_decisions(results_root):
+    import json
+    return {p.parents[1].name:json.loads(p.read_text()) for p in Path(results_root).glob('rounds/*/proposal/gp_strategy_decision.json')}
 
 
 def generate_campaign_prospective_artifacts(
@@ -379,7 +384,7 @@ def generate_campaign_prospective_artifacts(
             encoding="utf-8",
         )
         write_prospective(observations,table,metrics,pd.DataFrame(),staging/'plots','Cumulative campaign; frozen prospective evidence',
-                          include_publication_summary=include_publication_summary)
+                          include_publication_summary=include_publication_summary,strategy_decisions=_strategy_decisions(results_root))
         from .group10_reporting import additional_reports
         additional_reports(observations, table, results_root, staging / "tables")
         return _promote_tree(staging, output_dir)

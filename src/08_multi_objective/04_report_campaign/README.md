@@ -82,3 +82,19 @@ Use a new empty directory. Optional `--start-round`, `--end-round`, and `--endpo
 restrict the comparison. This never promotes a strategy or rewrites production data.
 It is a retrospective forward refit, not a frozen prospective challenger trial.
 See [decision guidance](../../../docs/group10/readiness_and_gp_decisions.md).
+
+
+The default `--suite expanded` now includes one-factor GP sensitivities and explicit
+latent/future interval columns; `--suite historical` keeps the original comparison set.
+`sensitivity_settings.json` records all settings, and `ucb_sensitivity.csv` explores
+uncertainty bonuses on already measured slates. See
+[scope and limitations](../../../docs/group10/gp_sensitivity_and_fallbacks.md).
+
+## Batch-aware GP comparisons
+
+`compare_gp_strategies.py` provides `audit`, `freeze`, `evaluate` and saved-evidence-only
+`render` commands. See `docs/group10/gp_strategy_implementation.md` for the full workflow.
+Group 10 forecasts are frozen under its `gp_comparison/` directory, separate from the
+original proposal. Ingestion evaluates frozen comparisons before next-round generation.
+Group 11 generation requires an explicit GP strategy decision; no strategy is promoted
+by an audit or report.

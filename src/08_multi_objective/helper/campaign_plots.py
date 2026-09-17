@@ -58,6 +58,11 @@ def timeline_figure(table):
     med = round_series(table, 'median_iqr', rounds)
     axes[0].plot(rounds, med.value, color=BLUE, marker='o', lw=1.5)
     axes[0].vlines(rounds, med.lower, med.upper, color=BLUE, lw=2)
+    if 'strategy_decision_id' in table:
+        changes=table.loc[table.strategy_decision_id.ne('historical_current')].sort_values('round_number').drop_duplicates('strategy_decision_id')
+        for row in changes.itertuples():
+            for ax in axes:ax.axvline(row.round_number,color=GRAY,ls=':',lw=.8)
+            axes[0].text(row.round_number,102,str(row.strategy_decision_id),rotation=90,va='top',fontsize=7)
     axes[0].set_ylabel('Observed viability (%)')
     axes[0].set_ylim(-3,105)
     header(heads[0], 'Experimental viability', handles=[

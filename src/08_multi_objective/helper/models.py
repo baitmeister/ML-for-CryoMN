@@ -302,7 +302,7 @@ def train_endpoint_models(
         require_both_classes=True,
     )
 
-    return EndpointModels(
+    result = EndpointModels(
         feature_names=registry.feature_names,
         viability=viability,
         critical_load=critical_load,
@@ -311,3 +311,5 @@ def train_endpoint_models(
         preparation=preparation,
         training_frame=frame,
     )
+    from .gp_strategy import install_strategy
+    return install_strategy(result, formulations, observations, registry, optimization_config)

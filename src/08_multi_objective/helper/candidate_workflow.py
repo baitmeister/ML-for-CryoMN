@@ -66,6 +66,7 @@ class CandidateSelectionOptions:
     phase_mode: str | None = None
     batch_id: str | None = None
     supersede_unstarted_proposal: bool = False
+    gp_strategy_decision_path: str | Path | None = None
 
 
 @dataclass(frozen=True)
@@ -109,6 +110,17 @@ def run_candidate_selection(
     )
     batch_id = options.batch_id or _next_round_id(options.observations_path)
     target_round_number = parse_round_number(batch_id)
+    if target_round_number >= 11:
+        from .gp_strategy import validate_decision, StrategyDecisionRequired
+        decision_path = options.gp_strategy_decision_path or Path(options.output_dir).parent / 'gp_strategy_decision.json'
+        decision = validate_decision(decision_path, target_round_number)
+        import json
+        for recorded in (Path(options.output_dir).parent / 'rounds').glob('*/proposal/gp_strategy_decision.json'):
+            old = json.loads(recorded.read_text())
+            if old['decision_id'] == decision['decision_id'] and old['sha256'] != decision['sha256']:
+                raise StrategyDecisionRequired('Changed configuration requires a new decision_id')
+        optimization_config['gp_strategy_decision'] = decision
+        optimization_config['_gp_raw_observations'] = observations.copy()
     group10_config = load_group10_config_for_round(target_round_number)
     assert_group10_can_proceed(group10_config, target_round_number, observations)
     observations = production_observations(observations, target_round_number=target_round_number)
@@ -316,6 +328,8 @@ def run_candidate_selection(
     result.metadata["candidate_pool_rows_filtered_by_bounds"] = bounds_filtered_count
     result.metadata["candidate_pool_rows_filtered_by_availability"] = filtered_count
     result.metadata["candidate_pool_rows_filtered_zero_active_at_entry"] = zero_active_filtered_count
+    if 'gp_strategy_decision' in optimization_config:
+        result.metadata['gp_strategy_decision'] = optimization_config['gp_strategy_decision']
     output_dir = Path(options.output_dir)
     results_root = output_dir.parent
     results_root.mkdir(parents=True, exist_ok=True)
@@ -338,6 +352,11 @@ def run_candidate_selection(
         staged_candidates = staging_output / "next_round_candidates.csv"
         staged_summary = staging_output / "next_round_summary.txt"
         staged_metadata = staging_output / "next_round_metadata.json"
+        if target_round_number >= 11:
+            from .gp_comparison import freeze
+            freeze(Path(__file__).resolve().parents[3], batch_id, staging_root / 'gp_comparison',
+                slate_path=staged_candidates, forms=formulations,
+                obs=optimization_config.get('_gp_raw_observations', observations), registry=registry)
         if options.supersede_unstarted_proposal:
             superseded_path = supersede_unstarted_proposal(
                 batch_id,
@@ -368,6 +387,15 @@ def run_candidate_selection(
             metadata_path=staged_metadata if staged_metadata.exists() else None,
             results_root=results_root,
         )
+        if 'gp_strategy_decision' in optimization_config:
+            import json
+            (round_paths.proposal_dir / 'gp_strategy_decision.json').write_text(json.dumps(optimization_config['gp_strategy_decision'], indent=2)+'\n')
+        if target_round_number >= 11:
+            import shutil
+            comparison_dir = round_paths.proposal_dir.parent / 'gp_comparison'
+            if comparison_dir.exists():
+                raise FileExistsError('Existing challenger evidence cannot be overwritten: '+str(comparison_dir))
+            shutil.move(str(staging_root / 'gp_comparison'), comparison_dir)
         proposal_artifacts = generate_proposal_artifacts(
             pd.read_csv(staged_candidates),
             round_paths.proposal_dir,

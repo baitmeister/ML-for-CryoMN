@@ -56,6 +56,11 @@ def _completed_round_ids(results_root: Path) -> list[str]:
 
 def main() -> None:
     args = parse_args()
+    # Redraw challenger evidence only; never fit a model during report generation.
+    from helper.gp_comparison_plots import render as render_gp_comparison
+    for source in sorted((Path(args.results_root) / 'rounds').glob('*/reports/gp_comparison/predictions.csv')):
+        if args.round_id is None or source.parents[2].name == args.round_id:
+            render_gp_comparison(source.parent)
     if args.restyle_existing:
         from helper.plot_backfill import restyle_existing
         print(restyle_existing(args.results_root,args.include_publication_summary,args.round_id))

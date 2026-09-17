@@ -55,3 +55,13 @@ transparent 300 dpi PNG, source CSV and metadata JSON. Generate these during
 completed-round reporting after ingestion. Pre-ingestion staging uses
 `run_round.py --validate-only` without an output directory and does not generate
 mechanical graph bundles.
+
+## GP strategy comparison bundles
+
+`gp_strategy_summary`, `gp_strategy_by_batch`, `reference_conditioning_comparison`,
+`batch_effect_estimates` and `gp_prediction_comparison` use the same theme and bundle
+contract. Source CSVs retain model, stage, evidence and conditioning provenance.
+Reference-conditioned accuracy uses matched non-reference outcomes only. Batch offsets
+are model estimates, not measured cell health. Sparse calibration and absent outcomes
+are explicit; no winner is selected automatically. `compare_gp_strategies.py render`
+redraws saved evidence without model fitting.

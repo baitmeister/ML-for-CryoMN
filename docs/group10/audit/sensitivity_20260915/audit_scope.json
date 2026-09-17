@@ -1,0 +1,48 @@
+{
+  "suite": "expanded",
+  "audit_kind": "retrospective_forward_refit",
+  "start_round": 3,
+  "end_round": null,
+  "discovered_observed_rounds": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "evaluated_rounds": [
+    "ROUND_003",
+    "ROUND_004",
+    "ROUND_005",
+    "ROUND_006",
+    "ROUND_007",
+    "ROUND_008",
+    "ROUND_009"
+  ],
+  "endpoints": [
+    "viability_percent",
+    "critical_axial_load_N_per_needle"
+  ],
+  "proposal_sha256": {
+    "ROUND_003": "5d653b12dece1ff6efef09ba6a5772a821f4efda938c0a96edfc05ab340d706c",
+    "ROUND_004": "0ed4a6f10b411521cf61b63ac06661036ecd9148392c338f98605c10680841e7",
+    "ROUND_005": "56dd84af6706581c65610a451e0314bae15fa4fdcc61523715d8629f169c9cdf",
+    "ROUND_006": "0d95d8abde6178e483ace84f6156fe7f5201e0326d2b4928a05c2a38a956893f",
+    "ROUND_007": "12f70a40ce417cd6a0ae5d24238821077c69f26a1ce7368e5af7999d2f412a7e",
+    "ROUND_008": "ce6c5e5f7d6e75e45183ff2d4d7ba540d0ca544451553136475258fa08da1c10",
+    "ROUND_009": "658fd5fd00414e2c373d90e5f05bf4a8897458ebf8c14002ab15818f34f06132"
+  },
+  "observations_sha256": "33636cea11e0d951fc4371ddc034bca53129b03ac778e7d3f063f8dd1e0c28e9",
+  "model_promotion": false,
+  "production_artifacts_modified": false,
+  "untested_dimensions": [
+    "cross-output correlation / multi-task transfer",
+    "batch-effect normalization",
+    "qLogNEHVI versus qLogNParEGO on a common candidate pool",
+    "candidate-pool generation / feasibility / diversity policy changes",
+    "fully Bayesian hyperparameter priors"
+  ],
+  "limitation": "Outcome-known strategy comparison; not frozen challenger evidence or a counterfactual acquisition trial"
+}

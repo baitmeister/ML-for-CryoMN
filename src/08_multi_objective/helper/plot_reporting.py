@@ -34,7 +34,15 @@ def write_decision(candidates,directory,prefix=''):
     prefix = prefix.rstrip('_')+'_' if prefix else ''
     if candidates.empty:return []
     table=decision_table(candidates)
-    return write_plot(plots.decision_figure(table),table,directory,prefix+'candidate_decisions','Frozen proposal; stored assignments')
+    metadata_path=Path(directory).parent/'selection_metadata.json'
+    decision={}
+    if metadata_path.exists():decision=json.loads(metadata_path.read_text()).get('gp_strategy_decision',{})
+    from .batch_gp import NAMES
+    name=NAMES.get(decision.get('viability_strategy','current'),'Current GP')
+    table['production_gp']=name
+    fig=plots.decision_figure(table)
+    fig.text(.09,.012,name+' | '+decision.get('decision_id','historical production'),fontsize=8)
+    return write_plot(fig,table,directory,prefix+'candidate_decisions','Frozen proposal; stored assignments; '+name)
 
 
 def write_pareto(formulations,observations,candidates,directory,prefix='',context='Current evidence'):
@@ -92,9 +100,16 @@ def write_diagnostics(inputs,directory,prefix='',context='Current evidence'):
 
 
 def write_prospective(observations,table,metrics,candidates,directory,context,
-                      include_publication_summary=False,formulations=None):
+                      include_publication_summary=False,formulations=None,strategy_decisions=None):
     timeline=timeline_table(observations,table,metrics,candidates)
+    decisions=strategy_decisions or {}
+    timeline['production_strategy']=timeline.round_id.map(lambda r: decisions.get(r, {}).get('viability_strategy', 'current'))
+    timeline['strategy_decision_id']=timeline.round_id.map(lambda r: decisions.get(r, {}).get('decision_id', 'historical_current'))
     trust=trust_table(table)
+    trust['production_strategy']=trust.round_id.map(lambda r: decisions.get(r, {}).get('viability_strategy', 'current'))
+    trust['interval_type']='stored official prediction interval; not reconstructed future-batch uncertainty'
+    if decisions:
+        context += ' | Recorded GP decisions: ' + ', '.join(f"{r}: {d['decision_id']}" for r,d in sorted(decisions.items()))
     # A per-round metrics archive has no pooled row. Summarize only its frozen cohort.
     display_metrics=metrics
     if 'pooled_formal' not in metrics.get('scope',pd.Series(dtype=str)).values:

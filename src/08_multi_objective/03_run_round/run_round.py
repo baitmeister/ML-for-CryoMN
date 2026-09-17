@@ -102,6 +102,7 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Skip post-ingestion round reports (advanced/debug use only).",
     )
+    parser.add_argument("--gp-strategy-decision", default=None, help="Recorded strategy JSON passed to next proposal generation.")
     parser.add_argument("--skip-generate", action="store_true", help="Skip Stage 02 candidate generation.")
     parser.add_argument(
         '--validate-only', action='store_true',
@@ -431,6 +432,15 @@ def main() -> None:
     else:
         formulations, observations = current_formulations, current_observations
 
+    # Score immutable challenger forecasts before any next-round refit/generation.
+    if round_progressed:
+        from helper.gp_comparison import evaluate
+        comparison_root = Path(args.output_dir).parent / 'rounds' / str(batch_id)
+        frozen_comparison = comparison_root / 'gp_comparison'
+        comparison_evaluation = comparison_root / 'reports' / 'gp_comparison'
+        if frozen_comparison.exists() and not comparison_evaluation.exists():
+            evaluate(frozen_comparison, observations, comparison_evaluation)
+
     status_path = Path(args.output_dir).parent / "current_round_status.json"
     if args.skip_generate:
         phase_resolution = resolve_phase_mode(
@@ -462,6 +472,8 @@ def main() -> None:
             "--total-candidate-pool",
             args.total_candidate_pool,
         ]
+        if args.gp_strategy_decision:
+            select_args.extend(["--gp-strategy-decision", args.gp_strategy_decision])
         if args.pool_size is not None:
             select_args.extend(["--pool-size", str(args.pool_size)])
         if args.seed is not None:

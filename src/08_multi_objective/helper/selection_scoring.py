@@ -14,7 +14,6 @@ import pandas as pd
 from .acquisition import (
     botorch_available,
     minmax,
-    qlognehvi_proxy_scores,
     try_botorch_optimize_qlognehvi,
     try_botorch_qlognehvi_scores,
 )
@@ -305,12 +304,13 @@ def _mechanics_phase_scores(
         float(ref_cfg.get("viability_percent", 0.0)),
         float(ref_cfg.get("critical_axial_load_N_per_needle", 0.0)),
     )
-    acquisition, botorch_metadata = try_botorch_qlognehvi_scores(
-        train_x=train_x,
-        train_y=train_y,
-        candidate_x=candidate_x,
-        reference_point=reference_point,
-    )
+    if hasattr(models, 'acquisition_bundle'):
+        from .gp_strategy import shared_scores
+        acquisition, botorch_metadata = shared_scores(models, train_x, candidate_x, reference_point)
+    else:
+        acquisition, botorch_metadata = try_botorch_qlognehvi_scores(
+            train_x=train_x, train_y=train_y, candidate_x=candidate_x, reference_point=reference_point,
+        )
     empirical_mode = bool(
         intact_policy is not None
         and intact_policy.active
@@ -327,16 +327,10 @@ def _mechanics_phase_scores(
         0.0,
         1.0,
     )
-    if acquisition is None:
-        mode = "qlognehvi_proxy"
-        acquisition = qlognehvi_proxy_scores(
-            annotated,
-            annotated["viability_ucb"].to_numpy(dtype=float),
-            annotated["critical_axial_load_ucb"].to_numpy(dtype=float),
-            reference_point=(0.0, 0.0),
-            feasibility_probability=(
-                empirical_probability if empirical_mode else None
-            ),
+    if acquisition is None or not np.isfinite(acquisition).all():
+        raise RuntimeError(
+            "BoTorch qLogNEHVI scoring failed; selection stopped without a heuristic fallback. "
+            + str(botorch_metadata.get("botorch_error", "invalid acquisition scores"))
         )
     else:
         mode = "qlognehvi_botorch"
@@ -419,6 +413,9 @@ def _continuous_mechanics_candidates(
         "continuous_optimizer_used": False,
         "continuous_optimizer_fallback": True,
     }
+    if hasattr(models, 'acquisition_bundle'):
+        metadata['continuous_optimizer_reason'] = 'Recorded strategy uses shared-model finite-pool qLogNEHVI'
+        return candidate_pool.head(0).copy(), metadata
     if not policy_active or not bool(
         nested_get(optimization_config, "continuous_qlognehvi.enabled", True)
     ):

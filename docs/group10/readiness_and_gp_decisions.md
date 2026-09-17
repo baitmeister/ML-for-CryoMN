@@ -72,16 +72,11 @@ one does not automatically install the separate `ModelListGP` acquisition protot
 
 ## What the decision boundary means
 
-`run_round.py` normally validates and ingests a completed round, writes its reports, then
-immediately generates the next proposal. The phase resolver can select `mechanics_enabled`
-once the numerical evidence gates are met. It does not pause to ask which GP strategy to
-use. The configuration's `production_decision_boundary` documents that decision but is
-not an implemented model-approval record.
-
-If the next proposal could be the first full-mechanics proposal, use **`--skip-generate`**
-for ingestion. Review the model decision and then generate the next proposal deliberately.
-An automatic hard stop for a missing methodology decision remains a possible software
-improvement; this update does not add one or choose a new GP on the user's behalf.
+Updated 2026-09-16: Group 11 and later generation requires a recorded, supported GP
+strategy decision. Ingestion and reports remain available; use `--skip-generate` when
+completing Group 10. No Proposed GP is promoted automatically. See the
+[implementation and operating guide](gp_strategy_implementation.md) for supported
+models, acquisition consistency, commands and the decision record.
 
 The current full gate requires 16 paired formulation–batch observations, 12 distinct
 formulations and three batches; the hybrid gate requires 8, 6 and 2 respectively.
@@ -146,3 +141,12 @@ that decision; use a subsequent independent experiment to validate the claim. Do
 terminal compression force “fracture strength.” The legacy acceptance configuration names
 must be bound to the actual endpoint definition. Requirements currently affect reporting
 only, not candidate ranking or the hypervolume reference point.
+
+
+## Expanded audit and fallback clarification
+
+See [GP sensitivity and fallbacks](gp_sensitivity_and_fallbacks.md) for the actual historical
+selection paths, expanded parameter audit, observation-noise examples and Group 10
+recipe comparison. The current operator decision is due **before the first hybrid
+proposal**; use `--skip-generate` during ingestion while it is pending. This earlier
+operator review does not rewrite frozen configuration fields or deploy a strategy.

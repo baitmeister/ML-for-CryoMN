@@ -14,7 +14,6 @@ import pandas as pd
 from .acquisition import (
     botorch_available,
     minmax,
-    qlognehvi_proxy_scores,
     try_botorch_optimize_qlognehvi,
     try_botorch_qlognehvi_scores,
 )

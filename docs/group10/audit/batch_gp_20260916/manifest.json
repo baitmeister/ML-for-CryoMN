@@ -1,0 +1,9 @@
+{
+  "version": "batch_gp_v1",
+  "stage": "historical_forward_refit",
+  "start": 3,
+  "end": 9,
+  "fit_errors": [],
+  "observations_sha256": "33636cea11e0d951fc4371ddc034bca53129b03ac778e7d3f063f8dd1e0c28e9",
+  "assumptions": "Empirical Bayes; fixed formulation kernel; parameter uncertainty not integrated"
+}

@@ -17,6 +17,7 @@ from helper.candidate_workflow import (
     run_candidate_selection,
 )
 from helper.group10_config import Group10HardStop
+from helper.gp_strategy import StrategyDecisionRequired
 from helper.paths import (
     AVAILABILITY_CONFIG,
     FORMULATIONS_PATH,
@@ -70,6 +71,7 @@ def parse_args() -> argparse.Namespace:
             "active worksheet has no entered wet-lab results."
         ),
     )
+    parser.add_argument("--gp-strategy-decision", default=None, help="Recorded production GP strategy JSON; required for Group 11 onward.")
     return parser.parse_args()
 
 
@@ -147,6 +149,7 @@ def _present_completion(
 def main() -> None:
     args = parse_args()
     options = CandidateSelectionOptions(
+        gp_strategy_decision_path=args.gp_strategy_decision,
         formulations_path=args.formulations,
         observations_path=args.observations,
         candidate_pool_path=args.candidate_pool,
@@ -166,5 +169,5 @@ def main() -> None:
 if __name__ == "__main__":
     try:
         main()
-    except Group10HardStop as exc:
+    except (Group10HardStop, StrategyDecisionRequired) as exc:
         raise SystemExit(str(exc)) from None

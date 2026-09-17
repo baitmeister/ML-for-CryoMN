@@ -28,38 +28,6 @@ def minmax(values: np.ndarray) -> np.ndarray:
     return (values - low) / (high - low)
 
 
-def qlognehvi_proxy_scores(
-    candidate_frame: pd.DataFrame,
-    viability_ucb: np.ndarray,
-    critical_load_ucb: np.ndarray,
-    reference_point: tuple[float, float] = (0.0, 0.0),
-    feasibility_probability: np.ndarray | None = None,
-) -> np.ndarray:
-    """Finite-pool proxy for qLogNEHVI when BoTorch is unavailable.
-
-    The production target is BoTorch qLogNEHVI. This proxy keeps local runs
-    executable by scoring log hypervolume-like improvement over a reference
-    point using normalized UCB estimates for the two Pareto objectives.
-    """
-    del candidate_frame
-    v = minmax(viability_ucb)
-    m = minmax(critical_load_ucb)
-    ref_v, ref_m = reference_point
-    improvement = np.maximum(v - ref_v, 0.0) * np.maximum(m - ref_m, 0.0)
-    if feasibility_probability is not None:
-        probability = np.clip(
-            np.asarray(feasibility_probability, dtype=float),
-            0.0,
-            1.0,
-        )
-        if probability.shape != improvement.shape:
-            raise ValueError(
-                "feasibility_probability must have one value per candidate."
-            )
-        improvement = improvement * probability
-    return np.log1p(improvement)
-
-
 def try_botorch_qlognehvi_scores(
     train_x: np.ndarray,
     train_y: np.ndarray,
@@ -69,8 +37,7 @@ def try_botorch_qlognehvi_scores(
     """Score candidates with BoTorch qLogNEHVI when optional deps are installed."""
     metadata: dict[str, Any] = {"botorch_attempted": False, "botorch_error": ""}
     if not botorch_available():
-        metadata["botorch_error"] = "torch/gpytorch/botorch not importable"
-        return None, metadata
+        raise RuntimeError("BoTorch acquisition is required: torch/gpytorch/botorch unavailable. Selection stopped; no heuristic fallback is permitted.")
     if train_x.shape[0] < 2 or train_y.shape[0] < 2:
         metadata["botorch_error"] = "at least two paired objective observations are required"
         return None, metadata
@@ -137,8 +104,7 @@ def try_botorch_optimize_qlognehvi(
         "accepted_candidate_count": 0,
     }
     if not botorch_available():
-        metadata["botorch_error"] = "torch/gpytorch/botorch not importable"
-        return None, metadata
+        raise RuntimeError("BoTorch acquisition is required: torch/gpytorch/botorch unavailable. Selection stopped; no heuristic fallback is permitted.")
     if train_x.shape[0] < 2 or train_y.shape[0] < 2:
         metadata["botorch_error"] = "at least two paired objective observations are required"
         return None, metadata

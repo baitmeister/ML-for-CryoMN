@@ -1,0 +1,94 @@
+[
+  {
+    "round_id": "ROUND_003",
+    "endpoint": "viability_percent",
+    "mechanical_definition_id": "",
+    "variant": "sens_paired_only",
+    "reason": "Fewer than two preceding comparable training rows",
+    "training_rows": 0
+  },
+  {
+    "round_id": "ROUND_003",
+    "endpoint": "critical_axial_load_N_per_needle",
+    "reason": "No measured outcomes"
+  },
+  {
+    "round_id": "ROUND_004",
+    "endpoint": "viability_percent",
+    "mechanical_definition_id": "",
+    "variant": "sens_paired_only",
+    "reason": "Fewer than two preceding comparable training rows",
+    "training_rows": 0
+  },
+  {
+    "round_id": "ROUND_004",
+    "endpoint": "critical_axial_load_N_per_needle",
+    "reason": "No measured outcomes"
+  },
+  {
+    "round_id": "ROUND_005",
+    "endpoint": "viability_percent",
+    "mechanical_definition_id": "",
+    "variant": "sens_paired_only",
+    "reason": "Fewer than two preceding comparable training rows",
+    "training_rows": 0
+  },
+  {
+    "round_id": "ROUND_005",
+    "endpoint": "critical_axial_load_N_per_needle",
+    "reason": "No measured outcomes"
+  },
+  {
+    "round_id": "ROUND_006",
+    "endpoint": "viability_percent",
+    "mechanical_definition_id": "",
+    "variant": "sens_paired_only",
+    "reason": "Fewer than two preceding comparable training rows",
+    "training_rows": 0
+  },
+  {
+    "round_id": "ROUND_006",
+    "endpoint": "critical_axial_load_N_per_needle",
+    "reason": "No measured outcomes"
+  },
+  {
+    "round_id": "ROUND_007",
+    "endpoint": "viability_percent",
+    "mechanical_definition_id": "",
+    "variant": "sens_paired_only",
+    "reason": "Fewer than two preceding comparable training rows",
+    "training_rows": 0
+  },
+  {
+    "round_id": "ROUND_007",
+    "endpoint": "critical_axial_load_N_per_needle",
+    "reason": "No measured outcomes"
+  },
+  {
+    "round_id": "ROUND_008",
+    "endpoint": "viability_percent",
+    "mechanical_definition_id": "",
+    "variant": "sens_paired_only",
+    "reason": "Fewer than two preceding comparable training rows",
+    "training_rows": 0
+  },
+  {
+    "round_id": "ROUND_008",
+    "endpoint": "critical_axial_load_N_per_needle",
+    "reason": "No measured outcomes"
+  },
+  {
+    "round_id": "ROUND_009",
+    "endpoint": "viability_percent",
+    "mechanical_definition_id": "",
+    "variant": "sens_paired_only",
+    "reason": "Fewer than two preceding comparable training rows",
+    "training_rows": 0
+  },
+  {
+    "round_id": "ROUND_009",
+    "endpoint": "critical_axial_load_N_per_needle",
+    "mechanical_definition_id": "terminal_force_08mm_after_1N_v1",
+    "reason": "No preceding comparable target measurements"
+  }
+]

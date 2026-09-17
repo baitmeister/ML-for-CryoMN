@@ -85,6 +85,13 @@ def main(output):
                 extra.append(row)
     ten=pd.concat([ten,pd.DataFrame(extra)],ignore_index=True)
     ten.to_csv(output/'synthetic_group10.csv',index=False)
+    # An explicit synthetic-only methodology decision exercises the new gate.
+    decision=dict(version=1,model_version='batch_gp_v1',decision_id='synthetic-integration-batch-v1',chosen_by='test harness (not a production decision)',
+        decided_at='2026-09-16',effective_round=11,viability_strategy='batch',mechanical_strategy='current_comparable_endpoint',
+        acquisition='shared_qlognehvi_finite_pool',objective='expected_formulation_response',evidence=['synthetic integration only'],acceptance_thresholds=None)
+    (results/'gp_strategy_decision.json').write_text(json.dumps(decision))
+    frozen_gp=ROOT/'results/multi_objective_v2/rounds/ROUND_010/gp_comparison'
+    if frozen_gp.exists():shutil.copytree(frozen_gp,results/'rounds/ROUND_010/gp_comparison')
     run('group10_update_and_group11','src/08_multi_objective/03_run_round/run_round.py',
         [str(output/'synthetic_group10.csv'),*shared,'--seed','42'])
     obs=pd.read_csv(data/'observations.csv')
@@ -101,6 +108,8 @@ def main(output):
     assert control.mechanical_test_recommended.eq(False).all()
     primaries=eleven.loc[eleven.mechanical_test_recommended.eq(True)]
     assert len(primaries)==4 and not primaries.experimental_role.eq('campaign_control').any()
+    assert (results/'rounds/ROUND_011/gp_comparison/manifest.json').exists()
+    assert (results/'rounds/ROUND_010/reports/gp_comparison/metrics.csv').exists()
     eleven_metadata=json.loads((results/'rounds/ROUND_011/proposal/selection_metadata.json').read_text())
     from helper.models import build_training_frame, paired_objective_frame
     from helper.registry import load_registry
@@ -124,7 +133,7 @@ def main(output):
     summary=dict(synthetic_only=True,group10_original_frozen_contract_ingestible=True,
         group10_frozen_definition=DEFINITION,group10_roles=originals.experimental_role.value_counts().to_dict(),
         mechanical_primary_roles=mechanical.experimental_role.value_counts().to_dict(),
-        production_gp_methodology='unchanged',legacy_mechanics_excluded_from_new_target=True,
+        production_gp_methodology='synthetic-only batch GP decision; live strategy unchanged',legacy_mechanics_excluded_from_new_target=True,
         control_viability_excluded_from_training=True,control_mechanics_retained_as_endpoint_evidence=True,
         group11_control_unranked=True,group11_mechanical_primaries=len(primaries),
         group11_phase=phase.active_phase,paired_observations=phase.paired_observation_count,next_proposal='ROUND_011',workload=manifest['workload'],

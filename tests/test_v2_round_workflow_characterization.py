@@ -110,7 +110,8 @@ class V2RoundWorkflowCharacterizationTests(unittest.TestCase):
             validate_mechanics_execution(completed, proposal, primary_capacity=4)
 
     def test_group10_ingestion_requires_complete_matching_frozen_protocol(self) -> None:
-        config = load_group10_config()
+        from helper.group10_config import load_group10_config_for_round
+        config = load_group10_config_for_round(10)
         with self.assertRaisesRegex(Group10HardStop, "no complete Group 10 effective_config"):
             assert_frozen_group10_protocol(config, 10, {})
         metadata = {"group10": {"effective_config": json.loads(json.dumps(config))}}
@@ -144,6 +145,8 @@ class V2RoundWorkflowCharacterizationTests(unittest.TestCase):
                 shutil.copyfile(source / filename, proposal_dir / filename)
             for filename in ('formulations.csv', 'observations.csv'):
                 shutil.copyfile(PROJECT_ROOT / 'data/processed_v2' / filename, root / filename)
+            historical = pd.read_csv(root / 'observations.csv')
+            historical.loc[historical.batch_id.ne('ROUND_009')].to_csv(root / 'observations.csv', index=False)
             (results / 'current_round_status.json').write_text('{"unchanged": true}\n')
             reports = results / 'reports'
             reports.mkdir()

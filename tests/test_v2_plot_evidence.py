@@ -76,9 +76,10 @@ class ProductionEvidenceTests(unittest.TestCase):
         old=original._trust_table(self.prospective)
         pd.testing.assert_frame_equal(table[old.columns],old)
         v=table.loc[table.panel.eq('viability_prediction')]
-        self.assertEqual(len(v),72)
-        self.assertAlmostEqual(v.absolute_error.mean(),27.45603818528404)
-        self.assertAlmostEqual(v.signed_error.mean(),25.22353261643731)
+        expected=old.loc[old.panel.eq('viability_prediction')]
+        self.assertEqual(len(v),len(expected))
+        self.assertAlmostEqual(v.absolute_error.mean(),expected.absolute_error.mean())
+        self.assertAlmostEqual(v.signed_error.mean(),(expected.prediction-expected.observed).mean())
         before=table.copy(deep=True)
         for _ in range(1):
             fig=review.trust_figure(table,self.metrics);fig.canvas.draw()

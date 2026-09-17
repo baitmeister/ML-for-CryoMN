@@ -21,7 +21,6 @@ from helper.artifacts import (  # noqa: E402
     ArtifactConflictError,
     supersede_unstarted_proposal,
 )
-from helper.acquisition import qlognehvi_proxy_scores  # noqa: E402
 from helper.cold_start import (  # noqa: E402
     ColdStartContext,
     annotate_cold_start_candidates,
@@ -539,19 +538,6 @@ class Round6PolicyTests(unittest.TestCase):
         self.assertEqual(
             metadata["classifier_probability_selection_role"], "diagnostic_only"
         )
-
-    def test_finite_pool_mechanics_proxy_multiplies_improvement_by_feasibility(self) -> None:
-        viability = np.array([0.0, 1.0, 1.0])
-        mechanics = np.array([0.0, 1.0, 1.0])
-        probabilities = np.array([0.5, 0.5, 0.25])
-        scores = qlognehvi_proxy_scores(
-            pd.DataFrame(index=range(3)),
-            viability,
-            mechanics,
-            feasibility_probability=probabilities,
-        )
-        self.assertAlmostEqual(scores[1], np.log1p(0.5))
-        self.assertAlmostEqual(scores[2], np.log1p(0.25))
 
     def test_mechanics_ranks_all_rows_by_weighted_score_and_leaves_screening_blank(self) -> None:
         policy = resolve_intact_combination_policy(self.config, 6)
