@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import io
+import math
 import pandas as pd
 import re
 import subprocess
@@ -29,7 +31,6 @@ from helper.paths import (
     TOTAL_CANDIDATE_POOL_PATH,
 )
 from helper.artifacts import (
-    archive_completed,
     assert_completed_archive_compatible,
     round_artifact_paths,
     validate_completed_against_proposal,
@@ -40,7 +41,10 @@ from helper.config import (
     load_optimization_config,
     nested_get,
 )
-from helper.feedback import ingest_feedback
+from helper.feedback import ingest_feedback, validate_numeric_feedback
+from helper.finalization import finalization_manifest
+from helper.persistence import (writer_lock, recover_transactions, journal_root, commit_files,
+                                file_hash, json_bytes, PersistenceConflict)
 from helper.group10_config import (
     Group10HardStop,
     assert_frozen_group10_protocol,
@@ -48,7 +52,6 @@ from helper.group10_config import (
     load_round_mechanical_endpoint,
 )
 from helper.mechanics_execution import (
-    freeze_mechanics_execution_manifest,
     validate_mechanics_execution,
 )
 from helper.phase import resolve_phase_mode
@@ -104,6 +107,10 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--gp-strategy-decision", default=None, help="Recorded strategy JSON passed to next proposal generation.")
     parser.add_argument("--skip-generate", action="store_true", help="Skip Stage 02 candidate generation.")
+    parser.add_argument('--finalize', action='store_true',
+                        help='Attest that all planned measurements are finished and commit this round.')
+    parser.add_argument('--unmeasured-reason', default='',
+                        help='Document why the listed unresolved outcomes will remain unmeasured.')
     parser.add_argument(
         '--validate-only', action='store_true',
         help=(
@@ -150,6 +157,8 @@ def _read_or_empty(path: str | Path) -> pd.DataFrame:
 # results were recorded) -- see helper/feedback.py for the parsing logic
 # that consumes each of these.
 RESULT_COLUMNS = (
+    "mechanical_test_attempted",
+    "supplementary_analysis_file",
     "viability_percent",
     "intact_patch_formation_pass",
     "intact_tip_count",
@@ -257,13 +266,25 @@ def _resolve_viability_noise(optimization_config: dict, cli_viability_noise: flo
                 fallback_legacy_noise / 5.0,
             )
         )
-    if noise <= 0.0:
-        raise SystemExit("viability noise must be > 0.")
+    if not math.isfinite(noise) or noise <= 0.0:
+        raise SystemExit("viability noise must be finite and > 0.")
     return noise
 
 
 def main() -> None:
     args = parse_args()
+    with writer_lock():
+        recover_transactions(journal_root(args.formulations), read_only=args.validate_only)
+        recover_transactions(Path(args.output_dir).parent / '.v2-transactions', read_only=args.validate_only)
+        selection = _run_locked(args)
+    # The selector takes the same lock in its own process and rereads committed tables.
+    if selection is not None:
+        _run(*selection)
+        print(f"Round status: {(Path(args.output_dir).parent / 'current_round_status.json').resolve()}")
+        print('Round progression complete.')
+
+
+def _run_locked(args):
     if args.validation_output_dir is not None and not args.validate_only:
         raise SystemExit('--validation-output-dir requires --validate-only')
     select_script = V2_ROOT / "02_select_candidates" / "select_candidates.py"
@@ -272,7 +293,17 @@ def main() -> None:
     evaluation_config = load_evaluation_config(args.evaluation_config)
     batch_id = _resolve_batch_id(args.candidates_csv, args.batch_id)
     candidate_files = args.candidate_file or [str(args.candidates_csv or NEXT_ROUND_CANDIDATES_PATH)]
+    validate_numeric_feedback(args.candidates_csv)
+    input_hashes = {str(Path(p).resolve()): file_hash(p)
+                    for p in [args.candidates_csv, args.formulations, args.observations, *candidate_files]}
     current_candidates = _read_or_empty(args.candidates_csv)
+    raw_inputs = {}
+    for column in ('instron_file', 'supplementary_analysis_file'):
+        for value in current_candidates.get(column, pd.Series(dtype=str)).dropna():
+            if str(value).strip():
+                path = Path(str(value)).resolve()
+                raw_inputs[str(path)] = file_hash(path)
+    input_hashes.update(raw_inputs)
     current_formulations = _read_or_empty(args.formulations)
     current_observations = _read_or_empty(args.observations)
     results_root = Path(args.output_dir).parent
@@ -294,7 +325,17 @@ def main() -> None:
             proposal_metadata,
         )
 
-    round_progressed = _round_has_new_results(args.candidates_csv)
+    receipt_path = round_paths.completed_dir / 'ingestion_commit.json'
+    receipt = json.loads(receipt_path.read_text()) if receipt_path.exists() else None
+    settings = dict(batch_id=batch_id, batch_date=args.batch_date,
+                    default_needles_compressed=args.default_needles_compressed,
+                    viability_noise=_resolve_viability_noise(optimization_config, args.viability_noise),
+                    proposal_sha256=file_hash(round_paths.proposal_csv),
+                    metadata_sha256=file_hash(round_paths.proposal_metadata),
+                    mechanical_endpoint=round_mechanical_endpoint,
+                    candidate_lookup_sha256=[file_hash(p) for p in candidate_files
+                        if Path(p).resolve() != Path(args.candidates_csv).resolve()])
+    round_progressed = _round_has_new_results(args.candidates_csv) or args.finalize or receipt is not None
     if not round_progressed:
         if args.validate_only:
             print(
@@ -341,23 +382,62 @@ def main() -> None:
         )
 
     if round_progressed:
-        formulations, observations = ingest_feedback(
-            feedback_path=args.candidates_csv,
-            candidate_files=candidate_files,
-            formulations=current_formulations,
-            observations=current_observations,
-            registry=registry,
-            batch_id=batch_id,
-            batch_date=args.batch_date,
-            default_needles_compressed=args.default_needles_compressed,
-            viability_noise=_resolve_viability_noise(optimization_config, args.viability_noise),
-            observation_source_file=portable_source_path(round_paths.completed_csv),
-            proposal_metadata=proposal_metadata,
-            round_mechanical_endpoint=round_mechanical_endpoint,
-        )
+        if receipt is not None:
+            if (receipt['worksheet_sha256'] != file_hash(args.candidates_csv)
+                    or receipt['settings'] != settings):
+                raise PersistenceConflict('Committed ingestion inputs differ; refusing to reinterpret the round.')
+            if args.unmeasured_reason.strip():
+                completion = json.loads((round_paths.completed_dir / 'finalization.json').read_text())
+                if completion['unmeasured_reason'] != args.unmeasured_reason.strip():
+                    raise PersistenceConflict('Committed unmeasured-outcome reason differs.')
+            for path, expected in receipt['frozen_outputs'].items():
+                if file_hash(path) != expected:
+                    raise PersistenceConflict('Committed round evidence changed: ' + path)
+            for path, expected in receipt.get('raw_inputs', {}).items():
+                if file_hash(path) != expected:
+                    raise PersistenceConflict('Committed raw input changed: ' + path)
+            existing_batch = current_observations.loc[current_observations.batch_id.eq(batch_id)]
+            expected_batch = pd.read_csv(io.StringIO(receipt['batch_observations_csv']))
+            try:
+                pd.testing.assert_frame_equal(
+                    existing_batch.sort_values('observation_id').reset_index(drop=True),
+                    expected_batch.sort_values('observation_id').reset_index(drop=True),
+                    check_dtype=False, rtol=1e-12, atol=1e-12)
+            except AssertionError as exc:
+                raise PersistenceConflict('Committed batch observations changed; cannot resume.') from exc
+            expected_forms = pd.read_csv(io.StringIO(receipt['formulations_csv']))
+            actual_forms = current_formulations.loc[
+                current_formulations.formulation_id.isin(expected_forms.formulation_id), expected_forms.columns]
+            try:
+                pd.testing.assert_frame_equal(
+                    actual_forms.sort_values('formulation_id').reset_index(drop=True),
+                    expected_forms.sort_values('formulation_id').reset_index(drop=True),
+                    check_dtype=False, rtol=1e-12, atol=1e-12)
+            except AssertionError as exc:
+                raise PersistenceConflict('Committed formulation concentrations changed; cannot resume.') from exc
+            formulations, observations = current_formulations, current_observations
+            print('Identical ingestion already committed; resuming remaining workflow steps.')
+        else:
+            formulations, observations = ingest_feedback(
+                feedback_path=args.candidates_csv,
+                candidate_files=candidate_files,
+                formulations=current_formulations,
+                observations=current_observations,
+                registry=registry,
+                batch_id=batch_id,
+                batch_date=args.batch_date,
+                default_needles_compressed=args.default_needles_compressed,
+                viability_noise=_resolve_viability_noise(optimization_config, args.viability_noise),
+                observation_source_file=portable_source_path(round_paths.completed_csv),
+                proposal_metadata=proposal_metadata,
+                round_mechanical_endpoint=round_mechanical_endpoint,
+            )
 
         from helper.mechanics_execution import update_endpoint_workload
         mechanics_audit = update_endpoint_workload(mechanics_audit, observations, batch_id)
+        completion = None if receipt is not None else finalization_manifest(
+            current_candidates, mechanics_audit, finalize=args.finalize,
+            unmeasured_reason=args.unmeasured_reason, validate_only=args.validate_only)
         if args.validate_only:
             current = observations.loc[observations.batch_id.astype(str).eq(batch_id)]
             counts = current.groupby('endpoint').size().to_dict()
@@ -381,22 +461,30 @@ def main() -> None:
                 )
             print('Validation-only complete: no canonical files were changed and the round was not advanced.')
             return
-        completed_path = archive_completed(
-            batch_id,
-            args.candidates_csv,
-            results_root=results_root,
-        )
-        print(f"Archived completed worksheet: {completed_path.resolve()}")
-        Path(args.formulations).parent.mkdir(parents=True, exist_ok=True)
-        formulations.to_csv(args.formulations, index=False)
-        observations.to_csv(args.observations, index=False)
-        print(f"Updated formulations: {Path(args.formulations).resolve()} ({len(formulations)} rows)")
-        print(f"Updated observations: {Path(args.observations).resolve()} ({len(observations)} rows)")
-        mechanics_manifest = freeze_mechanics_execution_manifest(
-            mechanics_audit,
-            round_paths.completed_dir / "mechanical_execution_manifest.json",
-        )
-        print(f"Archived mechanical execution audit: {mechanics_manifest.resolve()}")
+        if receipt is None:
+            from helper.persistence import digest_bytes
+            batch_observations = observations.loc[observations.batch_id.eq(batch_id)]
+            if batch_observations.empty:
+                raise ValueError('No observations to commit; all-unmeasured round advancement needs an explicit campaign decision.')
+            frozen_outputs = [
+                (round_paths.completed_csv, Path(args.candidates_csv).read_bytes(), True),
+                (round_paths.completed_dir / 'mechanical_execution_manifest.json', json_bytes(mechanics_audit), True),
+                (round_paths.completed_dir / 'finalization.json', json_bytes(completion), True),
+            ]
+            receipt = dict(version=1, worksheet_sha256=file_hash(args.candidates_csv), settings=settings,
+                           raw_inputs=raw_inputs,
+                           batch_observations_csv=batch_observations.to_csv(index=False),
+                           formulations_csv=formulations.loc[
+                               formulations.formulation_id.isin(batch_observations.formulation_id),
+                               ['formulation_id', *registry.feature_names]].to_csv(index=False),
+                           frozen_outputs={str(p.resolve()): digest_bytes(data) for p, data, _ in frozen_outputs})
+            commit_files(journal_root(args.formulations), [
+                *frozen_outputs,
+                (Path(args.formulations), formulations.to_csv(index=False).encode(), False),
+                (Path(args.observations), observations.to_csv(index=False).encode(), False),
+                (receipt_path, json_bytes(receipt), True),
+            ], inputs={**input_hashes, **raw_inputs}, label=f'{batch_id} ingestion')
+            print(f'Committed completed worksheet and database: {round_paths.completed_csv.resolve()}')
         if not args.skip_review:
             report_paths = generate_completed_round_artifacts(
                 formulations,
@@ -438,7 +526,7 @@ def main() -> None:
         comparison_root = Path(args.output_dir).parent / 'rounds' / str(batch_id)
         frozen_comparison = comparison_root / 'gp_comparison'
         comparison_evaluation = comparison_root / 'reports' / 'gp_comparison'
-        if frozen_comparison.exists() and not comparison_evaluation.exists():
+        if frozen_comparison.exists():
             evaluate(frozen_comparison, observations, comparison_evaluation)
 
     status_path = Path(args.output_dir).parent / "current_round_status.json"
@@ -482,7 +570,7 @@ def main() -> None:
             select_args.extend(["--phase-mode", args.phase_mode])
         if args.supersede_unstarted_proposal:
             select_args.append("--supersede-unstarted-proposal")
-        _run(select_script, select_args)
+        return select_script, select_args
 
     print(f"Round status: {status_path.resolve()}")
     print("Round progression complete.")

@@ -1,0 +1,33 @@
+{
+  "live_viability_strategy": "control",
+  "active_phase": "mechanics_hybrid",
+  "acquisition_mean_and_variance_match_latent_posterior": true,
+  "future_extra_variance_matches_batch_plus_residual": true,
+  "latent_only_guard_calls": [
+    {
+      "batch": null,
+      "future": false
+    }
+  ],
+  "shared_qlognehvi_scores_finite": true,
+  "acquisition_metadata": {
+    "backend": "shared_formulation_posterior",
+    "strategy": "control"
+  },
+  "mechanical_policy": "hybrid_2qlognehvi_1local_1coverage_with_actual_intact_backups",
+  "candidate_ids": [
+    "followup_v2_430e18c49d10",
+    "retest_v2_3e8ef993abba",
+    "retest_v2_c60ceb90bc67"
+  ],
+  "latent_sd": [
+    7.386491058383181,
+    5.79851731688663,
+    7.8318555315354415
+  ],
+  "future_measurement_sd": [
+    14.63471922254203,
+    13.900991318654242,
+    14.86447838418519
+  ]
+}

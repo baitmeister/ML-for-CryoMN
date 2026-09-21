@@ -11,11 +11,15 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from helper.group10_config import load_group10_config_for_round, reference_readiness
 from helper.terminal_force import DEFINITION
+from helper.persistence import serialized, recover_transactions
 
 
+@serialized
 def inspect_readiness(campaign_root, code_root=None):
     code_root = Path(code_root or Path(__file__).resolve().parents[3])
     campaign_root = Path(campaign_root).resolve()
+    recover_transactions(campaign_root/'data/processed_v2/.v2-transactions', read_only=True)
+    recover_transactions(campaign_root/'results/multi_objective_v2/.v2-transactions', read_only=True)
     config = load_group10_config_for_round(10, code_root/'config_v2/group10.yaml')
     observations_path = campaign_root/'data/processed_v2/observations.csv'
     observations = pd.read_csv(observations_path)

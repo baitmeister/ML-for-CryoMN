@@ -1,0 +1,49 @@
+{
+  "date": "2026-09-20",
+  "full_suite": {
+    "passed": 207,
+    "failed": 7,
+    "subtests_passed": 12,
+    "failures_match_preimplementation_baseline": true
+  },
+  "new_lifecycle_tests": 75,
+  "actual_round11_isolated_replay": {
+    "existing_artifacts_changed": [],
+    "first_reproduction_succeeded": true,
+    "second_identical_rerun_succeeded": true,
+    "live_files_written": false
+  },
+  "initializer_cli": {
+    "separate_fresh_directory_succeeded": true,
+    "second_initialization_refused": true,
+    "existing_outputs_byte_identical": true
+  },
+  "fault_injection": {
+    "before_and_after_each_of_eight_publication_boundaries": true,
+    "process_exit_after_first_promotion_recovered": true,
+    "external_edit_stops_recovery": true,
+    "read_only_validation_does_not_recover": true
+  },
+  "concurrency": {
+    "frozen_file_one_winner": true,
+    "separate_process_lock_prevents_lost_updates": true,
+    "two_concurrent_round_ingestions_both_preserved": true
+  },
+  "synthetic_group10_to_group11": {
+    "passed": true,
+    "protected_source_files": 766,
+    "protected_hash_mismatches": [],
+    "lost_attempts": 1,
+    "incomplete_or_invalid_tests": 1,
+    "usable_formulation_batch_force_observations": 4
+  },
+  "limits": [
+    "Fault injection and process termination were tested, not physical power loss or disk corruption.",
+    "The writer lock coordinates processes in this checkout; manual editors and unrelated CSV consumers do not honor it.",
+    "Replicate completion relies on explicit operator attestation; no replicate quota or biological independence is inferred.",
+    "An entirely unmeasured round remains blocked pending an explicit campaign decision."
+  ],
+  "read_only_audit_guard_followup_tests": {
+    "passed": 14
+  }
+}

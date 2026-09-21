@@ -24,9 +24,23 @@ class ComparisonTests(unittest.TestCase):
             self.assertEqual(set(p.formulation_id),set(slate.formulation_id))
             fake=pd.DataFrame(dict(formulation_id=slate.formulation_id,batch_id='ROUND_010',endpoint='viability_percent',value=np.arange(len(slate))+40.))
             result=Path(d)/'evaluated';evaluate(frozen,fake,result)
+            committed={p.name:p.read_bytes() for p in result.iterdir() if p.is_file()}
+            evaluate(frozen,fake,result)
+            self.assertEqual(committed,{p.name:p.read_bytes() for p in result.iterdir() if p.is_file()})
+            # Reporting can fail after its CSV evidence is already committed.
+            retry=Path(d)/'retry'
+            with patch('helper.gp_comparison_plots.render',side_effect=OSError('plot failed')):
+                with self.assertRaises(OSError):evaluate(frozen,fake,retry)
+            evaluate(frozen,fake,retry)
+            ambiguous=Path(d)/'ambiguous';ambiguous.mkdir()
+            (ambiguous/'predictions.csv').write_text('unidentified partial output')
+            with self.assertRaisesRegex(ValueError,'Existing evaluation differs'):
+                evaluate(frozen,fake,ambiguous)
+            self.assertEqual((ambiguous/'predictions.csv').read_text(),'unidentified partial output')
             e=pd.read_csv(result/'predictions.csv')
             for row in e.loc[e.stage.eq('reference_conditioned')].itertuples():self.assertNotIn(row.formulation_id,json.loads(row.conditioning_ids))
             fake.value+=30
+            with self.assertRaisesRegex(ValueError,'inputs differ'):evaluate(frozen,fake,result)
             other=Path(d)/'other';evaluate(frozen,fake,other)
             second=pd.read_csv(other/'predictions.csv')
             np.testing.assert_allclose(e.loc[e.stage.eq('before_batch'),'predicted'],second.loc[second.stage.eq('before_batch'),'predicted'])

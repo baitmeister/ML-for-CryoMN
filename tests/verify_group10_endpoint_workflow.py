@@ -93,7 +93,7 @@ def main(output):
     frozen_gp=ROOT/'results/multi_objective_v2/rounds/ROUND_010/gp_comparison'
     if frozen_gp.exists():shutil.copytree(frozen_gp,results/'rounds/ROUND_010/gp_comparison')
     run('group10_update_and_group11','src/08_multi_objective/03_run_round/run_round.py',
-        [str(output/'synthetic_group10.csv'),*shared,'--seed','42'])
+        [str(output/'synthetic_group10.csv'),*shared,'--seed','42','--finalize'])
     obs=pd.read_csv(data/'observations.csv')
     new=obs.loc[obs.batch_id.eq('ROUND_010')]
     active=production_observations(obs)

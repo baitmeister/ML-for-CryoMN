@@ -59,7 +59,7 @@ python3 src/08_multi_objective/02_select_candidates/select_candidates.py
 
 # 3. Fill next_round_candidates.csv with wet-lab results and run the round step
 python3 src/08_multi_objective/03_run_round/run_round.py \
-  results/multi_objective_v2/next_round/next_round_candidates.csv
+  results/multi_objective_v2/next_round/next_round_candidates.csv --finalize
 ```
 
 V2 files to know:

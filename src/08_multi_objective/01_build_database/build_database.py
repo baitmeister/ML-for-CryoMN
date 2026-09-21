@@ -12,7 +12,9 @@ if str(V2_ROOT) not in sys.path:
     sys.path.insert(0, str(V2_ROOT))
 
 from helper.config import load_optimization_config
-from helper.paths import LEGACY_LITERATURE_PATH, LEGACY_VALIDATION_PATH, PROCESSED_V2_DIR
+from helper.paths import (LEGACY_LITERATURE_PATH, LEGACY_VALIDATION_PATH, PROCESSED_V2_DIR,
+                          INGREDIENTS_CONFIG, OPTIMIZATION_CONFIG)
+from helper.persistence import file_hash
 from helper.registry import load_registry
 from helper.transfer import build_v2_tables_from_legacy, write_v2_tables
 
@@ -27,6 +29,8 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
+    input_hashes = {str(Path(p).resolve()): file_hash(p) for p in
+                    (args.literature, args.validation, INGREDIENTS_CONFIG, OPTIMIZATION_CONFIG)}
     registry = load_registry()
     optimization_config = load_optimization_config()
     formulations, observations = build_v2_tables_from_legacy(
@@ -35,7 +39,7 @@ def main() -> None:
         registry=registry,
         optimization_config=optimization_config,
     )
-    write_v2_tables(formulations, observations, args.output_dir)
+    write_v2_tables(formulations, observations, args.output_dir, input_hashes=input_hashes)
     print(f"Wrote {len(formulations)} formulations and {len(observations)} observations.")
     print(f"Output directory: {Path(args.output_dir).resolve()}")
 

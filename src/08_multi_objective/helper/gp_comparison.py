@@ -12,6 +12,7 @@ from .gp_strategy import viability_rows, fit_viability, control_mask, snapshot_c
 from .models import train_endpoint_models
 from .registry import load_registry
 from .group10_config import production_observations
+from .persistence import serialized, recover_transactions, commit_files, json_bytes, digest_bytes, PersistenceConflict
 
 
 def digest(path):return hashlib.sha256(Path(path).read_bytes()).hexdigest()
@@ -29,7 +30,9 @@ def attach_roles(obs,root):
     return obs
 
 
+@serialized
 def load_inputs(root):
+    recover_transactions(Path(root)/'data/processed_v2/.v2-transactions')
     root=Path(root);forms=pd.read_csv(root/'data/processed_v2/formulations.csv')
     obs=attach_roles(pd.read_csv(root/'data/processed_v2/observations.csv'),root)
     registry=load_registry(root/'config_v2/ingredients.yaml')
@@ -108,6 +111,7 @@ def reference_subset(slate,prior):
     return slate.loc[control_mask(slate)|slate.formulation_id.isin(measured.formulation_id),'formulation_id'].tolist()
 
 
+@serialized
 def freeze(root,batch,output,slate_path=None,forms=None,obs=None,registry=None):
     root=Path(root);output=Path(output)
     if output.exists():raise FileExistsError('Frozen GP comparison already exists; never overwrite: '+str(output))
@@ -151,12 +155,13 @@ def freeze(root,batch,output,slate_path=None,forms=None,obs=None,registry=None):
     return output
 
 
+@serialized
 def evaluate(frozen,obs,output):
     frozen=Path(frozen);output=Path(output)
+    recover_transactions(output.parent / '.v2-transactions')
     manifest=json.loads((frozen/'manifest.json').read_text())
     for name,h in manifest['hashes'].items():
         if digest(frozen/name)!=h:raise ValueError('Frozen artifact hash mismatch: '+name)
-    if output.exists():raise FileExistsError('Evaluation exists; use render to redraw saved evidence')
     features=manifest['features'];slate=pd.read_csv(frozen/'slate.csv')
     models={name:BatchGP.load(frozen/(name+'.json')) for name in manifest['models']}
     target=obs.loc[obs.batch_id.eq(manifest['batch_id'])]
@@ -174,11 +179,36 @@ def evaluate(frozen,obs,output):
     comparison=pd.DataFrame(records)
     check=comparison.loc[(comparison.stage=='before_batch')&(comparison.evaluation_subset=='full_slate')].merge(frozen_predictions,on=['strategy','formulation_id'],suffixes=('','_frozen'))
     if len(check)!=len(frozen_predictions) or not np.allclose(check.predicted,check.predicted_frozen,rtol=0,atol=1e-8):raise ValueError('Frozen forecast reproduction mismatch')
-    output.mkdir(parents=True)
-    comparison.to_csv(output/'predictions.csv',index=False);pd.DataFrame(offsets).to_csv(output/'offsets.csv',index=False)
-    (output/'manifest.json').write_text(json.dumps({'frozen_manifest_sha256':digest(frozen/'manifest.json'),'stage':'evaluation','evaluated_at':datetime.now(timezone.utc).isoformat()},indent=2))
+    inputs = dict(frozen_manifest_sha256=digest(frozen/'manifest.json'),
+                  target_observations_sha256=digest_bytes(target.to_csv(index=False).encode()))
+    old_path = output/'manifest.json'
+    old = json.loads(old_path.read_text()) if old_path.exists() else {}
+    if old.get('inputs') is not None and old['inputs'] != inputs:
+        raise PersistenceConflict('Evaluation inputs differ from committed evidence; use a separate output directory.')
+    if old.get('frozen_manifest_sha256', inputs['frozen_manifest_sha256']) != inputs['frozen_manifest_sha256']:
+        raise PersistenceConflict('Evaluation belongs to different frozen forecasts.')
+    data = {'predictions.csv': comparison.to_csv(index=False).encode(),
+            'offsets.csv': pd.DataFrame(offsets).to_csv(index=False).encode()}
+    for name, expected in old.get('hashes', {}).items():
+        if not (output/name).exists() or digest(output/name) != expected:
+            raise PersistenceConflict('Committed evaluation data changed: ' + name)
+        if name in data and digest_bytes(data[name]) != expected:
+            raise PersistenceConflict('Reproduced evaluation differs from committed evidence: ' + name)
+    # A complete old evaluation without a receipt must reproduce before adoption.
+    if 'inputs' not in old:
+        for name, value in data.items():
+            if (output/name).exists() and (output/name).read_bytes() != value:
+                raise PersistenceConflict('Existing evaluation differs: ' + name)
+    receipt = dict(frozen_manifest_sha256=inputs['frozen_manifest_sha256'], stage='evaluation',
+                   evaluated_at=old.get('evaluated_at', datetime.now(timezone.utc).isoformat()),
+                   inputs=inputs, hashes={name: digest_bytes(value) for name,value in data.items()})
+    outputs = [(output/name, value, False) for name,value in data.items()]
+    outputs.append((old_path, json_bytes(receipt), False))
+    if not old.get('inputs'):
+        commit_files(output.parent / '.v2-transactions', outputs, label='challenger evaluation')
     from .gp_comparison_plots import render
-    render(output);return output
+    render(output)
+    return output
 
 
 def audit(root,output,start=1,end=None):

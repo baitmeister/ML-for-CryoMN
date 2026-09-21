@@ -14,6 +14,7 @@ V2_ROOT = Path(__file__).resolve().parents[1]
 if str(V2_ROOT) not in sys.path:
     sys.path.insert(0, str(V2_ROOT))
 
+from helper.persistence import serialized, recover_transactions
 from helper.config import load_evaluation_config
 from helper.paths import EVALUATION_CONFIG, OBSERVATIONS_PATH, RESULTS_V2_DIR
 from helper.prospective_evaluation import (
@@ -54,8 +55,13 @@ def _completed_round_ids(results_root: Path) -> list[str]:
     )
 
 
+@serialized
 def main() -> None:
     args = parse_args()
+    recover_transactions(Path(args.observations).resolve().parent / '.v2-transactions')
+    recover_transactions(Path(args.results_root) / '.v2-transactions')
+    for root in Path(args.results_root).glob('rounds/*/reports/.v2-transactions'):
+        recover_transactions(root)
     # Redraw challenger evidence only; never fit a model during report generation.
     from helper.gp_comparison_plots import render as render_gp_comparison
     for source in sorted((Path(args.results_root) / 'rounds').glob('*/reports/gp_comparison/predictions.csv')):

@@ -6,7 +6,9 @@ import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 from helper.gp_comparison import audit,freeze,evaluate,load_inputs
 from helper.gp_comparison_plots import render
+from helper.persistence import serialized, recover_transactions
 
+@serialized
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('mode',choices=['audit','freeze','evaluate','render'])
@@ -15,6 +17,7 @@ def main():
     p.add_argument('--batch',default='ROUND_010');p.add_argument('--frozen',type=Path)
     p.add_argument('--start',type=int,default=1);p.add_argument('--end',type=int,default=None,help='Latest ingested Group when omitted; retrospective audit only')
     a=p.parse_args()
+    recover_transactions(a.output.parent / ".v2-transactions")
     if a.mode=='audit':audit(a.root,a.output,a.start,a.end)
     elif a.mode=='freeze':freeze(a.root,a.batch,a.output)
     elif a.mode=='evaluate':

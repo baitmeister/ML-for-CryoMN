@@ -1,0 +1,28 @@
+Review date: 2026-09-20
+Checkout: 6306acc (v2: Round 11 candidates)
+Command: PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q tests
+Result: 7 failed, 132 passed, 3 warnings, 12 subtests passed in 33.15 seconds.
+
+Failures:
+1. test_group10_methodology.py::Group10Tests::test_supplementary_ingestion_reproduces_and_preserves_legacy
+   Test selects first load from a populated ROUND_010: 0.19379825 rather than synthetic 4.
+2. test_v2_baseline_characterization.py::V2BaselineCharacterizationTests::test_configuration_policy_schema_and_fixed_predictions
+   Column count 128 rather than frozen expectation 114.
+3. test_v2_baseline_characterization.py::V2BaselineCharacterizationTests::test_formal_prospective_metrics_match_baseline
+   Formal viability count 95 rather than baseline 72.
+4. test_v2_baseline_characterization.py::V2BaselineCharacterizationTests::test_v2_database_shape_endpoint_counts_and_hashes
+   Formulations shape [411,29] rather than [392,29].
+5. test_v2_database_characterization.py::V2DatabaseCharacterizationTests::test_canonical_long_form_database_contract
+   Formulations shape (411,29) rather than (392,29).
+6. test_v2_database_characterization.py::V2DatabaseCharacterizationTests::test_stage_one_transfer_changes_only_new_provenance_strings
+   Legacy rebuild lacks 13 newer mechanical/provenance columns expected from the current database schema.
+7. test_v2_selection_characterization.py::V2SelectionCharacterizationTests::test_round_nine_phase_and_frozen_selection_contract
+   Current full database resolves hybrid, versus Round 9 bootstrap expectation; the test does not filter outcomes to that historical cutoff.
+
+Collection/environment caveat:
+An initial plain pytest invocation failed before project test collection due to external napari/numba plugin cache setup.
+Disabling automatic third-party plugin loading allowed all project tests to run.
+Warnings during project run included Python 3.14 torch.jit deprecation and blocked optional BoTorch C++ cache; BoTorch used Python fallback.
+
+These are observed assertion failures, not seven demonstrated new production regressions.
+No production files were edited to make the suite pass.

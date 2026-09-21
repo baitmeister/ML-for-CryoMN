@@ -36,6 +36,8 @@ except ImportError:  # pragma: no cover - direct script execution fallback
     )
 
 
+from helper.persistence import serialized, recover_transactions, publish_bytes
+
 FORCE_PATTERNS = ("load", "force")
 DISPLACEMENT_PATTERNS = ("extension", "displacement", "compressive extension", "position")
 
@@ -315,6 +317,7 @@ def _resolve_candidate_results_row(
     )
 
 
+@serialized
 def update_candidate_results(
     candidates_csv_path: str | Path,
     instron_csv_path: str | Path,
@@ -356,10 +359,11 @@ def update_candidate_results(
     frame.at[row_index, "initial_stiffness_N_per_mm_per_needle"] = (
         metrics.initial_stiffness_N_per_mm_per_needle
     )
-    frame.to_csv(path, index=False)
+    publish_bytes(path, frame.to_csv(index=False).encode())
     return path
 
 
+@serialized
 def append_observations(
     output_path: str | Path,
     metrics: InstronMetrics,
@@ -376,6 +380,7 @@ def append_observations(
         source_file=portable_source_path(source_file),
     )
     output = Path(output_path)
+    recover_transactions(output.resolve().parent / '.v2-transactions')
     if output.exists() and output.stat().st_size > 0:
         existing = pd.read_csv(output)
         collisions = sorted(set(existing.observation_id.astype(str)) & set(new_rows.observation_id.astype(str)))
@@ -385,7 +390,7 @@ def append_observations(
     else:
         combined = new_rows
     output.parent.mkdir(parents=True, exist_ok=True)
-    combined.to_csv(output, index=False)
+    publish_bytes(output, combined.to_csv(index=False).encode())
     return output
 
 

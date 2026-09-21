@@ -602,8 +602,12 @@ def _parse_cli_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+from helper.persistence import serialized, recover_transactions, journal_root
+
+@serialized
 def main() -> None:
     args = _parse_cli_args()
+    recover_transactions(journal_root(args.formulations))
     formulations = _read_or_empty(args.formulations)
     observations = _read_or_empty(args.observations)
     generated: list[Path] = []

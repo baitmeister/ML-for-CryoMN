@@ -1,0 +1,261 @@
+{
+  "prospective_recomputed": {
+    "n": 95,
+    "mae": 27.268207965723754,
+    "coverage": 0.6421052631578947,
+    "width": 66.86119834884045
+  },
+  "raw_terminal_reproduction": [
+    {
+      "observation_id": "obs_ROUND_009_v2_958a475d561d_mechanical_001_terminal_status",
+      "source_exists": true,
+      "status": "complete",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    },
+    {
+      "observation_id": "obs_ROUND_009_v2_058f0d84ea0e_mechanical_001_terminal_status",
+      "source_exists": true,
+      "status": "complete",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    },
+    {
+      "observation_id": "obs_ROUND_009_v2_f87d5e9bf5a4_mechanical_001_terminal_status",
+      "source_exists": true,
+      "status": "complete",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    },
+    {
+      "observation_id": "obs_ROUND_009_v2_f87d5e9bf5a4_mechanical_002_terminal_status",
+      "source_exists": true,
+      "status": "complete",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    },
+    {
+      "observation_id": "obs_ROUND_009_v2_a4c0156ecbf5_mechanical_001_terminal_status",
+      "source_exists": true,
+      "status": "complete",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    },
+    {
+      "observation_id": "obs_ROUND_009_v2_a4c0156ecbf5_mechanical_002_terminal_status",
+      "source_exists": true,
+      "status": "complete",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    },
+    {
+      "observation_id": "obs_ROUND_010_reference_b5a5b7b1176f_mechanical_001_terminal_status",
+      "source_exists": true,
+      "status": "incomplete_test",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    },
+    {
+      "observation_id": "obs_ROUND_010_v2_3e8ef993abba_mechanical_001_terminal_status",
+      "source_exists": true,
+      "status": "complete",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    },
+    {
+      "observation_id": "obs_ROUND_010_v2_211d2693ca45_mechanical_001_terminal_status",
+      "source_exists": true,
+      "status": "complete",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    },
+    {
+      "observation_id": "obs_ROUND_010_v2_55f87bb2c839_mechanical_001_terminal_status",
+      "source_exists": true,
+      "status": "complete",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    },
+    {
+      "observation_id": "obs_ROUND_010_reference_b5a5b7b1176f_mechanical_002_terminal_status",
+      "source_exists": true,
+      "status": "complete",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    },
+    {
+      "observation_id": "obs_ROUND_010_v2_3e8ef993abba_mechanical_002_terminal_status",
+      "source_exists": true,
+      "status": "complete",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    },
+    {
+      "observation_id": "obs_ROUND_010_v2_211d2693ca45_mechanical_002_terminal_status",
+      "source_exists": true,
+      "status": "complete",
+      "hash_matches": true,
+      "status_matches": true,
+      "force_matches": true
+    }
+  ],
+  "mechanics_exploratory_loo": {
+    "n": 8,
+    "gp_mae": 0.11950758281604572,
+    "training_mean_mae": 0.11869711607142858,
+    "gp_predictions": [
+      0.2548258100469027,
+      0.24762652139832936,
+      0.2597634081419246,
+      0.24692906611906074,
+      0.25731597974714165,
+      0.19054923153309256,
+      0.22087308396205327,
+      0.2549915675701523
+    ],
+    "actual": [
+      0.1787079583333333,
+      0.2150895,
+      0.15135425,
+      0.24119499999999983,
+      0.16605816666666665,
+      0.635854,
+      0.2720105,
+      0.109429
+    ],
+    "limitation": "Post-hoc eight-row diagnostic, not prospective validation or a reliable model-selection comparison."
+  },
+  "partial_and_invalid_number": {
+    "exit_code": 0,
+    "stdout": "Validated completed worksheet against frozen proposal: 12 candidates, 12 completed row(s).\nArchived completed worksheet: /private/var/folders/cy/qyn4lm1n1dsg2m0qmymr3wlr0000gn/T/cryomn_review_o59ah0zh/results/rounds/ROUND_011/completed/completed.csv\nUpdated formulations: /private/var/folders/cy/qyn4lm1n1dsg2m0qmymr3wlr0000gn/T/cryomn_review_o59ah0zh/formulations.csv (419 rows)\nUpdated observations: /private/var/folders/cy/qyn4lm1n1dsg2m0qmymr3wlr0000gn/T/cryomn_review_o59ah0zh/observations.csv (966 rows)\nArchived mechanical execution audit: /private/var/folders/cy/qyn4lm1n1dsg2m0qmymr3wlr0000gn/T/cryomn_review_o59ah0zh/results/rounds/ROUND_011/completed/mechanical_execution_manifest.json\nRound status: /private/var/folders/cy/qyn4lm1n1dsg2m0qmymr3wlr0000gn/T/cryomn_review_o59ah0zh/results/current_round_status.json\nRound progression complete.\n",
+    "stderr": "",
+    "new_observations": [
+      {
+        "formulation_id": "v2_6d7821323078",
+        "endpoint": "intact_patch_formation_pass",
+        "value": 1.0
+      }
+    ],
+    "completed_archive_exists": true,
+    "status": {
+      "status_version": 2,
+      "source_of_truth": "observations_csv",
+      "source_observations_path": "/var/folders/cy/qyn4lm1n1dsg2m0qmymr3wlr0000gn/T/cryomn_review_o59ah0zh/observations.csv",
+      "generated_at_utc": "2026-09-20T07:06:00.424674+00:00",
+      "latest_observed_round_id": "ROUND_011",
+      "latest_observed_round_number": 11,
+      "next_round_id": "ROUND_012",
+      "observed_round_count": 11,
+      "observed_round_ids": [
+        "ROUND_001",
+        "ROUND_002",
+        "ROUND_003",
+        "ROUND_004",
+        "ROUND_005",
+        "ROUND_006",
+        "ROUND_007",
+        "ROUND_008",
+        "ROUND_009",
+        "ROUND_010",
+        "ROUND_011"
+      ],
+      "non_round_batch_ids": [
+        "legacy_literature",
+        "legacy_wetlab"
+      ],
+      "active_phase": "mechanics_hybrid",
+      "phase_reason": "auto-selected mechanics_hybrid: hybrid_gate met; full_gate paired_observations=8/16, distinct_formulations=8/12, batches=2/3",
+      "phase_resolution": {
+        "requested_phase_mode": "auto",
+        "active_phase": "mechanics_hybrid",
+        "paired_observation_count": 8,
+        "distinct_formulation_count": 8,
+        "distinct_paired_formulation_count": 8,
+        "batch_count": 2,
+        "paired_mechanical_batch_count": 2,
+        "completed_screening_round_count": 10,
+        "bootstrap_gate_met": true,
+        "hybrid_gate_met": true,
+        "full_gate_met": false,
+        "bootstrap_batch_index": 3,
+        "transition_policy_version": "mechanics_transition_v1",
+        "target_proposal_round": null,
+        "minimum_completed_screening_rounds": 8,
+        "bootstrap_gate": {
+          "min_paired_observations": 8,
+          "min_distinct_formulations": 6,
+          "min_batches": 2,
+          "met": true,
+          "remaining": {
+            "paired_observations": 0,
+            "distinct_formulations": 0,
+            "batches": 0
+          }
+        },
+        "hybrid_gate": {
+          "min_paired_observations": 8,
+          "min_distinct_formulations": 6,
+          "min_batches": 2,
+          "met": true,
+          "remaining": {
+            "paired_observations": 0,
+            "distinct_formulations": 0,
+            "batches": 0
+          }
+        },
+        "full_gate": {
+          "min_paired_observations": 16,
+          "min_distinct_formulations": 12,
+          "min_batches": 3,
+          "met": false,
+          "remaining": {
+            "paired_observations": 8,
+            "distinct_formulations": 4,
+            "batches": 1
+          }
+        },
+        "reason": "auto-selected mechanics_hybrid: hybrid_gate met; full_gate paired_observations=8/16, distinct_formulations=8/12, batches=2/3",
+        "override_used": false
+      },
+      "proposal_policy": {},
+      "proposed_batch_id": "",
+      "proposed_batch_override_used": false,
+      "proposed_batch_matches_next_round": null
+    }
+  },
+  "partial_completion_retry": {
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/Users/doggonebastard/Antigravity/ML for CryoMN/src/08_multi_objective/03_run_round/run_round.py\", line 493, in <module>\n    main()\n    ~~~~^^\n  File \"/Users/doggonebastard/Antigravity/ML for CryoMN/src/08_multi_objective/03_run_round/run_round.py\", line 321, in main\n    assert_completed_archive_compatible(\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^\n        args.candidates_csv,\n        ^^^^^^^^^^^^^^^^^^^^\n        round_paths.completed_csv,\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^\n    )\n    ^\n  File \"/Users/doggonebastard/Antigravity/ML for CryoMN/src/08_multi_objective/helper/artifacts.py\", line 452, in assert_completed_archive_compatible\n    raise ArtifactConflictError(\n        f\"Completed round artifact already exists with different bytes: {destination}\"\n    )\nhelper.artifacts.ArtifactConflictError: Completed round artifact already exists with different bytes: /var/folders/cy/qyn4lm1n1dsg2m0qmymr3wlr0000gn/T/cryomn_review_o59ah0zh/results/rounds/ROUND_011/completed/completed.csv\n"
+  },
+  "frozen_copy_race": {
+    "successful_writers": 2,
+    "final_bytes": "A",
+    "method": "Controlled concurrent interleaving in a temporary directory; no production artifacts touched."
+  },
+  "screening_completion_gate_probe": {
+    "rows": 2,
+    "distinct_formulations": 2,
+    "complete_viability_intact_pairs": 0,
+    "counted_completed_rounds": 1
+  },
+  "initializer_overwrite_probe": {
+    "exit_code": 0,
+    "before_observations": 965,
+    "after_observations": 304,
+    "remaining_campaign_observations": 0,
+    "stdout": "Wrote 304 formulations and 304 observations.\nOutput directory: /private/var/folders/cy/qyn4lm1n1dsg2m0qmymr3wlr0000gn/T/cryomn_rebuild_probe_mt2ix92y\n"
+  }
+}

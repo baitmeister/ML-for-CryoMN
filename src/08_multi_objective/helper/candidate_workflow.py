@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 import tempfile
+import json
 from pathlib import Path
 from typing import Mapping
 
@@ -24,7 +25,10 @@ from .candidates import (
     unavailable_features_from_config,
 )
 from .config import load_availability_config, load_optimization_config, nested_get
-from .artifacts import copy_working, freeze_proposal, supersede_unstarted_proposal
+from .artifacts import (supersede_unstarted_proposal, round_artifact_paths,
+                        validate_completed_against_proposal, EDITABLE_WETLAB_COLUMNS)
+from .persistence import (serialized, recover_transactions, journal_root, commit_files,
+                          file_hash, digest_bytes, json_bytes, PersistenceConflict)
 from .feasibility import (
     annotate_feasibility,
     annotate_support,
@@ -83,7 +87,10 @@ class CandidateSelectionWorkflowResult:
 def _read_or_empty(path: str | Path) -> pd.DataFrame:
     path = Path(path)
     if path.exists() and path.stat().st_size > 0:
-        return pd.read_csv(path)
+        try:
+            return pd.read_csv(path)
+        except pd.errors.EmptyDataError:
+            return pd.DataFrame()
     return pd.DataFrame()
 
 
@@ -92,11 +99,20 @@ def _next_round_id(observations_path: str | Path = OBSERVATIONS_PATH) -> str:
     return str(derive_round_tracker(observations)["next_round_id"])
 
 
+@serialized
 def run_candidate_selection(
     options: CandidateSelectionOptions,
 ) -> CandidateSelectionWorkflowResult:
     """Run Stage 2 in the historical transaction order."""
 
+    recover_transactions(journal_root(options.formulations_path))
+    recover_transactions(Path(options.output_dir).parent / '.v2-transactions')
+    from .paths import CONFIG_DIR
+    input_paths = [Path(options.formulations_path), Path(options.observations_path),
+                   Path(options.availability_config_path), *sorted(CONFIG_DIR.rglob('*.yaml'))]
+    if options.candidate_pool_path:
+        input_paths.append(Path(options.candidate_pool_path))
+    input_hashes = {str(p.resolve()): file_hash(p) for p in input_paths}
     registry = load_registry()
     optimization_config = load_optimization_config()
     availability_config = load_availability_config(options.availability_config_path)
@@ -113,8 +129,8 @@ def run_candidate_selection(
     if target_round_number >= 11:
         from .gp_strategy import validate_decision, StrategyDecisionRequired
         decision_path = options.gp_strategy_decision_path or Path(options.output_dir).parent / 'gp_strategy_decision.json'
+        input_hashes[str(Path(decision_path).resolve())] = file_hash(decision_path)
         decision = validate_decision(decision_path, target_round_number)
-        import json
         for recorded in (Path(options.output_dir).parent / 'rounds').glob('*/proposal/gp_strategy_decision.json'):
             old = json.loads(recorded.read_text())
             if old['decision_id'] == decision['decision_id'] and old['sha256'] != decision['sha256']:
@@ -125,6 +141,28 @@ def run_candidate_selection(
     group10_config = load_group10_config_for_round(target_round_number)
     assert_group10_can_proceed(group10_config, target_round_number, observations)
     observations = production_observations(observations, target_round_number=target_round_number)
+    selection_inputs = dict(
+        files=dict(input_hashes),
+        pool_size=options.pool_size or nested_get(optimization_config, 'selection.generated_candidate_pool_size', 2000),
+        seed=options.seed if options.seed is not None else optimization_config.get('random_seed', 42),
+        phase_mode=options.phase_mode or 'auto', batch_id=batch_id,
+        decision_sha256=optimization_config.get('gp_strategy_decision', {}).get('sha256'))
+    round_paths = round_artifact_paths(batch_id, Path(options.output_dir).parent)
+    receipt_path = round_paths.proposal_dir / 'selection_commit.json'
+    if receipt_path.exists() and not options.supersede_unstarted_proposal:
+        receipt = json.loads(receipt_path.read_text())
+        if receipt['inputs'] != selection_inputs:
+            raise PersistenceConflict('Frozen selection inputs/decision differ; refusing to reuse or overwrite proposal.')
+        for name, expected in receipt['hashes'].items():
+            if file_hash(round_paths.round_dir / name) != expected:
+                raise PersistenceConflict('Frozen selection artifact changed: ' + name)
+        state = round_paths.proposal_dir / 'selection_state'
+        result = SelectionResult(
+            _read_or_empty(state / 'viability_screen.csv'), _read_or_empty(state / 'mechanical_tests.csv'),
+            _read_or_empty(state / 'candidate_pool.csv'), json.loads(round_paths.proposal_metadata.read_text()))
+        _publish_working(options, batch_id, round_paths, input_hashes)
+        artifacts = generate_proposal_artifacts(pd.read_csv(round_paths.proposal_csv), round_paths.proposal_dir)
+        return _finish_selection(options, observations, batch_id, result, round_paths, artifacts, None)
     policy_active, policy_version, policy_start_round = policy_activation(
         optimization_config,
         target_round_number,
@@ -155,6 +193,8 @@ def run_candidate_selection(
         history_reference_count=len(similarity_index),
     )
     availability_excluded_candidates = pd.DataFrame()
+    working_path = Path(options.output_dir) / 'next_round_candidates.csv'
+    input_hashes[str(working_path.resolve())] = file_hash(working_path)
 
     if options.candidate_pool_path:
         candidate_pool = load_candidate_pool(options.candidate_pool_path, registry)
@@ -282,10 +322,30 @@ def run_candidate_selection(
                 "Candidate pool is empty after applying formulation-similarity rules."
             )
 
-    if target_round_number == 11 and optimization_config.get('gp_strategy_decision',{}).get('sparse_control_exception'):
+    sensitivity_required = target_round_number == 11 and optimization_config.get('gp_strategy_decision', {}).get('sparse_control_exception')
+    if sensitivity_required:
         from .control_sensitivity import check_sensitivity
-        check_sensitivity(formulations, observations, candidate_pool, registry, optimization_config,
-                          Path(options.output_dir).parent / 'group11_control_sensitivity')
+        sensitivity_dir = Path(options.output_dir).parent / 'group11_control_sensitivity'
+        if not sensitivity_dir.exists():
+            # Keep a failed check's diagnostics available for the operator to review.
+            check_sensitivity(formulations, observations, candidate_pool, registry, optimization_config,
+                              sensitivity_dir)
+            sensitivity_files = {p.name: p.read_bytes() for p in sensitivity_dir.iterdir() if p.is_file()}
+        else:
+            with tempfile.TemporaryDirectory(prefix='cryomn-sensitivity-') as sensitivity_temp:
+                try:
+                    check_sensitivity(formulations, observations, candidate_pool, registry, optimization_config,
+                                      Path(sensitivity_temp))
+                except Exception:
+                    import uuid
+                    failed = sensitivity_dir.parent / ('group11_control_sensitivity_failed_' + uuid.uuid4().hex[:12])
+                    outputs = [(failed / p.name, p.read_bytes(), True)
+                               for p in Path(sensitivity_temp).iterdir() if p.is_file()]
+                    if outputs:
+                        commit_files(journal_root(options.formulations_path), outputs, label='failed control sensitivity diagnostic')
+                        print('Control sensitivity diagnostics: ' + str(failed))
+                    raise
+                sensitivity_files = {p.name: p.read_bytes() for p in Path(sensitivity_temp).iterdir() if p.is_file()}
 
     result = select_next_round(
         formulations=formulations,
@@ -358,6 +418,9 @@ def run_candidate_selection(
         staged_candidates = staging_output / "next_round_candidates.csv"
         staged_summary = staging_output / "next_round_summary.txt"
         staged_metadata = staging_output / "next_round_metadata.json"
+        if not staged_metadata.exists():
+            staged_metadata.write_text(json.dumps(result.metadata, indent=2,
+                default=lambda value: value.item() if hasattr(value, 'item') else str(value)) + '\n')
         if target_round_number >= 11:
             from .gp_comparison import freeze
             freeze(Path(__file__).resolve().parents[3], batch_id, staging_root / 'gp_comparison',
@@ -386,33 +449,53 @@ def run_candidate_selection(
                 total_candidate_pool=options.total_candidate_pool_path,
                 results_root=results_root,
             )
-        round_paths = freeze_proposal(
-            batch_id,
-            staged_candidates,
-            summary_path=staged_summary,
-            metadata_path=staged_metadata if staged_metadata.exists() else None,
-            results_root=results_root,
-        )
+        round_paths = round_artifact_paths(batch_id, results_root)
+        frozen_outputs = [
+            (round_paths.proposal_csv, staged_candidates.read_bytes(), True),
+            (round_paths.proposal_summary, staged_summary.read_bytes(), True),
+            (round_paths.proposal_metadata, staged_metadata.read_bytes(), True),
+        ]
         if 'gp_strategy_decision' in optimization_config:
-            import json
-            (round_paths.proposal_dir / 'gp_strategy_decision.json').write_text(json.dumps(optimization_config['gp_strategy_decision'], indent=2)+'\n')
+            # Preserve the established serialization of historical decision files.
+            frozen_outputs.append((round_paths.proposal_dir / 'gp_strategy_decision.json',
+                (json.dumps(optimization_config['gp_strategy_decision'], indent=2) + '\n').encode(), True))
         if target_round_number >= 11:
-            import shutil
-            comparison_dir = round_paths.proposal_dir.parent / 'gp_comparison'
+            comparison_dir = round_paths.round_dir / 'gp_comparison'
             if comparison_dir.exists():
-                raise FileExistsError('Existing challenger evidence cannot be overwritten: '+str(comparison_dir))
-            shutil.move(str(staging_root / 'gp_comparison'), comparison_dir)
-        proposal_artifacts = generate_proposal_artifacts(
-            pd.read_csv(staged_candidates),
-            round_paths.proposal_dir,
-        )
+                _validate_existing_comparison(comparison_dir, staging_root / 'gp_comparison')
+                # No regenerated timestamps or forecasts replace historical evidence.
+                comparison_source = comparison_dir
+            else:
+                comparison_source = staging_root / 'gp_comparison'
+            evidence_names = set(json.loads((comparison_source / 'manifest.json').read_text())['hashes']) | {'manifest.json'}
+            frozen_outputs.extend((comparison_dir / p.relative_to(comparison_source), p.read_bytes(),
+                                   str(p.relative_to(comparison_source)) in evidence_names)
+                                  for p in sorted(comparison_source.rglob('*')) if p.is_file())
+        state_dir = round_paths.proposal_dir / 'selection_state'
+        for name in ('viability_screen', 'mechanical_tests', 'candidate_pool'):
+            frame = getattr(result, name)
+            frozen_outputs.append((state_dir / (name + '.csv'), frame.to_csv(index=False).encode(), True))
+        frozen_outputs.append((state_dir / 'total_candidate_pool.csv', staging_pool.read_bytes(), True))
+        receipt = dict(version=1, inputs=selection_inputs,
+                       hashes={str(p.relative_to(round_paths.round_dir)): digest_bytes(data)
+                               for p, data, frozen in frozen_outputs if frozen})
+        frozen_outputs.append((round_paths.proposal_dir / 'selection_commit.json', json_bytes(receipt), True))
+        working_options = replace(options, supersede_unstarted_proposal=superseded_path is not None)
+        working_outputs = _working_outputs(working_options, batch_id, round_paths, staged_candidates.read_bytes(),
+                                          staged_summary.read_bytes(), staged_metadata.read_bytes(),
+                                          staging_pool.read_bytes())
+        if sensitivity_required:
+            sensitivity_dir = results_root / 'group11_control_sensitivity'
+            # Existing diagnostics remain immutable. Conflicting runs fail clearly.
+            frozen_outputs.extend((sensitivity_dir / name, data, True) for name, data in sensitivity_files.items())
+        commit_files(journal_root(options.formulations_path), [*frozen_outputs, *working_outputs],
+                     inputs=input_hashes, label=f'{batch_id} selection')
+        proposal_artifacts = generate_proposal_artifacts(pd.read_csv(staged_candidates), round_paths.proposal_dir)
 
-        copy_working(staged_candidates, output_dir / "next_round_candidates.csv")
-        copy_working(staged_summary, output_dir / "next_round_summary.txt")
-        if staged_metadata.exists():
-            copy_working(staged_metadata, output_dir / "next_round_metadata.json")
-        copy_working(staging_pool, options.total_candidate_pool_path)
+    return _finish_selection(options, observations, batch_id, result, round_paths, proposal_artifacts, superseded_path)
 
+
+def _finish_selection(options, observations, batch_id, result, round_paths, proposal_artifacts, superseded_path):
     status_path = write_current_round_status(
         Path(options.output_dir).parent / CURRENT_ROUND_STATUS_PATH.name,
         observations=observations,
@@ -470,3 +553,77 @@ def run_candidate_selection(
             None if superseded_path is None else Path(superseded_path)
         ),
     )
+
+
+def _validate_existing_comparison(existing, staged):
+    """Adopt pre-journal evidence only when a reproduced snapshot agrees."""
+    old = json.loads((existing / 'manifest.json').read_text())
+    new = json.loads((staged / 'manifest.json').read_text())
+    for name, expected in old['hashes'].items():
+        if file_hash(existing / name) != expected:
+            raise PersistenceConflict('Frozen challenger artifact changed: ' + name)
+    for key in ('batch_id', 'cutoff', 'features', 'reference_ids', 'models',
+                'proposal_sha256', 'training_sha256', 'assumptions'):
+        if old[key] != new[key]:
+            raise PersistenceConflict('Frozen challenger inputs differ: ' + key)
+    for name in old['hashes']:
+        if name == 'predictions.csv':
+            left = pd.read_csv(existing / name).drop(columns='created_at')
+            right = pd.read_csv(staged / name).drop(columns='created_at')
+            if not left.equals(right):
+                raise PersistenceConflict('Reproduced challenger predictions differ from frozen evidence.')
+        elif file_hash(existing / name) != file_hash(staged / name):
+            raise PersistenceConflict('Reproduced challenger snapshot differs: ' + name)
+
+
+def _working_outputs(options, batch_id, round_paths, candidates, summary, metadata, pool):
+    working = Path(options.output_dir) / 'next_round_candidates.csv'
+    preserve = False
+    if working.exists() and working.stat().st_size:
+        frame = pd.read_csv(working)
+        batches = set(frame.get('batch_id', pd.Series(dtype=str)).dropna().astype(str))
+        if batches == {batch_id} and not options.supersede_unstarted_proposal:
+            # Compare immutable identity with the proposed bytes, retaining all lab edits.
+            with tempfile.NamedTemporaryFile(suffix='.csv') as temporary:
+                temporary.write(candidates)
+                temporary.flush()
+                validate_completed_against_proposal(working, temporary.name)
+            preserve = True
+        elif batches != {batch_id}:
+            from .artifacts import _values_equivalent
+            if len(batches) != 1:
+                raise PersistenceConflict('Working worksheet has ambiguous batch identity; refusing to replace it.')
+            previous = round_artifact_paths(next(iter(batches)), Path(options.output_dir).parent)
+            if file_hash(previous.completed_csv) != file_hash(working):
+                if not previous.proposal_csv.exists():
+                    raise PersistenceConflict('Working worksheet has no matching frozen proposal; refusing replacement.')
+                proposal = pd.read_csv(previous.proposal_csv).set_index('candidate_id')
+                for _, row in frame.iterrows():
+                    candidate = row.get('candidate_id')
+                    if candidate not in proposal.index or any(
+                        not _values_equivalent(row.get(column), proposal.loc[candidate].get(column))
+                        for column in EDITABLE_WETLAB_COLUMNS
+                    ):
+                        raise PersistenceConflict('Working worksheet contains uncommitted lab edits; refusing replacement.')
+    outputs = [
+        (Path(options.output_dir) / 'next_round_summary.txt', summary, False),
+        (Path(options.output_dir) / 'next_round_metadata.json', metadata, False),
+        (Path(options.total_candidate_pool_path), pool, False),
+    ]
+    if not preserve:
+        outputs.insert(0, (working, candidates, False))
+    return outputs
+
+
+def _publish_working(options, batch_id, round_paths, input_hashes):
+    working = Path(options.output_dir) / 'next_round_candidates.csv'
+    guards = {**input_hashes, str(working.resolve()): file_hash(working)}
+    outputs = _working_outputs(
+        options, batch_id, round_paths, round_paths.proposal_csv.read_bytes(),
+        round_paths.proposal_summary.read_bytes(), round_paths.proposal_metadata.read_bytes(),
+        (round_paths.proposal_dir / 'selection_state/total_candidate_pool.csv').read_bytes())
+    # Only restore missing/stale mutable exports; frozen artifacts are never regenerated.
+    outputs = [(p, data, frozen) for p, data, frozen in outputs if file_hash(p) != digest_bytes(data)]
+    if outputs:
+        commit_files(journal_root(options.formulations_path), outputs, inputs=guards,
+                     label=f'{batch_id} restore working exports')

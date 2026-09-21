@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import numpy as np
 import pandas as pd
+from helper.persistence import serialized, recover_transactions
 from helper.registry import load_registry
 from helper.models import build_training_frame
 from helper.audit_models import VARIANTS, fit_predict
@@ -44,8 +45,11 @@ def observed_rounds(obs, start_round=3, end_round=None):
                   if n >= start_round and (end_round is None or n <= end_round))
 
 
+@serialized
 def run(root, output, start_round=3, end_round=None, endpoints=ENDPOINTS, suite='expanded'):
     root=Path(root).resolve(); output=Path(output).resolve()
+    recover_transactions(root/'data/processed_v2/.v2-transactions', read_only=True)
+    recover_transactions(root/'results/multi_objective_v2/.v2-transactions', read_only=True)
     if suite not in ('historical','expanded'):raise ValueError('Unknown audit suite')
     if start_round < 1 or (end_round is not None and end_round < start_round):
         raise ValueError('Invalid audit round range')

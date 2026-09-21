@@ -14,8 +14,19 @@ The canonical mechanics policy is documented in
 
 ```bash
 python3 src/08_multi_objective/03_run_round/run_round.py \
-  results/multi_objective_v2/next_round/next_round_candidates.csv
+  results/multi_objective_v2/next_round/next_round_candidates.csv --finalize
 ```
+
+`--finalize` explicitly confirms that the planned measurements and replicates
+are finished. If the preflight lists intentionally missing outcomes, document
+why with `--unmeasured-reason "reason for those outcomes"`. Leave their CSV cells
+blank. The check does not require a force value for every screen or lost attempt.
+Use `--validate-only` during data entry.
+
+An identical retry of a round with an `ingestion_commit.json` receipt resumes
+reporting/selection without duplicate observations. Changed inputs remain conflicts.
+See the [operator guide](../../../docs/multi_objective_operator_guide.md#initialization-interruption-and-retries)
+for database protection, commit recovery and historical-artifact handling.
 
 Optional controls:
 
@@ -28,12 +39,12 @@ python3 src/08_multi_objective/03_run_round/run_round.py \
 # Stop after validation, ingestion, archival, and reporting
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv \
-  --skip-generate
+  --finalize --skip-generate
 
 # Override the phase used for the following proposal for audit/debugging
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv \
-  --phase-mode mechanics_hybrid
+  --finalize --phase-mode mechanics_hybrid
 ```
 
 `--phase-mode` accepts `auto`, `screening_only`, `mechanics_bootstrap`,

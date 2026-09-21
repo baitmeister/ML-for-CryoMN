@@ -498,7 +498,7 @@ Supported round-progression entry point:
 
 ```bash
 python3 src/08_multi_objective/03_run_round/run_round.py \
-  results/multi_objective_v2/next_round/next_round_candidates.csv
+  results/multi_objective_v2/next_round/next_round_candidates.csv --finalize
 ```
 
 For every normal iteration, fill the active worksheet and run Stage 03 once.
@@ -566,7 +566,11 @@ python3 src/08_multi_objective/helper/instron.py \
 
 The normal output of `instron.py` is an updated
 `next_round_candidates.csv`. The internal `observations.csv` is updated when
-`03_run_round/run_round.py` ingests the filled round CSV.
+`03_run_round/run_round.py --finalize` ingests the completed round CSV after
+explicit completion checks. Use `--validate-only` while entering data, and
+`--unmeasured-reason` to document unresolved outcomes that will intentionally
+remain unmeasured. See the [operator guide](../../docs/multi_objective_operator_guide.md#initialization-interruption-and-retries)
+for safe retries and recovery of interrupted commits.
 
 ## ID Meanings
 

@@ -4,12 +4,15 @@
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import pandas as pd
 
 
 ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from helper.persistence import serialized, publish_bytes, recover_transactions
 DEFAULT_PROPOSAL = ROOT / 'results/multi_objective_v2/rounds/ROUND_009/proposal/proposal.csv'
 DEFAULT_OUTPUT = ROOT / 'results/multi_objective_v2/next_round/next_round_candidates.csv'
 
@@ -47,8 +50,10 @@ def blank_result_fields(row: pd.Series) -> pd.Series:
     return row
 
 
+@serialized
 def main() -> None:
     args = parse_args()
+    recover_transactions(ROOT / 'data/processed_v2/.v2-transactions')
     proposal = pd.read_csv(args.proposal, dtype=object, keep_default_na=False)
     viability = pd.read_csv(args.viability, dtype=object, keep_default_na=False)
     if sorted(pd.to_numeric(proposal.selection_rank).astype(int)) != list(range(1, 13)):
@@ -102,7 +107,7 @@ def main() -> None:
     if len(staged) != 66:
         raise AssertionError(f'Expected 66 staged rows, found {len(staged)}')
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    staged.to_csv(args.output, index=False)
+    publish_bytes(args.output, staged.to_csv(index=False).encode())
     print(f'Staged {len(staged)} Group 9 rows in {args.output}')
 
 

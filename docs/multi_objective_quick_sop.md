@@ -5,7 +5,7 @@
 Edit only:
 
 ```text
-results/multi_objective_v2/next_round/next_round_candidates.csv
+results/multi_objective_v2/next_round/next_round_candidates.csv --finalize
 ```
 
 Fill the applicable fields:
@@ -28,8 +28,14 @@ under `results/multi_objective_v2/rounds/`.
 
 ```bash
 python3 src/08_multi_objective/03_run_round/run_round.py \
-  results/multi_objective_v2/next_round/next_round_candidates.csv
+  results/multi_objective_v2/next_round/next_round_candidates.csv --finalize
 ```
+
+First use `--validate-only` while measurements are in progress. `--finalize`
+confirms that the intended measurements and replicates are finished. The command
+lists unresolved endpoints; complete them or add `--unmeasured-reason "documented
+reason"` if they will intentionally remain unmeasured. Do not fill missing values
+with `NaN` or `NA`: leave the cells blank. Lost mechanical attempts remain valid.
 
 The command:
 
@@ -45,10 +51,14 @@ Use `--skip-generate` to stop after ingestion, archival and reporting:
 ```bash
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv \
-  --skip-generate
+  --finalize --skip-generate
 ```
 
-Stage 01 is database initialization. Stage 03 invokes Stage 02 as part of the
+After a reporting interruption, rerun the identical completed worksheet with the
+same ingestion settings. Its commit receipt prevents duplicate observations.
+Stage 02 reruns preserve entered worksheet values and reuse compatible forecasts.
+
+Stage 01 is database initialization and refuses nonempty databases. Stage 03 invokes Stage 02 as part of the
 round workflow, so a separate Stage 02 run is unnecessary for routine result
 ingestion.
 

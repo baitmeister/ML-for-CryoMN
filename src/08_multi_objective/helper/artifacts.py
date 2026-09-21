@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 
 from .paths import RESULTS_V2_DIR
+from .persistence import PersistenceConflict, publish_bytes, serialized, commit_files
 
 
 EDITABLE_WETLAB_COLUMNS = frozenset(
@@ -146,24 +147,28 @@ def _atomic_copy(source: str | Path, destination: str | Path) -> Path:
     return destination_path
 
 
+@serialized
 def copy_frozen(source: str | Path, destination: str | Path) -> Path:
     """Create an immutable-by-convention copy, allowing identical reruns."""
     source_path = Path(source)
     destination_path = Path(destination)
-    if destination_path.exists():
-        if files_match(source_path, destination_path):
-            return destination_path
-        raise ArtifactConflictError(
-            f"Refusing to overwrite frozen artifact with different bytes: {destination_path}"
-        )
-    return _atomic_copy(source_path, destination_path)
+    data = source_path.read_bytes()
+    if not data:
+        raise FileNotFoundError(f'Artifact source is missing or empty: {source_path}')
+    try:
+        publish_bytes(destination_path, data, frozen=True)
+    except PersistenceConflict as exc:
+        raise ArtifactConflictError(str(exc)) from exc
+    return destination_path
 
 
+@serialized
 def copy_working(source: str | Path, destination: str | Path) -> Path:
     """Atomically replace a mutable working artifact with exact source bytes."""
     return _atomic_copy(source, destination)
 
 
+@serialized
 def freeze_proposal(
     batch_id: str,
     candidates_csv: str | Path,
@@ -173,14 +178,21 @@ def freeze_proposal(
 ) -> RoundArtifactPaths:
     """Freeze the selection outputs for a round before wet-lab editing."""
     paths = round_artifact_paths(batch_id, results_root)
-    copy_frozen(candidates_csv, paths.proposal_csv)
+    outputs = [(paths.proposal_csv, Path(candidates_csv).read_bytes(), True)]
     if summary_path is not None and Path(summary_path).exists():
-        copy_frozen(summary_path, paths.proposal_summary)
+        outputs.append((paths.proposal_summary, Path(summary_path).read_bytes(), True))
     if metadata_path is not None and Path(metadata_path).exists():
-        copy_frozen(metadata_path, paths.proposal_metadata)
+        outputs.append((paths.proposal_metadata, Path(metadata_path).read_bytes(), True))
+    if any(not data for _, data, _ in outputs):
+        raise FileNotFoundError('Proposal artifact source is empty; nothing was frozen.')
+    try:
+        commit_files(Path(results_root) / '.v2-transactions', outputs, label=f'{batch_id} proposal')
+    except PersistenceConflict as exc:
+        raise ArtifactConflictError(str(exc)) from exc
     return paths
 
 
+@serialized
 def supersede_unstarted_proposal(
     batch_id: str,
     observations: pd.DataFrame,

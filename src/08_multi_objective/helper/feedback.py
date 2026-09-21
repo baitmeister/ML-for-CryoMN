@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Iterable
+import csv
+import math
 import re
 
 import pandas as pd
@@ -36,10 +38,35 @@ def _blank(value: object) -> bool:
 def _safe_float(value: object) -> float | None:
     if _blank(value):
         return None
-    parsed = pd.to_numeric(value, errors="coerce")
-    if pd.isna(parsed):
-        return None
-    return float(parsed)
+    parsed = float(value)
+    if not math.isfinite(parsed):
+        raise ValueError(f'Expected a finite number, got {value!r}')
+    return parsed
+
+
+NUMERIC_FEEDBACK_COLUMNS = (
+    'viability_percent', 'intact_tip_count', 'total_tip_count', 'needles_compressed',
+    'critical_axial_load_N_per_needle', 'critical_axial_load_N_total',
+    'initial_stiffness_N_per_mm_per_needle',
+)
+
+
+def validate_numeric_feedback(path, columns=NUMERIC_FEEDBACK_COLUMNS):
+    # Check original text before pandas treats strings such as "NaN" as blanks.
+    with Path(path).open(newline='', encoding='utf-8-sig') as handle:
+        for row_number, row in enumerate(csv.DictReader(handle), start=2):
+            for column in columns:
+                value = row.get(column)
+                if value is None or not value.strip():
+                    continue
+                try:
+                    _safe_float(value)
+                except (ValueError, TypeError, OverflowError) as exc:
+                    candidate = row.get('candidate_id') or row.get('formulation_id') or '(unknown)'
+                    raise ValueError(
+                        f'Row {row_number}, candidate {candidate}, column {column}: '
+                        f'expected a finite number or a blank; got {value!r}.'
+                    ) from exc
 
 
 def _require_range(
@@ -71,6 +98,7 @@ def load_candidate_lookup(candidate_files: Iterable[str | Path], registry: Ingre
         path = Path(candidate_file)
         if not path.exists():
             continue
+        validate_numeric_feedback(path, registry.feature_names)
         frame = pd.read_csv(path)
         for feature_name in registry.feature_names:
             if feature_name not in frame.columns:
@@ -190,6 +218,9 @@ def ingest_feedback(
         if observation_source_file is not None
         else feedback_path
     )
+    validate_numeric_feedback(feedback_path)
+    if not math.isfinite(viability_noise) or viability_noise <= 0:
+        raise ValueError('viability_noise must be finite and > 0')
     feedback = pd.read_csv(feedback_path)
     candidates = load_candidate_lookup(candidate_files, registry)
     new_observations: list[dict] = []
@@ -257,7 +288,7 @@ def ingest_feedback(
                 **{key: "" if _blank(row.get(key)) else row.get(key) for key in METADATA_FIELDS},
             }
         if not terminal_policy and not _blank(row.get("supplementary_analysis_file")):
-            import json, hashlib, math
+            import json, hashlib
             analysis = json.loads(Path(str(row["supplementary_analysis_file"])).read_text())
             frozen = (proposal_metadata or {}).get("group10", {}).get("effective_config", {}).get("mechanical_endpoint")
             if frozen is None or analysis.get("settings") != frozen:

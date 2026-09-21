@@ -9,6 +9,7 @@ import re
 from typing import Any
 
 import pandas as pd
+from .persistence import serialized, publish_bytes
 
 
 ROUND_ID_PATTERN = re.compile(r"^ROUND_(\d+)$")
@@ -91,6 +92,7 @@ def build_current_round_status(
     }
 
 
+@serialized
 def write_current_round_status(
     output_path: str | Path,
     observations: pd.DataFrame,
@@ -114,7 +116,7 @@ def write_current_round_status(
         proposal_policy=proposal_policy,
     )
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
+    publish_bytes(path, (
         json.dumps(
             payload,
             indent=2,
@@ -122,7 +124,6 @@ def write_current_round_status(
                 value.item() if hasattr(value, "item") else str(value)
             ),
         )
-        + "\n",
-        encoding="utf-8",
+        + "\n").encode()
     )
     return path

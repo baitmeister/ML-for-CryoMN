@@ -36,6 +36,7 @@ from helper.paths import (
     RESULTS_V2_DIR,
 )
 from helper.registry import load_registry, presence_threshold
+from helper.persistence import serialized, recover_transactions, journal_root
 
 
 def parse_args() -> argparse.Namespace:
@@ -91,8 +92,10 @@ def _ingredient_present(frame: pd.DataFrame, feature_name: str) -> pd.Series:
     )
 
 
+@serialized
 def main() -> None:
     args = parse_args()
+    recover_transactions(journal_root(args.formulations), read_only=True)
     registry = load_registry()
     config = load_optimization_config()
     formulations = pd.read_csv(args.formulations)

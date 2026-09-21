@@ -119,7 +119,7 @@ reviewed Group 10 settings/protocol are complete, activation is fixed at Group
 Edit:
 
 ```text
-results/multi_objective_v2/next_round/next_round_candidates.csv
+results/multi_objective_v2/next_round/next_round_candidates.csv --finalize
 ```
 
 Fill as applicable:
@@ -189,14 +189,32 @@ The helper updates only `next_round_candidates.csv`.
 
 ```bash
 python3 src/08_multi_objective/03_run_round/run_round.py \
-  results/multi_objective_v2/next_round/next_round_candidates.csv
+  results/multi_objective_v2/next_round/next_round_candidates.csv --finalize
 ```
+
+`--finalize` attests that the planned measurements, including the intended
+replicates, are finished. Without it, a worksheet containing results cannot be
+archived or advance the campaign. Use `--validate-only` while editing; that mode
+parses the available measurements without writing canonical files. It does not
+certify that the experiment is complete.
+
+The finalization check lists candidates missing viability or an intact outcome,
+and actual-intact priority candidates lacking a mechanical attempt. It does not
+require force from every screen, infer replicate quotas, or invent values for
+lost attempts. If the listed outcomes will intentionally remain unmeasured, add
+`--unmeasured-reason "reason for the listed missing outcomes"`; the exact list and
+reason are frozen in `completed/finalization.json`. A recorded lost mechanical
+attempt is a resolved attempt even without a force value. An entirely unmeasured
+round cannot automatically advance; that remains an explicit campaign decision.
+
+Numeric blanks remain valid. Nonblank strings such as `NaN`, `NA`, `fifty`, and
+infinities are rejected with CSV row, candidate and column information.
 
 The command order is:
 
 1. validate the worksheet against the frozen proposal
-2. ingest observations and formulations
-3. archive the source bytes as `completed/completed.csv`
+2. parse observations and formulations and check explicit finalization
+3. commit both tables, the exact source bytes as `completed/completed.csv`, and their receipts together
 4. generate replicate-aggregated descriptive and formulation-grouped
    cross-validation reports
 5. evaluate frozen proposal-time predictions
@@ -206,15 +224,19 @@ The command order is:
 
 Proposal generation occurs only if reporting succeeds. A reporting failure
 retains the database update and completed worksheet. Regenerate reporting with
-Stage 04; Stage 03 rejects a second set of colliding observation IDs rather
-than silently replacing the first ingestion.
+Stage 04, or rerun Stage 03 with the identical completed worksheet and ingestion
+settings. A committed round now has an `ingestion_commit.json` receipt: Stage 03
+checks its source hashes and recorded batch observations, then resumes reporting
+and selection without re-ingestion. Changed inputs remain conflicts. Historical
+archives without a receipt are not retroactively assumed to have committed;
+use Stage 04 for those reports.
 
 To omit proposal generation:
 
 ```bash
 python3 src/08_multi_objective/03_run_round/run_round.py \
   results/multi_objective_v2/next_round/next_round_candidates.csv \
-  --skip-generate
+  --finalize --skip-generate
 ```
 
 ## Reports
@@ -269,3 +291,30 @@ formulations / 2 batches**, meeting the unchanged hybrid gate for Group 11.
 Group 10's planned tests stay unchanged; Group 11+ allocates no mechanical rank
 to the recurring viability reference. Technical replicates still aggregate within
 formulation/batch and do not inflate gate counts.
+
+
+## Initialization, interruption and retries
+
+Stage 01 refuses either existing nonempty canonical table. For an intentional
+rebuild, pass `--output-dir /path/to/separate/empty/directory`, validate that
+rebuild, and review any replacement as a separate operation. There is no force
+flag that can silently erase the live campaign.
+
+Stage 01, Stage 02, Stage 03 and the supported artifact writers share a process
+lock for this checkout. Normal selection and ingestion first recover any prepared
+commit under the database's `.v2-transactions/` directory. A commit records input
+hashes, before/after output hashes, and durable payloads; recovery completes that
+recorded write set. If an operator edit or corrupted payload prevents recovery,
+the command stops instead of mixing snapshots. Keep the journal with the tables;
+do not delete prepared manifests or edit their payloads. `--validate-only` refuses
+pending recovery rather than writing during a read-only check. Single CSV files
+remain ordinary CSVs; unrelated tools and manual file edits do not take this lock.
+Avoid editing campaign files while a workflow is running.
+
+Stage 02 records its input/configuration/decision hashes and saved selection state
+in the proposal. An identical rerun reuses those artifacts, restores missing
+working exports, and preserves any entered values in the active worksheet. A
+changed input or altered frozen artifact is a conflict. Pre-journal proposals
+are adopted only if reproducing their selection and challenger snapshots agrees
+with the frozen evidence; creation timestamps alone are ignored. Ambiguous
+historical mismatches remain untouched. Derived plots may still be redrawn.

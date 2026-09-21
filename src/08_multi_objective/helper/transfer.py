@@ -184,8 +184,22 @@ def write_v2_tables(
     formulations: pd.DataFrame,
     observations: pd.DataFrame,
     output_dir: str | Path,
+    *,
+    input_hashes: dict[str, str | None] | None = None,
 ) -> None:
     output = Path(output_dir)
-    output.mkdir(parents=True, exist_ok=True)
-    formulations.to_csv(output / "formulations.csv", index=False)
-    observations.to_csv(output / "observations.csv", index=False)
+    from .persistence import writer_lock, recover_transactions, journal_root, commit_files
+    with writer_lock():
+        root = journal_root(output / 'formulations.csv')
+        recover_transactions(root)
+        for name in ('formulations.csv', 'observations.csv'):
+            path = output / name
+            if path.exists() and path.stat().st_size:
+                raise FileExistsError(
+                    f'Refusing to initialize a nonempty v2 database: {path}. '
+                    'For an intentional rebuild, use --output-dir with a separate empty directory.'
+                )
+        commit_files(root, [
+            (output / 'formulations.csv', formulations.to_csv(index=False).encode(), False),
+            (output / 'observations.csv', observations.to_csv(index=False).encode(), False),
+        ], inputs=input_hashes, label='initialize v2 database')

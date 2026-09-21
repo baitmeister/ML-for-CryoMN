@@ -11,6 +11,7 @@ import pandas as pd
 
 from .artifacts import ProposalValidationError, copy_frozen
 from .endpoints import aggregate_intact_patch_replicates, intact_patch_formation_pass
+from .persistence import serialized
 
 
 MECHANICAL_RESULT_COLUMNS = (
@@ -289,6 +290,7 @@ def update_endpoint_workload(audit, observations, batch_id):
     return result
 
 
+@serialized
 def freeze_mechanics_execution_manifest(
     audit: dict[str, Any],
     destination: str | Path,

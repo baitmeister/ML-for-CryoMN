@@ -1,0 +1,11 @@
+Command: PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python3 -m pytest -q
+
+=========================== short test summary info ============================
+FAILED tests/test_group10_methodology.py::Group10Tests::test_supplementary_ingestion_reproduces_and_preserves_legacy
+FAILED tests/test_v2_baseline_characterization.py::V2BaselineCharacterizationTests::test_configuration_policy_schema_and_fixed_predictions
+FAILED tests/test_v2_baseline_characterization.py::V2BaselineCharacterizationTests::test_formal_prospective_metrics_match_baseline
+FAILED tests/test_v2_baseline_characterization.py::V2BaselineCharacterizationTests::test_v2_database_shape_endpoint_counts_and_hashes
+FAILED tests/test_v2_database_characterization.py::V2DatabaseCharacterizationTests::test_canonical_long_form_database_contract
+FAILED tests/test_v2_database_characterization.py::V2DatabaseCharacterizationTests::test_stage_one_transfer_changes_only_new_provenance_strings
+FAILED tests/test_v2_selection_characterization.py::V2SelectionCharacterizationTests::test_round_nine_phase_and_frozen_selection_contract
+7 failed, 207 passed, 3 warnings, 12 subtests passed in 27.06s

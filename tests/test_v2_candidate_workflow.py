@@ -121,16 +121,15 @@ class V2CandidateWorkflowTests(unittest.TestCase):
     def test_generated_pool_run_returns_round_and_artifact_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_name:
             root = Path(temporary_name)
-            outcome = run_candidate_selection(
-                CandidateSelectionOptions(
-                    formulations_path=self.formulations_path,
-                    observations_path=self.observations_path,
-                    output_dir=root / "next_round",
-                    total_candidate_pool_path=root / "total_candidate_pool.csv",
-                    seed=42,
-                    batch_id="ROUND_009",
-                )
+            options = CandidateSelectionOptions(
+                formulations_path=self.formulations_path,
+                observations_path=self.observations_path,
+                output_dir=root / "next_round",
+                total_candidate_pool_path=root / "total_candidate_pool.csv",
+                seed=42,
+                batch_id="ROUND_009",
             )
+            outcome = run_candidate_selection(options)
             expected_ids = [
                 "retest_v2_6f20e63adb1d",
                 "retest_v2_7371aa062562",
@@ -160,6 +159,17 @@ class V2CandidateWorkflowTests(unittest.TestCase):
                 "frozen_proposal",
             ):
                 self.assertTrue(outcome.artifact_paths[name].exists(), name)
+            pool_bytes = outcome.artifact_paths['total_candidate_pool'].read_bytes()
+            working = outcome.artifact_paths['working_candidates']
+            sheet = pd.read_csv(working)
+            sheet.loc[0, 'viability_percent'] = 53
+            sheet.to_csv(working, index=False)
+            entered = working.read_bytes()
+            with patch('helper.candidate_workflow.select_next_round', side_effect=AssertionError('must reuse')):
+                rerun = run_candidate_selection(options)
+            self.assertEqual(working.read_bytes(), entered)
+            self.assertEqual(rerun.artifact_paths['total_candidate_pool'].read_bytes(), pool_bytes)
+            self.assertEqual(rerun.selection_result.viability_screen.candidate_id.tolist(), expected_ids)
 
     def test_group10_override_hard_stops_without_group9_observations(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_name:
