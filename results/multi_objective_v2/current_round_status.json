@@ -2,11 +2,11 @@
   "status_version": 2,
   "source_of_truth": "observations_csv",
   "source_observations_path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/processed_v2/observations.csv",
-  "generated_at_utc": "2026-09-17T11:01:47.232057+00:00",
-  "latest_observed_round_id": "ROUND_010",
-  "latest_observed_round_number": 10,
-  "next_round_id": "ROUND_011",
-  "observed_round_count": 10,
+  "generated_at_utc": "2026-09-24T04:37:28.756259+00:00",
+  "latest_observed_round_id": "ROUND_011",
+  "latest_observed_round_number": 11,
+  "next_round_id": "ROUND_012",
+  "observed_round_count": 11,
   "observed_round_ids": [
     "ROUND_001",
     "ROUND_002",
@@ -17,29 +17,30 @@
     "ROUND_007",
     "ROUND_008",
     "ROUND_009",
-    "ROUND_010"
+    "ROUND_010",
+    "ROUND_011"
   ],
   "non_round_batch_ids": [
     "legacy_literature",
     "legacy_wetlab"
   ],
   "active_phase": "mechanics_hybrid",
-  "phase_reason": "auto-selected mechanics_hybrid: hybrid_gate met; full_gate paired_observations=8/16, distinct_formulations=8/12, batches=2/3",
+  "phase_reason": "auto-selected mechanics_hybrid: hybrid_gate met; full_gate paired_observations=13/16, distinct_formulations=13/12, batches=3/3",
   "phase_resolution": {
     "requested_phase_mode": "auto",
     "active_phase": "mechanics_hybrid",
-    "paired_observation_count": 8,
-    "distinct_formulation_count": 8,
-    "distinct_paired_formulation_count": 8,
-    "batch_count": 2,
-    "paired_mechanical_batch_count": 2,
-    "completed_screening_round_count": 10,
+    "paired_observation_count": 13,
+    "distinct_formulation_count": 13,
+    "distinct_paired_formulation_count": 13,
+    "batch_count": 3,
+    "paired_mechanical_batch_count": 3,
+    "completed_screening_round_count": 11,
     "bootstrap_gate_met": true,
     "hybrid_gate_met": true,
     "full_gate_met": false,
-    "bootstrap_batch_index": 3,
+    "bootstrap_batch_index": 4,
     "transition_policy_version": "mechanics_transition_v1",
-    "target_proposal_round": 11,
+    "target_proposal_round": 12,
     "minimum_completed_screening_rounds": 8,
     "bootstrap_gate": {
       "min_paired_observations": 8,
@@ -69,12 +70,12 @@
       "min_batches": 3,
       "met": false,
       "remaining": {
-        "paired_observations": 8,
-        "distinct_formulations": 4,
-        "batches": 1
+        "paired_observations": 3,
+        "distinct_formulations": 0,
+        "batches": 0
       }
     },
-    "reason": "auto-selected mechanics_hybrid: hybrid_gate met; full_gate paired_observations=8/16, distinct_formulations=8/12, batches=2/3",
+    "reason": "auto-selected mechanics_hybrid: hybrid_gate met; full_gate paired_observations=13/16, distinct_formulations=13/12, batches=3/3",
     "override_used": false
   },
   "proposal_policy": {
@@ -88,7 +89,7 @@
     },
     "mechanical_policy": {
       "mechanical_selection_mode": "hybrid_2qlognehvi_1local_1coverage_with_actual_intact_backups",
-      "mechanical_observation_count": 8,
+      "mechanical_observation_count": 13,
       "intact_probability_threshold": 0.5,
       "intact_probability_threshold_role": "compatibility_only_not_applied",
       "pass_pool_size": 9,
@@ -134,62 +135,62 @@
     "optimizer_fallback_status": "used",
     "ranked_candidates": [
       {
-        "candidate_id": "followup_v2_430e18c49d10",
+        "candidate_id": "followup_v2_655729013931",
         "mechanical_selection_rank": 1,
         "mechanical_transition_role": "screened_hit_mechanics",
         "mechanical_backup_status": "primary"
       },
       {
-        "candidate_id": "cand_000002",
+        "candidate_id": "cand_000529",
         "mechanical_selection_rank": 2,
         "mechanical_transition_role": "hybrid_qlognehvi",
         "mechanical_backup_status": "primary"
       },
       {
-        "candidate_id": "rescue_000012",
+        "candidate_id": "cand_000600",
         "mechanical_selection_rank": 3,
         "mechanical_transition_role": "hybrid_qlognehvi",
         "mechanical_backup_status": "primary"
       },
       {
-        "candidate_id": "cand_000586",
+        "candidate_id": "cand_000119",
         "mechanical_selection_rank": 4,
         "mechanical_transition_role": "hybrid_local",
         "mechanical_backup_status": "primary"
       },
       {
-        "candidate_id": "cand_000153",
+        "candidate_id": "cand_000191",
         "mechanical_selection_rank": 5,
-        "mechanical_transition_role": "ordered_backup",
+        "mechanical_transition_role": "hybrid_coverage",
         "mechanical_backup_status": "ordered_backup"
       },
       {
-        "candidate_id": "cand_000016",
+        "candidate_id": "rescue_000022",
         "mechanical_selection_rank": 6,
         "mechanical_transition_role": "ordered_backup",
         "mechanical_backup_status": "ordered_backup"
       },
       {
-        "candidate_id": "cand_000095",
+        "candidate_id": "cand_000449",
         "mechanical_selection_rank": 7,
         "mechanical_transition_role": "ordered_backup",
         "mechanical_backup_status": "ordered_backup"
       },
       {
-        "candidate_id": "cand_000072",
+        "candidate_id": "cand_000559",
         "mechanical_selection_rank": 8,
         "mechanical_transition_role": "ordered_backup",
         "mechanical_backup_status": "ordered_backup"
       },
       {
-        "candidate_id": "cand_000350",
+        "candidate_id": "cand_000466",
         "mechanical_selection_rank": 9,
         "mechanical_transition_role": "ordered_backup",
         "mechanical_backup_status": "ordered_backup"
       }
     ]
   },
-  "proposed_batch_id": "ROUND_011",
-  "proposed_batch_override_used": true,
+  "proposed_batch_id": "ROUND_012",
+  "proposed_batch_override_used": false,
   "proposed_batch_matches_next_round": true
 }

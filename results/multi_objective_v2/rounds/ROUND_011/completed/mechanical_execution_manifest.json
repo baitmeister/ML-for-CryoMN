@@ -1,0 +1,247 @@
+{
+  "actual_intact_fail_count": 0,
+  "actual_intact_measured_count": 12,
+  "actual_intact_pass_count": 12,
+  "actual_pass_shortfall": 0,
+  "additional_test_authorization": {
+    "candidate_ids": [
+      "cand_000153"
+    ],
+    "original_policy_violations": [
+      "mechanical test count 5 exceeds capacity 4",
+      "mechanical data do not follow actual-intact priority promotion: cand_000153"
+    ],
+    "reason": "User confirmed formulation 7 (backup 1) was intentionally tested in addition to the four primaries and authorized ingestion of all Group 11 results on 2026-09-24.",
+    "scope": "current completed worksheet only; no future capacity change",
+    "source": "explicit operator CLI arguments for this ingestion"
+  },
+  "configured_mechanical_capacity": 4,
+  "continuous_qlognehvi": {
+    "continuous_optimizer_enabled": false,
+    "continuous_optimizer_fallback": true,
+    "continuous_optimizer_reason": "Recorded strategy uses shared-model finite-pool qLogNEHVI",
+    "continuous_optimizer_used": false
+  },
+  "expected_actual_intact_test_ids": [
+    "followup_v2_430e18c49d10",
+    "cand_000002",
+    "rescue_000012",
+    "cand_000586"
+  ],
+  "failed_intact_mechanical_ids": [],
+  "manifest_version": 2,
+  "mechanical_policy": {
+    "active_phase": "mechanics_hybrid",
+    "actual_intact_backup_rule": "test the first ranked rows that actually pass intact until primary_mechanical_capacity is reached; unranked rows are ineligible",
+    "anchor": {
+      "formulation_id": "",
+      "selected": false,
+      "selection_score": null,
+      "source_batch_id": ""
+    },
+    "backup_count": 5,
+    "botorch_available": true,
+    "botorch_metadata": {
+      "backend": "shared_formulation_posterior",
+      "strategy": "control"
+    },
+    "classifier_probability_selection_role": "diagnostic_only",
+    "eligibility": {
+      "allow_other_prior_mechanical_formulations": false,
+      "allow_retest_priority_for_mechanics": false,
+      "prior_mechanics_excluded_count": 1,
+      "retest_excluded_count": 2,
+      "viability_control_excluded_count": 1
+    },
+    "intact_probability_threshold": 0.5,
+    "intact_probability_threshold_role": "compatibility_only_not_applied",
+    "mechanical_observation_count": 8,
+    "mechanical_selection_mode": "hybrid_2qlognehvi_1local_1coverage_with_actual_intact_backups",
+    "mechanically_ineligible_count": 3,
+    "pass_pool_size": 9,
+    "primary_mechanical_capacity": 4,
+    "primary_recommendation_count": 4,
+    "transition_allocation": {
+      "coverage_slots": 1,
+      "local_slots": 1,
+      "qlognehvi_slots": 2,
+      "role_fallbacks": []
+    }
+  },
+  "mechanical_transition_assignments": [
+    {
+      "candidate_id": "followup_v2_430e18c49d10",
+      "formulation_id": "v2_430e18c49d10",
+      "mechanical_repeat_allowed": false,
+      "mechanical_repeat_status": "intentional_followup",
+      "mechanical_selection_rank": 1,
+      "mechanical_transition_role": "screened_hit_mechanics",
+      "prior_mechanical_observation_count": 0
+    },
+    {
+      "candidate_id": "cand_000002",
+      "formulation_id": "v2_6d7821323078",
+      "mechanical_repeat_allowed": true,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_selection_rank": 2,
+      "mechanical_transition_role": "hybrid_qlognehvi",
+      "prior_mechanical_observation_count": 0
+    },
+    {
+      "candidate_id": "rescue_000012",
+      "formulation_id": "v2_e12062bdbe84",
+      "mechanical_repeat_allowed": true,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_selection_rank": 3,
+      "mechanical_transition_role": "hybrid_qlognehvi",
+      "prior_mechanical_observation_count": 0
+    },
+    {
+      "candidate_id": "cand_000586",
+      "formulation_id": "v2_c15b8bb3f4dd",
+      "mechanical_repeat_allowed": true,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_selection_rank": 4,
+      "mechanical_transition_role": "hybrid_local",
+      "prior_mechanical_observation_count": 0
+    },
+    {
+      "candidate_id": "cand_000153",
+      "formulation_id": "v2_971e40206f5d",
+      "mechanical_repeat_allowed": true,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_selection_rank": 5,
+      "mechanical_transition_role": "ordered_backup",
+      "prior_mechanical_observation_count": 0
+    },
+    {
+      "candidate_id": "cand_000016",
+      "formulation_id": "v2_dfc7f8accc23",
+      "mechanical_repeat_allowed": true,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_selection_rank": 6,
+      "mechanical_transition_role": "ordered_backup",
+      "prior_mechanical_observation_count": 0
+    },
+    {
+      "candidate_id": "cand_000095",
+      "formulation_id": "v2_fa5fcee4e205",
+      "mechanical_repeat_allowed": true,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_selection_rank": 7,
+      "mechanical_transition_role": "ordered_backup",
+      "prior_mechanical_observation_count": 0
+    },
+    {
+      "candidate_id": "cand_000072",
+      "formulation_id": "v2_e9c61bf27dbb",
+      "mechanical_repeat_allowed": true,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_selection_rank": 8,
+      "mechanical_transition_role": "ordered_backup",
+      "prior_mechanical_observation_count": 0
+    },
+    {
+      "candidate_id": "cand_000350",
+      "formulation_id": "v2_88288eae8f28",
+      "mechanical_repeat_allowed": true,
+      "mechanical_repeat_status": "unmeasured",
+      "mechanical_selection_rank": 9,
+      "mechanical_transition_role": "ordered_backup",
+      "prior_mechanical_observation_count": 0
+    }
+  ],
+  "mechanics_active_in_proposal": true,
+  "mechanics_execution_mode": "actual_intact_priority_promotion",
+  "mechanics_transition": {
+    "anchor_selection": {
+      "enabled": false,
+      "reason": "Group 11+ uses four experimental mechanical slots; the reference is viability-only and no mechanical anchor is reserved",
+      "selected": false
+    },
+    "policy_version": "mechanics_transition_v1"
+  },
+  "optimizer_fallback_status": "used",
+  "optimizer_mode": "hybrid_finite_pool_fallback",
+  "phase_resolution": {
+    "active_phase": "mechanics_hybrid",
+    "batch_count": 2,
+    "bootstrap_batch_index": 3,
+    "bootstrap_gate": {
+      "met": true,
+      "min_batches": 2,
+      "min_distinct_formulations": 6,
+      "min_paired_observations": 8,
+      "remaining": {
+        "batches": 0,
+        "distinct_formulations": 0,
+        "paired_observations": 0
+      }
+    },
+    "bootstrap_gate_met": true,
+    "completed_screening_round_count": 10,
+    "distinct_formulation_count": 8,
+    "distinct_paired_formulation_count": 8,
+    "full_gate": {
+      "met": false,
+      "min_batches": 3,
+      "min_distinct_formulations": 12,
+      "min_paired_observations": 16,
+      "remaining": {
+        "batches": 1,
+        "distinct_formulations": 4,
+        "paired_observations": 8
+      }
+    },
+    "full_gate_met": false,
+    "hybrid_gate": {
+      "met": true,
+      "min_batches": 2,
+      "min_distinct_formulations": 6,
+      "min_paired_observations": 8,
+      "remaining": {
+        "batches": 0,
+        "distinct_formulations": 0,
+        "paired_observations": 0
+      }
+    },
+    "hybrid_gate_met": true,
+    "minimum_completed_screening_rounds": 8,
+    "override_used": false,
+    "paired_mechanical_batch_count": 2,
+    "paired_observation_count": 8,
+    "reason": "auto-selected mechanics_hybrid: hybrid_gate met; full_gate paired_observations=8/16, distinct_formulations=8/12, batches=2/3",
+    "requested_phase_mode": "auto",
+    "target_proposal_round": 11,
+    "transition_policy_version": "mechanics_transition_v1"
+  },
+  "program_requested_test_count": 4,
+  "promoted_backup_ids": [],
+  "promotion_count": 0,
+  "proposal_backup_count": 5,
+  "proposal_primary_count": 4,
+  "ranked_actual_intact_pass_count": 9,
+  "recorded_mechanical_test_ids": [
+    "cand_000002",
+    "cand_000153",
+    "cand_000586",
+    "followup_v2_430e18c49d10",
+    "rescue_000012"
+  ],
+  "unconfirmed_intact_mechanical_ids": [],
+  "unranked_mechanical_ids": [],
+  "violations": [],
+  "workload": {
+    "attempts_without_raw_result": 0,
+    "complete_total_force_without_loaded_count": 0,
+    "formulations_attempted": 5,
+    "formulations_selected": 4,
+    "incomplete_or_invalid_tests": 0,
+    "interpretable_legacy_result_rows": 9,
+    "mechanical_definition_id": "terminal_force_08mm_after_1N_v1",
+    "run_count_status": "identified_runs",
+    "specimen_runs_attempted": 9,
+    "tests_with_interpretable_terminal_force": 9,
+    "usable_formulation_batch_observations": 5
+  }
+}

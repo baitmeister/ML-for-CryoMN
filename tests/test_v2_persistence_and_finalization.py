@@ -142,6 +142,76 @@ def test_recovery_refuses_unrelated_edits_and_read_only_never_recovers(tmp_path)
     assert target.read_bytes() == b'operator edit'
 
 
+def test_successful_commit_discards_payloads_and_keeps_manifest(tmp_path):
+    target = tmp_path / 'table.csv'
+    receipt = storage.commit_files(tmp_path / 'journal', [(target, b'new', False)])
+    assert target.read_bytes() == b'new'
+    assert json.loads(receipt.read_text())['state'] == 'committed'
+    assert list(receipt.parent.glob('*.payload')) == []
+    before = snapshot(tmp_path)
+    storage.recover_transactions(tmp_path / 'journal')
+    assert snapshot(tmp_path) == before
+
+
+def test_cleanup_preserves_pending_transactions_and_read_only_state(tmp_path):
+    target, root = tmp_path / 'table.csv', tmp_path / 'journal'
+    target.write_bytes(b'old')
+    publish = storage.publish_bytes
+    def interrupt(path, *args, **kwargs):
+        if Path(path) == target:
+            raise OSError('interrupted')
+        return publish(path, *args, **kwargs)
+    with patch.object(storage, 'publish_bytes', side_effect=interrupt), pytest.raises(OSError):
+        storage.commit_files(root, [(target, b'new', False)])
+    before = snapshot(tmp_path)
+    assert storage.prune_committed_transactions(root)['files_removed'] == 0
+    assert snapshot(tmp_path) == before
+    storage.recover_transactions(root)
+    assert target.read_bytes() == b'new'
+    assert not list(root.glob('*/*.payload'))
+
+
+@pytest.mark.parametrize('changed_output', [False, True])
+def test_old_committed_payload_cleanup_verifies_outputs(tmp_path, changed_output):
+    target, root = tmp_path / 'table.csv', tmp_path / 'journal'
+    with patch.object(storage, '_prune_committed_payloads'):
+        receipt = storage.commit_files(root, [(target, b'new', False)])
+    if changed_output:
+        target.write_bytes(b'operator edit')
+    before = snapshot(tmp_path)
+    storage.recover_transactions(root, read_only=True)
+    assert snapshot(tmp_path) == before
+    result = storage.prune_committed_transactions(root)
+    assert result == dict(files_removed=0 if changed_output else 1,
+                          bytes_removed=0 if changed_output else 3)
+    assert receipt.exists()
+    if changed_output:
+        assert snapshot(tmp_path) == before
+
+
+def test_interrupted_payload_cleanup_resumes_safely(tmp_path):
+    root = tmp_path / 'journal'
+    with patch.object(storage, '_prune_committed_payloads'):
+        receipt = storage.commit_files(root, [(tmp_path / 'a', b'a', False),
+                                             (tmp_path / 'b', b'b', False)])
+    (receipt.parent / '0000.payload').unlink()
+    storage.recover_transactions(root)
+    assert not list(root.glob('*/*.payload'))
+    assert (tmp_path / 'a').read_bytes() == b'a'
+    assert (tmp_path / 'b').read_bytes() == b'b'
+
+
+def test_cleanup_keeps_corrupt_payload_for_review(tmp_path):
+    root = tmp_path / 'journal'
+    with patch.object(storage, '_prune_committed_payloads'):
+        receipt = storage.commit_files(root, [(tmp_path / 'a', b'a', False)])
+    payload = receipt.parent / '0000.payload'
+    payload.write_bytes(b'corrupt')
+    with pytest.raises(storage.PersistenceConflict, match='Corrupt committed'):
+        storage.prune_committed_transactions(root)
+    assert payload.read_bytes() == b'corrupt'
+
+
 def test_initializer_protects_either_nonempty_table(tmp_path):
     forms, obs = pd.DataFrame({'formulation_id': ['a']}), pd.DataFrame({'value': [55]})
     write_v2_tables(forms, obs, tmp_path)
@@ -229,6 +299,44 @@ def test_documented_missing_outcomes_can_finalize(tmp_path, round_case):
     manifest = json.loads((tmp_path / 'results/rounds/ROUND_001/completed/finalization.json').read_text())
     assert len(manifest['unmeasured_outcomes']) == 2
     assert len(pd.read_csv(obs)) == 1
+
+
+def test_extra_mechanical_authorization_is_bound_to_ingestion_and_retry(tmp_path, round_case):
+    module, sheet, working, obs, run = round_case
+    proposal_path = tmp_path / 'results/rounds/ROUND_001/proposal/proposal.csv'
+    sheet['mechanical_selection_rank'] = [1, 2]
+    sheet['mechanical_test_recommended'] = [True, False]
+    sheet['critical_axial_load_N_per_needle'] = None
+    sheet.to_csv(proposal_path, index=False)
+    sheet['viability_percent'] = [55, 65]
+    sheet['intact_patch_formation_pass'] = [1, 1]
+    sheet['critical_axial_load_N_per_needle'] = [.1, .2]
+    sheet.to_csv(working, index=False)
+    config = module.load_optimization_config()
+    config['mechanics_transition']['bootstrap']['mechanical_capacity'] = 1
+    extra = ['--additional-mechanical-candidate', 'c2',
+             '--additional-mechanical-reason', 'User intentionally measured backup 1']
+    with patch.object(module, 'load_optimization_config', return_value=config):
+        before = snapshot(tmp_path)
+        with pytest.raises(ValueError, match='exceeds capacity'):
+            run('--finalize', '--skip-review')
+        assert snapshot(tmp_path) == before
+        run('--validate-only', *extra)
+        assert snapshot(tmp_path) == before
+        run('--finalize', '--skip-review', *extra)
+        committed = obs.read_bytes()
+        completed_dir = proposal_path.parent.parent / 'completed'
+        receipt = json.loads((completed_dir / 'ingestion_commit.json').read_text())
+        assert receipt['settings']['additional_mechanical_tests']['candidate_ids'] == ['c2']
+        audit = json.loads((completed_dir / 'mechanical_execution_manifest.json').read_text())
+        assert audit['configured_mechanical_capacity'] == 1
+        assert audit['additional_test_authorization']['candidate_ids'] == ['c2']
+        with patch.object(module, 'ingest_feedback', side_effect=AssertionError('must not reingest')):
+            run('--skip-review', *extra)
+        assert obs.read_bytes() == committed
+        with pytest.raises(storage.PersistenceConflict, match='inputs differ'):
+            run('--skip-review', *extra[:-1], 'changed reason')
+        assert obs.read_bytes() == committed
 
 
 def test_invalid_number_stops_before_any_archival_or_table_write(tmp_path, round_case):

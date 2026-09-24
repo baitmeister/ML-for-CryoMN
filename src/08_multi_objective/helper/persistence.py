@@ -113,6 +113,47 @@ def journal_root(formulations_path):
     return Path(formulations_path).resolve().parent / '.v2-transactions'
 
 
+def _prune_committed_payloads(directory, manifest):
+    """Drop redundant payloads only after every committed output is verified."""
+    if manifest['state'] != 'committed':
+        return dict(files_removed=0, bytes_removed=0)
+    payloads = []
+    for entry in manifest['outputs']:
+        name = entry['payload']
+        if Path(name).name != name or not name.endswith('.payload'):
+            raise PersistenceConflict(f'Invalid transaction payload name: {name}')
+        payload = directory / name
+        if payload.is_symlink():
+            raise PersistenceConflict(f'Transaction payload must not be a symlink: {payload}')
+        if payload.exists():
+            if file_hash(payload) != entry['after']:
+                raise PersistenceConflict(f'Corrupt committed transaction payload: {payload}')
+            payloads.append(payload)
+    # A later edit or missing output needs review, not deletion of its last copy.
+    if payloads and any(file_hash(e['path']) != e['after'] for e in manifest['outputs']):
+        return dict(files_removed=0, bytes_removed=0)
+    removed = dict(files_removed=0, bytes_removed=0)
+    for payload in payloads:
+        size = payload.stat().st_size
+        payload.unlink()
+        removed['files_removed'] += 1
+        removed['bytes_removed'] += size
+    if payloads:
+        _sync_directory(directory)
+    return removed
+
+
+@serialized
+def prune_committed_transactions(root):
+    """Remove verified duplicate payloads; retain manifests and all pending work."""
+    removed = dict(files_removed=0, bytes_removed=0)
+    for path in sorted(Path(root).glob('*/manifest.json')):
+        result = _prune_committed_payloads(path.parent, json.loads(path.read_text()))
+        for key in removed:
+            removed[key] += result[key]
+    return removed
+
+
 def _finish(directory, manifest):
     # Validate the entire remaining write set before publishing any more files.
     for entry in manifest['outputs']:
@@ -129,6 +170,7 @@ def _finish(directory, manifest):
                           frozen=entry['frozen'])
     manifest['state'] = 'committed'
     publish_bytes(directory / 'manifest.json', json_bytes(manifest))
+    _prune_committed_payloads(directory, manifest)
 
 
 @serialized
@@ -139,11 +181,13 @@ def recover_transactions(root, *, read_only=False):
             if read_only:
                 raise PersistenceConflict('Interrupted commit requires recovery before validation: ' + str(path))
             _finish(path.parent, manifest)
+        elif manifest['state'] == 'committed' and not read_only:
+            _prune_committed_payloads(path.parent, manifest)
 
 
 @serialized
 def commit_files(root, outputs, *, inputs=None, label='v2 commit'):
-    """outputs is (path, bytes, frozen) tuples. Retain payloads for recovery/audit."""
+    """outputs is (path, bytes, frozen) tuples. Keep recovery payloads until committed."""
     recover_transactions(root)
     inputs = inputs or {}
     for path, expected in inputs.items():

@@ -156,6 +156,18 @@ mechanical fields blank, and let the completion manifest report the unused
 capacity. Do not fill a failed, unranked, or disallowed-repeat formulation to
 reach the nominal capacity.
 
+If the operator intentionally measured additional passing backups and authorizes
+their inclusion, add `--additional-mechanical-candidate CANDIDATE_ID` for each
+extra formulation and `--additional-mechanical-reason "documented reason"`.
+Every normally required test must have been attempted, and the extra tests must
+continue in actual-intact rank order. Failed, unconfirmed, unranked, skipped-rank
+and unnamed extra tests remain rejected. The execution manifest retains the
+original four-formulation allocation and original violations alongside the
+explicit authorization. The receipt binds these arguments to the completed
+worksheet; identical retries require the same arguments. This does not change
+future-round capacity or the frozen proposal. These arguments also work with
+`--validate-only`.
+
 ## Instron import and terminal endpoint
 
 Store raw files under a batch directory:

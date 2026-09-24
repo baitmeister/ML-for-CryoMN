@@ -1,0 +1,46 @@
+{
+  "style_version": "selected_v1",
+  "context": "State after ROUND_011; terminal force and apparent secant stiffness",
+  "format": "transparent PNG",
+  "dpi": 300,
+  "source_sha256": "12c3d924fc567e48630d49d1bd48cc848261c147cf17c845562129415b80f4a6",
+  "sources": [
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_011/Group11_1.csv",
+      "sha256": "3735dc3ea6513e703b4a5e5124b807e5e28f963176ed21f2adefd2b591f08c0b"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_011/Group11_6.csv",
+      "sha256": "fe4cbe9d6f33afa82131f8d1a20e4c2266a8d8b60977b9b0c587460311f500d6"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_011/Group11_2.csv",
+      "sha256": "884904c80be2fbd1cc1ab1fbe9f5623184796242f32ee0f9edf10399762d2e01"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_011/Group11_7.csv",
+      "sha256": "c293b82466135a362083977cc73cad94276b3d168d062385ae5fb9f9e95d26cc"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_011/Group11_3.csv",
+      "sha256": "95ecb04d1daf00daa31a4119b05bdf96dc0aa85a2268fbbb41ee1f01d43e2abe"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_011/Group11_4.csv",
+      "sha256": "7d3dec544d606a00ccbd4e7778fb8fd742164df62e1f254eeb6a40a7a5564f8a"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_011/Group11_8.csv",
+      "sha256": "78537575e58e3338f890b8c003c5c67994560c4f1db3b8fb489ce1fb0eb2ec5d"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_011/Group11_5.csv",
+      "sha256": "52c1144d9cb505a7b6ffde4e6ed6cdfb05a6a8cab6158060e0d9c76e5f9f76e9"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_011/Group11_9.csv",
+      "sha256": "576e5b78d3c4c78c73f2c667a4dc9e6d9a72fd6d9bd0ceeb2de3c10ec554bb59"
+    }
+  ],
+  "synthetic_data": false
+}

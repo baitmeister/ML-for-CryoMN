@@ -111,6 +111,10 @@ def parse_args() -> argparse.Namespace:
                         help='Attest that all planned measurements are finished and commit this round.')
     parser.add_argument('--unmeasured-reason', default='',
                         help='Document why the listed unresolved outcomes will remain unmeasured.')
+    parser.add_argument('--additional-mechanical-candidate', action='append', default=[],
+                        help='Explicitly accept this extra ranked, intact-passing candidate for this ingestion only; repeat for each extra test.')
+    parser.add_argument('--additional-mechanical-reason', default='',
+                        help='Required reason for additional tests; frozen in the execution manifest and ingestion receipt.')
     parser.add_argument(
         '--validate-only', action='store_true',
         help=(
@@ -335,6 +339,11 @@ def _run_locked(args):
                     mechanical_endpoint=round_mechanical_endpoint,
                     candidate_lookup_sha256=[file_hash(p) for p in candidate_files
                         if Path(p).resolve() != Path(args.candidates_csv).resolve()])
+    if args.additional_mechanical_candidate or args.additional_mechanical_reason.strip():
+        settings['additional_mechanical_tests'] = {
+            'candidate_ids': sorted(args.additional_mechanical_candidate),
+            'reason': args.additional_mechanical_reason.strip(),
+        }
     round_progressed = _round_has_new_results(args.candidates_csv) or args.finalize or receipt is not None
     if not round_progressed:
         if args.validate_only:
@@ -379,6 +388,8 @@ def _run_locked(args):
                 )
             ),
             proposal_metadata=proposal_metadata,
+            additional_test_ids=args.additional_mechanical_candidate,
+            additional_test_reason=args.additional_mechanical_reason,
         )
 
     if round_progressed:

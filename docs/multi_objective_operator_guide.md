@@ -311,6 +311,15 @@ pending recovery rather than writing during a read-only check. Single CSV files
 remain ordinary CSVs; unrelated tools and manual file edits do not take this lock.
 Avoid editing campaign files while a workflow is running.
 
+After all outputs are durably committed and their hashes verified, the workflow
+removes the duplicate `.payload` files automatically. Small transaction manifests
+remain for the local audit trail; permanent ingestion, selection and evaluation
+receipts remain with their campaign artifacts. Normal writable recovery also
+cleans leftover payloads from completed transactions. Prepared transactions,
+corrupt payloads and committed transactions with missing or changed outputs are
+preserved for recovery or review. Read-only validation never performs cleanup.
+The local `.v2-transactions/` directories and Python/test caches are ignored by Git.
+
 Stage 02 records its input/configuration/decision hashes and saved selection state
 in the proposal. An identical rerun reuses those artifacts, restores missing
 working exports, and preserves any entered values in the active worksheet. A

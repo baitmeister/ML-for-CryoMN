@@ -241,6 +241,9 @@ def validate_mechanics_execution(
     proposal: pd.DataFrame,
     primary_capacity: int = 4,
     proposal_metadata: dict[str, Any] | None = None,
+    *,
+    additional_test_ids: list[str] | None = None,
+    additional_test_reason: str = "",
 ) -> dict[str, Any]:
     audit = mechanics_execution_audit(
         completed,
@@ -248,6 +251,40 @@ def validate_mechanics_execution(
         primary_capacity,
         proposal_metadata=proposal_metadata,
     )
+    additional = list(additional_test_ids or [])
+    reason = additional_test_reason.strip()
+    if additional or reason:
+        if (not additional or not reason or len(additional) != len(set(additional))
+                or any(not str(value).strip() for value in additional)):
+            raise ProposalValidationError(
+                "Additional mechanical tests require distinct candidate IDs and a documented reason"
+            )
+        expected = set(audit['expected_actual_intact_test_ids'])
+        recorded = set(audit['recorded_mechanical_test_ids'])
+        if not expected or not expected.issubset(recorded) or set(additional) != recorded - expected:
+            raise ProposalValidationError(
+                "Additional mechanical authorization must name exactly the extra recorded tests, "
+                "after every required actual-intact priority test was attempted"
+            )
+        expanded = mechanics_execution_audit(
+            completed, proposal,
+            primary_capacity=primary_capacity + len(additional),
+            proposal_metadata=proposal_metadata,
+        )
+        if expanded['violations']:
+            raise ProposalValidationError(
+                "Additional mechanical tests must follow ranked actual-intact order: "
+                + "; ".join(expanded['violations'])
+            )
+        # Preserve the frozen allocation and distinguish extra measurements from promotions.
+        audit['additional_test_authorization'] = {
+            'candidate_ids': sorted(additional),
+            'reason': reason,
+            'source': 'explicit operator CLI arguments for this ingestion',
+            'scope': 'current completed worksheet only; no future capacity change',
+            'original_policy_violations': list(audit['violations']),
+        }
+        audit['violations'] = []
     if "experimental_role" in proposal:
         attempted = completed.loc[completed.apply(_row_has_mechanical_result, axis=1)].copy()
         known = "mechanical_test_id" in attempted and attempted.mechanical_test_id.fillna("").ne("").all()
