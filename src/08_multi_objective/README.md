@@ -336,8 +336,21 @@ highest-scoring count representatives take precedence. Chosen sets run in score
 order, each receiving a solve before any receives a second. The execution record
 includes all set rankings, selected sets and actual optimizer attempts.
 
-The first four mechanically eligible rows are primaries and the remaining
-eligible rows are ordered backups. Exact mechanically observed formulations
+The final Group 10 allocator reserves one campaign control, one mechanics
+follow-up, and one shared retest/rescue slot. An eligible retest with the highest
+evidence-based retest priority fills that shared slot; if no retest can be
+selected, the highest-scoring admissible rescue fills it. Additional retest or
+rescue rows cannot enter the nine ordinary slots. Those nine slots rank all
+ordinary origins together by mechanics acquisition, while enforcing existing
+feasibility, availability, support, similarity, cold-ingredient, ingredient
+frequency, exact-combination and shared-pair limits. There are no full-phase
+origin quotas. A missing required role or insufficient admissible ordinary
+recipes stops selection rather than silently changing the 1/1/1/9 budget.
+Earlier phases retain their original allocation rules.
+
+The follow-up retains first mechanical priority; the highest-scoring three
+other mechanically eligible rows complete the four primaries, and remaining
+eligible rows are ordered backups. The control is viability-only. Exact mechanically observed formulations
 and `retest_priority` rows are unranked. An explicit confirmation policy would
 be required to allow any repeat beyond the one bootstrap anchor.
 

@@ -1,6 +1,6 @@
 # Full-phase search repair: must-dos
 
-Status: ingredient-set selection corrected and validated on `pre-full-phase-check`, 12 October 2026. Campaign activation remains separate.
+Status: full-phase allocation updated on `pre-full-phase-check`, 12 October 2026. Campaign activation remains separate.
 
 Objective: connect continuous concentration search to the approved models, then compare it fairly with the current finite-pool search.
 
@@ -21,3 +21,7 @@ Done when the repaired search executes with the approved models, passes validati
 The first comparison at `results/multi_objective_v2/comparisons/pre_full_phase_check/matched_comparison_final/` used only single-ingredient sets and did not test the intended mixture refinement. Its unchanged slate is not evidence against continuous mixture refinement. The correction replaces that ordering and requires a fresh matched comparison with inspected ingredient-set coverage.
 
 Corrected comparison: 568 eligible ingredient sets were scored before choosing 16 (one single, six pairs, seven triples and two quadruples). All 16 reached the optimizer. All 24 generated recipes survived candidate filtering; two refinements entered the final slate. Three of twelve recipes changed; mechanical primaries remained unchanged. The matched repeat reproduced the result, and the normal Stage 02 CLI produced the same recipes and mechanical assignments. All 65 relevant tests passed and 752 protected campaign files were unchanged. Final allocation still uses the existing Group 10 origin quotas and combination caps; these can exclude higher-scoring continuous recipes after finite recipes occupy those combinations. The corrected report is at `results/multi_objective_v2/comparisons/pre_full_phase_check/mixture_refinement_final/`.
+
+Subsequent user-authorized full-phase allocation: reserve one control, one mechanics follow-up and one shared retest/rescue slot, with nine ordinary candidates competing across origins on their common mechanics acquisition score. Preserve feasibility and diversity constraints. Select the shared slot by existing evidence-ranked retest priority, with an acquisition-ranked rescue if no retest can be selected. Do not add other retests/rescues through ordinary selection. Record the allocation policy and stop if a required role cannot be filled. Keep screening, bootstrap and hybrid allocation unchanged. Compare the previous allocator from commit `6b759c7` and the new allocator using identical fitted models and scored pools, then independently repeat refinement and verify the normal CLI.
+
+The new allocation produces one control, one follow-up, one retest, seven continuous ordinary candidates and two finite ordinary candidates. Five recipes change from the prior refined comparison; seven change from the official finite proposal. One mechanical primary changes to the refined glycerol/glucose/creatine recipe. Final comparison and validation receipts: `results/multi_objective_v2/comparisons/pre_full_phase_check/full_allocation_final/`.

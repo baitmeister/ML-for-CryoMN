@@ -56,9 +56,11 @@ python3 src/08_multi_objective/02_select_candidates/compare_search.py \
   --output-dir results/multi_objective_v2/comparisons/pre_full_phase_check/my_comparison
 ```
 
-This verifies the saved baseline, fits the approved models once, reuses one
-starting pool, replays finite selection, runs continuous refinement twice and
-checks protected campaign hashes. It exports recipes, decision plots, model
+This verifies the saved baseline, fits the approved models once and reuses one
+starting pool. It replays the previous allocator from commit `6b759c7`, then
+compares old/new allocation for finite and refined search using identical scored
+pools. It independently repeats refinement, checks earlier-phase allocation
+parity and verifies protected campaign hashes. It exports recipes, decision plots, model
 snapshots, a comparison report and execution receipts. It does not publish an
 official round or change the active campaign decision.
 
@@ -277,17 +279,27 @@ labeled `ordered_backup`.
 
 ## Full mechanics algorithm
 
-Full mode attempts continuous constrained qLogNEHVI. If BoTorch is unavailable
-or optimization fails, the selector uses the finite-pool proxy and records the
-error and fallback mode. Viability and critical load per needle are the Pareto
+Full mode uses the recorded finite-only or continuous-required search mode.
+Missing dependencies, failed required optimization or invalid acquisition scores
+stop selection. Both search paths use the approved shared posterior and the
+same qLogNEHVI score. Viability and critical load per needle are the Pareto
 objectives; initial stiffness is diagnostic.
 
 ```text
-constrained log acquisition = qLogNEHVI + log(max(p_combo, 1e-9))
-finite-pool proxy = log1p(raw hypervolume-like improvement × p_combo)
+mechanics score = qLogNEHVI + log(max(p_combo, 1e-9)) - screening_acquisition_penalty
 ```
 
-The first four eligible mechanics ranks are primaries. Further eligible ranks
+The final 12-row allocation is one control, one mechanics follow-up, one shared
+retest/rescue slot and nine ordinary recipes. Eligible evidence-ranked retests
+take precedence for the shared slot; an acquisition-ranked rescue fills it only
+if no retest can be selected. Extra retests/rescues are excluded. The nine
+ordinary rows compete across origins by mechanics score, with all existing
+feasibility and diversity constraints. Origin counts are descriptive outcomes;
+`group10.ordinary_origin_quotas` is empty. A required role or total-capacity
+shortfall stops the run. Earlier phases retain their existing allocation.
+
+The follow-up has first mechanical priority and the best three eligible ordinary
+recipes complete the four primaries. Further eligible ranks
 are ordered actual-intact backups. Retests and exact mechanically observed
 formulations remain unranked.
 

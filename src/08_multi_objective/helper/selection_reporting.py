@@ -695,6 +695,10 @@ def write_selection_result(
             handle.write("Reference readiness: " + json.dumps(details["reference_readiness"]) + "\n")
             handle.write("Mechanical budget: four formulations. Replicate counts are derived from completed CSV rows.\n")
             handle.write("Roles: " + json.dumps(details["realized_roles"]) + "\n")
+            if details.get('full_phase_allocation'):
+                handle.write("Full-phase allocation: 1 control, 1 mechanics follow-up, 1 shared retest/rescue, 9 ordinary candidates ranked across origins.\n")
+                handle.write("Shared special slot: evidence-ranked retest first; rescue if no retest can be selected.\n")
+                handle.write("Ordinary origin quotas: none. Realized sources: " + json.dumps(details['ordinary_origin_counts']) + "\n")
             handle.write("Mechanical endpoint: " + details["mechanical_definition_id"] + "; nominal N per loaded needle in compatibility force columns.\n")
     if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
         metadata_path = output / "next_round_metadata.json"

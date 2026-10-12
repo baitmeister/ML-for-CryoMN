@@ -111,6 +111,11 @@ evidence.
 | `mechanics_hybrid` | Hybrid gate met; fewer than 16 pairs, 12 formulations, or 3 paired batches | 2 qLogNEHVI, 1 local, 1 coverage |
 | `mechanics_enabled` | Full 16/12/3 gate met | 4 full-mechanics tests plus ordered eligible backups |
 
+Full-phase screening reserves one control, one mechanics follow-up and one
+shared retest/rescue slot. The other nine recipes compete across origins by
+the common mechanics acquisition score with existing feasibility and diversity
+constraints; no finite-versus-continuous source quota applies.
+
 A pair requires viability and critical load for the same formulation and batch;
 technical replicates aggregate into one pair. Mechanics is performed only on
 ranked rows that actually pass intact, with backups promoted in numeric order.
