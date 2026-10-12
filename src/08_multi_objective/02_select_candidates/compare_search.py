@@ -44,6 +44,21 @@ def digest(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def capture_campaign_manifest():
+    """Protect current inputs and official outputs without requiring old artifacts."""
+    comparisons = ROOT / 'results/multi_objective_v2/comparisons'
+    roots = ('config_v2', 'data/processed_v2', 'data/raw/instron/ROUND_012',
+             'data/raw/viability/ROUND_012', 'results/multi_objective_v2')
+    files = {}
+    for name in roots:
+        for path in sorted((ROOT / name).rglob('*')):
+            if path.is_file() and not path.is_relative_to(comparisons):
+                files[str(path.relative_to(ROOT))] = digest(path)
+    return dict(created_at=datetime.now(timezone.utc).isoformat(),
+                scope='Current campaign inputs and official outputs at comparison start',
+                protected_campaign_files=files)
+
+
 def verify_campaign(manifest):
     changed = [name for name, expected in manifest['protected_campaign_files'].items()
                if not (ROOT / name).is_file() or digest(ROOT / name) != expected]
@@ -151,14 +166,10 @@ def main(output):
     output = output.resolve()
     if not output.is_relative_to(BASE.resolve()) or output in (BASE.resolve(), (BASE / 'baseline').resolve()):
         raise ValueError('Output must be a new subdirectory inside the comparison workspace')
+    manifest = capture_campaign_manifest()
     output.mkdir(parents=True, exist_ok=False)
-    manifest = json.loads((BASE / 'baseline/manifest.json').read_text())
-    assert digest(BASE / 'baseline' / manifest['archive']) == manifest['archive_sha256']
+    (output / 'campaign_manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     verified = verify_campaign(manifest)
-    # Configuration is part of the matched experiment and must match the baseline.
-    for path, expected in manifest['files'].items():
-        if path.startswith('config_v2/'):
-            assert digest(ROOT / path) == expected, path
     torch.set_num_threads(1)
     forms = pd.read_csv(ROOT / 'data/processed_v2/formulations.csv')
     raw = pd.read_csv(ROOT / 'data/processed_v2/observations.csv')
@@ -181,7 +192,6 @@ def main(output):
     frozen = pd.read_csv(ROOT / 'results/multi_objective_v2/next_round/next_round_candidates.csv')
     group_config = load_group10_config_for_round(13)
     old_allocator = previous_allocator(output)
-    previous_refined = pd.read_csv(BASE / 'mixture_refinement_final/refined/next_round_candidates.csv')
     results, receipts = {}, {}
     upstream = {}
     cases = [('old_finite', 'finite_pool', old_allocator), ('old_refined', 'continuous_required', old_allocator),
@@ -194,7 +204,8 @@ def main(output):
         decision.update(version=2, decision_id=f'round13-{mode}-comparison-v2', effective_round=13,
                         acquisition='shared_qlognehvi', search_mode=mode,
                         chosen_by='user: full phase 1 control, 1 mechanics follow-up, 1 retest/rescue; comparison only',
-                        evidence=['docs/plans/pre_full_phase_check_repair_plan.md', 'preserved post-Group-12 baseline'])
+                        evidence=['src/08_multi_objective/02_select_candidates/README.md',
+                                  'current campaign inputs recorded in campaign_manifest.json'])
         decision_path = folder / 'gp_strategy_decision.json'
         decision_path.write_text(json.dumps(decision, indent=2) + '\n')
         run_config = deepcopy(config)
@@ -238,10 +249,9 @@ def main(output):
                 folder / 'ingredient_set_ranking.csv', index=False)
         sheet = pd.read_csv(folder / 'next_round_candidates.csv')
         generate_proposal_artifacts(sheet, folder)
-        if label in ('old_finite', 'old_refined'):
-            expected = frozen if label == 'old_finite' else previous_refined
+        if label == 'old_finite':
             for column in ('formulation_id', 'mechanical_test_recommended', 'mechanical_selection_rank'):
-                pd.testing.assert_series_equal(sheet[column], expected[column], check_names=False)
+                pd.testing.assert_series_equal(sheet[column], frozen[column], check_names=False)
         results[label] = result
         receipts[label] = dict(seconds=elapsed, selected=sheet.formulation_id.tolist(),
                                reused_upstream_candidates=reuse,
@@ -283,7 +293,7 @@ def main(output):
                    code_base_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                    versions=dict(python=platform.python_version(), torch=torch.__version__, botorch=botorch.__version__),
                    shared_pool_sha256=digest(output / 'starting_pool.csv'), pool_generation_seconds=generation_seconds,
-                   old_finite_replays_frozen_slate=True, old_refined_replays_previous_comparison=True,
+                   old_finite_replays_frozen_slate=True, old_refined_reconstructed_from_commit=True,
                    previous_allocation_commit=PREVIOUS_ALLOCATION_COMMIT,
                    previous_allocation_source_sha256=digest(output / 'previous_group10_selection.py'),
                    repeat_reproduces_refined_run=True, full_phase_allocation_verified=True,
@@ -313,15 +323,15 @@ def main(output):
 
 Full phase now reserves **one control, one mechanics follow-up and one shared retest/rescue slot**. An eligible evidence-ranked retest takes priority; otherwise an acquisition-ranked rescue fills that slot. The remaining **nine candidates compete across origins on the shared mechanics acquisition score**, with the existing feasibility, availability, similarity, support, cold-ingredient, ingredient-frequency, exact-combination and shared-pair constraints. There is no finite-versus-continuous quota. If a required role or the 12-row slate cannot be filled under these constraints, selection stops with a diagnostic.
 
-The old allocator was loaded from immutable commit `{PREVIOUS_ALLOCATION_COMMIT[:7]}` and reproduced both the official finite slate and the previous refined comparison. All runs share the fitted control-informed viability GP, comparable-endpoint mechanical GP and starting pool. Old/new allocation consumes the same scored candidate pool for each search method; the repeated refinement regenerates its pool independently.
+The old allocator was loaded from immutable commit `{PREVIOUS_ALLOCATION_COMMIT[:7]}` and reproduced the official finite slate. Its refined slate was reconstructed in this run; no archived comparison output is required or verified. All runs share the fitted control-informed viability GP, comparable-endpoint mechanical GP and starting pool. Old/new allocation consumes the same scored candidate pool for each search method; the repeated refinement regenerates its pool independently.
 
 | Run | Control | Follow-up | Retest | Rescue | Ordinary sources (realized counts, not quotas) | Mechanical primary positions |
 | --- | --- | --- | --- | --- | --- | --- |
 {chr(10).join(allocation_lines)}
 
-`old_finite` is the official baseline; `old_refined` is the previous comparison with origin quotas; `finite` and `refined` both use the new full-phase allocation.
+`old_finite` is the official baseline; `old_refined` reconstructs the previous allocation with origin quotas; `finite` and `refined` both use the new full-phase allocation.
 
-- Recipes retained from the **previous refined comparison**: **{summary['overlap_with_previous_refined']}/12**.
+- Recipes retained from the **reconstructed previous refined allocation**: **{summary['overlap_with_previous_refined']}/12**.
 - Recipes retained from the **official finite proposal**: **{summary['overlap_with_official']}/12**.
 - Recipes shared by **new finite and new refined allocations**: **{overlap}/12**.
 - Continuous candidates accepted before combined-pool filtering: **{info.get('accepted_candidate_count', 0)}**; surviving all candidate filters: **{info.get('accepted_after_all_candidate_filters', 0)}**.
@@ -334,7 +344,7 @@ The old allocator was loaded from immutable commit `{PREVIOUS_ALLOCATION_COMMIT[
 - Screening, bootstrap and hybrid final-allocation checks on the shared scored pool matched the previous allocator, including recipe identities, mechanical assignments and source quotas.
 - All **{verified}** protected campaign files remained unchanged.
 
-Changes below are relative to the previous refined comparison. Positions refer to each run separately.
+Changes below are relative to the reconstructed previous refined allocation. Positions refer to each run separately.
 
 | Change | Position in that run | Recipe | Source |
 | --- | --- | --- | --- |

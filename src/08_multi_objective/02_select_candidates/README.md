@@ -56,10 +56,14 @@ python3 src/08_multi_objective/02_select_candidates/compare_search.py \
   --output-dir results/multi_objective_v2/comparisons/pre_full_phase_check/my_comparison
 ```
 
-This verifies the saved baseline, fits the approved models once and reuses one
-starting pool. It replays the previous allocator from commit `6b759c7`, then
+This records hashes of current campaign inputs and official outputs, fits the
+approved models once and reuses one starting pool. It requires the preserved
+post-Group-12 data and official ROUND_013 proposal, but no previous comparison
+artifacts or baseline archive. It replays the previous allocator from commit `6b759c7`, then
 compares old/new allocation for finite and refined search using identical scored
-pools. It independently repeats refinement, checks earlier-phase allocation
+pools. The old finite slate must match the official proposal; the old refined
+slate is reconstructed from code rather than checked against a saved comparison.
+It independently repeats refinement, checks earlier-phase allocation
 parity and verifies protected campaign hashes. It exports recipes, decision plots, model
 snapshots, a comparison report and execution receipts. It does not publish an
 official round or change the active campaign decision.
