@@ -1,9 +1,13 @@
 # GP comparison workflow: implementation and operating instructions
 
-Implemented 2026-09-16. Group 10 remains frozen. No production GP has been selected
-on the user's behalf and no Group 11 proposal has been generated.
+Model implementation: `batch_gp_v1`. The Group 10 proposal uses its frozen pooled
+GP specification. Decision `group11-control-informed-user-v1`, effective Group 11,
+selects the campaign-only, control-informed batch-effect Matérn-5/2 viability GP
+with the comparable-endpoint mechanical GP. See the
+[round progression register](../multi_objective_round_progression.md) for search
+activation and full-phase allocation.
 
-## Evidence ready now
+## Groups 3–10 comparison evidence
 
 - [Historical forward comparison](audit/batch_gp_20260916/README.md): Groups 3–9,
   84 viability outcomes, each fitted using preceding data only.
@@ -20,7 +24,7 @@ Historical equal-Group MAE: Current GP 26.72 points; campaign-only 15.18; campai
 with fitted residual noise 14.89; batch model 15.63. Batch-model future coverage is 89.3%,
 but the matched-noise model also reaches 89.3% with lower error. This is not evidence to
 promote the batch model automatically. Control history in this snapshot is insufficient
-for an independently supported calibration claim; its results currently match the batch
+for an independently supported calibration claim; its snapshot results match the batch
 model on ordinary outcomes. The reports label this limitation.
 
 ## Statistical implementation
@@ -35,7 +39,9 @@ share a zero-centered normal distribution. The separate control baseline has a n
 prior centered at the ordinary campaign mean with SD 50 points. Sparse calibration is
 therefore explicitly prior-sensitive. Production control calibration requires at least
 two preceding control batches; this is a minimum identifiability screen, not proof of
-adequate calibration. No control is required for either non-calibrated Proposed GP.
+adequate calibration. The recorded Group 11 exception permits exactly one historical
+control batch for that target round; zero is rejected. No control is required for
+non-calibrated campaign strategies.
 
 This is empirical Bayes, not full Bayesian integration over model parameters. Intervals
 condition on fitted parameters. Gaussian intervals can extend outside 0–100%; retain
@@ -48,7 +54,9 @@ and independent objective outputs. Future batch offsets and residual noise are e
 from acquisition outputs, but their effect on uncertainty about formulation response
 remains. The mechanical model uses the Current GP's comparable endpoint posterior;
 no viability noise floor is applied to force. Shared acquisition uses genuine BoTorch
-finite-pool qLogNEHVI with cache_root=False. There is no heuristic fallback.
+qLogNEHVI with cache_root=False. Version-1 `control` decisions use a finite pool;
+version-2 decisions choose `finite_pool` or `continuous_required` explicitly.
+Both version-2 paths reuse this bundle. There is no heuristic fallback.
 
 ## Commands and state transitions
 
@@ -64,20 +72,22 @@ python3 src/08_multi_objective/04_report_campaign/compare_gp_strategies.py rende
 Audit/freeze/evaluate require new output directories. Do not repeat the Group 10 freeze
 as a replacement for the already saved evidence. Rendering reads only saved evidence.
 
-After Group 10 finishes, ingest with `--skip-generate`. The normal round workflow evaluates
-its saved challenger models automatically and writes `reports/gp_comparison` inside the
+Use `--skip-generate` when ingestion is authorized without candidate generation.
+The round workflow evaluates its saved challenger models automatically and writes `reports/gp_comparison` inside the
 round. Predictions are verified against immutable snapshots and before-batch forecasts.
 Reference-conditioned evaluations reveal only the predeclared reference/retest subset;
 these observations are excluded from the matched test set. Model parameters stay fixed.
 
-Before generating Group 11, the user must choose a strategy and complete a versioned
-JSON decision. Pass it with `--gp-strategy-decision PATH` to either round execution or
+Generation for Group 11 and higher requires a complete versioned JSON decision.
+Pass it with `--gp-strategy-decision PATH` to either round execution or
 candidate selection. Alternatively, put it at `results/multi_objective_v2/gp_strategy_decision.json`.
-No such active decision is created by this implementation.
+The decision at that path is `group11-control-informed-user-v1`.
 
 Supported viability IDs: `current`, `campaign`, `campaign_noise`, `batch`, `control`.
-Use acquisition `current_paired_qlognehvi` only with `current`; otherwise use
-`shared_qlognehvi_finite_pool`. Mechanical configuration is `current_comparable_endpoint`.
+For version 1, use acquisition `current_paired_qlognehvi` only with `current`;
+the campaign strategies use `shared_qlognehvi_finite_pool`. Version 2 requires
+a campaign strategy, acquisition `shared_qlognehvi` and explicit `search_mode`
+(`finite_pool` or `continuous_required`). Mechanical configuration is `current_comparable_endpoint`.
 The objective is `expected_formulation_response`. New selection acceptance thresholds
 are not silently introduced: leave `acceptance_thresholds` null unless separately
 implemented. Application acceptance criteria can be documented independently.
@@ -119,13 +129,14 @@ R², rank correlation, future coverage and interval width. Historical, pre-outco
 and official production evidence remain separately labeled. No aggregate winner score
 is computed. Existing frozen production reports remain separate from challenger reports.
 
-## Remaining user-controlled steps
+## Decision and evaluation sequence
 
-1. Complete Group 10 wet-lab work and supply its results/QC.
-2. Ingest and review the frozen-prediction comparison.
-3. Record the selected GP/acquisition strategy.
-4. Generate and test the single official Group 11 proposal.
-5. Review accumulated prospective evidence after Groups 11–12; do not switch merely
+1. Validate the completed round under its frozen protocol.
+2. Ingest authorized results and evaluate frozen predictions.
+3. Confirm the recorded GP/acquisition/search decision for the target proposal.
+4. Generate one official proposal and freeze its model and selection evidence.
+5. Review accumulated prospective evidence at the declared decision checkpoints,
+   including Groups 11–12 for `group11-control-informed-user-v1`; do not switch merely
    because one model wins one round. Verify phase gates and application thresholds separately.
 
 ## Verification completed

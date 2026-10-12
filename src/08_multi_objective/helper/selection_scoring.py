@@ -374,6 +374,8 @@ def _candidate_masks(
     candidate_pool: pd.DataFrame,
     registry: IngredientRegistry,
     optimization_config: Mapping,
+    *,
+    limit: bool = True,
 ) -> list[tuple[int, ...]]:
     max_size = int(
         nested_get(
@@ -395,7 +397,10 @@ def _candidate_masks(
         )
         if 0 < len(active) <= max_size:
             masks.add(active)
-    return sorted(masks, key=lambda mask: (len(mask), mask))[:max_masks]
+    ordered = sorted(masks, key=lambda mask: (len(mask), mask))
+    # Shared refinement must score all eligible sets before spending the budget.
+    # Keep the historical enumeration only for the legacy optimizer path.
+    return ordered[:max_masks] if limit else ordered
 
 
 def _continuous_mechanics_candidates(
@@ -407,15 +412,27 @@ def _continuous_mechanics_candidates(
     optimization_config: Mapping,
     policy_active: bool,
     policy_version: str | None = None,
+    intact_policy=None,
+    intact_evidence=None,
+    unavailable_feature_names=(),
 ) -> tuple[pd.DataFrame, dict]:
+    from .gp_strategy import search_mode, validate_search_config
+    mode = search_mode(optimization_config)
+    validate_search_config(optimization_config)
     metadata: dict = {
         "continuous_optimizer_enabled": False,
         "continuous_optimizer_used": False,
-        "continuous_optimizer_fallback": True,
+        "continuous_optimizer_fallback": False,
+        "search_mode_requested": mode,
+        "search_mode_actual": "finite_pool",
+        "optimizer_attempt_count": 0,
+        "accepted_candidate_count": 0,
     }
-    if hasattr(models, 'acquisition_bundle'):
-        metadata['continuous_optimizer_reason'] = 'Recorded strategy uses shared-model finite-pool qLogNEHVI'
+    if mode == 'finite_pool':
+        metadata['continuous_optimizer_reason'] = 'Recorded strategy explicitly selects finite-pool search'
         return candidate_pool.head(0).copy(), metadata
+    if mode == 'continuous_required' and (not policy_active or not hasattr(models, 'acquisition_bundle')):
+        raise RuntimeError('continuous_required needs active formulation policies and the approved shared posterior')
     if not policy_active or not bool(
         nested_get(optimization_config, "continuous_qlognehvi.enabled", True)
     ):
@@ -431,6 +448,8 @@ def _continuous_mechanics_candidates(
         ).notna()
     ].copy()
     if len(paired) < 2:
+        if mode == 'continuous_required':
+            raise RuntimeError('continuous_required needs at least two paired objective rows')
         metadata["continuous_optimizer_reason"] = "insufficient paired objective rows"
         return candidate_pool.head(0).copy(), metadata
 
@@ -447,7 +466,8 @@ def _continuous_mechanics_candidates(
         ],
         dtype=float,
     )
-    masks = _candidate_masks(candidate_pool, registry, optimization_config)
+    masks = _candidate_masks(candidate_pool, registry, optimization_config,
+                             limit=mode != 'continuous_required')
     support = build_support_context(
         formulations,
         registry,
@@ -457,9 +477,17 @@ def _continuous_mechanics_candidates(
     preparation_threshold = float(
         nested_get(optimization_config, "preparation_model.probability_threshold", 0.50)
     )
+    history_index = build_history_similarity_index(
+        formulations, observations, registry,
+        resolve_similarity_policy(optimization_config, optimization_config.get('_gp_target_round')),
+    ) if mode == 'continuous_required' else None
 
     def feasible(vector: np.ndarray) -> bool:
         row = dict(zip(registry.feature_names, vector))
+        if not np.isfinite(vector).all() or count_active_ingredients(row, registry) == 0:
+            return False
+        if any(abs(row.get(feature, 0.0)) > 1e-12 for feature in unavailable_feature_names):
+            return False
         report = feasibility_report(
             row,
             registry,
@@ -473,6 +501,8 @@ def _continuous_mechanics_candidates(
             probability = float(models.preparation.predict_proba(vector.reshape(1, -1))[0])
             if probability < preparation_threshold:
                 return False
+        if history_index is not None and history_index.find_conflict(row) is not None:
+            return False
         return True
 
     ref_cfg = nested_get(optimization_config, "selection.reference_point", {})
@@ -487,19 +517,29 @@ def _continuous_mechanics_candidates(
             24,
         )
     )
-    optimized, botorch_metadata = try_botorch_optimize_qlognehvi(
-        train_x=_feature_matrix(paired, registry.feature_names),
-        train_y=paired[
-            ["viability_percent", "critical_axial_load_N_per_needle"]
-        ].to_numpy(dtype=float),
-        lower_bounds=lower,
-        upper_bounds=upper,
-        active_masks=masks,
-        reference_point=reference_point,
-        n_candidates=target,
-        feasibility_callback=feasible,
-        random_seed=int(optimization_config.get("random_seed", 42)),
-    )
+    if mode == 'continuous_required':
+        from .continuous_search import optimize_shared_candidates
+        optimized, botorch_metadata = optimize_shared_candidates(
+            models=models, train_x=_feature_matrix(paired, registry.feature_names),
+            candidate_pool=candidate_pool, registry=registry, config=optimization_config,
+            policy=intact_policy, evidence=intact_evidence, masks=masks,
+            lower_bounds=lower, upper_bounds=upper, reference=reference_point,
+            target=target, feasible=feasible, policy_version=policy_version,
+        )
+    else:
+        optimized, botorch_metadata = try_botorch_optimize_qlognehvi(
+            train_x=_feature_matrix(paired, registry.feature_names),
+            train_y=paired[
+                ["viability_percent", "critical_axial_load_N_per_needle"]
+            ].to_numpy(dtype=float),
+            lower_bounds=lower,
+            upper_bounds=upper,
+            active_masks=masks,
+            reference_point=reference_point,
+            n_candidates=target,
+            feasibility_callback=feasible,
+            random_seed=int(optimization_config.get("random_seed", 42)),
+        )
     metadata.update(botorch_metadata)
     metadata["continuous_optimizer_enabled"] = True
     if optimized is None or len(optimized) == 0:
@@ -518,6 +558,7 @@ def _continuous_mechanics_candidates(
                 "formulation_id": stable_formulation_id(row, registry),
                 "active_ingredient_count": count_active_ingredients(row, registry),
                 "candidate_origin": "continuous_qlognehvi",
+                "generation_origin": "continuous_qlognehvi",
             }
         )
         rows.append(row)

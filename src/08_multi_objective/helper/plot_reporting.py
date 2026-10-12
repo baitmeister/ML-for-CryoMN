@@ -34,15 +34,25 @@ def write_decision(candidates,directory,prefix=''):
     prefix = prefix.rstrip('_')+'_' if prefix else ''
     if candidates.empty:return []
     table=decision_table(candidates)
-    metadata_path=Path(directory).parent/'selection_metadata.json'
-    decision={}
-    if metadata_path.exists():decision=json.loads(metadata_path.read_text()).get('gp_strategy_decision',{})
+    metadata = {}
+    for filename in ('selection_metadata.json', 'next_round_metadata.json'):
+        metadata_path = Path(directory).parent / filename
+        if metadata_path.exists():
+            metadata = json.loads(metadata_path.read_text())
+            break
+    decision=metadata.get('gp_strategy_decision', {})
     from .batch_gp import NAMES
     name=NAMES.get(decision.get('viability_strategy','current'),'Current GP')
+    if decision.get('viability_strategy') == 'control':
+        name = 'Control-informed batch-effect viability GP'
     table['production_gp']=name
+    table['gp_decision_id'] = decision.get('decision_id', 'historical production')
+    table['evidence_phase'] = metadata.get('active_phase', 'unrecorded')
+    table['search_method'] = metadata.get('optimizer_mode', 'unrecorded')
     fig=plots.decision_figure(table)
-    fig.text(.09,.012,name+' | '+decision.get('decision_id','historical production'),fontsize=8)
-    return write_plot(fig,table,directory,prefix+'candidate_decisions','Frozen proposal; stored assignments; '+name)
+    context = name + ' | phase=' + metadata.get('active_phase', 'unrecorded') + ' | search=' + metadata.get('optimizer_mode', 'unrecorded')
+    fig.text(.09,.012,context,fontsize=8)
+    return write_plot(fig,table,directory,prefix+'candidate_decisions','Stored proposal; stored assignments; '+context)
 
 
 def write_pareto(formulations,observations,candidates,directory,prefix='',context='Current evidence'):

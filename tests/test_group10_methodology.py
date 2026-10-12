@@ -124,7 +124,9 @@ class Group10Tests(unittest.TestCase):
             sheet.to_csv(td/'sheet.csv',index=False)
             args=(td/'sheet.csv',[td/'candidate.csv'],formulations,observations,load_registry(),'ROUND_010')
             _,updated=ingest_feedback(*args,proposal_metadata={'group10':{'effective_config':{'mechanical_endpoint':self.e}}})
-            new=updated[updated.batch_id=='ROUND_010']
+            # Live fixtures now contain completed Group 10 data. Inspect only
+            # the synthetic observation IDs introduced by this test.
+            new=updated.loc[~updated.observation_id.isin(observations.observation_id)]
             self.assertEqual(new.loc[new.endpoint=='supported_axial_load_1mm_N_per_needle','value'].iloc[0],1)
             self.assertEqual(new.loc[new.endpoint=='critical_axial_load_N_per_needle','value'].iloc[0],4)
             self.assertFalse(production_observations(new).endpoint.eq('viability_percent').any())

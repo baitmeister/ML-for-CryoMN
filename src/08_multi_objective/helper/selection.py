@@ -171,7 +171,8 @@ def _prepare_and_score_candidate_pool(
     unavailable_feature_names: list[str] | tuple[str, ...],
 ) -> tuple[pd.DataFrame, dict]:
     """Prepare evidence, annotate predictions, and apply phase-appropriate scores."""
-
+    candidate_pool = candidate_pool.copy()
+    candidate_pool['generation_origin'] = candidate_pool.get('generation_origin', candidate_pool.get('candidate_origin', 'finite_pool'))
     continuous_metadata = {
         "continuous_optimizer_enabled": False,
         "continuous_optimizer_used": False,
@@ -190,7 +191,7 @@ def _prepare_and_score_candidate_pool(
                 ["boundary_probe", "rescue_dilution"]
             )
             candidate_pool.loc[~preserved_origin_mask, "candidate_origin"] = (
-                "finite_pool_fallback"
+                "finite_pool"
             )
         continuous_candidates, continuous_metadata = _continuous_mechanics_candidates(
             candidate_pool,
@@ -201,6 +202,9 @@ def _prepare_and_score_candidate_pool(
             optimization_config,
             policy_active=policy_active,
             policy_version=policy_version,
+            intact_policy=intact_combination_policy,
+            intact_evidence=intact_evidence,
+            unavailable_feature_names=unavailable_feature_names,
         )
         if not continuous_candidates.empty:
             candidate_pool = pd.concat(
@@ -235,6 +239,9 @@ def _prepare_and_score_candidate_pool(
         if bool(continuous_metadata.get("continuous_optimizer_used", False)):
             continuous_metadata["similarity_survivor_count"] = continuous_survivors
             if continuous_survivors == 0:
+                if continuous_metadata.get('search_mode_requested') == 'continuous_required':
+                    from .continuous_search import ContinuousSearchError
+                    raise ContinuousSearchError('continuous_required: all continuous candidates rejected by similarity policy', continuous_metadata)
                 continuous_metadata["continuous_optimizer_used"] = False
                 continuous_metadata["continuous_optimizer_fallback"] = True
                 continuous_metadata["continuous_optimizer_reason"] = (
@@ -470,6 +477,7 @@ def _prepare_and_score_candidate_pool(
             [anchor_candidates, combined_pool], ignore_index=True, sort=False
         ).drop_duplicates("candidate_id", keep="first")
     combined_pool, zero_active_filtered_count = _drop_zero_active_candidates(combined_pool, registry)
+    combined_pool['generation_origin'] = combined_pool['generation_origin'].fillna(combined_pool['candidate_origin'])
     combined_pool = annotate_intact_combination_evidence(
         combined_pool,
         intact_evidence,
@@ -512,6 +520,12 @@ def _prepare_and_score_candidate_pool(
         annotated = annotated.loc[
             annotated["preparation_feasibility_probability"] >= preparation_threshold
         ].reset_index(drop=True)
+    if continuous_metadata.get('search_mode_requested') == 'continuous_required':
+        survivors = int(annotated.candidate_origin.eq('continuous_qlognehvi').sum())
+        continuous_metadata['accepted_after_all_candidate_filters'] = survivors
+        if survivors == 0:
+            from .continuous_search import ContinuousSearchError
+            raise ContinuousSearchError('continuous_required: no continuous candidates survived final candidate filters', continuous_metadata)
     pool_selection_metadata = {"pool_selection_mode": "screening_phase"}
     if phase_resolution.active_phase in {PHASE_HYBRID, PHASE_MECHANICS}:
         mechanics_scores, pool_selection_metadata = _mechanics_phase_scores(
@@ -618,7 +632,7 @@ def _assemble_selection_metadata(
     if phase_resolution.active_phase == PHASE_SCREENING:
         optimizer_mode = (
             "support_aware_finite_pool_screening"
-            if policy_active
+            if target_round_number is not None and policy_activation(optimization_config, target_round_number)[0]
             else "legacy_uniform_finite_pool_screening"
         )
         optimizer_fallback_status = "not_applicable"
@@ -626,19 +640,13 @@ def _assemble_selection_metadata(
         optimizer_mode = "bootstrap_utility_diversity"
         optimizer_fallback_status = "not_applicable"
     elif continuous_metadata.get("continuous_optimizer_used", False):
-        optimizer_mode = (
-            "hybrid_continuous_qlognehvi"
-            if phase_resolution.active_phase == PHASE_HYBRID
-            else "continuous_qlognehvi"
-        )
+        optimizer_mode = "finite_pool_plus_continuous_qlognehvi"
         optimizer_fallback_status = "not_used"
     else:
-        optimizer_mode = (
-            "hybrid_finite_pool_fallback"
-            if phase_resolution.active_phase == PHASE_HYBRID
-            else "finite_pool_fallback"
-        )
-        optimizer_fallback_status = "used"
+        deliberate = continuous_metadata.get('search_mode_requested') == 'finite_pool'
+        optimizer_mode = 'finite_pool_qlognehvi' if deliberate else 'finite_pool_fallback'
+        optimizer_fallback_status = 'not_applicable' if deliberate else 'used'
+    continuous_metadata['selected_candidate_count'] = int(viability_screen.candidate_origin.eq('continuous_qlognehvi').sum())
     metadata = {
         "viability_screen_count": int(len(viability_screen)),
         "mechanical_test_count": int(
@@ -838,13 +846,16 @@ def select_next_round(
     policy_version: str | None = None,
     similarity_audit: SimilarityAudit | None = None,
     unavailable_feature_names: list[str] | tuple[str, ...] = (),
+    endpoint_models: EndpointModels | None = None,
 ) -> SelectionResult:
+    from .gp_strategy import search_mode, validate_search_config
+    validate_search_config(optimization_config)
     if policy_version is None:
         policy_version = policy_activation(
             optimization_config,
             target_round_number,
         )[1]
-    models = train_endpoint_models(
+    models = endpoint_models if endpoint_models is not None else train_endpoint_models(
         formulations,
         observations,
         registry,
@@ -881,6 +892,8 @@ def select_next_round(
         requested_phase_mode=requested_phase_mode,
         target_round_number=target_round_number,
     )
+    if search_mode(optimization_config) == 'continuous_required' and phase_resolution.active_phase not in {PHASE_HYBRID, PHASE_MECHANICS}:
+        raise RuntimeError('continuous_required is only available in hybrid or full mechanics phases')
     similarity_policy = resolve_similarity_policy(
         optimization_config,
         target_round_number,

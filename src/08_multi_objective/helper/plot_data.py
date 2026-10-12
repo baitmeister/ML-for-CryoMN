@@ -343,14 +343,19 @@ def decision_table(candidates):
     full=(candidates.sort_values('selection_rank', kind='stable') if 'selection_rank' in candidates else candidates).reset_index(drop=True)
     # Include complete input features and IDs in the source table, not just abbreviated labels.
     table=pd.concat([table,full[[col for col in full if col not in table]]],axis=1).copy()
+    if 'generation_origin' in table:
+        table['selection_origin_group'] = table.candidate_origin
+        table['candidate_origin'] = table.generation_origin.fillna(table.candidate_origin)
     table['effective_intact_evidence']=pd.to_numeric(table.get('empirical_combination_weighted_passes', pd.Series(np.nan,index=table.index)),errors='coerce')+pd.to_numeric(table.get('empirical_combination_weighted_failures', pd.Series(np.nan,index=table.index)),errors='coerce')
     table['prior_only']=table.effective_intact_evidence.eq(0)
     ranks=pd.to_numeric(table.mechanical_selection_rank,errors='coerce')
     flags=table.mechanical_test_recommended.map(lambda x:parse_bool(x) is True)
     table['mechanical_assignment']=[f'Primary {int(r)}' if primary and pd.notna(r) else f'Backup {int(r)}' if pd.notna(r) else 'Primary (rank unknown)' if primary else 'Screen only' for r,primary in zip(ranks,flags)]
     reasons={'retest':'Repeat a tested formulation','rescue_dilution':'Dilute a tested formulation',
-             'sparse_exploration':'Explore ingredient combinations','local_perturbation':'Explore near a tested formulation',
-             'boundary_probe':'Explore the evidence boundary'}
+             'sparse_exploration':'Explore ingredient combinations','local_perturbation':'Explore near an existing formulation',
+             'boundary_probe':'Explore higher concentrations',
+             'continuous_qlognehvi':'Continuous concentration refinement',
+             'finite_pool':'Select from finite pool'}
     unknown_assignment=table.mechanical_test_recommended.map(parse_bool).isna() & ranks.isna()
     table.loc[unknown_assignment,'mechanical_assignment']='Not recorded'
     table['selection_reason']=table.candidate_origin.fillna('unrecorded').map(reasons).fillna(table.candidate_origin.fillna('unrecorded').str.replace('_',' '))

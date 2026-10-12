@@ -138,6 +138,8 @@ def run_candidate_selection(
         optimization_config['gp_strategy_decision'] = decision
         optimization_config['_gp_target_round'] = target_round_number
         optimization_config['_gp_raw_observations'] = observations.copy()
+        from .gp_strategy import validate_search_config
+        validate_search_config(optimization_config)
     group10_config = load_group10_config_for_round(target_round_number)
     assert_group10_can_proceed(group10_config, target_round_number, observations)
     observations = production_observations(observations, target_round_number=target_round_number)
@@ -265,7 +267,7 @@ def run_candidate_selection(
         )
         candidate_pool = annotate_support(candidate_pool, registry, support_context)
         if "candidate_origin" not in candidate_pool.columns:
-            candidate_pool["candidate_origin"] = "finite_pool_fallback"
+            candidate_pool["candidate_origin"] = "finite_pool"
         rejected_candidates = candidate_pool.loc[
             ~candidate_pool["feasibility_pass"].astype(bool)
         ].copy()
@@ -347,19 +349,27 @@ def run_candidate_selection(
                     raise
                 sensitivity_files = {p.name: p.read_bytes() for p in Path(sensitivity_temp).iterdir() if p.is_file()}
 
-    result = select_next_round(
-        formulations=formulations,
-        observations=observations,
-        candidate_pool=candidate_pool,
-        registry=registry,
-        optimization_config=optimization_config,
-        requested_phase_mode=options.phase_mode,
-        target_round_number=target_round_number,
-        policy_active=policy_active,
-        policy_version=policy_version,
-        similarity_audit=similarity_audit,
-        unavailable_feature_names=unavailable_features,
-    )
+    try:
+        result = select_next_round(
+            formulations=formulations,
+            observations=observations,
+            candidate_pool=candidate_pool,
+            registry=registry,
+            optimization_config=optimization_config,
+            requested_phase_mode=options.phase_mode,
+            target_round_number=target_round_number,
+            policy_active=policy_active,
+            policy_version=policy_version,
+            similarity_audit=similarity_audit,
+            unavailable_feature_names=unavailable_features,
+        )
+    except RuntimeError as exc:
+        if hasattr(exc, 'metadata'):
+            failure = Path(options.output_dir).parent / 'continuous_search_failure.json'
+            commit_files(journal_root(options.formulations_path),
+                         [(failure, json_bytes({'error': str(exc), **exc.metadata}), False)],
+                         label='continuous search failure diagnostic')
+        raise
     from .group10_selection import apply_group10
     result = apply_group10(result, formulations, observations, registry,
                            optimization_config, group10_config, target_round_number,

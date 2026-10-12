@@ -212,6 +212,14 @@ def _write_summary(
         f"optimizer={result.metadata.get('optimizer_mode', '')}; "
         f"fallback={result.metadata.get('optimizer_fallback_status', '')}; "
         f"reason={result.metadata.get('continuous_qlognehvi', {}).get('continuous_optimizer_reason', 'not applicable')}",
+        "GP decision: "
+        f"{result.metadata.get('gp_strategy_decision', {}).get('decision_id', 'legacy')}; "
+        f"viability={result.metadata.get('gp_strategy_decision', {}).get('viability_strategy', 'current')}; "
+        f"mechanics={result.metadata.get('gp_strategy_decision', {}).get('mechanical_strategy', 'current_comparable_endpoint')}",
+        "Continuous execution: "
+        f"attempts={result.metadata.get('continuous_qlognehvi', {}).get('optimizer_attempt_count', 0)}; "
+        f"accepted={result.metadata.get('continuous_qlognehvi', {}).get('accepted_candidate_count', 0)}; "
+        f"selected={result.metadata.get('continuous_qlognehvi', {}).get('selected_candidate_count', 0)}",
         "",
         "Main database used by selector:",
         "- data/processed_v2/formulations.csv",
@@ -510,6 +518,7 @@ def write_selection_result(
         *registry.feature_names,
         "active_ingredient_count",
         "candidate_origin",
+        "generation_origin",
         "rescue_scale_factor",
         "rescue_anchor_formulation_id",
         "rescue_anchor_viability_percent",
@@ -686,6 +695,10 @@ def write_selection_result(
             handle.write("Reference readiness: " + json.dumps(details["reference_readiness"]) + "\n")
             handle.write("Mechanical budget: four formulations. Replicate counts are derived from completed CSV rows.\n")
             handle.write("Roles: " + json.dumps(details["realized_roles"]) + "\n")
+            if details.get('full_phase_allocation'):
+                handle.write("Full-phase allocation: 1 control, 1 mechanics follow-up, 1 shared retest/rescue, 9 ordinary candidates ranked across origins.\n")
+                handle.write("Shared special slot: evidence-ranked retest first; rescue if no retest can be selected.\n")
+                handle.write("Ordinary origin quotas: none. Realized sources: " + json.dumps(details['ordinary_origin_counts']) + "\n")
             handle.write("Mechanical endpoint: " + details["mechanical_definition_id"] + "; nominal N per loaded needle in compatibility force columns.\n")
     if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
         metadata_path = output / "next_round_metadata.json"

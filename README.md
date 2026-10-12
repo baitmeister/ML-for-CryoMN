@@ -90,9 +90,18 @@ single import.
 The v2 lane treats transferred data as viability-only evidence, uses
 `intact_patch_formation_pass` as the mechanical screening gate, and optimizes
 viability with `critical_axial_load_N_per_needle`.
-Exact BoTorch qLogNEHVI support uses the optional packages listed in
-`requirements-v2-optional.txt`; if those are unavailable, the executable
-fallback mode is reported in `next_round_summary.txt`.
+Exact BoTorch qLogNEHVI support requires the packages listed in
+`requirements-v2-optional.txt`; missing dependencies stop mechanics acquisition.
+The recorded GP decision controls search separately from the evidence phase.
+Historical control-informed decisions use finite-pool qLogNEHVI. Version-2
+decisions can request continuous refinement using the same approved posterior;
+continuous-required failures stop the run. See the
+[isolated search comparison](src/08_multi_objective/02_select_candidates/README.md#isolated-search-comparison).
+
+The [round progression and method register](docs/multi_objective_round_progression.md)
+records GP choices, finite-pool generation, chemistry/diversity policies,
+mechanical phases and allocation by round. It distinguishes frozen Rounds 1–12
+from the repaired implementation and its explicit search-activation conditions.
 
 ## V2 Mechanics Phases
 
@@ -106,6 +115,11 @@ evidence.
 | `mechanics_bootstrap` | Screening entry met; fewer than 8 pairs, 6 formulations, or 2 paired batches | 4 bootstrap tests |
 | `mechanics_hybrid` | Hybrid gate met; fewer than 16 pairs, 12 formulations, or 3 paired batches | 2 qLogNEHVI, 1 local, 1 coverage |
 | `mechanics_enabled` | Full 16/12/3 gate met | 4 full-mechanics tests plus ordered eligible backups |
+
+Full-phase screening reserves one control, one mechanics follow-up and one
+shared retest/rescue slot. The other nine recipes compete across origins by
+the common mechanics acquisition score with existing feasibility and diversity
+constraints; no finite-versus-continuous source quota applies.
 
 A pair requires viability and critical load for the same formulation and batch;
 technical replicates aggregate into one pair. Mechanics is performed only on

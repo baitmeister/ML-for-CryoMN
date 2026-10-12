@@ -13,7 +13,7 @@ from .feasibility import annotate_feasibility
 from .selection_scoring import annotate_candidates
 from .similarity import resolve_similarity_policy, build_history_similarity_index, validate_selected_similarity
 from .selection_policy import select_mechanical_tests
-from .phase import resolve_phase_mode
+from .phase import PHASE_MECHANICS, resolve_phase_mode
 from .intact_policy import resolve_intact_combination_policy, build_intact_evidence, annotate_intact_combination_evidence
 
 
@@ -41,11 +41,56 @@ def reference_feasibility(frame, registry, optimization, config):
                           if i.feature_name=='dmso_M' else i for i in registry.ingredients])
     return annotate_feasibility(frame,modified,optimization,policy_active=True)
 
-def apply_group10(result, formulations, observations, registry, optimization, config, round_number, unavailable=()):
+
+def _allocate_full_phase_slate(extra, ordinary, add, selected):
+    """Reserve 1 control, 1 follow-up, 1 retest/rescue; rank nine across origins.
+
+    ``add`` is the same constraint checker used by the historical allocator.
+    No source quota or source-processing priority applies to the nine ordinary
+    slots. Diagnostic retest priority remains evidence-based, not acquisition.
+    """
+    def take_one(rows, role):
+        for _, row in rows.iterrows():
+            if add(row):
+                return row
+        raise ValueError(f'Full-phase allocation cannot fill required {role} slot; no proposal written')
+
+    extra_roles = extra.get('experimental_role', pd.Series('', index=extra.index))
+    take_one(extra.loc[extra_roles.eq('campaign_control')], 'control')
+    take_one(extra.loc[extra_roles.eq('screened_hit_mechanics')], 'mechanics follow-up')
+    retests = ordinary.loc[ordinary.experimental_role.eq('retest_priority')]
+    if not retests.empty:
+        retests = retests.sort_values(['retest_priority_score', 'formulation_id'], ascending=[False, True], kind='stable')
+    rescues = ordinary.loc[ordinary.candidate_origin.eq('rescue_dilution')].sort_values(
+        ['mechanics_phase_score', 'candidate_id'], ascending=[False, True], kind='stable')
+    special = take_one(pd.concat([retests, rescues], ignore_index=True), 'retest/rescue')
+    pool = ordinary.loc[ordinary.experimental_role.eq('ordinary')
+                        & ~ordinary.candidate_origin.eq('rescue_dilution')]
+    if not np.isfinite(pd.to_numeric(pool.mechanics_phase_score, errors='coerce')).all():
+        raise ValueError('Full-phase ordinary allocation requires finite mechanics acquisition scores')
+    ranked = pool.sort_values(['mechanics_phase_score', 'candidate_id'], ascending=[False, True], kind='stable')
+    for _, row in ranked.iterrows():
+        if len(selected) == 12:
+            break
+        add(row)
+    if len(selected) != 12:
+        raise ValueError(f'Full-phase slate has {len(selected)}/12 rows under existing constraints; no proposal written')
+    return {
+        'policy_version': 'full_mechanics_1control_1followup_1retest_or_rescue_v1',
+        'reserved_slots': {'campaign_control': 1, 'screened_hit_mechanics': 1, 'retest_or_rescue': 1},
+        'ordinary_slots': 9,
+        'retest_rescue_priority': 'evidence-ranked retest first; acquisition-ranked rescue if no retest can be selected',
+        'selected_retest_or_rescue_id': str(special.formulation_id),
+        'selected_retest_or_rescue_kind': 'retest' if special.experimental_role == 'retest_priority' else 'rescue',
+        'ordinary_ranking': 'shared mechanics acquisition score across all origins, subject to existing constraints',
+    }
+
+
+def apply_group10(result, formulations, observations, registry, optimization, config, round_number, unavailable=(), endpoint_models=None):
     assert_group10_can_proceed(config, round_number, observations)
     if not active(config,round_number): return result
     observations=production_observations(observations,target_round_number=round_number)
-    models=train_endpoint_models(formulations,observations,registry,optimization)
+    models=endpoint_models if endpoint_models is not None else train_endpoint_models(formulations,observations,registry,optimization)
     phase=resolve_phase_mode(formulations,observations,registry,optimization,target_round_number=round_number)
     reference,state=reference_candidate(config,registry)
     if not reference.empty:
@@ -121,34 +166,40 @@ def apply_group10(result, formulations, observations, registry, optimization, co
         if role=='ordinary' and row.get('candidate_origin')!='rescue_dilution': cold_counts.update(f for f in combo if f in cold)
         if role!='retest_priority': combos.update([combo]); pairs.update(combinations(combo,2))
         return True
-    if not extra.empty:
-        for _,r in extra.loc[extra.experimental_role.eq('campaign_control')].iterrows():
-            if not add(r): raise ValueError('Reference conflicts with slate constraints')
-        for _,r in extra.loc[extra.experimental_role.isin(['mechanics_anchor'])].iterrows(): add(r)
-        hit_target=max(0,(1 if len(reference) else 2)-len(legacy_anchor))
-        for _,r in extra.loc[extra.experimental_role.eq('screened_hit_mechanics')].iterrows():
-            if sum(x['experimental_role']=='screened_hit_mechanics' for x in selected)>=hit_target: break
-            add(r)
-    # Reserve up to two evidence-driven viability retests. Their identities stay separate.
-    for _,r in ordinary.loc[ordinary.experimental_role.eq('retest_priority')].sort_values('retest_priority_score',ascending=False).head(2).iterrows(): add(r)
-    rescue_filled=0
-    for _,r in ordinary.loc[ordinary.candidate_origin.eq('rescue_dilution')].iterrows():
-        if rescue_filled>=2: break
-        if add(r): rescue_filled+=1
-    reserved=len(selected)
-    score='mechanics_phase_score' if phase.active_phase=='mechanics_enabled' else 'hybrid_phase_score' if phase.active_phase=='mechanics_hybrid' else 'screening_phase_score'
-    ranked=ordinary.sort_values([score,'candidate_id'],ascending=[False,True],na_position='last')
-    # Residual origin quotas preserve the frozen ordinary proposal's origin proportions.
-    origins=result.viability_screen.loc[~result.viability_screen.recommendation_type.isin(ROLES|{'retest_priority','mechanics_anchor'}) & ~result.viability_screen.candidate_origin.eq('rescue_dilution'),'candidate_origin'].value_counts()
-    total=12-reserved
-    weights=origins/origins.sum(); quotas={k:int(np.floor(v*total)) for k,v in weights.items()}
-    for k in sorted(quotas,key=lambda k:(-(weights[k]*total-quotas[k]),k))[:total-sum(quotas.values())]: quotas[k]+=1
-    for origin,q in quotas.items():
-        accepted=0
-        for _,r in ranked.loc[ranked.candidate_origin.eq(origin)&ranked.experimental_role.eq('ordinary')].iterrows():
-            if accepted>=q: break
-            if add(r): accepted+=1
-        if accepted<q: raise ValueError(f'Group10 residual origin/chemistry quota unsatisfied: {origin} {accepted}/{q}; no proposal written')
+    full_allocation = None
+    if phase.active_phase == PHASE_MECHANICS:
+        full_allocation = _allocate_full_phase_slate(extra, ordinary, add, selected)
+        reserved = 3
+        rescue_filled = int(full_allocation['selected_retest_or_rescue_kind'] == 'rescue')
+        quotas = {}
+    else:
+        if not extra.empty:
+            for _,r in extra.loc[extra.experimental_role.eq('campaign_control')].iterrows():
+                if not add(r): raise ValueError('Reference conflicts with slate constraints')
+            for _,r in extra.loc[extra.experimental_role.isin(['mechanics_anchor'])].iterrows(): add(r)
+            hit_target=max(0,(1 if len(reference) else 2)-len(legacy_anchor))
+            for _,r in extra.loc[extra.experimental_role.eq('screened_hit_mechanics')].iterrows():
+                if sum(x['experimental_role']=='screened_hit_mechanics' for x in selected)>=hit_target: break
+                add(r)
+        # Earlier phases retain their existing reservations and origin quotas.
+        for _,r in ordinary.loc[ordinary.experimental_role.eq('retest_priority')].sort_values('retest_priority_score',ascending=False).head(2).iterrows(): add(r)
+        rescue_filled=0
+        for _,r in ordinary.loc[ordinary.candidate_origin.eq('rescue_dilution')].iterrows():
+            if rescue_filled>=2: break
+            if add(r): rescue_filled+=1
+        reserved=len(selected)
+        score='hybrid_phase_score' if phase.active_phase=='mechanics_hybrid' else 'screening_phase_score'
+        ranked=ordinary.sort_values([score,'candidate_id'],ascending=[False,True],na_position='last')
+        origins=result.viability_screen.loc[~result.viability_screen.recommendation_type.isin(ROLES|{'retest_priority','mechanics_anchor'}) & ~result.viability_screen.candidate_origin.eq('rescue_dilution'),'candidate_origin'].value_counts()
+        total=12-reserved
+        weights=origins/origins.sum(); quotas={k:int(np.floor(v*total)) for k,v in weights.items()}
+        for k in sorted(quotas,key=lambda k:(-(weights[k]*total-quotas[k]),k))[:total-sum(quotas.values())]: quotas[k]+=1
+        for origin,q in quotas.items():
+            accepted=0
+            for _,r in ranked.loc[ranked.candidate_origin.eq(origin)&ranked.experimental_role.eq('ordinary')].iterrows():
+                if accepted>=q: break
+                if add(r): accepted+=1
+            if accepted<q: raise ValueError(f'Group10 residual origin/chemistry quota unsatisfied: {origin} {accepted}/{q}; no proposal written')
     if len(selected)!=12: raise ValueError(f'Group10 slate has {len(selected)}/12 rows')
     slate=pd.DataFrame(selected).reset_index(drop=True);slate['selection_rank']=range(1,13)
     mechanical,meta=select_mechanical_tests(slate,models,registry,optimization,phase,4,policy)
@@ -166,6 +217,8 @@ def apply_group10(result, formulations, observations, registry, optimization, co
     metadata=deepcopy(result.metadata)
     metadata['group10']={'policy_version':config['policy_version'],'effective_config':deepcopy(config),
         'reference_readiness':state,'reserved_screen_rows':reserved,'ordinary_origin_quotas':quotas,
+        'full_phase_allocation':full_allocation,
+        'ordinary_origin_counts':slate.iloc[reserved:].candidate_origin.value_counts().to_dict(),
         'model_revision':'unchanged',
         'reference_scope':'viability_and_mechanics_historical' if config['reference']['mechanical'] else 'viability_only',
         'mechanical_control':bool(config['reference']['mechanical']),
@@ -183,8 +236,22 @@ def apply_group10(result, formulations, observations, registry, optimization, co
     slate['mechanical_prediction_status']='fitted' if models.critical_load.fitted else 'untrained_placeholder'
     mechanical['mechanical_definition_id']=config['mechanical_endpoint']['definition_id']
     metadata['selected_candidate_ids']=slate.candidate_id.tolist()
+    if 'continuous_qlognehvi' in metadata:
+        metadata['continuous_qlognehvi']['selected_candidate_count'] = int(slate.candidate_origin.eq('continuous_qlognehvi').sum())
+        metadata['continuous_qlognehvi']['selected_mechanical_primary_count'] = int((mechanical.candidate_origin.eq('continuous_qlognehvi') & mechanical.mechanical_primary_recommended).sum()) if not mechanical.empty else 0
+    for table in (slate, mechanical, ordinary, extra):
+        if not table.empty:
+            table['generation_origin'] = table.get('generation_origin', table.candidate_origin).fillna(table.candidate_origin)
     metadata['mechanical_test_count']=int(mechanical.mechanical_primary_recommended.sum()) if not mechanical.empty else 0
     metadata['group10']['realized_roles']=slate.experimental_role.value_counts().to_dict()
+    if full_allocation is not None:
+        # The upstream selector can propose two retests; describe only those
+        # that survive the final shared-slot allocation in published metadata.
+        selected_retests = set(slate.loc[slate.experimental_role.eq('retest_priority'), 'formulation_id'])
+        metadata['retest_policy']['selected_candidates'] = [
+            row for row in metadata['retest_policy'].get('eligible_candidates', [])
+            if row['formulation_id'] in selected_retests]
+        metadata['cold_start_policy']['final_allocation_preserve_origin_allocation'] = False
     metadata['group10']['rescue_rows']=rescue_filled
     metadata['group10']['ingredient_counts']=dict(ingredients)
     metadata['group10']['pair_counts']={' + '.join(k):v for k,v in pairs.items()}
