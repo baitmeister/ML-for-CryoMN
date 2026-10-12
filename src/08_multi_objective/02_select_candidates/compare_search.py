@@ -26,7 +26,7 @@ from helper.gp_strategy import validate_decision
 from helper.group10_config import production_observations, load_group10_config_for_round
 from helper.group10_selection import apply_group10
 from helper.models import train_endpoint_models
-from helper.registry import load_registry
+from helper.registry import load_registry, presence_threshold
 from helper.selection import select_next_round, write_selection_result
 from helper.selection_scoring import _mechanics_phase_scores, annotate_candidates
 from helper.intact_policy import build_intact_evidence, resolve_intact_combination_policy, annotate_intact_combination_evidence
@@ -64,6 +64,24 @@ def starting_pool(forms, obs, registry, config, unavailable):
     pool = pd.concat([rescue, pool], ignore_index=True).drop_duplicates('formulation_id', keep='first')
     pool = annotate_support(annotate_feasibility(pool, registry, config, active, version), registry, support)
     return pool.loc[pool.feasibility_pass].reset_index(drop=True), audit, version
+
+
+def verify_refinement_coverage(metadata):
+    """A successful solve alone is insufficient: inspect what was searched."""
+    records = [row for row in metadata['mask_ranking_records'] if 'best_seed_score' in row]
+    searched = [row for row in metadata['mask_records'] if row['attempts'] > 0]
+    expected = set(map(int, metadata['feasible_mask_size_counts']))
+    actual = {len(row['features']) for row in searched}
+    if metadata['masks_requested'] >= len(expected) and actual != expected:
+        raise RuntimeError(f'Ingredient-count coverage failed: eligible {expected}, searched {actual}')
+    if len(searched) != metadata['masks_requested']:
+        raise RuntimeError('A selected ingredient set never reached the optimizer')
+    if not min(records, key=lambda row: row['acquisition_rank'])['selected_for_refinement']:
+        raise RuntimeError('The highest-scoring ingredient set was not refined')
+    if metadata['masks_requested'] >= len(expected):
+        if not all(row['selected_for_refinement'] for row in records if row['best_for_ingredient_count']):
+            raise RuntimeError('A best-scoring ingredient-count representative was not refined')
+    return True
 
 
 def main(output):
@@ -121,6 +139,8 @@ def main(output):
                 unavailable_feature_names=unavailable, endpoint_models=models)
             result = apply_group10(result, forms, obs, registry, run_config, group_config, 13,
                                    unavailable, endpoint_models=models)
+            if mode == 'continuous_required':
+                verify_refinement_coverage(result.metadata['continuous_qlognehvi'])
         except Exception as exc:
             (folder / 'failure.json').write_text(json.dumps(dict(error=str(exc), metadata=getattr(exc, 'metadata', {})), indent=2))
             verify_campaign(manifest)
@@ -131,6 +151,9 @@ def main(output):
                                gp_strategy_decision=run_config['gp_strategy_decision'], comparison_only=True)
         write_selection_result(result, folder, batch_id='ROUND_013', registry=registry,
                                total_candidate_pool_path=folder / 'scored_pool.csv')
+        if mode == 'continuous_required':
+            pd.DataFrame(result.metadata['continuous_qlognehvi']['mask_ranking_records']).to_csv(
+                folder / 'ingredient_set_ranking.csv', index=False)
         sheet = pd.read_csv(folder / 'next_round_candidates.csv')
         generate_proposal_artifacts(sheet, folder)
         if label == 'finite':
@@ -160,13 +183,22 @@ def main(output):
               'feasibility_pass', 'support_status', *registry.feature_names]
     ordinary.reindex(columns=fields).to_csv(output / 'candidate_comparison.csv', index=False)
     overlap = len(set(receipts['finite']['selected']) & set(receipts['refined']['selected']))
+    removed = results['finite'].viability_screen.loc[~results['finite'].viability_screen.formulation_id.isin(receipts['refined']['selected'])]
+    added = results['refined'].viability_screen.loc[~results['refined'].viability_screen.formulation_id.isin(receipts['finite']['selected'])]
+    def recipe(row):
+        return ' + '.join(f'{registry.get_by_feature(f).display_name} {row[f]:.6g} {registry.get_by_feature(f).unit}'
+                          for f in registry.feature_names if abs(row[f]) >= presence_threshold(f))
+    change_lines = [f"| Removed | {int(row.selection_rank)} | {recipe(row)} | {row.generation_origin} |" for _, row in removed.iterrows()]
+    change_lines += [f"| Added | {int(row.selection_rank)} | {recipe(row)} | {row.generation_origin} |" for _, row in added.iterrows()]
     summary = dict(status='passed', created_at=datetime.now(timezone.utc).isoformat(),
                    branch=subprocess.check_output(['git', 'branch', '--show-current'], cwd=ROOT, text=True).strip(),
                    code_base_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                    versions=dict(python=platform.python_version(), torch=torch.__version__, botorch=botorch.__version__),
                    shared_pool_sha256=digest(output / 'starting_pool.csv'), pool_generation_seconds=generation_seconds,
                    finite_replays_frozen_slate=True, repeat_reproduces_refined_run=True,
+                   ingredient_set_coverage_verified=True,
                    selected_formulation_overlap=overlap, protected_campaign_files_verified=verified,
+                   mechanical_primaries_unchanged=receipts['finite']['mechanical_primaries'] == receipts['refined']['mechanical_primaries'],
                    source_sha256={str(path.relative_to(ROOT)): digest(path) for path in sorted((ROOT / 'src/08_multi_objective').rglob('*.py'))},
                    input_sha256={name: digest(ROOT / name) for name in ('data/processed_v2/formulations.csv', 'data/processed_v2/observations.csv')},
                    runs=receipts)
@@ -182,15 +214,22 @@ The finite replay reproduced the frozen slate and mechanical assignments. The co
 - Shared formulations: **{overlap}/12**.
 - Continuous candidates accepted before combined-pool filtering: **{info.get('accepted_candidate_count', 0)}**; surviving all candidate filters: **{info.get('accepted_after_all_candidate_filters', 0)}**.
 - Continuous candidates selected: **{info.get('selected_candidate_count', 0)}**; mechanical primaries: **{info.get('selected_mechanical_primary_count', 0)}**.
-- Ingredient sets searched, grouped by number of ingredients: **{mask_sizes}**. The retained ordering chooses the smallest sets first; if all 16 are single-ingredient sets, this comparison does not assess multi-ingredient continuous refinement.
+- Mechanical primary identities unchanged: **{summary['mechanical_primaries_unchanged']}**.
+- Ingredient sets searched, grouped by number of ingredients: **{mask_sizes}**. Sets are ranked by the best feasible seed's shared acquisition score, with the best set of each available ingredient count reserved first. Every chosen set reached the optimizer; coverage and top-score inclusion were checked.
 - Best surviving continuous individual log-acquisition score: **{best_continuous:.6f}**. Compare it with the finite recipes in `candidate_comparison.csv`; larger is better under this shared score.
 - Finite selection runtime: **{receipts['finite']['seconds']:.1f} s**; selection with refinement: **{receipts['refined']['seconds']:.1f} s**. Shared pool generation and plotting are excluded.
 - A second refinement run reproduced candidate values, selection and mechanical assignments within 1e-9 numerical tolerance.
 - All **{verified}** protected campaign files remained unchanged.
 
+| Change | Position in that run | Recipe | Source |
+| --- | --- | --- | --- |
+{chr(10).join(change_lines)}
+
+Final selection still applies the existing Group 10 origin quotas: **{results['refined'].metadata['group10']['ordinary_origin_quotas']}**. It processes these origin groups sequentially and applies ingredient and exact-combination caps. Consequently, a higher-scoring continuous recipe can be excluded after a finite recipe has already occupied its combination's slot. The best continuous acquisition score above describes the search output, not necessarily a selected recipe. This repair changes ingredient-set search allocation; these existing slate rules remain in effect.
+
 Inspect `candidate_comparison.csv` for recipes and common individual log-acquisition scores, each run's `next_round_candidates.csv` for the complete slate and mechanical assignments, and `comparison_receipt.json` for execution details. Candidate-decision plots are inside each run's `plots` directory.
 
-Scope: this is finite-pool exploration plus continuous concentration refinement within the existing ingredient-set budget. The original mask ordering is retained; the run does not search every ingredient combination. Existing similarity conflict priority gives rescue candidates precedence, then continuous candidates, then ordinary finite candidates. All survivors are subsequently ranked with a common score and existing slate policies. The scores are individual model-based utilities, not joint batch hypervolume or measured experimental improvement. This comparison does not replace the official ROUND_013 proposal.
+Scope: this is finite-pool exploration plus continuous concentration refinement within the existing ingredient-set budget. All eligible sets with feasible seeds are scored before selecting up to 16 sets (at most four ingredients each); the run does not search every ingredient combination. `ingredient_set_ranking.csv` records the scores, choices and actual optimizer attempts. Existing similarity conflict priority gives rescue candidates precedence, then continuous candidates, then ordinary finite candidates. All survivors are subsequently ranked with a common score and existing slate policies. The scores are individual model-based utilities, not joint batch hypervolume or measured experimental improvement. This comparison does not replace the official ROUND_013 proposal.
 '''
     (output / 'README.md').write_text(report)
     verify_campaign(manifest)

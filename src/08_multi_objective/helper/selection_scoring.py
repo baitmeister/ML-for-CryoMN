@@ -374,6 +374,8 @@ def _candidate_masks(
     candidate_pool: pd.DataFrame,
     registry: IngredientRegistry,
     optimization_config: Mapping,
+    *,
+    limit: bool = True,
 ) -> list[tuple[int, ...]]:
     max_size = int(
         nested_get(
@@ -395,7 +397,10 @@ def _candidate_masks(
         )
         if 0 < len(active) <= max_size:
             masks.add(active)
-    return sorted(masks, key=lambda mask: (len(mask), mask))[:max_masks]
+    ordered = sorted(masks, key=lambda mask: (len(mask), mask))
+    # Shared refinement must score all eligible sets before spending the budget.
+    # Keep the historical enumeration only for the legacy optimizer path.
+    return ordered[:max_masks] if limit else ordered
 
 
 def _continuous_mechanics_candidates(
@@ -461,7 +466,8 @@ def _continuous_mechanics_candidates(
         ],
         dtype=float,
     )
-    masks = _candidate_masks(candidate_pool, registry, optimization_config)
+    masks = _candidate_masks(candidate_pool, registry, optimization_config,
+                             limit=mode != 'continuous_required')
     support = build_support_context(
         formulations,
         registry,

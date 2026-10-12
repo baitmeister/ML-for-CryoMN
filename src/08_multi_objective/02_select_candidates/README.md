@@ -74,6 +74,12 @@ ingredient-set budget, chemistry, preparation, support, availability, similarity
 special-row and mechanical allocation policies remain in force. It adds no
 pipetting or rounding constraints. `candidate_origin` retains selection groups;
 `generation_origin` preserves the original source and is shown in decision plots.
+All eligible ingredient sets are scored by their best feasible recipe using the
+shared acquisition and penalties. The best set per ingredient count is reserved,
+then remaining slots are filled by score, within the configured budget. This
+prevents single-ingredient sets from exhausting the budget before mixtures are
+considered. Comparison runs verify actual search coverage and export
+`ingredient_set_ranking.csv`, including scores, choices and optimizer attempts.
 
 ## Inputs and outputs
 

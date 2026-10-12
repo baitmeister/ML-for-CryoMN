@@ -105,6 +105,27 @@ def mixture_constraints(registry, config, mask, lower, upper, policy_version):
             for weights, cap in limits if weights.any()]
 
 
+def select_refinement_masks(mask_scores, max_masks):
+    """Reserve the best set per ingredient count, then fill by acquisition score.
+
+    Rank each set by its best feasible starting recipe. If the budget cannot
+    cover every count, choose the highest-scoring count representatives first.
+    All ties and returned execution order are deterministic.
+    """
+    if max_masks < 1:
+        raise ValueError('Refinement needs a positive ingredient-set budget')
+    if any(not np.isfinite(score) for score in mask_scores.values()):
+        raise ValueError('Ingredient-set ranking requires finite acquisition scores')
+    ranked = sorted(mask_scores, key=lambda mask: (-mask_scores[mask], mask))
+    champions = {}
+    for mask in ranked:
+        champions.setdefault(len(mask), mask)
+    selected = list(champions.values())[:max_masks]
+    selected.extend([mask for mask in ranked if mask not in selected])
+    chosen = set(selected[:max_masks])
+    return [mask for mask in ranked if mask in chosen]
+
+
 def optimize_shared_candidates(*, models, train_x, candidate_pool, registry, config,
                                policy, evidence, masks, lower_bounds, upper_bounds,
                                reference, target, feasible, policy_version):
@@ -112,9 +133,9 @@ def optimize_shared_candidates(*, models, train_x, candidate_pool, registry, con
     metadata = dict(search_mode_requested='continuous_required', search_mode_actual='finite_pool_plus_continuous',
                     continuous_optimizer_enabled=True, continuous_optimizer_used=False,
                     continuous_optimizer_fallback=False, optimizer_attempt_count=0,
-                    accepted_candidate_count=0, masks_requested=len(masks), mask_records=[],
-                    mask_ordering='existing fewest-active-ingredients first, then registry order',
-                    mask_size_counts=dict(Counter(len(mask) for mask in masks)),
+                    accepted_candidate_count=0, eligible_mask_count=len(masks), mask_records=[],
+                    mask_ordering='best feasible seed acquisition score; reserve best set per ingredient count, then fill by score',
+                    mask_budget=int(nested_get(config, 'continuous_qlognehvi.max_masks', 16)),
                     initialization='feasible finite-pool recipes', num_restarts_limit=5, maxiter=150,
                     pending_policy='sequential accepted continuous candidates; final ranking has no pending points',
                     score='shared_qlognehvi + log(empirical_intact_probability) - chemistry_penalty')
@@ -126,7 +147,7 @@ def optimize_shared_candidates(*, models, train_x, candidate_pool, registry, con
     for mask in masks:
         mask = tuple(mask)
         record = dict(features=[registry.feature_names[i] for i in mask], attempts=0, accepted=0)
-        metadata['mask_records'].append(record)
+        metadata.setdefault('mask_ranking_records', []).append(record)
         lo = np.maximum(lower_bounds[list(mask)], floors[list(mask)])
         hi = upper_bounds[list(mask)]
         seeds = pool_x[[tuple(np.flatnonzero(np.abs(row) >= floors)) == mask for row in pool_x]].copy()
@@ -144,6 +165,37 @@ def optimize_shared_candidates(*, models, train_x, candidate_pool, registry, con
     try:
         with torch.random.fork_rng():
             torch.manual_seed(int(config.get('random_seed', 42)))
+            # Use the exact same posterior, sampler and feasibility-adjusted
+            # score as refinement, without pending candidates for this ranking.
+            acquisition = shared_acquisition(models, train_x, reference)
+            scores = {}
+            for mask, lo, hi, seeds, _, record in seed_sets:
+                wrapper = MaskAcquisition(acquisition, registry, config, policy, evidence, mask, lo, hi)
+                starts = torch.tensor((seeds[:, list(mask)] - lo) / (hi - lo), dtype=torch.double).unsqueeze(-2)
+                with torch.no_grad():
+                    values = torch.cat([wrapper(chunk) for chunk in starts.split(64)])
+                if not torch.isfinite(values).all():
+                    raise ValueError('Nonfinite acquisition score while ranking ingredient sets')
+                best = int(torch.argmax(values))
+                scores[mask] = float(values[best])
+                record.update(best_seed_score=scores[mask], feasible_seed_count=len(seeds),
+                              best_seed_formulation_id=stable_formulation_id(dict(zip(registry.feature_names, seeds[best])), registry))
+            # Each chosen set must receive a solve before any receives a second.
+            # Limit the set budget to the candidate target so early success can
+            # never exhaust the target before all selected sets are attempted.
+            chosen = select_refinement_masks(scores, min(metadata['mask_budget'], target))
+            by_mask = {item[0]: item for item in seed_sets}
+            seed_sets = [by_mask[mask] for mask in chosen]
+            champions = {}
+            for rank, mask in enumerate(sorted(scores, key=lambda mask: (-scores[mask], mask)), 1):
+                champions.setdefault(len(mask), mask)
+                record = by_mask[mask][-1]
+                record.update(acquisition_rank=rank, selected_for_refinement=mask in chosen,
+                              best_for_ingredient_count=champions[len(mask)] == mask)
+            metadata.update(masks_requested=len(chosen),
+                            mask_records=[item[-1] for item in seed_sets],
+                            mask_size_counts=dict(Counter(map(len, chosen))),
+                            feasible_mask_size_counts=dict(Counter(map(len, scores))))
             for iteration in range(max(target * 3, len(seed_sets))):
                 if len(accepted) >= target:
                     break
@@ -187,6 +239,7 @@ def optimize_shared_candidates(*, models, train_x, candidate_pool, registry, con
         metadata.update(optimizer_error=f'{type(exc).__name__}: {exc}', accepted_candidate_count=len(accepted))
         raise ContinuousSearchError('continuous_required stopped: ' + metadata['optimizer_error'], metadata) from exc
     metadata.update(accepted_candidate_count=len(accepted), optimized_mask_count=sum(r['attempts'] > 0 for r in metadata['mask_records']),
+                    optimized_mask_size_counts=dict(Counter(len(r['features']) for r in metadata['mask_records'] if r['attempts'] > 0)),
                     rejection_counts=dict(rejections), continuous_optimizer_used=bool(accepted),
                     target_candidate_count=target, target_reached=len(accepted) >= target,
                     continuous_optimizer_reason='shared posterior refinement completed')

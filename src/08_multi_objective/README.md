@@ -327,10 +327,14 @@ mechanics score =
   qLogNEHVI + log(max(p_combo, 1e-9)) - screening_acquisition_penalty
 ```
 
-Both search paths use this score. Continuous refinement retains the existing
-mask ordering (fewest active ingredients, then registry order) and the configured
-mask budget. With enough single-ingredient options, all 16 masks can be singles;
-the execution record reports the actual ingredient sets explored.
+Both search paths use this score. Continuous refinement scores all eligible
+ingredient sets using their best feasible pool recipe. It reserves the best set
+for each available ingredient count, then fills the remaining budget by score.
+The configured limits remain 16 sets, at most four ingredients per set and a
+target of 24 candidates. If a smaller budget cannot cover every count, the
+highest-scoring count representatives take precedence. Chosen sets run in score
+order, each receiving a solve before any receives a second. The execution record
+includes all set rankings, selected sets and actual optimizer attempts.
 
 The first four mechanically eligible rows are primaries and the remaining
 eligible rows are ordered backups. Exact mechanically observed formulations

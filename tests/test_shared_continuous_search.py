@@ -17,14 +17,15 @@ sys.path.insert(0, str(ROOT / 'src/08_multi_objective'))
 from helper.batch_gp import BatchGP, torch_bundle
 from helper.config import load_optimization_config
 from helper.continuous_search import (MaskAcquisition, ContinuousSearchError,
-                                     mixture_constraints, optimize_shared_candidates)
+                                     mixture_constraints, optimize_shared_candidates,
+                                     select_refinement_masks)
 from helper.feasibility import feasibility_report, ROUND5_POLICY_VERSION
 from helper.gp_strategy import (shared_acquisition, shared_scores, validate_decision,
                                 validate_search_config, StrategyDecisionRequired)
 from helper.intact_policy import resolve_intact_combination_policy, annotate_intact_combination_evidence
 from helper.penalties import constraint_report
 from helper.registry import load_registry
-from helper.selection_scoring import _mechanics_phase_scores, _continuous_mechanics_candidates
+from helper.selection_scoring import _mechanics_phase_scores, _continuous_mechanics_candidates, _candidate_masks
 from helper.candidate_workflow import CandidateSelectionOptions, run_candidate_selection
 
 
@@ -95,17 +96,64 @@ class SharedContinuousTests(unittest.TestCase):
         self.assertTrue(torch.isfinite(value).all())
         self.assertTrue(torch.isfinite(x.grad).all())
 
-    def run_optimizer(self, feasible=None):
-        pool = pd.DataFrame(self.train_x[:4], columns=self.registry.feature_names)
+    def run_optimizer(self, feasible=None, pool=None, target=2, config=None):
+        if pool is None:
+            pool = pd.DataFrame(self.train_x[:4], columns=self.registry.feature_names)
+        config = self.config if config is None else config
         lower = np.zeros(len(self.registry.feature_names))
         upper = np.array([self.registry.get_by_feature(f).upper_bound for f in self.registry.feature_names])
         def validate(vector):
             return feasibility_report(dict(zip(self.registry.feature_names, vector)), self.registry,
                                       self.config, True, ROUND5_POLICY_VERSION)['feasibility_pass']
         return optimize_shared_candidates(models=self.models, train_x=self.train_x, candidate_pool=pool,
-            registry=self.registry, config=self.config, policy=self.policy, evidence=self.evidence,
-            masks=[self.mask], lower_bounds=lower, upper_bounds=upper, reference=(0., 0.),
-            target=2, feasible=feasible or validate, policy_version=ROUND5_POLICY_VERSION)
+            registry=self.registry, config=config, policy=self.policy, evidence=self.evidence,
+            masks=_candidate_masks(pool, self.registry, config, limit=False),
+            lower_bounds=lower, upper_bounds=upper, reference=(0., 0.),
+            target=target, feasible=feasible or validate, policy_version=ROUND5_POLICY_VERSION)
+
+    def test_single_ingredient_surplus_cannot_hide_promising_mixtures(self):
+        scores = {(i,): -float(i) for i in range(21)}
+        mixtures = {(0, 1): 10., (0, 1, 2): 12., (0, 1, 2, 3): 11., (1, 2): 9.}
+        scores.update(mixtures)
+        pool = np.zeros((len(scores), len(self.registry.feature_names)))
+        for row, mask in zip(pool, scores):
+            row[list(mask)] = .2
+        frame = pd.DataFrame(pool, columns=self.registry.feature_names)
+        eligible = _candidate_masks(frame, self.registry, self.config, limit=False)
+        self.assertEqual(set(eligible), set(scores))
+        selected = select_refinement_masks({mask: scores[mask] for mask in eligible}, 16)
+        self.assertEqual(len(selected), 16)
+        self.assertTrue(set(mixtures).issubset(selected))
+        self.assertEqual(selected[0], (0, 1, 2))
+        self.assertEqual({len(mask) for mask in selected}, {1, 2, 3, 4})
+        self.assertEqual(selected, select_refinement_masks(dict(reversed(list(scores.items()))), 16))
+
+    def test_ingredient_count_coverage_and_small_budgets_are_explicit(self):
+        scores = {(i,): 100. - i for i in range(21)}
+        scores.update({(0, 1): 4., (0, 1, 2): 3., (0, 1, 2, 3): 2.})
+        selected = select_refinement_masks(scores, 16)
+        self.assertEqual({len(mask) for mask in selected}, {1, 2, 3, 4})
+        self.assertEqual(select_refinement_masks(scores, 2), [(0,), (0, 1)])
+        with self.assertRaisesRegex(ValueError, 'finite'):
+            select_refinement_masks({(0,): float('nan')}, 16)
+
+    def test_real_optimizer_attempts_single_pair_triple_and_quadruple_sets(self):
+        recipes = [dict(ectoin_M=.12), dict(ectoin_M=.12, ethylene_glycol_M=.6),
+                   dict(ectoin_M=.12, ethylene_glycol_M=.6, glycerol_M=.15),
+                   dict(ectoin_M=.12, ethylene_glycol_M=.6, glycerol_M=.15, dmso_M=.05)]
+        pool = pd.DataFrame(recipes).reindex(columns=self.registry.feature_names).fillna(0.)
+        for _, row in pool.iterrows():
+            self.assertTrue(feasibility_report(row, self.registry, self.config, True, ROUND5_POLICY_VERSION)['feasibility_pass'])
+        with patch('helper.batch_gp.BatchGP.fit', side_effect=AssertionError('must not refit')):
+            _, metadata = self.run_optimizer(pool=pool, target=4)
+        self.assertEqual(metadata['optimized_mask_size_counts'], {1: 1, 2: 1, 3: 1, 4: 1})
+        self.assertEqual(metadata['optimized_mask_count'], metadata['masks_requested'])
+        self.assertTrue(all(record['attempts'] > 0 for record in metadata['mask_records']))
+        annotated = annotate_intact_combination_evidence(pool, self.evidence, self.registry, self.policy)
+        annotated['screening_acquisition_penalty'] = [constraint_report(row, self.registry, self.config)['screening_acquisition_penalty'] for _, row in pool.iterrows()]
+        expected, _ = _mechanics_phase_scores(annotated, self.models, self.registry, self.config, self.policy)
+        for record in metadata['mask_records']:
+            self.assertAlmostEqual(record['best_seed_score'], expected[len(record['features']) - 1], places=9)
 
     def test_real_optimizer_uses_approved_model_and_is_reproducible(self):
         with patch('helper.batch_gp.BatchGP.fit', side_effect=AssertionError('must not refit')):
