@@ -41,11 +41,11 @@ def reference_feasibility(frame, registry, optimization, config):
                           if i.feature_name=='dmso_M' else i for i in registry.ingredients])
     return annotate_feasibility(frame,modified,optimization,policy_active=True)
 
-def apply_group10(result, formulations, observations, registry, optimization, config, round_number, unavailable=()):
+def apply_group10(result, formulations, observations, registry, optimization, config, round_number, unavailable=(), endpoint_models=None):
     assert_group10_can_proceed(config, round_number, observations)
     if not active(config,round_number): return result
     observations=production_observations(observations,target_round_number=round_number)
-    models=train_endpoint_models(formulations,observations,registry,optimization)
+    models=endpoint_models if endpoint_models is not None else train_endpoint_models(formulations,observations,registry,optimization)
     phase=resolve_phase_mode(formulations,observations,registry,optimization,target_round_number=round_number)
     reference,state=reference_candidate(config,registry)
     if not reference.empty:
@@ -183,6 +183,12 @@ def apply_group10(result, formulations, observations, registry, optimization, co
     slate['mechanical_prediction_status']='fitted' if models.critical_load.fitted else 'untrained_placeholder'
     mechanical['mechanical_definition_id']=config['mechanical_endpoint']['definition_id']
     metadata['selected_candidate_ids']=slate.candidate_id.tolist()
+    if 'continuous_qlognehvi' in metadata:
+        metadata['continuous_qlognehvi']['selected_candidate_count'] = int(slate.candidate_origin.eq('continuous_qlognehvi').sum())
+        metadata['continuous_qlognehvi']['selected_mechanical_primary_count'] = int((mechanical.candidate_origin.eq('continuous_qlognehvi') & mechanical.mechanical_primary_recommended).sum()) if not mechanical.empty else 0
+    for table in (slate, mechanical, ordinary, extra):
+        if not table.empty:
+            table['generation_origin'] = table.get('generation_origin', table.candidate_origin).fillna(table.candidate_origin)
     metadata['mechanical_test_count']=int(mechanical.mechanical_primary_recommended.sum()) if not mechanical.empty else 0
     metadata['group10']['realized_roles']=slate.experimental_role.value_counts().to_dict()
     metadata['group10']['rescue_rows']=rescue_filled

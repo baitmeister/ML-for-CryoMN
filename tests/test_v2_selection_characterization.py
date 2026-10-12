@@ -36,6 +36,10 @@ class V2SelectionCharacterizationTests(unittest.TestCase):
         baseline = json.loads(BASELINE.read_text())
         formulations = pd.read_csv(FORMULATIONS_PATH)
         observations = pd.read_csv(OBSERVATIONS_PATH)
+        # Characterize the pre-Round-9 decision, excluding later campaign outcomes.
+        rounds = pd.to_numeric(observations.batch_id.astype(str).str.extract(r'^ROUND_(\d+)$')[0], errors='coerce')
+        observations = observations.loc[rounds.isna() | rounds.lt(9)]
+        formulations = formulations.loc[formulations.formulation_id.isin(observations.formulation_id)]
         resolution = resolve_phase_mode(
             formulations,
             observations,

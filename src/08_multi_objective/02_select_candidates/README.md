@@ -43,6 +43,38 @@ can replace a different frozen proposal only when the batch has no observations,
 no completed archive, and no entered result values. The superseded proposal is
 preserved with hashes and a reason manifest.
 
+## Isolated search comparison
+
+The approved viability model is the campaign-only, control-informed batch-effect
+Matérn-5/2 GP (`control`, `batch_gp_v1`), paired with the existing comparable-endpoint
+mechanical GP. The historical version-1 decision remains finite-only.
+
+Run the matched post-Group-12 comparison in a new output directory:
+
+```bash
+python3 src/08_multi_objective/02_select_candidates/compare_search.py \
+  --output-dir results/multi_objective_v2/comparisons/pre_full_phase_check/my_comparison
+```
+
+This verifies the saved baseline, fits the approved models once, reuses one
+starting pool, replays finite selection, runs continuous refinement twice and
+checks protected campaign hashes. It exports recipes, decision plots, model
+snapshots, a comparison report and execution receipts. It does not publish an
+official round or change the active campaign decision.
+
+For normal Stage 02 execution, a version-2 GP decision separates acquisition
+(`shared_qlognehvi`) from search (`finite_pool` or `continuous_required`). Pass
+that file through `--gp-strategy-decision`. Continuous-required needs active
+hybrid/full mechanics and enabled continuous settings; optimizer failure or
+zero surviving candidates stops selection. `continuous_search_failure.json`
+retains optimizer diagnostics when available.
+
+Continuous search uses feasible pool recipes as starting points. The configured
+ingredient-set budget, chemistry, preparation, support, availability, similarity,
+special-row and mechanical allocation policies remain in force. It adds no
+pipetting or rounding constraints. `candidate_origin` retains selection groups;
+`generation_origin` preserves the original source and is shown in decision plots.
+
 ## Inputs and outputs
 
 Inputs:

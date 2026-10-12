@@ -90,9 +90,13 @@ single import.
 The v2 lane treats transferred data as viability-only evidence, uses
 `intact_patch_formation_pass` as the mechanical screening gate, and optimizes
 viability with `critical_axial_load_N_per_needle`.
-Exact BoTorch qLogNEHVI support uses the optional packages listed in
-`requirements-v2-optional.txt`; if those are unavailable, the executable
-fallback mode is reported in `next_round_summary.txt`.
+Exact BoTorch qLogNEHVI support requires the packages listed in
+`requirements-v2-optional.txt`; missing dependencies stop mechanics acquisition.
+The recorded GP decision controls search separately from the evidence phase.
+Historical control-informed decisions use finite-pool qLogNEHVI. Version-2
+decisions can request continuous refinement using the same approved posterior;
+continuous-required failures stop the run. See the
+[isolated search comparison](src/08_multi_objective/02_select_candidates/README.md#isolated-search-comparison).
 
 ## V2 Mechanics Phases
 

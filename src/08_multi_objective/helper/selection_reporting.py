@@ -212,6 +212,14 @@ def _write_summary(
         f"optimizer={result.metadata.get('optimizer_mode', '')}; "
         f"fallback={result.metadata.get('optimizer_fallback_status', '')}; "
         f"reason={result.metadata.get('continuous_qlognehvi', {}).get('continuous_optimizer_reason', 'not applicable')}",
+        "GP decision: "
+        f"{result.metadata.get('gp_strategy_decision', {}).get('decision_id', 'legacy')}; "
+        f"viability={result.metadata.get('gp_strategy_decision', {}).get('viability_strategy', 'current')}; "
+        f"mechanics={result.metadata.get('gp_strategy_decision', {}).get('mechanical_strategy', 'current_comparable_endpoint')}",
+        "Continuous execution: "
+        f"attempts={result.metadata.get('continuous_qlognehvi', {}).get('optimizer_attempt_count', 0)}; "
+        f"accepted={result.metadata.get('continuous_qlognehvi', {}).get('accepted_candidate_count', 0)}; "
+        f"selected={result.metadata.get('continuous_qlognehvi', {}).get('selected_candidate_count', 0)}",
         "",
         "Main database used by selector:",
         "- data/processed_v2/formulations.csv",
@@ -510,6 +518,7 @@ def write_selection_result(
         *registry.feature_names,
         "active_ingredient_count",
         "candidate_origin",
+        "generation_origin",
         "rescue_scale_factor",
         "rescue_anchor_formulation_id",
         "rescue_anchor_viability_percent",

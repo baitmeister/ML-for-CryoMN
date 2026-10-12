@@ -16,12 +16,21 @@ def validate_decision(path,round_number):
     required={'version','model_version','decision_id','chosen_by','decided_at','effective_round','viability_strategy','mechanical_strategy','acquisition','objective','evidence','acceptance_thresholds'}
     if not required.issubset(d):raise StrategyDecisionRequired('Incomplete GP decision: '+str(sorted(required-set(d))))
     if d['model_version']!=VERSION:raise StrategyDecisionRequired('Decision model version does not match implemented configuration')
-    if d['version']!=1 or d['effective_round']>round_number or d['effective_round']<11:raise StrategyDecisionRequired('Invalid strategy version/effective round')
+    if d['version'] not in (1, 2) or d['effective_round']>round_number or d['effective_round']<11:raise StrategyDecisionRequired('Invalid strategy version/effective round')
     if any(not d[k] for k in ('decision_id','chosen_by','decided_at','evidence')):raise StrategyDecisionRequired('Decision provenance must be nonempty')
     if d['viability_strategy'] not in NAMES:raise StrategyDecisionRequired('Unsupported viability strategy')
     if d['objective']!='expected_formulation_response':raise StrategyDecisionRequired('Unsupported optimization objective')
     if d['mechanical_strategy']!='current_comparable_endpoint':raise StrategyDecisionRequired('Unsupported mechanical strategy')
-    expected='current_paired_qlognehvi' if d['viability_strategy']=='current' else 'shared_qlognehvi_finite_pool'
+    if d['version'] == 2:
+        if d.get('search_mode') not in ('finite_pool', 'continuous_required'):
+            raise StrategyDecisionRequired('Version 2 requires finite_pool or continuous_required search_mode')
+        if d['viability_strategy'] == 'current':
+            raise StrategyDecisionRequired('Version 2 requires a shared formulation posterior')
+        expected = 'shared_qlognehvi'
+    else:
+        if 'search_mode' in d:
+            raise StrategyDecisionRequired('Explicit search_mode requires a version-2 decision')
+        expected='current_paired_qlognehvi' if d['viability_strategy']=='current' else 'shared_qlognehvi_finite_pool'
     if d['acquisition']!=expected:raise StrategyDecisionRequired('GP and acquisition configuration mismatch')
     if d['acceptance_thresholds'] not in ({},None):raise StrategyDecisionRequired('New selection thresholds need explicit policy implementation; use null for no new threshold')
     exception=d.get('sparse_control_exception')
@@ -77,13 +86,45 @@ def install_strategy(endpoint_models,forms,obs,registry,config):
     return endpoint_models
 
 
-def shared_scores(models,train_x,candidate_x,reference):
+def shared_acquisition(models, train_x, reference, pending=None):
+    """One acquisition definition for finite scoring and continuous search."""
     import torch
     from botorch.acquisition.multi_objective.logei import qLogNoisyExpectedHypervolumeImprovement
     if len(train_x)<2:raise RuntimeError('Comparable observed paired acquisition baseline required')
     from botorch.sampling.normal import SobolQMCNormalSampler
-    acq=qLogNoisyExpectedHypervolumeImprovement(models.acquisition_bundle,list(reference),
-        torch.tensor(np.array(train_x,copy=True),dtype=torch.double),cache_root=False,prune_baseline=False,sampler=SobolQMCNormalSampler(torch.Size([128]),seed=42))
+    return qLogNoisyExpectedHypervolumeImprovement(models.acquisition_bundle,list(reference),
+        torch.tensor(np.array(train_x,copy=True),dtype=torch.double),cache_root=False,prune_baseline=False,
+        X_pending=None if pending is None else torch.tensor(np.array(pending, copy=True), dtype=torch.double),
+        sampler=SobolQMCNormalSampler(torch.Size([128]),seed=42))
+
+
+def search_mode(config):
+    """Legacy shared decisions intentionally mean finite-only search."""
+    decision = (config or {}).get('gp_strategy_decision', {})
+    if decision.get('version') == 2:
+        return decision['search_mode']
+    if decision.get('viability_strategy', 'current') != 'current':
+        return 'finite_pool'
+    return 'legacy'
+
+
+def validate_search_config(config):
+    if search_mode(config) != 'continuous_required':
+        return
+    from .acquisition import botorch_available
+    settings = config.get('continuous_qlognehvi', {})
+    if not settings.get('enabled', True):
+        raise StrategyDecisionRequired('continuous_required contradicts continuous_qlognehvi.enabled=false')
+    for key, default in (('max_masks', 16), ('max_sparse_mask_size', 4), ('generated_candidate_target', 24)):
+        if not isinstance(settings.get(key, default), int) or settings.get(key, default) <= 0:
+            raise StrategyDecisionRequired(f'continuous_qlognehvi.{key} must be a positive integer')
+    if not botorch_available():
+        raise StrategyDecisionRequired('continuous_required needs torch, gpytorch and botorch')
+
+
+def shared_scores(models,train_x,candidate_x,reference):
+    import torch
+    acq = shared_acquisition(models, train_x, reference)
     with torch.no_grad():
         chunks=[acq(torch.tensor(np.array(candidate_x[i:i+64],copy=True),dtype=torch.double).unsqueeze(-2)).cpu().numpy() for i in range(0,len(candidate_x),64)]
         scores=np.concatenate(chunks) if chunks else np.empty(0)
