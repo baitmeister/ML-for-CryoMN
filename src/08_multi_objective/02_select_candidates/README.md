@@ -9,6 +9,8 @@ screening slate has satisfied the common chemistry and diversity policies.
 
 The canonical transition policy is documented in
 [Evidence-gated mechanics transition](../README.md#evidence-gated-mechanics-transition).
+The [round progression register](../../../docs/multi_objective_round_progression.md)
+identifies the GP, search and policy versions used by each frozen proposal.
 
 ## Command and phase controls
 
@@ -45,26 +47,29 @@ preserved with hashes and a reason manifest.
 
 ## Isolated search comparison
 
-The approved viability model is the campaign-only, control-informed batch-effect
+The Group 11 decision selects the campaign-only, control-informed batch-effect
 Matérn-5/2 GP (`control`, `batch_gp_v1`), paired with the existing comparable-endpoint
 mechanical GP. The historical version-1 decision remains finite-only.
 
-Run the matched post-Group-12 comparison in a new output directory:
+With Round 12 ingested and an official Round 13 proposal available, run the matched
+comparison in an unused output directory:
 
 ```bash
 python3 src/08_multi_objective/02_select_candidates/compare_search.py \
   --output-dir results/multi_objective_v2/comparisons/pre_full_phase_check/my_comparison
 ```
 
-This records hashes of current campaign inputs and official outputs, fits the
+This records hashes of the campaign inputs and official outputs at invocation, fits the
 approved models once and reuses one starting pool. It requires the preserved
 post-Group-12 data and official ROUND_013 proposal, but no previous comparison
-artifacts or baseline archive. It replays the previous allocator from commit `6b759c7`, then
-compares old/new allocation for finite and refined search using identical scored
-pools. The old finite slate must match the official proposal; the old refined
+outputs or baseline archive. It replays the source-quota allocator from commit `6b759c7`, then
+compares it with the 1/1/1/9 allocator for finite and refined search using identical scored
+pools. The source-quota finite slate must match the official proposal; its refined
 slate is reconstructed from code rather than checked against a saved comparison.
-It independently repeats refinement, checks earlier-phase allocation
-parity and verifies protected campaign hashes. It exports recipes, decision plots, model
+It independently repeats refinement, checks screening/bootstrap/hybrid allocation
+parity and verifies protected campaign hashes. The data baseline at commit
+`0a0a7328` does not meet the Round 12 ingestion/Round 13 proposal prerequisites.
+The runner exports recipes, decision plots, model
 snapshots, a comparison report and execution receipts. It does not publish an
 official round or change the active campaign decision.
 
@@ -155,10 +160,10 @@ selection preserve:
 - temporary ingredient availability;
 - observation-supported distance controls;
 - unified history and within-pool formulation similarity;
-- origin allocation across local, sparse, boundary, rescue, continuous, and
-  finite-pool sources;
+- phase-specific role reservations and source allocation; full-phase ordinary
+  positions have no origin quotas;
 - exact ingredient-combination, shared-pair, and marginal-frequency caps;
-- cold-start cap and graduation allocation;
+- cold-start cap, with graduation allocation governed by the phase-specific selector;
 - rescue dilution and evidence-based retest reservations.
 
 The screening acquisition uses viability upper confidence bound and the
@@ -256,8 +261,10 @@ repeat an anchor in another batch.
 
 ## Hybrid algorithm
 
-Hybrid mode trains the mechanics surrogate, attempts continuous qLogNEHVI
-generation, and preserves original origins such as `local_perturbation`. It
+Hybrid mode trains the mechanics surrogate and uses the recorded search mode.
+The version-1 `control` decision uses finite-pool qLogNEHVI; a version-2
+`continuous_required` decision requests refinement. It preserves original
+origins such as `local_perturbation` and
 combines screening and mechanics for the 12-row slate:
 
 ```text
@@ -300,7 +307,7 @@ if no retest can be selected. Extra retests/rescues are excluded. The nine
 ordinary rows compete across origins by mechanics score, with all existing
 feasibility and diversity constraints. Origin counts are descriptive outcomes;
 `group10.ordinary_origin_quotas` is empty. A required role or total-capacity
-shortfall stops the run. Earlier phases retain their existing allocation.
+shortfall stops the run. Screening, bootstrap and hybrid retain their phase-specific allocation.
 
 The follow-up has first mechanical priority and the best three eligible ordinary
 recipes complete the four primaries. Further eligible ranks
@@ -320,11 +327,16 @@ summary report:
   reason;
 - prior-mechanics and retest exclusion counts;
 - hybrid quota fulfillment and deterministic fallbacks;
-- BoTorch availability, continuous optimizer errors, and finite-pool fallback;
+- requested and executed search mode, BoTorch availability and optimizer diagnostics;
 - mechanical capacity, primary count, backup count, and actual-intact rule.
 
 The generated summary uses phase-specific operator instructions. It does not
 describe policy changes or rely on a named campaign round.
+
+Frozen Rounds 11–12 use the label `hybrid_finite_pool_fallback`, but their
+continuous-search reason explicitly records the finite-only GP decision.
+That label does not establish an attempted continuous solve. A repaired
+`continuous_required` run stops on failure rather than substituting finite-only search.
 
 ## Batch and artifact rules
 

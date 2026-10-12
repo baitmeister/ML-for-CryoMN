@@ -98,6 +98,11 @@ decisions can request continuous refinement using the same approved posterior;
 continuous-required failures stop the run. See the
 [isolated search comparison](src/08_multi_objective/02_select_candidates/README.md#isolated-search-comparison).
 
+The [round progression and method register](docs/multi_objective_round_progression.md)
+records GP choices, finite-pool generation, chemistry/diversity policies,
+mechanical phases and allocation by round. It distinguishes frozen Rounds 1–12
+from the repaired implementation and its explicit search-activation conditions.
+
 ## V2 Mechanics Phases
 
 The v2 selector always proposes 12 viability/intact screens and resolves
