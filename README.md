@@ -48,6 +48,10 @@ Detailed v2 workflow documentation lives in
 `src/08_multi_objective/README.md`, with one
 README in each numbered stage folder.
 
+The [MSC tailoring grant plan](docs/msc_tailoring_grant_plan.txt) outlines a
+proposed serum-free BM-MSC and AD-MSC pilot that builds on the existing model
+and wet-lab evidence.
+
 ## Quick Start: V2 Multi-Objective Loop
 
 ```bash
