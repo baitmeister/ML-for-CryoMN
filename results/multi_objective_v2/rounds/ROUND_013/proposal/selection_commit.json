@@ -1,0 +1,41 @@
+{
+  "hashes": {
+    "gp_comparison/batch.json": "eb5d3b34fb6b400e60f8b9141d21d4b11a14841e57502ff49c6290eea9b19bd9",
+    "gp_comparison/campaign.json": "3ec6996b5a6f59354bc3d4317f6c5a585a872277b47c2bce346184feecf395cb",
+    "gp_comparison/campaign_noise.json": "0f2b5e3f60e1427cfd2220a228e7097eaa22fa8f4a5d385a30d63ad0195f38da",
+    "gp_comparison/control.json": "b78b82df89358971f675de3e4e694a8e8fbbcfab3495ace172cff03c712ad8fe",
+    "gp_comparison/current.json": "526072fa0281d9eb96efd25e5ccc89fba63be74d337774abb4d3c5b6469860a7",
+    "gp_comparison/manifest.json": "19afffdcf837f14475261b35de8da0f3eb347b5bbb6151591e0d08e8e529adfb",
+    "gp_comparison/offsets.csv": "528447ca545f748795d5092c0941de287dd301550197cbda77198d4a8f41c683",
+    "gp_comparison/predictions.csv": "434d485df1726a09a2c8e78a88f7f20c0ba97a1f213307e79990032447eef514",
+    "gp_comparison/slate.csv": "282d2399f617298a8b5f50d6b0562f2c0a16d977ec6fde1724620acfb487e35f",
+    "gp_comparison/training_observations.csv": "a67a4ef45fb3458307c3b43bb9206b3f859ddff45d82353c63c1713e0f0d315d",
+    "proposal/gp_strategy_decision.json": "bc38ceeb65072f1eaa5eff4dd672dc937c8548120c1a109f9d70617c2dc90eae",
+    "proposal/proposal.csv": "3acdad08b15fbf17d1c749d720d55d1d731227d02dbc4ddbe6c4dd7be74928d9",
+    "proposal/selection_metadata.json": "026253e2c85dec1f1af6d70328c0347efbe01efa59147ca3cb94712c3c020116",
+    "proposal/selection_state/candidate_pool.csv": "43743bdddce330ed0d1d5ce0847cfe28b74e76a6af318ece9760f30721838add",
+    "proposal/selection_state/mechanical_tests.csv": "199a4c74e7e094c20230330fab121fdacd12c1e4fb7bc89c6ab644ee1db1e7e8",
+    "proposal/selection_state/total_candidate_pool.csv": "0ded7ffe9f55a0ececc938a3576595ee7c4b7c2fb739f99ff22cce80b9e9cb90",
+    "proposal/selection_state/viability_screen.csv": "c863013347c8bfeb5fd4f9a4751362d9eeccf0785162ae4f865049dc2b089e5d",
+    "proposal/summary.txt": "df8f74b51e2ba10ec9b8403a5bdfa9595e1306a6568b865b080fd6a1650ec786"
+  },
+  "inputs": {
+    "batch_id": "ROUND_013",
+    "decision_sha256": "06067632e2148cf01b2314b0f8a12884d64b5fe0ba4a22638fc3bbfae7169ed7",
+    "files": {
+      "/Users/doggonebastard/Antigravity/ML for CryoMN/config_v2/availability.yaml": "973c9c7469a8493dd36bf441af1b920b86b27f50e99aa262f865a914ce74f2d4",
+      "/Users/doggonebastard/Antigravity/ML for CryoMN/config_v2/endpoints.yaml": "df240c4a9c393856672cc842b6f2f00c4aa4d16e76eac4984daa2fc68929aae0",
+      "/Users/doggonebastard/Antigravity/ML for CryoMN/config_v2/evaluation.yaml": "19db1119a078083d40d254294a3073f261d3da791f88cd14371d98615e12afb7",
+      "/Users/doggonebastard/Antigravity/ML for CryoMN/config_v2/group10.yaml": "66c81031783544b3f7e0a39db9d600cfcc415174ee5871222d99662b60d3c437",
+      "/Users/doggonebastard/Antigravity/ML for CryoMN/config_v2/ingredients.yaml": "3bba2bc62572380ae772967220f8fded09152257679d0fa9570a966465af0634",
+      "/Users/doggonebastard/Antigravity/ML for CryoMN/config_v2/optimization.yaml": "1f015cf829927623c0d67cab6705871856bd33e853caa5b7bf9e439262ea98c7",
+      "/Users/doggonebastard/Antigravity/ML for CryoMN/data/processed_v2/formulations.csv": "ef46faf34c42dff064253156a157d709ba47e75769d4662958d1b0bb122a88cc",
+      "/Users/doggonebastard/Antigravity/ML for CryoMN/data/processed_v2/observations.csv": "11348809066c94d757927d303f599a848676e991571d15c3921a0a85e39450ed",
+      "/Users/doggonebastard/Antigravity/ML for CryoMN/results/multi_objective_v2/gp_strategy_decision.json": "06067632e2148cf01b2314b0f8a12884d64b5fe0ba4a22638fc3bbfae7169ed7"
+    },
+    "phase_mode": "auto",
+    "pool_size": 2000,
+    "seed": 42
+  },
+  "version": 1
+}

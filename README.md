@@ -100,7 +100,7 @@ continuous-required failures stop the run. See the
 
 The [round progression and method register](docs/multi_objective_round_progression.md)
 records GP choices, finite-pool generation, chemistry/diversity policies,
-mechanical phases and allocation by round. It distinguishes frozen Rounds 1–12
+mechanical phases and allocation by round. It distinguishes frozen Rounds 1–13
 from the repaired implementation and its explicit search-activation conditions.
 
 ## V2 Mechanics Phases

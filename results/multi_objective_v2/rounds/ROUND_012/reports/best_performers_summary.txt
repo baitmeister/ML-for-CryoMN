@@ -1,0 +1,102 @@
+CryoMN v2 Best Performers
+=========================
+
+Database snapshot:
+- Formulations tracked: 427
+- Observation rows: 1153
+- Candidate formulations shown: 12
+
+Best observed viability performers:
+- scope: feasible wetlab_feedback campaign formulations only
+- #1 v2_655729013931 | viability 70.8% | source wetlab_feedback
+  formulation: 286mM ectoin + 1.56M ethylene glycol + 154mM glycerol
+- #2 v2_e12062bdbe84 | viability 69.9% | source instron_5942_terminal_v1, wetlab_feedback
+  formulation: 240mM ectoin + 753mM ethylene glycol + 7.5% FBS
+- #3 v2_237544a25f30 | viability 69.2% | source wetlab_feedback
+  formulation: 304mM ectoin + 1.95M ethylene glycol + 9.32% HSA
+- #4 v2_8a721b7d8f1c | viability 64.0% | source wetlab_feedback
+  formulation: 385mM ectoin + 791mM ethylene glycol
+- #5 v2_34d667ff4762 | viability 63.9% | source wetlab_feedback
+  formulation: 296mM ectoin + 1.75M ethylene glycol + 3.61% FBS + 0.62% HSA
+
+Historical literature-reference viability leaders:
+- #1 legacy_lit_38 | viability 100.0%
+  formulation: 1.13M DMSO
+- #2 legacy_lit_37 | viability 100.0%
+  formulation: 986mM DMSO
+- #3 legacy_lit_306 | viability 99.0%
+  formulation: 0.5mM trehalose
+- #4 legacy_lit_309 | viability 99.0%
+  formulation: 1.41M DMSO + 0.5mM trehalose
+- #5 legacy_lit_1 | viability 96.0%
+  formulation: 1.41M DMSO + 70.3mM ectoin + 300mM ethylene glycol + 1mM taurine
+
+Best observed mechanical performers:
+- scope: feasible wetlab_feedback campaign formulations only
+- #1 v2_e25da9b67825 | critical load 1.359 N/needle | viability 42.9%
+  formulation: 295mM glycerol + 166mM glucose + 19.4mM creatine
+- #2 v2_f41acb9cf9bf | critical load 0.889 N/needle | viability 48.9%
+  formulation: 550mM glycerol + 323mM acetamide
+- #3 v2_bfa93c703d0f | critical load 0.647 N/needle | viability 40.9%
+  formulation: 502mM glycerol + 368mM acetamide
+- #4 v2_c15b8bb3f4dd | critical load 0.536 N/needle | viability 16.1%
+  formulation: 336mM glycerol + 191mM glucose + 24.8mM creatine
+- #5 v2_87bc3f573dbf | critical load 0.502 N/needle | viability 35.8%
+  formulation: 500mM acetamide + 4.85% FBS
+
+Balanced multi-objective leaders:
+- scope: feasible wetlab_feedback campaign formulations only
+- #1 v2_e12062bdbe84 | viability 69.9% | critical load 0.243 N/needle
+  formulation: 240mM ectoin + 753mM ethylene glycol + 7.5% FBS
+- #2 v2_430e18c49d10 | viability 61.1% | critical load 0.300 N/needle
+  formulation: 152mM ectoin + 974mM ethylene glycol + 4.66% HSA
+- #3 v2_f41acb9cf9bf | viability 48.9% | critical load 0.889 N/needle
+  formulation: 550mM glycerol + 323mM acetamide
+- #4 v2_e25da9b67825 | viability 42.9% | critical load 1.359 N/needle
+  formulation: 295mM glycerol + 166mM glucose + 19.4mM creatine
+
+Retest-priority recommendations:
+- v2_3e8ef993abba | predicted viability 50.3% | intact probability 0.96
+  note: retest_priority: reason=cross_batch_disagreement; feedback_batches=3; batch_range=49.6; latest_batch_n=4; latest_batch_sd=2.4; neighbor_residual=0.8; viability_std_tiebreak=5.1
+  formulation: 240mM ectoin + 1.07M ethylene glycol
+- v2_6f20e63adb1d | predicted viability 51.1% | intact probability 0.89
+  note: retest_priority: reason=cross_batch_disagreement; feedback_batches=4; batch_range=33.1; latest_batch_n=4; latest_batch_sd=5.6; neighbor_residual=27.8; viability_std_tiebreak=4.2
+  formulation: 193mM ectoin + 583mM ethylene glycol + 5.82% FBS
+
+ROUND_012 completed-round candidates:
+- #1 reference_b5a5b7b1176f | viability unknown | intact probability 1.00 | mechanical test False
+  completed result: viability 58.61% (sample SD 1.95, n=4); intact pass
+  formulation: 352mM DMSO + 100mM sucrose
+- #2 v2_655729013931 | predicted viability 54.5% | intact probability 0.74 | mechanical test True
+  completed result: viability 76.73% (sample SD 3.82, n=4); intact fail
+  formulation: 286mM ectoin + 1.56M ethylene glycol + 154mM glycerol
+- #3 v2_3e8ef993abba | predicted viability 50.3% | intact probability 0.96 | mechanical test False
+  completed result: viability 43.09% (sample SD 6.31, n=4); intact pass
+  formulation: 240mM ectoin + 1.07M ethylene glycol
+- #4 v2_6f20e63adb1d | predicted viability 51.1% | intact probability 0.89 | mechanical test False
+  completed result: viability 70.30% (sample SD 7.30, n=4); intact pass
+  formulation: 193mM ectoin + 583mM ethylene glycol + 5.82% FBS
+- #5 v2_4adf29ba3120 | predicted viability 46.0% | intact probability 0.97 | mechanical test False
+  completed result: viability 18.56% (sample SD 2.43, n=4); intact pass
+  formulation: 61.6mM ectoin + 385mM ethylene glycol + 1.52% FBS
+- #6 v2_f01b18f6162e | predicted viability 52.3% | intact probability 0.99 | mechanical test False
+  completed result: viability 61.50% (sample SD 11.52, n=4); intact pass
+  formulation: 470mM ectoin + 367mM ethylene glycol
+- #7 v2_e25da9b67825 | predicted viability 47.8% | intact probability 0.86 | mechanical test True
+  completed result: viability 42.92% (sample SD 24.61, n=4); intact pass
+  formulation: 295mM glycerol + 166mM glucose + 19.4mM creatine
+- #8 v2_f41acb9cf9bf | predicted viability 35.0% | intact probability 0.88 | mechanical test True
+  completed result: viability 48.90% (sample SD 7.94, n=4); intact pass
+  formulation: 550mM glycerol + 323mM acetamide
+- #9 v2_4662a5352b86 | predicted viability 36.6% | intact probability 1.00 | mechanical test False
+  completed result: viability 45.41% (sample SD 7.15, n=4); intact pass
+  formulation: 57.6mM DMSO + 403mM acetamide + 6.24% FBS
+- #10 v2_87bc3f573dbf | predicted viability 38.1% | intact probability 1.00 | mechanical test False
+  completed result: viability 35.77% (sample SD 3.67, n=4); intact pass
+  formulation: 500mM acetamide + 4.85% FBS
+- #11 v2_3dde24a855fd | predicted viability 38.2% | intact probability 1.00 | mechanical test False
+  completed result: viability 22.10% (sample SD 4.82, n=4); intact pass
+  formulation: 450mM acetamide + 5.52% FBS
+- #12 v2_bfa93c703d0f | predicted viability 34.3% | intact probability 0.94 | mechanical test True
+  completed result: viability 40.90% (sample SD 5.28, n=4); intact pass
+  formulation: 502mM glycerol + 368mM acetamide

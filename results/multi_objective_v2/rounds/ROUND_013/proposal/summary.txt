@@ -1,0 +1,131 @@
+CryoMN v2 Next-Round Candidate Summary
+==========================================
+
+Batch ID: ROUND_013
+Active phase: mechanics_enabled
+Phase reason: auto-selected mechanics_enabled: full_gate paired_observations=17/16, distinct_formulations=17/12, batches=4/3
+Candidates to make: 12
+Mechanical tests requested: 4
+Mechanical selection mode: empirical_feasibility_weighted_with_actual_intact_backups
+Mechanical observations in database: 17
+Completed screening rounds: 12/8
+Hybrid evidence gate: paired=17/8, formulations=17/6, batches=4/2, met=True
+Full evidence gate: paired=17/16, formulations=17/12, batches=4/3, met=True
+Manual phase override: False
+Retest-priority formulations in slate: 1
+Mechanically ranked rows: 10
+Mechanical roles: followup_v2_655729013931=screened_hit_mechanics, cand_000348=full_primary, cand_000518=full_primary, cand_000584=full_primary, cand_000676=full_primary, cand_000479=ordered_backup, cand_000491=ordered_backup, cand_000645=ordered_backup, cand_000710=ordered_backup, cand_001017=ordered_backup
+Anchor decision: selected=False; source_batch=none; score=None; reason=Group 11+ uses four experimental mechanical slots; the reference is viability-only and no mechanical anchor is reserved
+Transition fallbacks: none
+qLogNEHVI status: available=True; optimizer=finite_pool_qlognehvi; fallback=not_applicable; reason=Recorded strategy explicitly selects finite-pool search
+GP decision: group11-control-informed-user-v1; viability=control; mechanics=current_comparable_endpoint
+Continuous execution: attempts=0; accepted=0; selected=0
+
+Main database used by selector:
+- data/processed_v2/formulations.csv
+- data/processed_v2/observations.csv
+
+Temporary selection restrictions:
+- human_serum_pct, methoxyphenyl_beta_d_glucopyranoside_M, sericin_pct
+
+Formulation feasibility policy:
+- Version: round5_solubility_viscosity_v2
+- Support radius: 1.464
+- Rejected pool rows: 1983
+- Optimizer mode: finite_pool_qlognehvi
+- Fallback status: not_applicable
+- Fallback reason: Recorded strategy explicitly selects finite-pool search
+
+Formulation similarity policy:
+- Version: round3_formulation_similarity_v1
+- Status: active
+- Bounds-normalized distance threshold: 0.05
+- Same-single-ingredient minimum relative difference: 50%
+- Historical references: 229
+- Rejected generation/pool rows: 2005
+- Final minimum history distance: 0.07185364816083441
+- Final minimum within-slate distance: 0.07743240134946887
+
+Marginal ingredient-frequency policy:
+- Version: round3_marginal_ingredient_diversity_v1
+- Maximum selected rows per ingredient: 5
+- Retest and rescue rows count toward the limit but are protected from removal.
+- Frequency-driven replacements: 1
+- Final maximum ingredient frequency: 5
+
+Empirical intact-combination policy:
+- Version: round6_empirical_combination_intact_v1
+- Exact active ingredient sets only; no individual-ingredient blame.
+- Unseen-combination pass probability: 0.50
+- Screening maximum deduction: 0.20
+- Mechanics mode: empirical_feasibility_weighted
+- Classifier selection role: compatibility_only
+
+Cold-start policy:
+- Version: round6_cold_start_graduation_v1
+- Cold ingredients: none
+- Maximum ordinary rows per cold ingredient: 2
+- Graduation rows selected: 0
+- Cap-driven replacements: 0
+- Retests and rescue dilutions are exempt from the cold cap.
+
+Viability prediction labeling:
+- Version: round7_viability_prediction_labeling_v1
+- Candidates labeled unknown: 0
+- Unknown candidates keep raw GP values only as acquisition/audit diagnostics.
+- Blank predicted_viability_percent means no reliable public viability estimate.
+
+Wet-lab instructions:
+1. Make every formulation listed below.
+2. Fill viability_percent and intact_patch_formation_pass in next_round_candidates.csv.
+3. After intact results are recorded, run Instron on the first four ranked actual-intact rows; skip failures and promote backups only in numeric rank order.
+4. Run 03_run_round/run_round.py after the CSV is filled.
+
+Candidates:
+- #1; candidate_id=reference_control; formulation_id=reference_b5a5b7b1176f; recommendation_type=campaign_control; mechanical_test=False; viability=UNKNOWN; viability_status=reference_not_modeled; intact_probability=1.00; origin=campaign_control; support=nan; predicted_critical_load=0.514 N/needle
+  formulation: 352mM DMSO + 100mM sucrose
+  viability note: nan
+- #2; candidate_id=followup_v2_655729013931; formulation_id=v2_655729013931; recommendation_type=screened_hit_mechanics; mechanical_test=True; predicted_viability=63.2%; viability_status=observed_followup; intact_probability=0.67; origin=screened_hit_mechanics; support=nan; predicted_critical_load=0.247 N/needle
+  formulation: 286mM ectoin + 1.56M ethylene glycol + 154mM glycerol
+  viability note: nan
+  note: First mechanics follow-up; prior batches=2, intact passing=1; mean viability=70.817
+- #3; candidate_id=retest_v2_3e8ef993abba; formulation_id=v2_3e8ef993abba; recommendation_type=retest_priority; mechanical_test=False; predicted_viability=48.8%; viability_status=observed_retest; intact_probability=0.95; origin=retest; support=in_support; predicted_critical_load=0.229 N/needle
+  formulation: 240mM ectoin + 1.07M ethylene glycol
+  viability note: exact formulation has 16 viability observation(s) across 4 batch(es)
+  note: retest_priority: reason=cross_batch_disagreement; feedback_batches=4; batch_range=49.6; latest_batch_n=4; latest_batch_sd=6.3; neighbor_residual=14.4; viability_std_tiebreak=4.8
+- #4; candidate_id=cand_000348; formulation_id=v2_ef1651db5234; recommendation_type=nan; mechanical_test=True; predicted_viability=41.6%; viability_status=model_supported; intact_probability=0.92; origin=finite_pool; support=in_support; predicted_critical_load=0.736 N/needle
+  formulation: 265mM glycerol + 115mM glucose + 15.3mM creatine
+  viability note: candidate has a non-prior-reverted surrogate estimate
+- #5; candidate_id=cand_000518; formulation_id=v2_73a98ba6a931; recommendation_type=nan; mechanical_test=True; predicted_viability=46.7%; viability_status=model_supported; intact_probability=0.85; origin=finite_pool; support=in_support; predicted_critical_load=0.537 N/needle
+  formulation: 490mM glycerol + 177mM acetamide
+  viability note: candidate has a non-prior-reverted surrogate estimate
+- #6; candidate_id=cand_000584; formulation_id=v2_7663fdca4b34; recommendation_type=nan; mechanical_test=True; predicted_viability=42.2%; viability_status=model_supported; intact_probability=0.75; origin=finite_pool; support=in_support; predicted_critical_load=0.568 N/needle
+  formulation: 588mM glycerol + 210mM acetamide
+  viability note: candidate has a non-prior-reverted surrogate estimate
+- #7; candidate_id=cand_000676; formulation_id=v2_792a11efc5c9; recommendation_type=nan; mechanical_test=False; predicted_viability=59.7%; viability_status=model_supported; intact_probability=0.61; origin=finite_pool; support=in_support; predicted_critical_load=0.295 N/needle
+  formulation: 173mM ectoin + 1.15M ethylene glycol + 7.81% FBS
+  viability note: candidate has a non-prior-reverted surrogate estimate
+- #8; candidate_id=cand_000479; formulation_id=v2_a15cb91c6c9c; recommendation_type=nan; mechanical_test=False; predicted_viability=53.2%; viability_status=model_supported; intact_probability=0.58; origin=finite_pool; support=in_support; predicted_critical_load=0.392 N/needle
+  formulation: 983mM ethylene glycol + 4.81% PVP
+  viability note: candidate has a non-prior-reverted surrogate estimate
+- #9; candidate_id=cand_000491; formulation_id=v2_09dc779f490b; recommendation_type=nan; mechanical_test=False; predicted_viability=52.0%; viability_status=model_supported; intact_probability=0.38; origin=finite_pool; support=in_support; predicted_critical_load=0.332 N/needle
+  formulation: 6.51mM DMSO + 234mM ectoin + 1.81M ethylene glycol + 7.28% FBS
+  viability note: candidate has a non-prior-reverted surrogate estimate
+- #10; candidate_id=cand_000645; formulation_id=v2_ece43a81072d; recommendation_type=nan; mechanical_test=False; predicted_viability=30.9%; viability_status=model_supported; intact_probability=0.98; origin=finite_pool; support=in_support; predicted_critical_load=0.46 N/needle
+  formulation: 209mM glucose + 27mM creatine + 0.428% methylcellulose
+  viability note: candidate has a non-prior-reverted surrogate estimate
+- #11; candidate_id=cand_000710; formulation_id=v2_c4a769ec5b31; recommendation_type=nan; mechanical_test=False; predicted_viability=36.3%; viability_status=model_supported; intact_probability=1.00; origin=finite_pool; support=in_support; predicted_critical_load=0.408 N/needle
+  formulation: 72.5mM DMSO + 309mM acetamide + 4.05% FBS
+  viability note: candidate has a non-prior-reverted surrogate estimate
+- #12; candidate_id=cand_001017; formulation_id=v2_a9b18c305205; recommendation_type=nan; mechanical_test=False; predicted_viability=36.2%; viability_status=model_supported; intact_probability=0.57; origin=finite_pool; support=in_support; predicted_critical_load=0.441 N/needle
+  formulation: 476mM glycerol + 43.7mM raffinose
+  viability note: candidate has a non-prior-reverted surrogate estimate
+
+Group 10 workflow: GP methodology and noise unchanged; mechanical endpoint versioned separately.
+Reference readiness: {"ready": true, "missing_settings": []}
+Mechanical budget: four formulations. Replicate counts are derived from completed CSV rows.
+Roles: {"ordinary": 9, "campaign_control": 1, "screened_hit_mechanics": 1, "retest_priority": 1}
+Full-phase allocation: 1 control, 1 mechanics follow-up, 1 shared retest/rescue, 9 ordinary candidates ranked across origins.
+Shared special slot: evidence-ranked retest first; rescue if no retest can be selected.
+Ordinary origin quotas: none. Realized sources: {"finite_pool": 9}
+Mechanical endpoint: terminal_force_08mm_after_1N_v1; nominal N per loaded needle in compatibility force columns.

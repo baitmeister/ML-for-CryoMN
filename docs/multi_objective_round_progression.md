@@ -4,6 +4,8 @@ This register separates three decisions: **which GP supplies predictions**, **ho
 
 ## Evidence scope
 
+Current campaign state after the 2026-10-12 Round 12 ingestion: 427 formulations and 1,153 observation rows through `ROUND_012`, with a frozen `ROUND_013` proposal and its editable next-round worksheet. Round 12 added 48 viability readings, 12 intact-patch outcomes (11 pass, one fail), and eight mechanical replicates across four formulations. The ingestion has no unresolved outcomes or mechanical execution violations. The 17 paired formulation–batch observations across 17 formulations and four batches satisfy the full mechanics gate, so Round 13 uses `mechanics_enabled` with the existing approved control-informed GP and finite-pool qLogNEHVI decision. See the [completed Round 12 worksheet](../results/multi_objective_v2/rounds/ROUND_012/completed/completed.csv) and [Round 13 selection metadata](../results/multi_objective_v2/rounds/ROUND_013/proposal/selection_metadata.json).
+
 The campaign baseline is commit `0a0a7328b7d0248bd29e769ebeda3739a8295f02`: observations through `ROUND_011`, a prepared `ROUND_012` worksheet, 419 formulations and 1,061 observation rows. Frozen proposal metadata covers Rounds 2–12. Round 1 has reconstructed evaluation provenance and no frozen selection-metadata file in this baseline. Round 2 is a migration-frozen supplementary evaluation cohort; the formal prospective cohort starts at Round 3. The baseline excludes Round 12 ingestion outputs and a Round 13 proposal.
 
 The implementation reference is `pre-full-phase-check` at commit `98d03e3`. Its continuous-search and full-phase allocation changes are described by activation conditions below. They do not establish that a frozen campaign proposal used those methods.
@@ -24,8 +26,9 @@ The implementation reference is `pre-full-phase-check` at commit `98d03e3`. Its 
 | 10 | Pooled Matérn-5/2 specification; comparable terminal-force mechanical GP. | Finite pool; bootstrap utility/diversity. | `group10_workflow_v4`, schema 4: recurring control and screened-hit follow-up. Frozen mechanical primaries include one control, one follow-up and two fresh recipes. |
 | 11 | **Campaign-only, control-informed batch-effect Matérn-5/2 GP** (`control`, `batch_gp_v1`). | Shared-posterior finite-pool qLogNEHVI; hybrid screening/mechanics score. | Decision `group11-control-informed-user-v1`. Workflow v5/schema 5 makes the reference viability-only; one historical control batch is explicitly permitted for Round 11. |
 | 12 | Round 11 approved GP and decision. | Shared-posterior finite-pool qLogNEHVI; hybrid phase. | Two historical control batches satisfy the normal control-history requirement. Full-phase evidence gate remains incomplete in the frozen proposal. |
+| 13 | Round 11 approved GP and decision. | Shared-posterior finite-pool qLogNEHVI; full mechanics phase. | Round 12 completion satisfies the full gate. Allocation is one control, one mechanics follow-up, one shared retest/rescue and nine ordinary candidates; four primary mechanical tests retain actual-intact rank promotion. |
 
-Round 2 and Round 3 kernel definitions are recorded in source commits `ac1e387` and `a500ea4`; commit `6160fad` records the all-pass aggregation change used for Round 4. Round-indexed selection evidence is under `results/multi_objective_v2/rounds/ROUND_###/proposal/selection_metadata.json`. These records establish **finite-pool search for every frozen proposal from Round 2 through Round 12**. The `hybrid_finite_pool_fallback` label in Rounds 11–12 accompanies the explicit reason “Recorded strategy uses shared-model finite-pool qLogNEHVI”; it does not establish an attempted continuous solve or optimizer failure.
+Round 2 and Round 3 kernel definitions are recorded in source commits `ac1e387` and `a500ea4`; commit `6160fad` records the all-pass aggregation change used for Round 4. Round-indexed selection evidence is under `results/multi_objective_v2/rounds/ROUND_###/proposal/selection_metadata.json`. These records establish **finite-pool search for every frozen proposal from Round 2 through Round 13**. The `hybrid_finite_pool_fallback` label in Rounds 11–12 accompanies the explicit reason “Recorded strategy uses shared-model finite-pool qLogNEHVI”; it does not establish an attempted continuous solve or optimizer failure.
 
 ## GP and control definitions
 
@@ -78,6 +81,7 @@ Frozen proposal counts are:
 | [Round 10](../results/multi_objective_v2/rounds/ROUND_010/proposal/selection_metadata.json) | 4 | 4 | 1 | Bootstrap |
 | [Round 11](../results/multi_objective_v2/rounds/ROUND_011/proposal/selection_metadata.json) | 8 | 8 | 2 | Hybrid |
 | [Round 12](../results/multi_objective_v2/rounds/ROUND_012/proposal/selection_metadata.json) | 13 | 13 | 3 | Hybrid |
+| [Round 13](../results/multi_objective_v2/rounds/ROUND_013/proposal/selection_metadata.json) | 17 | 17 | 4 | Full mechanics |
 
 ### Source quotas and reserved roles
 
