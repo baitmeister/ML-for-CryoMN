@@ -85,20 +85,23 @@ Frozen proposal counts are:
 
 ### Source quotas and reserved roles
 
-The Group 10 allocator in bootstrap/hybrid reserves its eligible control/follow-up, up to two retests and up to two rescues, subject to feasibility and slate constraints. It divides the residual ordinary positions proportionally to source counts in the preliminary slate, using floor allocation and largest fractional remainders. These quotas vary by run, but become hard counts within that run.
+The bootstrap/hybrid allocator reserves its eligible control/follow-up and at most one shared confirmation-retest/rescue slot, subject to feasibility and slate constraints. It divides the residual ordinary positions proportionally to source counts in the preliminary slate, using floor allocation and largest fractional remainders. These quotas vary by run, but become hard counts within that run.
 
 Frozen Rounds 10–12 each reserve five positions: one control, one follow-up, two retests and one rescue. Round 10 assigns the seven ordinary positions to four local and three sparse recipes; Rounds 11–12 assign all seven to local recipes. These source allocations are distinct from the hybrid **mechanical** 2/1/1 transition roles.
 
-The repaired full-phase allocator uses policy `full_mechanics_1control_1followup_1retest_or_rescue_v1`:
+The current full-phase allocator uses policy `full_mechanics_optional_followup_confirmation_rescue_v1`.
+Frozen proposals retain the allocation and policy recorded with their original decision.
+The [automatic repeat and rescue rules](../src/08_multi_objective/README.md#automatic-repeat-and-rescue-rules)
+define cumulative two-failure retirement and the one-completed-confirmation limit.
 
 | Screening role | Positions | Selection rule |
 | --- | ---: | --- |
 | Campaign control | 1 | Fixed 2.5% v/v DMSO + 0.100 M sucrose reference; viability-only. |
-| Mechanics follow-up | 1 | Eligible screened hit with passing intact evidence and no comparable mechanical observation; ranked by observed viability, with deterministic ties. |
-| Retest or rescue | 1 shared | Highest-priority admissible retest; admissible rescue ranked by mechanics acquisition if no retest can fill the slot. |
-| Ordinary candidates | 9 | Rank all surviving origins together by mechanics acquisition, subject to the established constraints. |
+| Mechanics follow-up | 0–1 | Screened hit with passing intact history, no comparable mechanical measurement and fewer than two cumulative intact failures; ranked by observed viability, with deterministic ties. |
+| Retest or rescue | 0–1 shared | Highest-priority numerically eligible retest with no completed automatic confirmation; otherwise a previously untested rescue ranked by mechanics acquisition. |
+| Ordinary candidates | 9–11 | Rank all surviving origins together by mechanics acquisition; unfilled special slots return here. |
 
-There is **no finite/continuous origin quota** for the nine full-phase ordinary positions. Additional retest/rescue rows cannot occupy them. A missing required role or an underfilled feasible slate stops selection. Source counts are descriptive outcomes. This allocator applies whenever the repaired code resolves `mechanics_enabled`, for either finite-only or continuous-required search. Bootstrap/hybrid retain their phase-specific allocation.
+There is **no finite/continuous origin quota** for full-phase ordinary positions. Additional retest/rescue rows cannot occupy them. A missing campaign control or an underfilled feasible slate stops selection; optional special slots are backfilled. Source counts are descriptive outcomes. This allocator applies when the code resolves `mechanics_enabled`, for either finite-only or continuous-required search. Bootstrap/hybrid retain their phase-specific ordinary source allocation, with the same cumulative retirement and bounded shared confirmation/rescue rules.
 
 ## Continuous-search implementation and activation
 
@@ -130,7 +133,7 @@ Implementation provenance: `98a3405` connects the approved posterior; `6b759c7` 
 - Availability and round-effective chemistry limits apply to finite and refined candidates. Round 5 limits include total permeating CPA ≤2.50 M, sugar ≤0.50 M, nonpermeating solutes ≤0.50 M, polymer-dependent sugar/nonpermeating limits ≤0.30 M, at most one active polymer and saturation burden ≤0.80. The registry supplies ingredient-specific ceilings; the reference has a narrowly scoped DMSO exception.
 - Round 3 similarity uses complete registry-bounds-normalized vectors: distance must exceed 0.05, and matching single-ingredient recipes must differ by at least 50% relative to the lower concentration. Intentional retests and reserved-role handling retain their documented exceptions.
 - A slate permits at most one measured outside-support row, two occurrences of an exact two-ingredient set, one occurrence of an exact 3+-ingredient set, five occurrences of a shared ingredient pair and five rows containing any individual ingredient. Intentional retests are exempt from exact-set/shared-pair counts, but count toward ingredient frequency.
-- Round 6 cold-ingredient policy uses fewer than three distinct campaign formulations with measured viability as its threshold and caps each cold ingredient at two ordinary rows. Full-phase ordinary positions compete by acquisition; the 1/1/1/9 rule adds no separate graduation reservation.
+- Round 6 cold-ingredient policy uses fewer than three distinct campaign formulations with measured viability as its threshold and caps each cold ingredient at two ordinary rows. Full-phase ordinary positions compete by acquisition; special-role allocation adds no separate graduation reservation.
 - Round 6 intact probability pools only identical complete active sets within normalized RMS radius 0.35, with a Beta(1,1) prior. Unseen sets receive probability 0.50. The classifier probability is diagnostic, not an additional selection gate.
 - Mechanical execution follows ascending mechanical rank among recipes that actually pass intact. Unranked rows cannot supply mechanics or become backups. A shortage of passing eligible recipes is recorded explicitly.
 

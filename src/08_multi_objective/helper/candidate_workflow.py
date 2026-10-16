@@ -53,6 +53,7 @@ from .similarity import (
 )
 from .status import derive_round_tracker, parse_round_number, write_current_round_status
 from .visualization import generate_proposal_artifacts
+from .automatic_repeats import repeat_policy_enabled, load_completed_retest_history
 
 
 @dataclass(frozen=True)
@@ -143,6 +144,11 @@ def run_candidate_selection(
     group10_config = load_group10_config_for_round(target_round_number)
     assert_group10_can_proceed(group10_config, target_round_number, observations)
     observations = production_observations(observations, target_round_number=target_round_number)
+    if repeat_policy_enabled(optimization_config):
+        history, history_inputs = load_completed_retest_history(
+            observations, Path(options.output_dir).parent / 'rounds', target_round_number)
+        optimization_config['_completed_automatic_retest_history'] = history
+        input_hashes.update(history_inputs)
     selection_inputs = dict(
         files=dict(input_hashes),
         pool_size=options.pool_size or nested_get(optimization_config, 'selection.generated_candidate_pool_size', 2000),
@@ -446,6 +452,7 @@ def run_candidate_selection(
                     "unstarted proposal"
                 ),
                 policy_versions=[
+                    result.metadata.get('automatic_repeat_policy', {}).get('policy_version', ''),
                     result.metadata.get("intact_combination_policy", {}).get(
                         "policy_version", ""
                     ),
@@ -514,6 +521,7 @@ def _finish_selection(options, observations, batch_id, result, round_paths, prop
         phase_reason=result.metadata.get("phase_resolution", {}).get("reason", ""),
         phase_resolution=result.metadata.get("phase_resolution", {}),
         proposal_policy={
+            'automatic_repeat_policy': result.metadata.get('automatic_repeat_policy', {}),
             "mechanics_transition": result.metadata.get("mechanics_transition", {}),
             "mechanical_policy": result.metadata.get("mechanical_policy", {}),
             "continuous_qlognehvi": result.metadata.get("continuous_qlognehvi", {}),

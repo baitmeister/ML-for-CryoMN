@@ -96,7 +96,7 @@ candidate_generation:
     - 0.25
     - 0.50
     - 0.75
-  rescue_candidates_per_round: 2
+  rescue_candidates_per_round: 1
 
 support_policy:
   radius_percentile: 95.0
@@ -251,10 +251,17 @@ selection:
     viability_percent: 0.0
     critical_axial_load_N_per_needle: 0.0
 
+automatic_repeat_policy:
+  enabled: true
+  policy_version: cumulative_failure_bounded_retest_v1
+  # Distinct measured exact-recipe batches; passes never reset this count.
+  max_cumulative_intact_failures: 2
+
 retest:
   enabled: true
-  policy_version: campaign_observed_instability_v2
-  max_candidates_per_round: 2
+  policy_version: bounded_campaign_confirmation_v1
+  max_candidates_per_round: 1
+  max_completed_automatic_retests_per_formulation: 1
   formulation_disagreement_threshold_percent: 15.0
   local_residual_threshold_percent: 20.0
   within_batch_std_threshold_percent: 8.0

@@ -150,6 +150,14 @@ def validate_optimization_config(config: Mapping[str, Any]) -> None:
                 f"to the hybrid-gate value; received {full} < {hybrid}."
             )
     reference = _require_mapping(_require_mapping(config, "selection"), "reference_point")
+    repeat_policy = config.get('automatic_repeat_policy', {})
+    if repeat_policy.get('enabled', False):
+        _require_positive_integer(repeat_policy.get('max_cumulative_intact_failures'),
+                                  'automatic_repeat_policy.max_cumulative_intact_failures')
+        _require_positive_integer(nested_get(config, 'retest.max_completed_automatic_retests_per_formulation'),
+                                  'retest.max_completed_automatic_retests_per_formulation')
+        if nested_get(config, 'retest.max_candidates_per_round') != 1:
+            raise ConfigValidationError('Bounded automatic retests require retest.max_candidates_per_round=1.')
     for endpoint in ("viability_percent", "critical_axial_load_N_per_needle"):
         if not _is_number(reference.get(endpoint)):
             raise ConfigValidationError(f"selection.reference_point.{endpoint} must be numeric.")

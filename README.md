@@ -116,10 +116,19 @@ evidence.
 | `mechanics_hybrid` | Hybrid gate met; fewer than 16 pairs, 12 formulations, or 3 paired batches | 2 qLogNEHVI, 1 local, 1 coverage |
 | `mechanics_enabled` | Full 16/12/3 gate met | 4 full-mechanics tests plus ordered eligible backups |
 
-Full-phase screening reserves one control, one mechanics follow-up and one
-shared retest/rescue slot. The other nine recipes compete across origins by
-the common mechanics acquisition score with existing feasibility and diversity
-constraints; no finite-versus-continuous source quota applies.
+Full-phase screening reserves one control, up to one eligible mechanics
+follow-up and up to one shared confirmation-retest/rescue slot. Unfilled
+special slots return to ordinary acquisition ranking, giving 9–11 ordinary
+recipes under the existing feasibility and diversity constraints. There is
+no finite-versus-continuous source quota.
+
+Two cumulative failed intact batches retire an exact recipe from automatic
+selection; intervening passes do not reset the count. Each exact recipe may
+receive at most one completed automatic viability retest across campaign
+history. The shared slot chooses a numerically eligible confirmation first,
+otherwise an acquisition-ranked, previously untested rescue dilution, otherwise
+an ordinary candidate. The [automatic repeat and rescue rules](src/08_multi_objective/README.md#automatic-repeat-and-rescue-rules)
+define the counters, thresholds and historical-role evidence.
 
 A pair requires viability and critical load for the same formulation and batch;
 technical replicates aggregate into one pair. Mechanics is performed only on

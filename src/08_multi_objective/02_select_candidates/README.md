@@ -192,6 +192,14 @@ active screening or mechanical ranking.
 
 ## Mechanical eligibility and repeat filtering
 
+The [automatic repeat and rescue rules](../README.md#automatic-repeat-and-rescue-rules)
+apply before allocation. Two cumulative failed intact batches retire an exact
+recipe, and one completed automatic viability confirmation exhausts its retest
+allowance. Completed confirmations require a frozen `retest_priority` role plus
+finite measured viability, including historical confirmations. Mechanics follow-up
+and shared retest/rescue slots are optional; unfilled capacity returns to ordinary
+acquisition ranking. Counts and source batch IDs are recorded in proposal metadata.
+
 Mechanical ranking considers only rows inside the finalized 12-row slate.
 Ordinary eligibility requires all of the following:
 
@@ -199,6 +207,7 @@ Ordinary eligibility requires all of the following:
 - no `retest_priority` recommendation;
 - no prior critical-load observation for the formulation;
 - no disallowed exact mechanical repeat.
+- fewer than two cumulative failed intact batches.
 
 The one exception is an eligible second-bootstrap-batch anchor. Screening rows
 that fail mechanical eligibility retain blank mechanical rank, role, mode, and
@@ -300,17 +309,18 @@ objectives; initial stiffness is diagnostic.
 mechanics score = qLogNEHVI + log(max(p_combo, 1e-9)) - screening_acquisition_penalty
 ```
 
-The final 12-row allocation is one control, one mechanics follow-up, one shared
-retest/rescue slot and nine ordinary recipes. Eligible evidence-ranked retests
+The final 12-row allocation is one control, up to one eligible mechanics follow-up,
+up to one shared retest/rescue slot and 9–11 ordinary recipes. Eligible evidence-ranked retests
 take precedence for the shared slot; an acquisition-ranked rescue fills it only
-if no retest can be selected. Extra retests/rescues are excluded. The nine
+if no retest can be selected. Unfilled special slots return to ordinary ranking.
+Extra retests/rescues are excluded. The ordinary
 ordinary rows compete across origins by mechanics score, with all existing
 feasibility and diversity constraints. Origin counts are descriptive outcomes;
-`group10.ordinary_origin_quotas` is empty. A required role or total-capacity
+`group10.ordinary_origin_quotas` is empty. A missing campaign control or total-capacity
 shortfall stops the run. Screening, bootstrap and hybrid retain their phase-specific allocation.
 
-The follow-up has first mechanical priority and the best three eligible ordinary
-recipes complete the four primaries. Further eligible ranks
+An eligible follow-up has first mechanical priority and the best remaining eligible ordinary
+recipes complete the four primaries; without a follow-up, all four are acquisition-ranked. Further eligible ranks
 are ordered actual-intact backups. Retests and exact mechanically observed
 formulations remain unranked.
 

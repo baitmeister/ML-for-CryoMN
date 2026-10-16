@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
+from copy import deepcopy
 import importlib.util
 from pathlib import Path
 import sys
@@ -22,6 +23,7 @@ from helper.candidate_workflow import (  # noqa: E402
 )
 from helper.paths import FORMULATIONS_PATH, OBSERVATIONS_PATH  # noqa: E402
 from helper.registry import load_registry  # noqa: E402
+from helper.config import load_yaml
 
 
 def _load_selection_cli_module():
@@ -36,6 +38,11 @@ def _load_selection_cli_module():
 
 class V2CandidateWorkflowTests(unittest.TestCase):
     def setUp(self):
+        # Historical characterization must use its preserved selection policy.
+        historical_config = load_yaml(PROJECT_ROOT / 'tests/baselines/optimization_historical.yaml')
+        config_patch = patch('helper.candidate_workflow.load_optimization_config', side_effect=lambda: deepcopy(historical_config))
+        config_patch.start()
+        self.addCleanup(config_patch.stop)
         # These characterization cases exercise selection before Group 9.
         # Later live ingestion must not alter their input evidence cutoff.
         temporary = tempfile.TemporaryDirectory()

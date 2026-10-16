@@ -62,6 +62,7 @@ from .prediction_labels import (
 )
 from .registry import IngredientRegistry, presence_threshold
 from .retest import build_retest_candidates
+from .automatic_repeats import filter_retired_recipes, automatic_repeat_metadata, repeat_policy_enabled
 from .similarity import (
     SimilarityAudit,
     build_history_similarity_index,
@@ -212,6 +213,7 @@ def _prepare_and_score_candidate_pool(
                 ignore_index=True,
                 sort=False,
             ).drop_duplicates("formulation_id", keep="first")
+    candidate_pool = filter_retired_recipes(candidate_pool, formulations, observations, registry, optimization_config)
     if similarity_policy.active:
         similarity_index = build_history_similarity_index(
             formulations,
@@ -304,6 +306,7 @@ def _prepare_and_score_candidate_pool(
         ),
         "eligibility_uses_model_uncertainty": False,
         "eligible_before_feasibility": int(len(retest_candidates)),
+        'max_completed_automatic_retests_per_formulation': int(nested_get(optimization_config, 'retest.max_completed_automatic_retests_per_formulation', 1)),
     }
     retest_audit_rows: list[dict] = []
     retest_candidates_rejected_by_feasibility = 0
@@ -379,7 +382,7 @@ def _prepare_and_score_candidate_pool(
                         )
                         or 0.0
                     ),
-                    "model_uncertainty_tiebreak": float(
+                    ('model_uncertainty_diagnostic' if repeat_policy_enabled(optimization_config) else 'model_uncertainty_tiebreak'): float(
                         pd.to_numeric(
                             row.get("viability_std", 0.0),
                             errors="coerce",
@@ -450,6 +453,7 @@ def _prepare_and_score_candidate_pool(
     # Retest-only audit fields belong in metadata and explanations, not in
     # the stable operator worksheet schema.
     retained_retest_columns = set(candidate_pool.columns) | {
+        'cumulative_intact_failure_count', 'completed_automatic_retest_count', 'automatic_repeat_retired',
         "candidate_id",
         "formulation_id",
         "recommendation_type",
@@ -476,6 +480,7 @@ def _prepare_and_score_candidate_pool(
         combined_pool = pd.concat(
             [anchor_candidates, combined_pool], ignore_index=True, sort=False
         ).drop_duplicates("candidate_id", keep="first")
+    combined_pool = filter_retired_recipes(combined_pool, formulations, observations, registry, optimization_config)
     combined_pool, zero_active_filtered_count = _drop_zero_active_candidates(combined_pool, registry)
     combined_pool['generation_origin'] = combined_pool['generation_origin'].fillna(combined_pool['candidate_origin'])
     combined_pool = annotate_intact_combination_evidence(
@@ -1055,6 +1060,8 @@ def select_next_round(
         final_ingredient_counts=final_ingredient_counts,
         zero_active_filtered_count=zero_active_filtered_count,
     )
+    if repeat_policy_enabled(optimization_config):
+        metadata['automatic_repeat_policy'] = automatic_repeat_metadata(formulations, observations, registry, optimization_config)
     return SelectionResult(
         viability_screen=viability_screen,
         mechanical_tests=mechanical_tests,

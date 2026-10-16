@@ -62,6 +62,7 @@ from .prediction_labels import (
 )
 from .registry import IngredientRegistry, presence_threshold
 from .retest import build_retest_candidates
+from .automatic_repeats import repeat_policy_enabled
 from .similarity import (
     SimilarityAudit,
     build_history_similarity_index,
@@ -535,9 +536,9 @@ def _select_round_slate(
         score_column = "screening_phase_score"
         default_recommendation_type = "screening_candidate"
 
-    # Retest eligibility is based only on observed campaign evidence. Model
-    # uncertainty is the second ranking key after evidence severity and
-    # cannot create a retest by itself. Feasibility was applied before this
+    # Retest eligibility is based only on observed campaign evidence. Bounded
+    # confirmations break severity ties by formulation ID; historical policies
+    # retain their uncertainty tie-break. Feasibility was applied before this
     # point, so an infeasible diagnostic row cannot consume either slot.
     anchors = annotated[
         annotated.get(
@@ -545,6 +546,9 @@ def _select_round_slate(
         ).astype(str).eq("mechanics_anchor")
     ].copy()
     retest_limit = int(nested_get(optimization_config, "retest.max_candidates_per_round", 2))
+    bounded_repeats = repeat_policy_enabled(optimization_config)
+    if bounded_repeats:
+        retest_limit = min(retest_limit, 1)
     retests = annotated[annotated["recommendation_type"] == "retest_priority"].copy()
     selected_parts: list[pd.DataFrame] = []
     selected_ids: set[str] = set()
@@ -556,8 +560,8 @@ def _select_round_slate(
         selected_ids.update(selected_anchor["candidate_id"].astype(str))
     if not retests.empty and retest_limit > 0:
         selected_retests = retests.sort_values(
-            ["retest_priority_score", "viability_std", "formulation_id"],
-            ascending=[False, False, True],
+            ['retest_priority_score', 'formulation_id'] if bounded_repeats else ["retest_priority_score", "viability_std", "formulation_id"],
+            ascending=[False, True] if bounded_repeats else [False, False, True],
             kind="mergesort",
         ).head(min(retest_limit, n)).copy()
         selected_parts.append(selected_retests)
@@ -570,6 +574,8 @@ def _select_round_slate(
         in {PHASE_SCREENING, PHASE_BOOTSTRAP, PHASE_HYBRID}
         else 0
     )
+    if bounded_repeats:
+        rescue_limit = 0 if any(part.recommendation_type.eq('retest_priority').any() for part in selected_parts) else min(rescue_limit, 1)
     if rescue_limit > 0:
         rescue_candidates = annotated.loc[
             annotated.get("candidate_origin", pd.Series("", index=annotated.index)).astype(str).eq("rescue_dilution")
@@ -580,8 +586,8 @@ def _select_round_slate(
             if "rescue_scale_factor" not in rescue_candidates.columns:
                 rescue_candidates["rescue_scale_factor"] = 1.0
             selected_rescue = rescue_candidates.sort_values(
-                ["rescue_scale_factor", "viability_ucb"],
-                ascending=[True, False],
+                [score_column, 'formulation_id'] if bounded_repeats else ["rescue_scale_factor", "viability_ucb"],
+                ascending=[False, True] if bounded_repeats else [True, False],
             ).head(min(rescue_limit, remaining_capacity)).copy()
             if not selected_rescue.empty:
                 selected_parts.append(selected_rescue)
@@ -593,7 +599,7 @@ def _select_round_slate(
     # rescue candidates than the cap) is backfilled with the best-scoring
     # local_perturbation candidates rather than silently shrinking the
     # slate, so the round always gets a full n candidates.
-    rescue_retest_reserve = retest_limit + rescue_limit
+    rescue_retest_reserve = 1 if bounded_repeats else retest_limit + rescue_limit
     rescue_retest_filled = sum(len(part) for part in selected_parts)
     rescue_retest_unused = max(rescue_retest_reserve - rescue_retest_filled, 0)
 
@@ -601,6 +607,9 @@ def _select_round_slate(
     # pool. Exact-combination evidence has already supplied a bounded
     # screening deduction, while rescue rows keep their reserved priority.
     remaining = annotated.loc[~annotated["candidate_id"].astype(str).isin(selected_ids)].reset_index(drop=True)
+    if bounded_repeats:
+        remaining = remaining.loc[~remaining.recommendation_type.eq('retest_priority')
+                                  & ~remaining.candidate_origin.eq('rescue_dilution')].reset_index(drop=True)
     remaining_n = max(n - rescue_retest_filled, 0)
     if remaining_n > 0 and not remaining.empty:
         diversity_weight = (
@@ -811,6 +820,8 @@ def _mechanical_eligibility_mask(
     repeat_eligible = prior_count.eq(0) | is_anchor | allow_prior | historical_mechanical_reference
     retest_eligible = ~is_retest | allow_retests
     mask = repeat_eligible & retest_eligible & ~is_viability_control
+    if repeat_policy_enabled(optimization_config) and 'automatic_repeat_retired' in frame:
+        mask &= ~frame.automatic_repeat_retired.fillna(False).astype(bool)
     return mask, {
         "viability_control_excluded_count": int(is_viability_control.sum()),
         "prior_mechanics_excluded_count": int((~repeat_eligible).sum()),

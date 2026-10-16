@@ -15,6 +15,7 @@ from .similarity import resolve_similarity_policy, build_history_similarity_inde
 from .selection_policy import select_mechanical_tests
 from .phase import PHASE_MECHANICS, resolve_phase_mode
 from .intact_policy import resolve_intact_combination_policy, build_intact_evidence, annotate_intact_combination_evidence
+from .automatic_repeats import filter_retired_recipes, repeat_policy_enabled, automatic_repeat_metadata
 
 
 def _combo(row,registry):
@@ -42,28 +43,31 @@ def reference_feasibility(frame, registry, optimization, config):
     return annotate_feasibility(frame,modified,optimization,policy_active=True)
 
 
-def _allocate_full_phase_slate(extra, ordinary, add, selected):
-    """Reserve 1 control, 1 follow-up, 1 retest/rescue; rank nine across origins.
+def _allocate_full_phase_slate(extra, ordinary, add, selected, optional_special_slots=False):
+    """Reserve a control; fill eligible special slots, then rank remaining slots.
 
     ``add`` is the same constraint checker used by the historical allocator.
     No source quota or source-processing priority applies to the nine ordinary
     slots. Diagnostic retest priority remains evidence-based, not acquisition.
     """
-    def take_one(rows, role):
+    def take_one(rows, role, required=True):
         for _, row in rows.iterrows():
             if add(row):
                 return row
-        raise ValueError(f'Full-phase allocation cannot fill required {role} slot; no proposal written')
+        if required:
+            raise ValueError(f'Full-phase allocation cannot fill required {role} slot; no proposal written')
+        return None
 
     extra_roles = extra.get('experimental_role', pd.Series('', index=extra.index))
     take_one(extra.loc[extra_roles.eq('campaign_control')], 'control')
-    take_one(extra.loc[extra_roles.eq('screened_hit_mechanics')], 'mechanics follow-up')
+    followup = take_one(extra.loc[extra_roles.eq('screened_hit_mechanics')], 'mechanics follow-up', required=not optional_special_slots)
     retests = ordinary.loc[ordinary.experimental_role.eq('retest_priority')]
     if not retests.empty:
         retests = retests.sort_values(['retest_priority_score', 'formulation_id'], ascending=[False, True], kind='stable')
     rescues = ordinary.loc[ordinary.candidate_origin.eq('rescue_dilution')].sort_values(
-        ['mechanics_phase_score', 'candidate_id'], ascending=[False, True], kind='stable')
-    special = take_one(pd.concat([retests, rescues], ignore_index=True), 'retest/rescue')
+        ['mechanics_phase_score', 'formulation_id'], ascending=[False, True], kind='stable')
+    special = take_one(pd.concat([retests, rescues], ignore_index=True), 'retest/rescue', required=not optional_special_slots)
+    reserved = len(selected)
     pool = ordinary.loc[ordinary.experimental_role.eq('ordinary')
                         & ~ordinary.candidate_origin.eq('rescue_dilution')]
     if not np.isfinite(pd.to_numeric(pool.mechanics_phase_score, errors='coerce')).all():
@@ -76,12 +80,14 @@ def _allocate_full_phase_slate(extra, ordinary, add, selected):
     if len(selected) != 12:
         raise ValueError(f'Full-phase slate has {len(selected)}/12 rows under existing constraints; no proposal written')
     return {
-        'policy_version': 'full_mechanics_1control_1followup_1retest_or_rescue_v1',
-        'reserved_slots': {'campaign_control': 1, 'screened_hit_mechanics': 1, 'retest_or_rescue': 1},
-        'ordinary_slots': 9,
+        'policy_version': 'full_mechanics_optional_followup_confirmation_rescue_v1' if optional_special_slots else 'full_mechanics_1control_1followup_1retest_or_rescue_v1',
+        'reserved_slots': {'campaign_control': 1, 'screened_hit_mechanics': int(followup is not None), 'retest_or_rescue': int(special is not None)},
+        'reserved_screen_rows': reserved,
+        'ordinary_slots': 12 - reserved,
+        'special_slots_optional': optional_special_slots,
         'retest_rescue_priority': 'evidence-ranked retest first; acquisition-ranked rescue if no retest can be selected',
-        'selected_retest_or_rescue_id': str(special.formulation_id),
-        'selected_retest_or_rescue_kind': 'retest' if special.experimental_role == 'retest_priority' else 'rescue',
+        'selected_retest_or_rescue_id': str(special.formulation_id) if special is not None else '',
+        'selected_retest_or_rescue_kind': ('retest' if special.experimental_role == 'retest_priority' else 'rescue') if special is not None else 'none',
         'ordinary_ranking': 'shared mechanics acquisition score across all origins, subject to existing constraints',
     }
 
@@ -126,6 +132,7 @@ def apply_group10(result, formulations, observations, registry, optimization, co
     legacy_anchor=result.viability_screen.loc[result.viability_screen.recommendation_type.eq('mechanics_anchor')].copy() if reference.empty else pd.DataFrame()
     if not legacy_anchor.empty: legacy_anchor['experimental_role']='mechanics_anchor'
     extra=pd.concat([reference,legacy_anchor,hits],ignore_index=True,sort=False)
+    extra=filter_retired_recipes(extra,formulations,observations,registry,optimization)
     if not extra.empty:
         evidence=build_intact_evidence(formulations,observations,registry,policy,round_number)
         extra=annotate_intact_combination_evidence(extra,evidence,registry,policy)
@@ -141,6 +148,7 @@ def apply_group10(result, formulations, observations, registry, optimization, co
         extra['raw_surrogate_viability_std']=extra.viability_std
         extra.loc[extra.experimental_role.eq('campaign_control'),['raw_surrogate_viability_mean','raw_surrogate_viability_std','predicted_viability_percent']]=np.nan
     ordinary=result.candidate_pool.copy()
+    ordinary=filter_retired_recipes(ordinary,formulations,observations,registry,optimization)
     ordinary=ordinary.loc[~ordinary.recommendation_type.fillna('').isin(ROLES|{'mechanics_anchor'})].copy()
     ordinary['experimental_role']=ordinary.recommendation_type.where(ordinary.recommendation_type.eq('retest_priority'),'ordinary')
     selected=[]; used=set(); combos=Counter(); ingredients=Counter(); pairs=Counter(); cold_counts=Counter()
@@ -168,8 +176,9 @@ def apply_group10(result, formulations, observations, registry, optimization, co
         return True
     full_allocation = None
     if phase.active_phase == PHASE_MECHANICS:
-        full_allocation = _allocate_full_phase_slate(extra, ordinary, add, selected)
-        reserved = 3
+        full_allocation = _allocate_full_phase_slate(extra, ordinary, add, selected,
+                                                    optional_special_slots=repeat_policy_enabled(optimization))
+        reserved = full_allocation['reserved_screen_rows']
         rescue_filled = int(full_allocation['selected_retest_or_rescue_kind'] == 'rescue')
         quotas = {}
     else:
@@ -182,10 +191,16 @@ def apply_group10(result, formulations, observations, registry, optimization, co
                 if sum(x['experimental_role']=='screened_hit_mechanics' for x in selected)>=hit_target: break
                 add(r)
         # Earlier phases retain their existing reservations and origin quotas.
-        for _,r in ordinary.loc[ordinary.experimental_role.eq('retest_priority')].sort_values('retest_priority_score',ascending=False).head(2).iterrows(): add(r)
+        retest_limit = 1 if repeat_policy_enabled(optimization) else 2
+        retest_filled = 0
+        for _,r in ordinary.loc[ordinary.experimental_role.eq('retest_priority')].sort_values(['retest_priority_score','formulation_id'],ascending=[False,True]).iterrows():
+            if retest_filled >= retest_limit: break
+            if add(r): retest_filled += 1
         rescue_filled=0
-        for _,r in ordinary.loc[ordinary.candidate_origin.eq('rescue_dilution')].iterrows():
-            if rescue_filled>=2: break
+        rescue_limit = (0 if retest_filled else 1) if repeat_policy_enabled(optimization) else 2
+        rescue_score = 'mechanics_phase_score' if phase.active_phase == 'mechanics_hybrid' else 'screening_phase_score'
+        for _,r in ordinary.loc[ordinary.candidate_origin.eq('rescue_dilution')].sort_values([rescue_score,'formulation_id'],ascending=[False,True]).iterrows():
+            if rescue_filled>=rescue_limit: break
             if add(r): rescue_filled+=1
         reserved=len(selected)
         score='hybrid_phase_score' if phase.active_phase=='mechanics_hybrid' else 'screening_phase_score'
@@ -213,8 +228,12 @@ def apply_group10(result, formulations, observations, registry, optimization, co
         mechanical['mechanical_selection_rank']=range(1,len(mechanical)+1)
         mechanical['mechanical_primary_recommended']=mechanical.mechanical_selection_rank<=4
         mechanical['mechanical_backup_status']=np.where(mechanical.mechanical_primary_recommended,'primary','ordered_backup')
+        mechanical['selection_role']=np.where(mechanical.mechanical_primary_recommended,'mechanical_test_primary','mechanical_test_backup')
+        mechanical['mechanical_transition_role']=mechanical.mechanical_transition_role.where(mechanical.mechanical_primary_recommended,'ordered_backup')
         mechanical['mechanical_transition_role']=mechanical.experimental_role.where(mechanical.experimental_role.isin(ROLES|{'mechanics_anchor'}),mechanical.mechanical_transition_role)
     metadata=deepcopy(result.metadata)
+    if repeat_policy_enabled(optimization):
+        metadata['automatic_repeat_policy']=automatic_repeat_metadata(formulations,observations,registry,optimization)
     metadata['group10']={'policy_version':config['policy_version'],'effective_config':deepcopy(config),
         'reference_readiness':state,'reserved_screen_rows':reserved,'ordinary_origin_quotas':quotas,
         'full_phase_allocation':full_allocation,

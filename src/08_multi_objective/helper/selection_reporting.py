@@ -188,9 +188,9 @@ def _write_summary(
         "Mechanical roles: "
         + (
             ", ".join(
-                f"{row.candidate_id}={row.mechanical_transition_role or 'full_primary'}"
+                f"{row.candidate_id}={row.mechanical_transition_role or ('full_primary' if row.mechanical_backup_status == 'primary' else 'ordered_backup')}"
                 for row in ranked_rows[
-                    ["candidate_id", "mechanical_transition_role"]
+                    ["candidate_id", "mechanical_transition_role", "mechanical_backup_status"]
                 ].itertuples(index=False)
             )
             if not ranked_rows.empty
@@ -696,9 +696,19 @@ def write_selection_result(
             handle.write("Mechanical budget: four formulations. Replicate counts are derived from completed CSV rows.\n")
             handle.write("Roles: " + json.dumps(details["realized_roles"]) + "\n")
             if details.get('full_phase_allocation'):
-                handle.write("Full-phase allocation: 1 control, 1 mechanics follow-up, 1 shared retest/rescue, 9 ordinary candidates ranked across origins.\n")
-                handle.write("Shared special slot: evidence-ranked retest first; rescue if no retest can be selected.\n")
+                allocation = details['full_phase_allocation']
+                slots = allocation['reserved_slots']
+                handle.write(f"Full-phase allocation: 1 control, {slots['screened_hit_mechanics']} mechanics follow-up, {slots['retest_or_rescue']} shared retest/rescue, {allocation['ordinary_slots']} ordinary candidates ranked across origins.\n")
+                handle.write("Shared special slot: eligible confirmation retest first; otherwise acquisition-ranked rescue; otherwise an ordinary acquisition-ranked candidate.\n")
                 handle.write("Ordinary origin quotas: none. Realized sources: " + json.dumps(details['ordinary_origin_counts']) + "\n")
+            repeats = result.metadata.get('automatic_repeat_policy', {})
+            if repeats.get('enabled'):
+                handle.write(f"Automatic repeat policy: {repeats['policy_version']}.\n")
+                handle.write(f"Exact-recipe cutoff: {repeats['max_cumulative_intact_failures']} cumulative failed intact batches; intervening passes never reset the count.\n")
+                handle.write(f"Automatic viability retests: at most {repeats['max_completed_automatic_retests_per_formulation']} completed confirmation per exact recipe across campaign history; frozen retest role plus measured viability consumes the allowance.\n")
+                handle.write("Retest triggers: batch-mean range >=15 percentage points; latest sample SD >=8 with >=3 readings; or a single-batch residual >=20 against three nearest other tested recipes.\n")
+                handle.write("Rescues: 25/50/75% concentration variants of intact-failing recipes with same-batch mean viability >=50%; previously tested variants are excluded; feasibility, similarity and diversity limits apply.\n")
+                handle.write("Unfilled mechanics follow-up and shared retest/rescue slots return to constrained acquisition ranking.\n")
             handle.write("Mechanical endpoint: " + details["mechanical_definition_id"] + "; nominal N per loaded needle in compatibility force columns.\n")
     if bool(result.metadata.get("formulation_feasibility_policy_active", False)):
         metadata_path = output / "next_round_metadata.json"

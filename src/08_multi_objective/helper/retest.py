@@ -12,6 +12,7 @@ from .config import nested_get
 from .models import EndpointModels
 from .penalties import count_active_ingredients
 from .registry import IngredientRegistry, presence_threshold
+from .automatic_repeats import annotate_automatic_repeats, repeat_policy_enabled
 
 
 RETEST_ELIGIBLE_SOURCE_TYPES = {"wetlab_feedback"}
@@ -161,9 +162,9 @@ def build_retest_candidates(
 ) -> pd.DataFrame:
     """Return every evidence-eligible retest; slate limits are applied later.
 
-    Model uncertainty is deliberately excluded from eligibility. It is used
-    only as the second deterministic ranking key after observed-evidence
-    severity.
+    Model uncertainty is excluded from eligibility. Bounded confirmations rank
+    by observed-evidence severity and formulation ID; historical policy fixtures
+    retain their original uncertainty tie-break.
     """
     if not bool(nested_get(optimization_config, "retest.enabled", True)):
         return pd.DataFrame()
@@ -234,6 +235,7 @@ def build_retest_candidates(
         )
     )
     latest = latest.merge(batch_stats, on="formulation_id", how="left")
+    latest = annotate_automatic_repeats(latest, formulations, observations, registry, optimization_config)
     latest["feedback_batch_count"] = (
         pd.to_numeric(latest["feedback_batch_count"], errors="coerce")
         .fillna(0)
@@ -308,7 +310,11 @@ def build_retest_candidates(
     latest["_retest_high_replicate_sd"] = high_replicate_sd
     latest["_retest_one_batch_anomaly"] = one_batch_anomaly
 
-    flagged = latest[cross_batch | high_replicate_sd | one_batch_anomaly].copy()
+    eligible = cross_batch | high_replicate_sd | one_batch_anomaly
+    if repeat_policy_enabled(optimization_config):
+        cap = int(nested_get(optimization_config, 'retest.max_completed_automatic_retests_per_formulation', 1))
+        eligible &= ~latest.automatic_repeat_retired & latest.completed_automatic_retest_count.lt(cap)
+    flagged = latest[eligible].copy()
     if flagged.empty:
         return flagged
 
@@ -338,12 +344,15 @@ def build_retest_candidates(
             f"latest_batch_n={int(row['viability_replicate_count'])}; "
             f"latest_batch_sd={row['viability_replicate_sd']:.1f}; "
             f"neighbor_residual={row['local_neighbor_residual']:.1f}; "
-            f"viability_std_tiebreak={row['viability_std']:.1f}"
+            f"{'viability_std_diagnostic' if repeat_policy_enabled(optimization_config) else 'viability_std_tiebreak'}={row['viability_std']:.1f}"
+            + (f"; cumulative_intact_failures={int(row['cumulative_intact_failure_count'])}; completed_automatic_retests={int(row['completed_automatic_retest_count'])}/{cap}"
+               if repeat_policy_enabled(optimization_config) else '')
         ),
         axis=1,
     )
+    keys = ['retest_priority_score', 'formulation_id'] if repeat_policy_enabled(optimization_config) else ['retest_priority_score', 'viability_std', 'formulation_id']
     return flagged.sort_values(
-        ["retest_priority_score", "viability_std", "formulation_id"],
-        ascending=[False, False, True],
+        keys,
+        ascending=[False, True] if len(keys) == 2 else [False, False, True],
         kind="mergesort",
     ).reset_index(drop=True)

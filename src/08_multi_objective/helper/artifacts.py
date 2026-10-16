@@ -236,11 +236,18 @@ def supersede_unstarted_proposal(
         )
         if worksheet_batches == {batch_id}:
             entered: dict[str, int] = {}
+            frozen_proposal = pd.read_csv(paths.proposal_csv)
             for column in EDITABLE_WETLAB_COLUMNS:
                 if column not in worksheet.columns:
                     continue
                 values = worksheet[column]
                 nonblank = values.notna() & values.astype(str).str.strip().ne("")
+                # The generated worksheet pre-fills this endpoint identifier.
+                # Only an unchanged identifier is metadata rather than an entered result.
+                if column == 'mechanical_definition_id' and {'candidate_id', column}.issubset(frozen_proposal.columns) and 'candidate_id' in worksheet:
+                    expected = worksheet.candidate_id.map(frozen_proposal.set_index('candidate_id')[column])
+                    unchanged = values.fillna('').astype(str).str.strip().eq(expected.fillna('').astype(str).str.strip())
+                    nonblank &= ~unchanged
                 if nonblank.any():
                     entered[column] = int(nonblank.sum())
             if entered:
@@ -268,7 +275,17 @@ def supersede_unstarted_proposal(
         for path in sorted(paths.proposal_dir.rglob("*"))
         if path.is_file()
     }
+    comparison_dir = paths.round_dir / 'gp_comparison'
+    comparison_hashes = {str(path.relative_to(comparison_dir)): sha256_file(path)
+                         for path in sorted(comparison_dir.rglob('*')) if path.is_file()} if comparison_dir.exists() else {}
+    if comparison_dir.exists() and (comparison_dir / 'manifest.json').exists():
+        evidence = json.loads((comparison_dir / 'manifest.json').read_text())
+        for name, expected in evidence.get('hashes', {}).items():
+            if comparison_hashes.get(name) != expected:
+                raise ArtifactConflictError(f'Cannot supersede changed model-comparison evidence: {name}')
     os.replace(paths.proposal_dir, destination / "proposal")
+    if comparison_dir.exists():
+        os.replace(comparison_dir, destination / 'gp_comparison')
     extra_hashes: dict[str, str] = {}
     if worksheet_path is not None and worksheet_path.exists():
         worksheet_copy = destination / "active_worksheet.csv"
@@ -286,6 +303,7 @@ def supersede_unstarted_proposal(
         "superseded_at_utc": datetime.now(timezone.utc).isoformat(),
         "reason": str(reason).strip(),
         "replacement_policy_versions": list(policy_versions),
+        'superseded_gp_comparison_hashes': comparison_hashes,
         "safety_checks": {
             "completed_artifact_absent": True,
             "batch_observations_absent": True,

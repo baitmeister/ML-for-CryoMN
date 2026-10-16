@@ -116,7 +116,7 @@ hybrid selection retain an origin quota that
 bounds how much any one candidate-origin
 bucket (`local_perturbation`, `sparse_exploration`, `boundary_probe`,
 `rescue_dilution`, `retest`, `continuous_qlognehvi`, `finite_pool`)
-can contribute. The repaired full-phase allocator instead ranks nine ordinary
+can contribute. The full-phase allocator instead ranks 9–11 ordinary
 positions across origins, with no source quota. An ingredient-combination cap limits how many
 candidates may share the exact same active-ingredient set (pairs allowed up
 to `selection.max_candidates_per_ingredient_combination`, default `2`;
@@ -353,19 +353,21 @@ highest-scoring count representatives take precedence. Chosen sets run in score
 order, each receiving a solve before any receives a second. The execution record
 includes all set rankings, selected sets and actual optimizer attempts.
 
-The repaired Group 10+ allocator in `mechanics_enabled` reserves one campaign control, one mechanics
-follow-up, and one shared retest/rescue slot. An eligible retest with the highest
+The allocator in `mechanics_enabled` reserves one campaign control, up to one mechanics
+follow-up, and up to one shared retest/rescue slot. An eligible retest with the highest
 evidence-based retest priority fills that shared slot; if no retest can be
-selected, the highest-scoring admissible rescue fills it. Additional retest or
-rescue rows cannot enter the nine ordinary slots. Those nine slots rank all
+selected, the highest-scoring admissible rescue fills it. If neither can be
+selected, that slot returns to ordinary acquisition ranking. A missing eligible
+mechanics follow-up also returns its slot to ordinary ranking. Additional retest or
+rescue rows cannot enter the 9–11 ordinary slots. Those slots rank all
 ordinary origins together by mechanics acquisition, while enforcing existing
 feasibility, availability, support, similarity, cold-ingredient, ingredient
 frequency, exact-combination and shared-pair limits. There are no full-phase
-origin quotas. A missing required role or insufficient admissible ordinary
-recipes stops selection rather than silently changing the 1/1/1/9 budget.
+origin quotas. A missing required campaign control or insufficient admissible
+recipes stops selection; optional special roles do not reduce the 12-row slate.
 Screening, bootstrap and hybrid retain their phase-specific allocation rules.
 
-The follow-up retains first mechanical priority; the highest-scoring three
+An eligible follow-up retains first mechanical priority; the highest-scoring
 other mechanically eligible rows complete the four primaries, and remaining
 eligible rows are ordered backups. The control is viability-only. Exact mechanically observed formulations
 and `retest_priority` rows are unranked. An explicit confirmation policy would
@@ -425,15 +427,56 @@ unknown instead of as the pooled GP mean. Raw surrogate mean/SD columns remain
 frozen in the proposal for acquisition provenance and prospective evaluation;
 the public prediction columns are blank for unknown candidates.
 
-Automatic retests use campaign `wetlab_feedback` only. A formulation is
-eligible for at most two available slate slots when feedback batches disagree
-by at least 15 percentage points, the highest-numbered batch has at least three
-replicates with sample SD at least 8 points, or a single feedback batch is at
-least 20 points off its bounds-normalized chemical neighbours and has not yet
-received its one anomaly-confirmation batch. Model uncertainty never creates
-eligibility; it only breaks ties. Once two batches agree within 15 points and
-the highest-numbered-batch replicate SD is below 8, the neighbour residual cannot request a
-third test.
+### Automatic repeat and rescue rules
+
+`automatic_repeat_policy` applies to automatic experimental candidate selection,
+including mechanics follow-ups, retests and generated candidates. It changes
+candidate eligibility and allocation; all acquired measurements remain in model
+training. Frozen completed proposals retain their recorded policies.
+
+- **Cumulative retirement:** aggregate measured intact outcomes for each exact
+  recipe and `ROUND_###` batch using the conservative all-pass rule. A batch
+  containing a measured failure contributes one failure, regardless of readout
+  duplicates. Missing outcomes contribute none. Two failed batches retire the
+  unchanged composition; intervening passes never reset this count. Exact recipe
+  aliases share the same concentration fingerprint and failure count.
+- **Completed confirmation count:** count distinct historical batches whose frozen
+  proposal labels the recipe `retest_priority` and whose observations contain
+  finite measured viability. Failed intact formation still consumes a confirmation
+  if viability was measured. A proposal alone does not. At most one completed
+  automatic viability retest is allowed per exact recipe across campaign history.
+  Historical confirmations count immediately. A completed confirmation cannot
+  reopen because the same historical range or another trigger remains high.
+- **Retest eligibility:** fewer than two cumulative intact failures, zero completed
+  automatic confirmations, and at least one numerical trigger: two or more
+  measured batches with batch-mean range >=15 percentage points; latest batch
+  sample SD >=8 points with >=3 viability readings; or one measured batch with
+  absolute residual >=20 points against the mean of its three nearest other
+  tested recipes in registry-bounds-normalized concentration space. Only campaign
+  `wetlab_feedback` is used. Priority is the maximum active trigger divided by
+  its threshold, descending, with formulation ID as the deterministic tie-break.
+  Model uncertainty does not create eligibility or break this tie.
+- **Rescue eligibility:** a completed batch must have intact failure and mean
+  viability >=50%. Generate 0.25/0.50/0.75 concentration variants of that parent.
+  Previously tested exact variants are excluded. Each new concentration recipe
+  has its own failure count, while the parent's outcomes remain intact-feasibility
+  evidence. Registry bounds, availability, feasibility, support, history/within-slate
+  similarity and diversity limits still apply. The normalized similarity distance
+  must exceed 0.05; matching single-ingredient recipes also require >=50% relative
+  concentration difference measured against the lower concentration.
+- **Allocation:** at most one shared slot chooses the highest-priority eligible
+  retest, otherwise the highest-scoring admissible rescue, otherwise an ordinary
+  acquisition-ranked candidate. In full mechanics, rescues use the common
+  feasibility-weighted mechanics acquisition; earlier phases use their active
+  acquisition score. Ties use formulation ID. An eligible mechanics follow-up
+  requires passing intact history, no comparable mechanical observation, and no
+  cumulative retirement. If none can be selected, its slot also returns to ordinary
+  acquisition ranking. The budgets remain 12 screens and four mechanical tests;
+  only the first four ranked actual-intact passes are tested.
+
+Proposal metadata records the policy version, failed batch IDs, completed
+confirmation batch IDs, counts and exclusion states. Historical proposal hashes
+used to establish confirmation roles are included among the frozen selection inputs.
 
 ## Numbered Stages
 

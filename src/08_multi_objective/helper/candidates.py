@@ -553,6 +553,15 @@ def generate_rescue_candidate_pool(
     if not rows:
         return pd.DataFrame()
     rescue = _finalize_generated_rows(rows, registry, candidate_id_prefix="rescue")
+    from .automatic_repeats import repeat_policy_enabled, filter_retired_recipes
+    if repeat_policy_enabled(optimization_config):
+        measured_ids = set(obs.loc[obs.batch_id.str.match(r'^ROUND_\d+$') & obs.value.notna(), 'formulation_id'].astype(str))
+        tested = {formulation_fingerprint(row, registry) for _, row in candidate_formulations.loc[
+            candidate_formulations.formulation_id.astype(str).isin(measured_ids)].iterrows()}
+        rescue = rescue.loc[~rescue.apply(lambda row: formulation_fingerprint(row, registry) in tested, axis=1)].copy()
+        rescue = filter_retired_recipes(rescue, formulations, observations, registry, optimization_config)
+    if rescue.empty:
+        return rescue
     rescue = annotate_feasibility(
         rescue,
         registry,
