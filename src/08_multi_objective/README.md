@@ -686,3 +686,9 @@ flowchart TD
 ```
 
 See [production plotting](04_report_campaign/PLOTTING.md) for the selected suite, transparent PNG exports and historical backfill.
+
+For endpoint-specific ingredient influence, directional SHAP plots, and
+retrospective explanations of completed rounds, see
+[ingredient influence and retrospective SHAP](04_report_campaign/README.md#ingredient-influence-and-retrospective-shap).
+Run `python3 src/08_multi_objective/04_report_campaign/explain_models.py --all-rounds`
+to generate the completed-round cutoffs and the current model explanation.

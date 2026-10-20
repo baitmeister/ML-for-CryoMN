@@ -1,0 +1,71 @@
+{
+  "report_version": 1,
+  "source_sha256": "ed3b7a1b5138b255b5397be7c0407713856e3f74f32b7eef78ce04eca07151ea",
+  "shap_source_sha256": {
+    "ROUND_001/shap_values.csv": "9964216ea0c8145af12e25fe12dd71d46eb6c84fa3bf5675110ddc9c5a60eafe",
+    "ROUND_002/shap_values.csv": "81a300b5009747511299073ce00c673aeb2c0eaa3250275bc2c3fe2d2bded86c",
+    "ROUND_003/shap_values.csv": "0f657a809db95e21cb7a21034645ebed91c3302d1185a6e44df56500017eb5e9",
+    "ROUND_004/shap_values.csv": "46c7a93d11447f684abdfcf70014c872518867f8853c62baedabce4c237c5a81",
+    "ROUND_005/shap_values.csv": "39d7be54d4d830d44187bac68df095d983b782d4d6b63c329e76afcb334f0874",
+    "ROUND_006/shap_values.csv": "2694d5e28b962392aa87b6d53524326851ead14dc3f8b7ee886916c2705b1bad",
+    "ROUND_007/shap_values.csv": "e93bdbf784cacb8c19b2473ae1f798544573c19423e62077ded25c06a737668e",
+    "ROUND_008/shap_values.csv": "7294a8c0fa267c7d7fa0c1c01dcdcc289d73c7bdc394c4536ca006bc73dbf02f",
+    "ROUND_009/shap_values.csv": "b8c5c59ffb007d4ffaefd3cb334003ba34f03327ba39be10c337606d47e54c23",
+    "ROUND_010/shap_values.csv": "88c54aa08d6b0d041d52df90a1ea44dadc4f0807912f82335f52a94a4476af17",
+    "ROUND_011/shap_values.csv": "c2d43a3ca2d1d9d153302e6ab6529220ee398ff3ef23d901693929431286c824",
+    "ROUND_012/shap_values.csv": "02b2a72b56c0bc5d5ea3cc46d609d432ec4d4438fd01099207d5ba89c9165d85",
+    "ROUND_013/shap_values.csv": "c4eec37e2107bad126e0599592aa3b0d58b104905c19c780d763e82dabc9c5ac",
+    "current/shap_values.csv": "2c7c24f4d7c18161019d0653366418410fbbc8179252a6b9842e6787c4b8c23b"
+  },
+  "value_definition": "mean(SHAP_j | feature_value_j > presence_threshold); original backgrounds retained",
+  "presence_threshold": 1e-06,
+  "presence_threshold_unit": "each ingredient's stored unit (M or pct); numerical zero tolerance",
+  "count_definition": "Explained formulation-round rows containing the ingredient; not independent biological replicates",
+  "missing_value": "NaN; distinguish model_unavailable from no_present_explained_rows in CSV",
+  "feature_selection": "All active registry ingredients, including those absent from explained samples",
+  "color_scales": {
+    "viability_percent": [
+      -20.0,
+      20.0
+    ],
+    "critical_axial_load_N_per_needle": [
+      -0.06,
+      0.06
+    ]
+  },
+  "color_legend": {
+    "negative": "blue",
+    "zero": "white",
+    "positive": "orange",
+    "unavailable": "grey"
+  },
+  "format": "transparent 300 dpi PNG",
+  "renderer_sha256": "455aee944cc8007dd85a0263f38013e3be508ca81408657877b5cb445f9f61af",
+  "target_rounds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+  ],
+  "limitations": [
+    "Small n and recurring formulations limit interpretation; n is not a count of independent confirmations.",
+    "Presence conditioning does not remove ingredient, dose, formulation or round confounding.",
+    "Counts concern the stored explained samples, which can be smaller than the training cohorts.",
+    "Positive contribution is relative to the original background; no causal intervention is estimated."
+  ],
+  "generated_sha256": {
+    "feature_presence_shap_history.png": "7597a7c38fed2e499d110c8d8fc612e4a63ed73c3316e88f1d938b7f308817ee",
+    "viability_percent_presence_shap_history.png": "128b8d656cb91ff4fefe57fd180cf674abb29409ca3f976119dbf18808400fc2",
+    "critical_axial_load_N_per_needle_presence_shap_history.png": "eb7b024c10743ed50276fff9e707d97ce089150d269534c65bcf9dd2ad5e682d"
+  }
+}

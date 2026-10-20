@@ -98,3 +98,94 @@ Group 10 forecasts are frozen under its `gp_comparison/` directory, separate fro
 original proposal. Ingestion evaluates frozen comparisons before next-round generation.
 Group 11 generation requires an explicit GP strategy decision; no strategy is promoted
 by an audit or report.
+
+## Ingredient influence and retrospective SHAP
+
+`explain_models.py` creates mean absolute SHAP rankings and directional SHAP
+summary plots for each endpoint model. Viability and mechanical resistance are
+separate objectives; intact and preparation probabilities are diagnostic gate
+models, and initial stiffness is a diagnostic endpoint. An intact classifier
+explanation does not describe the separate empirical feasibility selection policy.
+
+```sh
+# Current model cutoff: all completed rounds, before the next round.
+python3 src/08_multi_objective/04_report_campaign/explain_models.py
+
+# Models before Round 9: strictly preceding rounds and baseline legacy evidence.
+python3 src/08_multi_objective/04_report_campaign/explain_models.py --round ROUND_009
+
+# All completed rounds plus the current cutoff and a signed history heatmap.
+python3 src/08_multi_objective/04_report_campaign/explain_models.py --all-rounds
+
+# Redraw only the historical heatmap from stored SHAP summaries; no refitting.
+python3 src/08_multi_objective/04_report_campaign/explain_models.py --history-only
+
+# Compare SHAP only where each ingredient is present, with cell sample counts.
+python3 src/08_multi_objective/04_report_campaign/explain_models.py --presence-history-only
+```
+
+The default output directory is
+`results/multi_objective_v2/reports/explainability/`. Each `ROUND_NNN/` directory
+explains the model **before** that round; `current/` explains the model cutoff
+for the next round. Mechanical models use the comparable endpoint definition
+for that target round. Missing measurements or single-class gates are reported
+as unavailable, rather than as zero ingredient importance.
+
+Existing saved viability comparison GPs matching the recorded production
+strategy are reused after checking their hashes, features and training cutoff.
+They remain labelled as frozen *comparison* evidence, separate from production
+proposal forecasts. Other endpoint models, and earlier viability models without
+snapshots, are retrospective refits using today's implementation and only
+preceding outcomes. The baseline legacy cohort is assumed to have been available
+before campaign Round 1, consistent with existing retrospective audits.
+This command writes only its explanation outputs and does not change campaign
+observations, proposals, model decisions or future selection.
+
+Outputs include `feature_importance.png`, endpoint `*_shap_summary.png` files,
+`feature_importance.csv`, row-level `shap_values.csv`, background/explained rows,
+and a `manifest.json` with model provenance, settings and additivity checks.
+The all-round history shows **signed mean SHAP**, normalized within endpoint and
+round as `100 * mean(SHAP_j) / sum_k mean(abs(SHAP_k))`. Blue means a net reduction
+in prediction, orange a net increase relative to that model's background, and
+white zero net contribution. Grey cells mean unavailable. Features remain
+selected by their absolute influence so important features with cancelling
+contributions remain visible. Signed values do not sum to 100%; opposing
+contributions can cancel, so a near-zero signed mean does not imply low overall
+importance or a monotonic dose effect. Absolute rankings and directional row
+plots remain available separately. Raw importance is in each endpoint's units,
+so magnitudes cannot be compared directly between viability, force and probability.
+
+The presence-conditioned historical comparison is saved as
+`feature_presence_shap_history.png`, with separate
+`viability_percent_presence_shap_history.png` and
+`critical_axial_load_N_per_needle_presence_shap_history.png` exports for closer
+inspection. Every active ingredient is displayed. Each cell shows
+`mean(SHAP_j | ingredient_j > 1e-6)` in the endpoint's native units and `n`, the
+number of containing formulation/round rows in the stored explanation sample.
+Column labels give `N`, the full explained sample size. Grey cells and dashes
+mean no containing rows in that sample; they are not zero effects. Mechanical
+columns begin when an eligible model is available.
+
+The `1e-6` presence cutoff is a numerical zero tolerance in each ingredient's
+stored unit (M or percent). Counts concern the explained samples (default cap
+48), not all training observations or independent biological batches. The
+companion CSV also includes distinct formulation counts, training sizes, dose
+ranges, and separate statuses for unavailable models and zero present rows.
+Original SHAP backgrounds and values are retained; conditioning selects rows
+and does not estimate adding or removing an ingredient. Co-occurring ingredients,
+concentration, and round effects can still be confounded. The metadata verifies
+all row-level source hashes. `--all-rounds` also generates these comparisons;
+`--presence-history-only` redraws them without refitting or recomputing SHAP.
+
+The method is SHAP's model-agnostic `PermutationExplainer` with an independent
+empirical training background, a fixed seed, and an identity link. Defaults are
+48 explained formulation/batch rows, 16 background rows and 16 forward/reverse
+permutation cycles. Increase `--max-explain`, `--max-background` and
+`--permutations` for a larger analysis. These are sampled model explanations,
+not causal ingredient effects, predictive-performance tests, or explanations
+of the acquisition function and its penalties. Masking can create untested
+mixtures when ingredients are correlated. Historical backgrounds and viability
+strategies change, so the ranking history is descriptive.
+
+This separate command deliberately permits retrospective refitting;
+`report_campaign.py` retains its saved-prediction-only prospective contract.

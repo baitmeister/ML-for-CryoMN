@@ -1,0 +1,122 @@
+{
+  "report_version": 2,
+  "source_sha256": "03617c227daf5c75ecb4e1a14cef61628028f5be8ab9ccb3aecb788c9a209531",
+  "value_column": "signed_relative_contribution_percent",
+  "value_definition": "100 * mean(SHAP_j) / sum_k mean(abs(SHAP_k)), per endpoint and target round",
+  "feature_selection": "Largest average relative absolute importance across rounds",
+  "interpretation": "Net contribution relative to the model background; opposing row contributions can cancel; signed values do not sum to 100%",
+  "target_rounds": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14
+  ],
+  "color_scale_percent": [
+    -20.0,
+    20.0
+  ],
+  "color_legend": {
+    "negative": "blue; lowers prediction",
+    "zero": "white; zero net contribution",
+    "positive": "orange; raises prediction"
+  },
+  "renderer_sha256": "abad6ea28a48e49903601dac62d9d72d6c35a216384b79c2b5f658204b3d4cf9",
+  "missing_cells": "model unavailable",
+  "format": "transparent 300 dpi PNG",
+  "model_evidence": [
+    {
+      "target_round": 1,
+      "training_cutoff": 0,
+      "viability_strategy": "current",
+      "training_evidence": "canonical_data_at_cutoff"
+    },
+    {
+      "target_round": 2,
+      "training_cutoff": 1,
+      "viability_strategy": "current",
+      "training_evidence": "canonical_data_at_cutoff"
+    },
+    {
+      "target_round": 3,
+      "training_cutoff": 2,
+      "viability_strategy": "current",
+      "training_evidence": "canonical_data_at_cutoff"
+    },
+    {
+      "target_round": 4,
+      "training_cutoff": 3,
+      "viability_strategy": "current",
+      "training_evidence": "canonical_data_at_cutoff"
+    },
+    {
+      "target_round": 5,
+      "training_cutoff": 4,
+      "viability_strategy": "current",
+      "training_evidence": "canonical_data_at_cutoff"
+    },
+    {
+      "target_round": 6,
+      "training_cutoff": 5,
+      "viability_strategy": "current",
+      "training_evidence": "canonical_data_at_cutoff"
+    },
+    {
+      "target_round": 7,
+      "training_cutoff": 6,
+      "viability_strategy": "current",
+      "training_evidence": "canonical_data_at_cutoff"
+    },
+    {
+      "target_round": 8,
+      "training_cutoff": 7,
+      "viability_strategy": "current",
+      "training_evidence": "canonical_data_at_cutoff"
+    },
+    {
+      "target_round": 9,
+      "training_cutoff": 8,
+      "viability_strategy": "current",
+      "training_evidence": "canonical_data_at_cutoff"
+    },
+    {
+      "target_round": 10,
+      "training_cutoff": 9,
+      "viability_strategy": "current",
+      "training_evidence": "archived_training_observations"
+    },
+    {
+      "target_round": 11,
+      "training_cutoff": 10,
+      "viability_strategy": "control",
+      "training_evidence": "archived_training_observations"
+    },
+    {
+      "target_round": 12,
+      "training_cutoff": 11,
+      "viability_strategy": "control",
+      "training_evidence": "archived_training_observations"
+    },
+    {
+      "target_round": 13,
+      "training_cutoff": 12,
+      "viability_strategy": "control",
+      "training_evidence": "archived_training_observations"
+    },
+    {
+      "target_round": 14,
+      "training_cutoff": 13,
+      "viability_strategy": "control",
+      "training_evidence": "archived_training_observations"
+    }
+  ]
+}

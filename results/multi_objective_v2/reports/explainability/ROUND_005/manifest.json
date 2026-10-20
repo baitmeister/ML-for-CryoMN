@@ -1,0 +1,92 @@
+{
+  "report_version": 1,
+  "target_round": 5,
+  "training_cutoff": 4,
+  "viability_strategy": "current",
+  "decision_id": "historical_current",
+  "sources": {
+    "data/processed_v2/formulations.csv": "a13ce8ecb119832a7375b2cfb383e8946d75b16e05f66dad4240ff52b9426c87",
+    "data/processed_v2/observations.csv": "cf9eabc87ce0409293e1eea0c2d3730406cd30e118b8ec22a869c171015ff1ab",
+    "config_v2/ingredients.yaml": "3bba2bc62572380ae772967220f8fded09152257679d0fa9570a966465af0634",
+    "config_v2/optimization.yaml": "997c7a83470bb5fe7b7741c8cef3ee69a4d2cca6f148c4f8013b3491fb773a3f"
+  },
+  "training_evidence": "canonical_data_at_cutoff",
+  "method": "SHAP PermutationExplainer; independent empirical background; identity link",
+  "method_reference": "https://shap.readthedocs.io/en/latest/generated/shap.PermutationExplainer.html",
+  "shap_version": "0.52.0",
+  "code_sha256": {
+    "explainability.py": "b6e62836de2ef1cae879cf193420a9316a76cd93430846df2be089ef32343e43",
+    "models.py": "9eea312c0b381ccfa27563f90a17f21a3c16fbf4000e85c48212f714bc6becc0",
+    "batch_gp.py": "373847fda8ac846fdbd10fb4403d43ff978a885a7555b3627026fed46ff63909",
+    "gp_strategy.py": "037389f288767a4d4e522ab4a34adc945e56aa6fbb3b9ea551e0fe6f60f58961",
+    "group10_config.py": "a64b514b12e1d3304fd2a734482f73d68be0e6e983641312a908d3ed6b5017fb"
+  },
+  "settings": {
+    "max_explain": 48,
+    "max_background": 16,
+    "permutations": 16,
+    "top_features": 12,
+    "seed": 42
+  },
+  "endpoints": {
+    "viability_percent": {
+      "status": "available",
+      "training_rows": 352,
+      "model_evidence": "retrospective_refit",
+      "mechanical_definition_id": null,
+      "explained_rows": 48,
+      "background_rows": 16,
+      "additivity_max_absolute_error": 2.842170943040401e-14,
+      "background_prediction": 46.7292950605646
+    },
+    "critical_axial_load_N_per_needle": {
+      "status": "unavailable",
+      "reason": "0 training rows; requires 2",
+      "training_rows": 0,
+      "model_evidence": "retrospective_refit"
+    },
+    "intact_patch_formation_pass": {
+      "status": "available",
+      "training_rows": 48,
+      "model_evidence": "retrospective_refit",
+      "mechanical_definition_id": null,
+      "explained_rows": 48,
+      "background_rows": 16,
+      "additivity_max_absolute_error": 4.440892098500626e-16,
+      "background_prediction": 0.5755575432343623
+    },
+    "initial_stiffness_N_per_mm_per_needle": {
+      "status": "unavailable",
+      "reason": "0 training rows; requires 2",
+      "training_rows": 0,
+      "model_evidence": "retrospective_refit"
+    },
+    "preparation_feasibility_pass": {
+      "status": "unavailable",
+      "reason": "0 training rows; requires 8",
+      "training_rows": 0,
+      "model_evidence": "retrospective_refit"
+    }
+  },
+  "limitations": [
+    "Attributions explain model predictions, not causal effects or predictive accuracy.",
+    "No acquisition function, uncertainty bonus, penalties or empirical gate policy is explained.",
+    "Retrospective refits use today's implementation/configuration and preceding labels, not a preserved historical production model.",
+    "Frozen GPs are archived comparison models matching the recorded strategy; their provenance is separate from production proposal forecasts.",
+    "Legacy baseline evidence is assumed available before campaign Round 1, consistent with existing retrospective audits.",
+    "Backgrounds and explained training populations vary across rounds and endpoints; rankings are descriptive, not a controlled longitudinal comparison.",
+    "Interventional masking can create untested or infeasible mixtures and does not preserve ingredient correlations.",
+    "Permutation estimates are sampled; no statistical confidence intervals or causal claims are implied."
+  ],
+  "generated_sha256": {
+    "intact_patch_formation_pass_shap_summary.png": "677e9942e75912c9d28de14370aedd7edd0855b5346874df13d97eb7d6b9c1ae",
+    "viability_percent_explained_rows.csv": "7e08c1596973c5ae7b3f06161e51e04412b9a7bc168ac8377d3c6bb7262e6062",
+    "feature_importance.csv": "079238c5e3bea1d77d8ec662378628613871e05823eaf1b9ade0ddab5851c023",
+    "intact_patch_formation_pass_background.csv": "fd956d51f0e62c12063cf7031a66aa9fe69a9b255c0b75cea891ca6028e4e650",
+    "feature_importance.png": "05550cbcc72a796783e0f574d5651a61503b11ac00924dea1b8077b458734f37",
+    "viability_percent_shap_summary.png": "8b31ba3987f0214ca032859299d93dd009f2ff640494743776d11610a1901be1",
+    "shap_values.csv": "39d7be54d4d830d44187bac68df095d983b782d4d6b63c329e76afcb334f0874",
+    "intact_patch_formation_pass_explained_rows.csv": "98682257cdbc572e0d12b8c9b8656f412be3fe78b33542a526d969c6215e58a7",
+    "viability_percent_background.csv": "03cad6790fae0d3c35ea47543363210dc355c830075da7a6a47108154d64874a"
+  }
+}

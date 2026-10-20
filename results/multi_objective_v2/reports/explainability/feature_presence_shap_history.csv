@@ -1,0 +1,673 @@
+target_round,training_cutoff,viability_strategy,endpoint,feature,ingredient,ingredient_unit,shap_unit,model_evidence,training_rows,n_explained,n_present,n_distinct_formulations_present,mean_shap_present,mean_abs_shap_present,positive_shap_fraction_present,feature_value_min_present,feature_value_max_present,status
+1,0,current,viability_percent,dmso_M,DMSO,M,percentage points,retrospective_refit,304,48,23,23,3.2215253322864204,6.889775655007873,0.5652173913043478,0.0061,13.37514399078459,estimated
+1,0,current,viability_percent,ectoin_M,ectoin,M,percentage points,retrospective_refit,304,48,9,9,10.144521758919666,12.952095282322913,0.8888888888888888,0.1314,0.4145,estimated
+1,0,current,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,retrospective_refit,304,48,16,16,8.092127171167395,8.145799359898465,0.875,0.0015,2.25,estimated
+1,0,current,viability_percent,glycerol_M,glycerol,M,percentage points,retrospective_refit,304,48,7,7,4.927535734974905,6.40289878492114,0.5714285714285714,0.1827,1.3682267347160386,estimated
+1,0,current,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,retrospective_refit,304,48,3,3,0.7503814969346738,2.344266534445785,0.6666666666666666,0.001,2.46,estimated
+1,0,current,viability_percent,trehalose_M,trehalose,M,percentage points,retrospective_refit,304,48,4,4,6.373673399284273,8.989784778924305,0.75,0.06,0.25,estimated
+1,0,current,viability_percent,sucrose_M,sucrose,M,percentage points,retrospective_refit,304,48,9,9,-1.8183680325928515,1.9524203896938848,0.3333333333333333,5e-05,0.5887,estimated
+1,0,current,viability_percent,raffinose_M,raffinose,M,percentage points,retrospective_refit,304,48,2,2,11.145614275026512,11.145614275026512,1.0,0.1,0.4,estimated
+1,0,current,viability_percent,taurine_M,taurine,M,percentage points,retrospective_refit,304,48,0,0,,,,,,no_present_explained_rows
+1,0,current,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,retrospective_refit,304,48,0,0,,,,,,no_present_explained_rows
+1,0,current,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,retrospective_refit,304,48,0,0,,,,,,no_present_explained_rows
+1,0,current,viability_percent,betaine_M,betaine,M,percentage points,retrospective_refit,304,48,3,3,5.284317644632449,7.226495730701488,0.6666666666666666,0.0766,0.2666,estimated
+1,0,current,viability_percent,proline_M,proline,M,percentage points,retrospective_refit,304,48,2,2,0.6727555164291911,0.8914800595313636,0.5,0.0676,0.1495,estimated
+1,0,current,viability_percent,glucose_M,glucose,M,percentage points,retrospective_refit,304,48,1,1,-6.155414408831811e-06,6.155414408831811e-06,0.0,5e-05,5e-05,estimated
+1,0,current,viability_percent,creatine_M,creatine,M,percentage points,retrospective_refit,304,48,1,1,10.564604230041592,10.564604230041592,1.0,0.025,0.025,estimated
+1,0,current,viability_percent,acetamide_M,acetamide,M,percentage points,retrospective_refit,304,48,0,0,,,,,,no_present_explained_rows
+1,0,current,viability_percent,sericin_pct,sericin,pct,percentage points,retrospective_refit,304,48,0,0,,,,,,no_present_explained_rows
+1,0,current,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,retrospective_refit,304,48,1,1,-1.1032242194090636,1.1032242194090636,0.0,0.1,0.1,estimated
+1,0,current,viability_percent,dextran_pct,dextran,pct,percentage points,retrospective_refit,304,48,2,2,-0.3154096579399748,3.926793356765225,0.5,1.0,2.5,estimated
+1,0,current,viability_percent,pvp_pct,PVP,pct,percentage points,retrospective_refit,304,48,3,3,1.4288536249865726,5.1820263713313715,0.6666666666666666,4.8,7.2,estimated
+1,0,current,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,retrospective_refit,304,48,0,0,,,,,,no_present_explained_rows
+1,0,current,viability_percent,fbs_pct,FBS,pct,percentage points,retrospective_refit,304,48,17,17,0.531492150749367,2.2675531583793775,0.7058823529411765,2.0,92.5,estimated
+1,0,current,viability_percent,hsa_pct,HSA,pct,percentage points,retrospective_refit,304,48,6,6,-3.629958798272382,6.6698821781613615,0.16666666666666666,1.4,98.0,estimated
+1,0,current,viability_percent,human_serum_pct,human serum,pct,percentage points,retrospective_refit,304,48,0,0,,,,,,no_present_explained_rows
+1,0,current,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+1,0,current,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,viability_percent,dmso_M,DMSO,M,percentage points,retrospective_refit,316,48,18,18,3.8710471736090906,5.380206992803202,0.5555555555555556,0.0061,1.407909893766799,estimated
+2,1,current,viability_percent,ectoin_M,ectoin,M,percentage points,retrospective_refit,316,48,11,11,7.066385130359458,8.200843770659164,0.8181818181818182,0.0703432751828925,0.4935,estimated
+2,1,current,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,retrospective_refit,316,48,11,11,6.85265788931739,7.277162460995465,0.9090909090909091,0.0015,3.576607056549058,estimated
+2,1,current,viability_percent,glycerol_M,glycerol,M,percentage points,retrospective_refit,316,48,4,4,3.862138783112267,4.763267202416691,0.5,0.1853715199151118,2.35,estimated
+2,1,current,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,retrospective_refit,316,48,4,4,4.137024448320698,6.870972773189214,0.75,0.7505,1.84,estimated
+2,1,current,viability_percent,trehalose_M,trehalose,M,percentage points,retrospective_refit,316,48,2,2,-3.420496305831069,7.838932143953491,0.5,0.1,0.4879,estimated
+2,1,current,viability_percent,sucrose_M,sucrose,M,percentage points,retrospective_refit,316,48,8,8,1.6515658399806867,2.900105706162834,0.75,5e-05,0.4,estimated
+2,1,current,viability_percent,raffinose_M,raffinose,M,percentage points,retrospective_refit,316,48,1,1,15.183500182360715,15.183500182360715,1.0,0.4,0.4,estimated
+2,1,current,viability_percent,taurine_M,taurine,M,percentage points,retrospective_refit,316,48,0,0,,,,,,no_present_explained_rows
+2,1,current,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,retrospective_refit,316,48,0,0,,,,,,no_present_explained_rows
+2,1,current,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,retrospective_refit,316,48,0,0,,,,,,no_present_explained_rows
+2,1,current,viability_percent,betaine_M,betaine,M,percentage points,retrospective_refit,316,48,4,4,1.2784560538125533,6.297943486050143,0.5,0.0175430468718685,0.6828851899274434,estimated
+2,1,current,viability_percent,proline_M,proline,M,percentage points,retrospective_refit,316,48,3,3,-1.3088251958262878,2.6988937093685874,0.3333333333333333,0.0552,0.4432614470960219,estimated
+2,1,current,viability_percent,glucose_M,glucose,M,percentage points,retrospective_refit,316,48,2,2,0.20456615331377306,0.20456615331377306,1.0,5e-05,0.066104668,estimated
+2,1,current,viability_percent,creatine_M,creatine,M,percentage points,retrospective_refit,316,48,1,1,1.1221169261926207,1.1221169261926207,1.0,0.004765245,0.004765245,estimated
+2,1,current,viability_percent,acetamide_M,acetamide,M,percentage points,retrospective_refit,316,48,0,0,,,,,,no_present_explained_rows
+2,1,current,viability_percent,sericin_pct,sericin,pct,percentage points,retrospective_refit,316,48,0,0,,,,,,no_present_explained_rows
+2,1,current,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,retrospective_refit,316,48,1,1,5.2201440374485255,5.2201440374485255,1.0,0.1,0.1,estimated
+2,1,current,viability_percent,dextran_pct,dextran,pct,percentage points,retrospective_refit,316,48,1,1,1.9451672117912795,1.9451672117912795,1.0,8.347854319240385,8.347854319240385,estimated
+2,1,current,viability_percent,pvp_pct,PVP,pct,percentage points,retrospective_refit,316,48,2,2,-0.918557298321574,7.508954878238955,0.5,6.0,40.0,estimated
+2,1,current,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,retrospective_refit,316,48,2,2,4.916381230692638,4.916381230692638,1.0,0.2,0.8477155540953429,estimated
+2,1,current,viability_percent,fbs_pct,FBS,pct,percentage points,retrospective_refit,316,48,16,16,-0.8226045352150214,3.7206317061733354,0.5625,5.9,92.5,estimated
+2,1,current,viability_percent,hsa_pct,HSA,pct,percentage points,retrospective_refit,316,48,5,5,-3.4500643097459323,6.360357725180586,0.2,3.9,96.0,estimated
+2,1,current,viability_percent,human_serum_pct,human serum,pct,percentage points,retrospective_refit,316,48,1,1,1.7246816404433305,1.7246816404433305,1.0,4.0,4.0,estimated
+2,1,current,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+2,1,current,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,viability_percent,dmso_M,DMSO,M,percentage points,retrospective_refit,328,48,21,21,3.684133048259878,7.634128836632488,0.47619047619047616,0.0122,1.407909893766799,estimated
+3,2,current,viability_percent,ectoin_M,ectoin,M,percentage points,retrospective_refit,328,48,10,10,12.616103749485983,13.646147788900029,0.9,0.1347,0.7034327518289252,estimated
+3,2,current,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,retrospective_refit,328,48,14,14,5.621874726974114,6.597035132661901,0.7857142857142857,0.0015,7.153214113098116,estimated
+3,2,current,viability_percent,glycerol_M,glycerol,M,percentage points,retrospective_refit,328,48,3,3,-2.8031010455451217,5.1402989257871186,0.3333333333333333,0.6841133673580193,1.91,estimated
+3,2,current,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,retrospective_refit,328,48,2,2,5.836217901254464,7.20101764884962,0.5,1.02,1.84,estimated
+3,2,current,viability_percent,trehalose_M,trehalose,M,percentage points,retrospective_refit,328,48,5,5,2.031033858001102,5.596913635107372,0.6,0.0005,0.25,estimated
+3,2,current,viability_percent,sucrose_M,sucrose,M,percentage points,retrospective_refit,328,48,7,7,0.9710772462102,1.492671414414333,0.7142857142857143,5e-05,0.3476,estimated
+3,2,current,viability_percent,raffinose_M,raffinose,M,percentage points,retrospective_refit,328,48,2,2,8.922611068382155,8.922611068382155,1.0,0.05,0.4,estimated
+3,2,current,viability_percent,taurine_M,taurine,M,percentage points,retrospective_refit,328,48,0,0,,,,,,no_present_explained_rows
+3,2,current,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,retrospective_refit,328,48,0,0,,,,,,no_present_explained_rows
+3,2,current,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,retrospective_refit,328,48,0,0,,,,,,no_present_explained_rows
+3,2,current,viability_percent,betaine_M,betaine,M,percentage points,retrospective_refit,328,48,2,2,5.62296478801576,5.62296478801576,1.0,0.4908631570755598,0.8536064874093042,estimated
+3,2,current,viability_percent,proline_M,proline,M,percentage points,retrospective_refit,328,48,4,4,-0.9422055308578,3.599333170052908,0.25,0.0361,0.8685833405715279,estimated
+3,2,current,viability_percent,glucose_M,glucose,M,percentage points,retrospective_refit,328,48,3,3,-1.5337021499188863,1.6682715146842055,0.6666666666666666,5e-05,0.9361,estimated
+3,2,current,viability_percent,creatine_M,creatine,M,percentage points,retrospective_refit,328,48,1,1,-2.449677403338733,2.449677403338733,0.0,0.023145099,0.023145099,estimated
+3,2,current,viability_percent,acetamide_M,acetamide,M,percentage points,retrospective_refit,328,48,0,0,,,,,,no_present_explained_rows
+3,2,current,viability_percent,sericin_pct,sericin,pct,percentage points,retrospective_refit,328,48,0,0,,,,,,no_present_explained_rows
+3,2,current,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,retrospective_refit,328,48,3,3,3.339449504426828,3.62414440578163,0.6666666666666666,0.1,1.0,estimated
+3,2,current,viability_percent,dextran_pct,dextran,pct,percentage points,retrospective_refit,328,48,1,1,-10.408702678083136,10.408702678083136,0.0,2.5,2.5,estimated
+3,2,current,viability_percent,pvp_pct,PVP,pct,percentage points,retrospective_refit,328,48,3,3,-2.878921736835929,3.9451385412560236,0.3333333333333333,1.6,10.0,estimated
+3,2,current,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,retrospective_refit,328,48,0,0,,,,,,no_present_explained_rows
+3,2,current,viability_percent,fbs_pct,FBS,pct,percentage points,retrospective_refit,328,48,18,18,-0.9945007053152709,2.055533074361593,0.3888888888888889,1.4,95.0,estimated
+3,2,current,viability_percent,hsa_pct,HSA,pct,percentage points,retrospective_refit,328,48,5,5,-2.974774654092197,3.288497688684332,0.2,0.6,90.0,estimated
+3,2,current,viability_percent,human_serum_pct,human serum,pct,percentage points,retrospective_refit,328,48,1,1,7.396054200127688,7.396054200127688,1.0,10.0,10.0,estimated
+3,2,current,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+3,2,current,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,viability_percent,dmso_M,DMSO,M,percentage points,retrospective_refit,340,48,25,25,3.1026244697214365,7.595611098824479,0.48,0.0058,2.1118648406501985,estimated
+4,3,current,viability_percent,ectoin_M,ectoin,M,percentage points,retrospective_refit,340,48,12,12,8.567572868058596,10.688114330898955,0.8333333333333334,0.0703432751828925,0.4166632147180427,estimated
+4,3,current,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,retrospective_refit,340,48,15,15,4.806401908325236,6.658412233920675,0.6666666666666666,0.0015,2.25,estimated
+4,3,current,viability_percent,glycerol_M,glycerol,M,percentage points,retrospective_refit,340,48,4,4,6.2819597100782465,8.975046068824508,0.5,0.7387,2.33,estimated
+4,3,current,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,retrospective_refit,340,48,5,5,3.384813761920462,5.119870305232664,0.6,0.1821,2.44,estimated
+4,3,current,viability_percent,trehalose_M,trehalose,M,percentage points,retrospective_refit,340,48,6,6,-1.8319172965874249,2.6242769120695564,0.6666666666666666,0.0005,0.5,estimated
+4,3,current,viability_percent,sucrose_M,sucrose,M,percentage points,retrospective_refit,340,48,10,10,0.33202718447886814,2.1929688967268044,0.7,5e-05,0.6072,estimated
+4,3,current,viability_percent,raffinose_M,raffinose,M,percentage points,retrospective_refit,340,48,1,1,15.285870353337224,15.285870353337224,1.0,0.4,0.4,estimated
+4,3,current,viability_percent,taurine_M,taurine,M,percentage points,retrospective_refit,340,48,0,0,,,,,,no_present_explained_rows
+4,3,current,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,retrospective_refit,340,48,0,0,,,,,,no_present_explained_rows
+4,3,current,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,retrospective_refit,340,48,0,0,,,,,,no_present_explained_rows
+4,3,current,viability_percent,betaine_M,betaine,M,percentage points,retrospective_refit,340,48,3,3,5.93264251100311,5.93264251100311,1.0,0.1332,0.8536064874093042,estimated
+4,3,current,viability_percent,proline_M,proline,M,percentage points,retrospective_refit,340,48,5,5,-1.737044044443918,2.055545153262317,0.2,0.01984576425,0.3680699952957303,estimated
+4,3,current,viability_percent,glucose_M,glucose,M,percentage points,retrospective_refit,340,48,2,2,0.4736447402423658,0.47388359464852137,0.5,5e-05,0.1127153068616857,estimated
+4,3,current,viability_percent,creatine_M,creatine,M,percentage points,retrospective_refit,340,48,0,0,,,,,,no_present_explained_rows
+4,3,current,viability_percent,acetamide_M,acetamide,M,percentage points,retrospective_refit,340,48,0,0,,,,,,no_present_explained_rows
+4,3,current,viability_percent,sericin_pct,sericin,pct,percentage points,retrospective_refit,340,48,0,0,,,,,,no_present_explained_rows
+4,3,current,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,retrospective_refit,340,48,2,2,2.1086323289761,4.0247663420789035,0.5,0.1,1.0,estimated
+4,3,current,viability_percent,dextran_pct,dextran,pct,percentage points,retrospective_refit,340,48,3,3,-3.6976955256480846,6.099414072752173,0.3333333333333333,1.803182474452244,5.0,estimated
+4,3,current,viability_percent,pvp_pct,PVP,pct,percentage points,retrospective_refit,340,48,1,1,3.5580905934579143,3.5580905934579143,1.0,10.0,10.0,estimated
+4,3,current,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,retrospective_refit,340,48,2,2,-3.668531194587357,3.668531194587357,0.0,0.013560916738022,0.2,estimated
+4,3,current,viability_percent,fbs_pct,FBS,pct,percentage points,retrospective_refit,340,48,16,16,0.6229268279732507,1.754441264549949,0.5625,2.0,92.5,estimated
+4,3,current,viability_percent,hsa_pct,HSA,pct,percentage points,retrospective_refit,340,48,4,4,-3.067926158890692,3.7387783637913756,0.25,2.0,85.0,estimated
+4,3,current,viability_percent,human_serum_pct,human serum,pct,percentage points,retrospective_refit,340,48,0,0,,,,,,no_present_explained_rows
+4,3,current,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+4,3,current,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,viability_percent,dmso_M,DMSO,M,percentage points,retrospective_refit,352,48,17,17,4.547186099761201,9.003274129154093,0.47058823529411764,0.011,1.407909893766799,estimated
+5,4,current,viability_percent,ectoin_M,ectoin,M,percentage points,retrospective_refit,352,48,15,15,8.894899085442587,9.529255489569604,0.8,0.154,0.7034327518289252,estimated
+5,4,current,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,retrospective_refit,352,48,14,14,10.613907887815026,10.613907887815026,1.0,0.139,2.25,estimated
+5,4,current,viability_percent,glycerol_M,glycerol,M,percentage points,retrospective_refit,352,48,3,3,6.070739692568491,6.070739692568491,1.0,0.1827,1.3682267347160386,estimated
+5,4,current,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,retrospective_refit,352,48,3,3,-1.256204443578328,3.2212207673387945,0.3333333333333333,0.002061542,2.3,estimated
+5,4,current,viability_percent,trehalose_M,trehalose,M,percentage points,retrospective_refit,352,48,9,9,0.02575548631237718,4.077260803262911,0.6666666666666666,0.0002,0.4437811389062057,estimated
+5,4,current,viability_percent,sucrose_M,sucrose,M,percentage points,retrospective_refit,352,48,8,8,-1.9285547544307198,3.095199274203221,0.375,0.0002,0.466252283875273,estimated
+5,4,current,viability_percent,raffinose_M,raffinose,M,percentage points,retrospective_refit,352,48,0,0,,,,,,no_present_explained_rows
+5,4,current,viability_percent,taurine_M,taurine,M,percentage points,retrospective_refit,352,48,0,0,,,,,,no_present_explained_rows
+5,4,current,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,retrospective_refit,352,48,0,0,,,,,,no_present_explained_rows
+5,4,current,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,retrospective_refit,352,48,0,0,,,,,,no_present_explained_rows
+5,4,current,viability_percent,betaine_M,betaine,M,percentage points,retrospective_refit,352,48,2,2,11.284403054617474,11.284403054617474,1.0,0.0766,0.8536064874093042,estimated
+5,4,current,viability_percent,proline_M,proline,M,percentage points,retrospective_refit,352,48,5,5,0.27685221965994583,3.896456793849223,0.4,0.0552,0.8685833405715279,estimated
+5,4,current,viability_percent,glucose_M,glucose,M,percentage points,retrospective_refit,352,48,0,0,,,,,,no_present_explained_rows
+5,4,current,viability_percent,creatine_M,creatine,M,percentage points,retrospective_refit,352,48,1,1,-5.222606076582639,5.222606076582639,0.0,0.0236856718991648,0.0236856718991648,estimated
+5,4,current,viability_percent,acetamide_M,acetamide,M,percentage points,retrospective_refit,352,48,0,0,,,,,,no_present_explained_rows
+5,4,current,viability_percent,sericin_pct,sericin,pct,percentage points,retrospective_refit,352,48,0,0,,,,,,no_present_explained_rows
+5,4,current,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,retrospective_refit,352,48,2,2,2.410647537089223,2.410647537089223,1.0,0.1,0.1,estimated
+5,4,current,viability_percent,dextran_pct,dextran,pct,percentage points,retrospective_refit,352,48,1,1,-12.019464888763968,12.019464888763968,0.0,2.4,2.4,estimated
+5,4,current,viability_percent,pvp_pct,PVP,pct,percentage points,retrospective_refit,352,48,4,4,3.3466236337726567,4.117035447741048,0.75,4.8,11.970569780865324,estimated
+5,4,current,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,retrospective_refit,352,48,3,3,1.8120850981852403,2.8937613231360104,0.6666666666666666,0.2,0.9488272429405464,estimated
+5,4,current,viability_percent,fbs_pct,FBS,pct,percentage points,retrospective_refit,352,48,18,18,1.9763186765754162,2.895141112030486,0.7777777777777778,3.0,90.0,estimated
+5,4,current,viability_percent,hsa_pct,HSA,pct,percentage points,retrospective_refit,352,48,5,5,-10.89865123679608,10.89865123679608,0.0,2.0,6.6,estimated
+5,4,current,viability_percent,human_serum_pct,human serum,pct,percentage points,retrospective_refit,352,48,2,2,3.0758793973917475,5.100905104578264,0.5,4.0,13.4,estimated
+5,4,current,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+5,4,current,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,viability_percent,dmso_M,DMSO,M,percentage points,retrospective_refit,364,48,25,25,6.969780635860383,9.626857133988121,0.56,0.0100284628168995,2.815819787533598,estimated
+6,5,current,viability_percent,ectoin_M,ectoin,M,percentage points,retrospective_refit,364,48,12,12,12.873685116450725,13.865378358936907,0.9166666666666666,0.1314,0.3802,estimated
+6,5,current,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,retrospective_refit,364,48,16,16,11.010693932925527,11.186806723688791,0.875,0.0015,7.153214113098116,estimated
+6,5,current,viability_percent,glycerol_M,glycerol,M,percentage points,retrospective_refit,364,48,4,4,9.922089508122548,9.922089508122548,1.0,1.1,2.35,estimated
+6,5,current,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,retrospective_refit,364,48,1,1,0.4831320510159786,0.4831320510159786,1.0,0.003,0.003,estimated
+6,5,current,viability_percent,trehalose_M,trehalose,M,percentage points,retrospective_refit,364,48,7,7,1.2748261303037562,2.5302640649452948,0.8571428571428571,0.0005,0.4212156104041252,estimated
+6,5,current,viability_percent,sucrose_M,sucrose,M,percentage points,retrospective_refit,364,48,6,6,-1.1109253061112863,2.3123974382208914,0.16666666666666666,0.0002,0.4741207628781291,estimated
+6,5,current,viability_percent,raffinose_M,raffinose,M,percentage points,retrospective_refit,364,48,3,3,0.8103750956398983,1.612957080420396,0.3333333333333333,0.1,0.429129568213765,estimated
+6,5,current,viability_percent,taurine_M,taurine,M,percentage points,retrospective_refit,364,48,0,0,,,,,,no_present_explained_rows
+6,5,current,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,retrospective_refit,364,48,0,0,,,,,,no_present_explained_rows
+6,5,current,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,retrospective_refit,364,48,0,0,,,,,,no_present_explained_rows
+6,5,current,viability_percent,betaine_M,betaine,M,percentage points,retrospective_refit,364,48,1,1,0.0433607889384832,0.0433607889384832,1.0,0.0301,0.0301,estimated
+6,5,current,viability_percent,proline_M,proline,M,percentage points,retrospective_refit,364,48,3,3,1.5714988817736681,3.9287357175914486,0.6666666666666666,0.079383057,0.3182,estimated
+6,5,current,viability_percent,glucose_M,glucose,M,percentage points,retrospective_refit,364,48,1,1,4.82824870189474,4.82824870189474,1.0,0.4508612274467428,0.4508612274467428,estimated
+6,5,current,viability_percent,creatine_M,creatine,M,percentage points,retrospective_refit,364,48,1,1,-1.8185769011284287,1.8185769011284287,0.0,0.0129677391091254,0.0129677391091254,estimated
+6,5,current,viability_percent,acetamide_M,acetamide,M,percentage points,retrospective_refit,364,48,1,1,0.0009042934736374,0.0009042934736374,1.0,0.001,0.001,estimated
+6,5,current,viability_percent,sericin_pct,sericin,pct,percentage points,retrospective_refit,364,48,0,0,,,,,,no_present_explained_rows
+6,5,current,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,retrospective_refit,364,48,2,2,-1.429513426856463,5.541985993266116,0.5,0.1,0.8564748106759047,estimated
+6,5,current,viability_percent,dextran_pct,dextran,pct,percentage points,retrospective_refit,364,48,2,2,-1.9875739752878232,6.988941369077676,0.5,2.4,7.212729897808976,estimated
+6,5,current,viability_percent,pvp_pct,PVP,pct,percentage points,retrospective_refit,364,48,4,4,-0.17541781961864072,3.4388401396830437,0.5,5.0,15.698226615285964,estimated
+6,5,current,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,retrospective_refit,364,48,2,2,0.5280297054943851,0.5280297054943851,1.0,0.0542436669520883,0.9874143241465968,estimated
+6,5,current,viability_percent,fbs_pct,FBS,pct,percentage points,retrospective_refit,364,48,20,20,1.6686101350951232,2.0012822524105376,0.8,3.0,92.5,estimated
+6,5,current,viability_percent,hsa_pct,HSA,pct,percentage points,retrospective_refit,364,48,6,6,-6.687146381893387,6.687146381893387,0.0,2.0,6.531873822,estimated
+6,5,current,viability_percent,human_serum_pct,human serum,pct,percentage points,retrospective_refit,364,48,1,1,1.8130676393495224,1.8130676393495224,1.0,2.0,2.0,estimated
+6,5,current,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+6,5,current,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,viability_percent,dmso_M,DMSO,M,percentage points,retrospective_refit,376,48,16,16,4.840780501420749,6.557734794688155,0.625,0.011,1.407909893766799,estimated
+7,6,current,viability_percent,ectoin_M,ectoin,M,percentage points,retrospective_refit,376,48,11,11,12.754347620426161,13.005852109163573,0.8181818181818182,0.1431,0.4083,estimated
+7,6,current,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,retrospective_refit,376,48,16,16,5.68473852504908,5.829413302103507,0.9375,0.139,3.576607056549058,estimated
+7,6,current,viability_percent,glycerol_M,glycerol,M,percentage points,retrospective_refit,376,48,4,4,2.1962226301786467,2.6394488271555048,0.5,0.2333,2.33,estimated
+7,6,current,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,retrospective_refit,376,48,5,5,0.6102805501498733,2.386352484957911,0.4,0.001,2.44,estimated
+7,6,current,viability_percent,trehalose_M,trehalose,M,percentage points,retrospective_refit,376,48,5,5,-1.6708584624603469,1.8922511474103831,0.4,0.00125,0.5,estimated
+7,6,current,viability_percent,sucrose_M,sucrose,M,percentage points,retrospective_refit,376,48,9,9,0.8486879015333462,2.112462695766335,0.6666666666666666,0.0002,0.6072,estimated
+7,6,current,viability_percent,raffinose_M,raffinose,M,percentage points,retrospective_refit,376,48,0,0,,,,,,no_present_explained_rows
+7,6,current,viability_percent,taurine_M,taurine,M,percentage points,retrospective_refit,376,48,0,0,,,,,,no_present_explained_rows
+7,6,current,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,retrospective_refit,376,48,0,0,,,,,,no_present_explained_rows
+7,6,current,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,retrospective_refit,376,48,0,0,,,,,,no_present_explained_rows
+7,6,current,viability_percent,betaine_M,betaine,M,percentage points,retrospective_refit,376,48,6,6,3.85170038204797,5.9471850277525435,0.5,0.0301,0.8536064874093042,estimated
+7,6,current,viability_percent,proline_M,proline,M,percentage points,retrospective_refit,376,48,3,3,1.417173546896719,3.0839830896009133,0.3333333333333333,0.1495,0.3674627943888496,estimated
+7,6,current,viability_percent,glucose_M,glucose,M,percentage points,retrospective_refit,376,48,0,0,,,,,,no_present_explained_rows
+7,6,current,viability_percent,creatine_M,creatine,M,percentage points,retrospective_refit,376,48,3,3,2.7218851860824764,4.458387692115804,0.6666666666666666,0.0125,0.026655113,estimated
+7,6,current,viability_percent,acetamide_M,acetamide,M,percentage points,retrospective_refit,376,48,1,1,-9.700484139057137,9.700484139057137,0.0,0.3665641806955139,0.3665641806955139,estimated
+7,6,current,viability_percent,sericin_pct,sericin,pct,percentage points,retrospective_refit,376,48,0,0,,,,,,no_present_explained_rows
+7,6,current,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,retrospective_refit,376,48,0,0,,,,,,no_present_explained_rows
+7,6,current,viability_percent,dextran_pct,dextran,pct,percentage points,retrospective_refit,376,48,3,3,0.7000284737896915,3.179767000869497,0.3333333333333333,1.0,5.0,estimated
+7,6,current,viability_percent,pvp_pct,PVP,pct,percentage points,retrospective_refit,376,48,5,5,4.182514757233131,6.709178271716863,0.8,1.0,20.0,estimated
+7,6,current,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,retrospective_refit,376,48,0,0,,,,,,no_present_explained_rows
+7,6,current,viability_percent,fbs_pct,FBS,pct,percentage points,retrospective_refit,376,48,19,19,1.6009781914120493,2.335763945899733,0.7368421052631579,3.0,92.5,estimated
+7,6,current,viability_percent,hsa_pct,HSA,pct,percentage points,retrospective_refit,376,48,6,6,-0.8479997437389061,4.545652329916327,0.3333333333333333,0.6200547594370113,99.5,estimated
+7,6,current,viability_percent,human_serum_pct,human serum,pct,percentage points,retrospective_refit,376,48,0,0,,,,,,no_present_explained_rows
+7,6,current,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+7,6,current,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,viability_percent,dmso_M,DMSO,M,percentage points,retrospective_refit,388,48,18,18,6.3831946099474735,9.15011410318586,0.6111111111111112,0.0116891698342244,1.407909893766799,estimated
+8,7,current,viability_percent,ectoin_M,ectoin,M,percentage points,retrospective_refit,388,48,9,9,4.608434677604347,7.575219163540407,0.6666666666666666,0.1314,0.3937221083693463,estimated
+8,7,current,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,retrospective_refit,388,48,12,12,8.025298564264306,8.94335448456342,0.8333333333333334,0.8143,3.576607056549058,estimated
+8,7,current,viability_percent,glycerol_M,glycerol,M,percentage points,retrospective_refit,388,48,7,7,2.863928929520258,3.910040744821789,0.5714285714285714,0.2333,1.86,estimated
+8,7,current,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,retrospective_refit,388,48,4,4,2.387368394611549,3.3631252686689628,0.5,0.1517996000228061,2.15,estimated
+8,7,current,viability_percent,trehalose_M,trehalose,M,percentage points,retrospective_refit,388,48,6,6,-0.2626740323976087,2.7982844874426074,0.5,0.0002,0.4,estimated
+8,7,current,viability_percent,sucrose_M,sucrose,M,percentage points,retrospective_refit,388,48,8,8,-0.19757515019374416,3.2002261687537854,0.5,0.0002,0.5887,estimated
+8,7,current,viability_percent,raffinose_M,raffinose,M,percentage points,retrospective_refit,388,48,0,0,,,,,,no_present_explained_rows
+8,7,current,viability_percent,taurine_M,taurine,M,percentage points,retrospective_refit,388,48,1,1,-10.99268488010984,10.99268488010984,0.0,0.0691519551088567,0.0691519551088567,estimated
+8,7,current,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,retrospective_refit,388,48,0,0,,,,,,no_present_explained_rows
+8,7,current,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,retrospective_refit,388,48,0,0,,,,,,no_present_explained_rows
+8,7,current,viability_percent,betaine_M,betaine,M,percentage points,retrospective_refit,388,48,4,4,-5.640694304526644,5.640694304526644,0.0,0.0885,0.3994,estimated
+8,7,current,viability_percent,proline_M,proline,M,percentage points,retrospective_refit,388,48,3,3,-1.9450241275275475,5.479340087853823,0.3333333333333333,0.088665134203437,0.5,estimated
+8,7,current,viability_percent,glucose_M,glucose,M,percentage points,retrospective_refit,388,48,1,1,-2.6870592880328696,2.6870592880328696,0.0,0.4838870652371413,0.4838870652371413,estimated
+8,7,current,viability_percent,creatine_M,creatine,M,percentage points,retrospective_refit,388,48,3,3,1.565784932763244,1.6574250745073809,0.6666666666666666,0.0125,0.0243995068973409,estimated
+8,7,current,viability_percent,acetamide_M,acetamide,M,percentage points,retrospective_refit,388,48,0,0,,,,,,no_present_explained_rows
+8,7,current,viability_percent,sericin_pct,sericin,pct,percentage points,retrospective_refit,388,48,0,0,,,,,,no_present_explained_rows
+8,7,current,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,retrospective_refit,388,48,1,1,-1.609320139710189,1.609320139710189,0.0,0.0968433629948464,0.0968433629948464,estimated
+8,7,current,viability_percent,dextran_pct,dextran,pct,percentage points,retrospective_refit,388,48,5,5,-3.207957186136768,4.942989714231942,0.2,0.5264431474892101,5.0,estimated
+8,7,current,viability_percent,pvp_pct,PVP,pct,percentage points,retrospective_refit,388,48,4,4,2.729661015159824,2.729661015159824,1.0,6.710231711747509,10.0,estimated
+8,7,current,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,retrospective_refit,388,48,1,1,-2.95634244070325,2.95634244070325,0.0,0.9273155245090484,0.9273155245090484,estimated
+8,7,current,viability_percent,fbs_pct,FBS,pct,percentage points,retrospective_refit,388,48,14,14,0.0588193894915776,2.3798098844748297,0.5714285714285714,1.184390852842464,92.5,estimated
+8,7,current,viability_percent,hsa_pct,HSA,pct,percentage points,retrospective_refit,388,48,4,4,-0.25944125437160115,4.18544578042137,0.25,1.3,99.0,estimated
+8,7,current,viability_percent,human_serum_pct,human serum,pct,percentage points,retrospective_refit,388,48,2,2,2.8356833872312572,5.030436789131589,0.5,10.0,80.0,estimated
+8,7,current,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+8,7,current,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,viability_percent,dmso_M,DMSO,M,percentage points,retrospective_refit,400,48,22,22,6.7863057442797645,8.611417797699927,0.5909090909090909,0.021,13.37514399078459,estimated
+9,8,current,viability_percent,ectoin_M,ectoin,M,percentage points,retrospective_refit,400,48,12,12,10.822854885909173,11.296863824460027,0.75,0.1431,0.3956137271878303,estimated
+9,8,current,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,retrospective_refit,400,48,18,18,6.832893434020733,8.207710718024076,0.8333333333333334,0.2641206335188518,3.576607056549058,estimated
+9,8,current,viability_percent,glycerol_M,glycerol,M,percentage points,retrospective_refit,400,48,3,3,4.356791996902514,8.00878030252005,0.6666666666666666,0.7387,4.104680204148115,estimated
+9,8,current,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,retrospective_refit,400,48,2,2,-1.4636048588456387,1.4636048588456387,0.0,0.1517996000228061,1.02,estimated
+9,8,current,viability_percent,trehalose_M,trehalose,M,percentage points,retrospective_refit,400,48,5,5,-0.9903182147743745,2.1332170374818626,0.4,0.0005,0.401626763833068,estimated
+9,8,current,viability_percent,sucrose_M,sucrose,M,percentage points,retrospective_refit,400,48,7,7,1.963737108225852,3.7152370925617837,0.42857142857142855,0.0002,0.3465,estimated
+9,8,current,viability_percent,raffinose_M,raffinose,M,percentage points,retrospective_refit,400,48,3,3,-6.9273628274656955,6.9273628274656955,0.0,0.1,0.4,estimated
+9,8,current,viability_percent,taurine_M,taurine,M,percentage points,retrospective_refit,400,48,1,1,-17.740840080132493,17.740840080132493,0.0,0.3115630075817165,0.3115630075817165,estimated
+9,8,current,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,retrospective_refit,400,48,1,1,7.6859421243159876,7.6859421243159876,1.0,0.2743140108570348,0.2743140108570348,estimated
+9,8,current,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,retrospective_refit,400,48,0,0,,,,,,no_present_explained_rows
+9,8,current,viability_percent,betaine_M,betaine,M,percentage points,retrospective_refit,400,48,2,2,-4.733931823890938,4.733931823890938,0.0,0.2647619256052412,0.3994,estimated
+9,8,current,viability_percent,proline_M,proline,M,percentage points,retrospective_refit,400,48,2,2,-2.5561920252480417,2.591804231638681,0.5,0.0582,0.079383057,estimated
+9,8,current,viability_percent,glucose_M,glucose,M,percentage points,retrospective_refit,400,48,2,2,1.166575876074297,2.620342769541932,0.5,0.4508612274467428,0.4838870652371413,estimated
+9,8,current,viability_percent,creatine_M,creatine,M,percentage points,retrospective_refit,400,48,1,1,-3.5530894242680167,3.5530894242680167,0.0,0.0236856718991648,0.0236856718991648,estimated
+9,8,current,viability_percent,acetamide_M,acetamide,M,percentage points,retrospective_refit,400,48,0,0,,,,,,no_present_explained_rows
+9,8,current,viability_percent,sericin_pct,sericin,pct,percentage points,retrospective_refit,400,48,0,0,,,,,,no_present_explained_rows
+9,8,current,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,retrospective_refit,400,48,1,1,-18.340736616302852,18.340736616302852,0.0,0.7450063998291049,0.7450063998291049,estimated
+9,8,current,viability_percent,dextran_pct,dextran,pct,percentage points,retrospective_refit,400,48,3,3,-3.6178465138563727,5.971613419260251,0.3333333333333333,1.2,7.212729897808976,estimated
+9,8,current,viability_percent,pvp_pct,PVP,pct,percentage points,retrospective_refit,400,48,5,5,-4.859594206124642,7.1235991460857875,0.4,1.0,40.0,estimated
+9,8,current,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,retrospective_refit,400,48,2,2,-0.451136257345917,0.48804261998858023,0.5,0.0542436669520883,0.9273155245090484,estimated
+9,8,current,viability_percent,fbs_pct,FBS,pct,percentage points,retrospective_refit,400,48,18,18,0.4395080380382074,1.3884117251189745,0.4444444444444444,1.184390852842464,92.5,estimated
+9,8,current,viability_percent,hsa_pct,HSA,pct,percentage points,retrospective_refit,400,48,6,6,-0.7121267971423227,5.578078228014413,0.3333333333333333,0.6200547594370113,99.0,estimated
+9,8,current,viability_percent,human_serum_pct,human serum,pct,percentage points,retrospective_refit,400,48,1,1,3.0669859636596883,3.0669859636596883,1.0,4.0,4.0,estimated
+9,8,current,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+9,8,current,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,0,0,0,0,,,,,,model_unavailable
+10,9,current,viability_percent,dmso_M,DMSO,M,percentage points,frozen_gp_comparison_snapshot,412,48,21,21,3.544363398431628,7.908507109490579,0.47619047619047616,0.011,1.407909893766799,estimated
+10,9,current,viability_percent,ectoin_M,ectoin,M,percentage points,frozen_gp_comparison_snapshot,412,48,14,14,12.913407559172697,14.202075042957322,0.9285714285714286,0.112962607700229,0.3956137271878303,estimated
+10,9,current,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,frozen_gp_comparison_snapshot,412,48,18,18,10.38599330525816,10.38599330525816,1.0,0.0938565115,2.09,estimated
+10,9,current,viability_percent,glycerol_M,glycerol,M,percentage points,frozen_gp_comparison_snapshot,412,48,5,5,5.3062111919887425,5.568415419925569,0.8,0.1537267092157568,2.7364534694320772,estimated
+10,9,current,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,frozen_gp_comparison_snapshot,412,48,2,2,2.051770269403098,3.6618900514390416,0.5,1.95,2.15,estimated
+10,9,current,viability_percent,trehalose_M,trehalose,M,percentage points,frozen_gp_comparison_snapshot,412,48,5,5,2.917848947978041,4.943638736696459,0.6,0.001,0.401626763833068,estimated
+10,9,current,viability_percent,sucrose_M,sucrose,M,percentage points,frozen_gp_comparison_snapshot,412,48,10,10,0.37674449291182277,2.2444212302619553,0.6,0.0002,0.5887,estimated
+10,9,current,viability_percent,raffinose_M,raffinose,M,percentage points,frozen_gp_comparison_snapshot,412,48,0,0,,,,,,no_present_explained_rows
+10,9,current,viability_percent,taurine_M,taurine,M,percentage points,frozen_gp_comparison_snapshot,412,48,2,2,-10.364348221397638,10.94918516544556,0.5,0.0007369667758306,0.2121350219000281,estimated
+10,9,current,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,frozen_gp_comparison_snapshot,412,48,0,0,,,,,,no_present_explained_rows
+10,9,current,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,frozen_gp_comparison_snapshot,412,48,0,0,,,,,,no_present_explained_rows
+10,9,current,viability_percent,betaine_M,betaine,M,percentage points,frozen_gp_comparison_snapshot,412,48,3,3,5.307177200659942,6.02050474738138,0.6666666666666666,0.2666,0.6828851899274434,estimated
+10,9,current,viability_percent,proline_M,proline,M,percentage points,frozen_gp_comparison_snapshot,412,48,1,1,-0.9904641415401566,0.9904641415401566,0.0,0.01984576425,0.01984576425,estimated
+10,9,current,viability_percent,glucose_M,glucose,M,percentage points,frozen_gp_comparison_snapshot,412,48,1,1,0.2557038921873082,0.2557038921873082,1.0,0.1127153068616857,0.1127153068616857,estimated
+10,9,current,viability_percent,creatine_M,creatine,M,percentage points,frozen_gp_comparison_snapshot,412,48,3,3,0.9124398797495238,2.991902554553581,0.6666666666666666,0.0223681357081184,0.0265520113939161,estimated
+10,9,current,viability_percent,acetamide_M,acetamide,M,percentage points,frozen_gp_comparison_snapshot,412,48,2,2,-5.157616759734443,7.892659052756626,0.5,0.2620068191842505,0.3491677137910172,estimated
+10,9,current,viability_percent,sericin_pct,sericin,pct,percentage points,frozen_gp_comparison_snapshot,412,48,0,0,,,,,,no_present_explained_rows
+10,9,current,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,frozen_gp_comparison_snapshot,412,48,1,1,0.6224959572790109,0.6224959572790109,1.0,1.0,1.0,estimated
+10,9,current,viability_percent,dextran_pct,dextran,pct,percentage points,frozen_gp_comparison_snapshot,412,48,2,2,-1.1625727299117739,1.1625727299117739,0.0,1.0,1.803182474452244,estimated
+10,9,current,viability_percent,pvp_pct,PVP,pct,percentage points,frozen_gp_comparison_snapshot,412,48,6,6,-3.1972266320710534,4.2451936611482015,0.5,1.6775579279368773,10.0,estimated
+10,9,current,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,frozen_gp_comparison_snapshot,412,48,1,1,-0.4855007570586416,0.4855007570586416,0.0,0.013560916738022,0.013560916738022,estimated
+10,9,current,viability_percent,fbs_pct,FBS,pct,percentage points,frozen_gp_comparison_snapshot,412,48,16,16,1.6911494169477947,1.9635343067826878,0.8125,3.6078290441241623,92.5,estimated
+10,9,current,viability_percent,hsa_pct,HSA,pct,percentage points,frozen_gp_comparison_snapshot,412,48,6,6,-0.9892539852781725,6.739686048133442,0.3333333333333333,0.6200547594370113,98.0,estimated
+10,9,current,viability_percent,human_serum_pct,human serum,pct,percentage points,frozen_gp_comparison_snapshot,412,48,2,2,9.86520200167232,9.86520200167232,1.0,10.0,10.0,estimated
+10,9,current,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,4,4,3,3,-0.0006900929624952,0.0012798775949494,0.3333333333333333,0.0751278810186414,0.0890941970277426,estimated
+10,9,current,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,4,4,1,1,0.0024274688540532,0.0024274688540532,1.0,0.4085859366688696,0.4085859366688696,estimated
+10,9,current,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,4,4,1,1,0.0022115452735921,0.0022115452735921,1.0,0.4445899023866297,0.4445899023866297,estimated
+10,9,current,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,4,4,1,1,-0.0028951148454177,0.0028951148454177,0.0,0.423671033441645,0.423671033441645,estimated
+10,9,current,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,4,4,1,1,-0.0051765324065813,0.0051765324065813,0.0,0.3772682270582229,0.3772682270582229,estimated
+10,9,current,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,4,4,1,1,0.0060905621265641,0.0060905621265641,1.0,0.4003559668540912,0.4003559668540912,estimated
+10,9,current,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,4,4,2,2,-0.0029813635068081,0.0029813635068081,0.0,0.0245274250591131,0.0263313477020842,estimated
+10,9,current,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+10,9,current,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,4,4,1,1,-0.0039306935667164,0.0039306935667164,0.0,7.871730614992146,7.871730614992146,estimated
+10,9,current,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,4,4,1,1,0.0051303977307143,0.0051303977307143,1.0,7.696867081677418,7.696867081677418,estimated
+10,9,current,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,4,4,0,0,,,,,,no_present_explained_rows
+11,10,control,viability_percent,dmso_M,DMSO,M,percentage points,frozen_gp_comparison_snapshot,119,48,10,10,-1.003035069300846,1.345154716504305,0.1,0.01285738975,0.099285136,estimated
+11,10,control,viability_percent,ectoin_M,ectoin,M,percentage points,frozen_gp_comparison_snapshot,119,48,20,20,3.020079238663932,3.0277521350295786,0.95,0.0820912394161307,0.5,estimated
+11,10,control,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,frozen_gp_comparison_snapshot,119,48,20,20,3.497316121393177,3.8144873173013787,0.85,0.0938565115,2.053908766011441,estimated
+11,10,control,viability_percent,glycerol_M,glycerol,M,percentage points,frozen_gp_comparison_snapshot,119,48,5,4,3.0430102252093763,3.463238205320515,0.8,0.1537267092157568,0.4787773619116262,estimated
+11,10,control,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,frozen_gp_comparison_snapshot,119,48,2,2,-0.2658916871828863,0.2669372826161271,0.5,0.002061542,0.1517996000228061,estimated
+11,10,control,viability_percent,trehalose_M,trehalose,M,percentage points,frozen_gp_comparison_snapshot,119,48,4,4,-0.9551111633882288,1.0439081079257067,0.25,0.0880014624143136,0.3043658999964462,estimated
+11,10,control,viability_percent,sucrose_M,sucrose,M,percentage points,frozen_gp_comparison_snapshot,119,48,3,3,-0.4634722632254946,0.9394394258725232,0.3333333333333333,0.079736650095617,0.152529727210486,estimated
+11,10,control,viability_percent,raffinose_M,raffinose,M,percentage points,frozen_gp_comparison_snapshot,119,48,2,2,-0.9457990376151397,0.9457990376151397,0.0,0.1610862069077319,0.1902297513428384,estimated
+11,10,control,viability_percent,taurine_M,taurine,M,percentage points,frozen_gp_comparison_snapshot,119,48,6,6,-2.322454337055116,2.322454337055116,0.0,0.0007369667758306,0.3115630075817165,estimated
+11,10,control,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,frozen_gp_comparison_snapshot,119,48,2,2,-0.8998931463507873,1.4543730526164709,0.5,0.1869024836347554,0.2318306721986533,estimated
+11,10,control,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,frozen_gp_comparison_snapshot,119,48,0,0,,,,,,no_present_explained_rows
+11,10,control,viability_percent,betaine_M,betaine,M,percentage points,frozen_gp_comparison_snapshot,119,48,2,2,-1.481178919633482,1.481178919633482,0.0,0.2647619256052412,0.4185894893614068,estimated
+11,10,control,viability_percent,proline_M,proline,M,percentage points,frozen_gp_comparison_snapshot,119,48,4,4,-1.3991793790123066,1.3991793790123066,0.0,0.01984576425,0.3680699952957303,estimated
+11,10,control,viability_percent,glucose_M,glucose,M,percentage points,frozen_gp_comparison_snapshot,119,48,7,6,-0.007531676102448108,1.7262302595937362,0.42857142857142855,0.1127153068616857,0.5,estimated
+11,10,control,viability_percent,creatine_M,creatine,M,percentage points,frozen_gp_comparison_snapshot,119,48,11,10,-0.632606627900043,1.2825757206934398,0.36363636363636365,0.0223681357081184,0.0272422574509164,estimated
+11,10,control,viability_percent,acetamide_M,acetamide,M,percentage points,frozen_gp_comparison_snapshot,119,48,5,5,-2.0972183713532915,2.2196589309494925,0.2,0.2564307512444164,0.3665641806955139,estimated
+11,10,control,viability_percent,sericin_pct,sericin,pct,percentage points,frozen_gp_comparison_snapshot,119,48,0,0,,,,,,no_present_explained_rows
+11,10,control,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,frozen_gp_comparison_snapshot,119,48,4,4,-1.7581928340212025,1.7581928340212025,0.0,0.5935446221184634,0.7450063998291049,estimated
+11,10,control,viability_percent,dextran_pct,dextran,pct,percentage points,frozen_gp_comparison_snapshot,119,48,4,4,-0.3071819003234795,1.202581233517768,0.25,0.5264431474892101,5.0,estimated
+11,10,control,viability_percent,pvp_pct,PVP,pct,percentage points,frozen_gp_comparison_snapshot,119,48,5,5,1.204671729589746,1.7720134158677485,0.6,1.025005135030028,11.970569780865324,estimated
+11,10,control,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,frozen_gp_comparison_snapshot,119,48,2,2,-0.374782788749926,0.374782788749926,0.0,0.013560916738022,0.9273155245090484,estimated
+11,10,control,viability_percent,fbs_pct,FBS,pct,percentage points,frozen_gp_comparison_snapshot,119,48,14,14,0.5711574562613991,1.4747557600661074,0.5714285714285714,1.184390852842464,10.0,estimated
+11,10,control,viability_percent,hsa_pct,HSA,pct,percentage points,frozen_gp_comparison_snapshot,119,48,2,2,0.2304064556134674,1.5936087988528342,0.5,8.684994925258765,9.316828139709228,estimated
+11,10,control,viability_percent,human_serum_pct,human serum,pct,percentage points,frozen_gp_comparison_snapshot,119,48,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,8,8,4,4,0.008169892879815475,0.016499840832020173,0.25,0.0751278810186414,0.3519774734416998,estimated
+11,10,control,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,8,8,4,4,-0.004884795921568725,0.005531499266137925,0.25,0.240084092433004,0.4110977373526631,estimated
+11,10,control,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,8,8,4,4,-0.00496791867160175,0.00543068090653015,0.25,0.4445899023866297,1.5330693248584275,estimated
+11,10,control,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,8,8,1,1,-0.0240955883842949,0.0240955883842949,0.0,0.1230991577776128,0.1230991577776128,estimated
+11,10,control,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,8,8,1,1,-0.0088456194975005,0.0088456194975005,0.0,0.423671033441645,0.423671033441645,estimated
+11,10,control,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,8,8,1,1,0.0526206015299353,0.0526206015299353,1.0,0.1,0.1,estimated
+11,10,control,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,8,8,1,1,-0.0082086060066796,0.0082086060066796,0.0,0.3772682270582229,0.3772682270582229,estimated
+11,10,control,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,8,8,1,1,-0.0010439091477051,0.0010439091477051,0.0,0.4003559668540912,0.4003559668540912,estimated
+11,10,control,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,8,8,2,2,-0.0107655854848193,0.0107655854848193,0.0,0.0245274250591131,0.0263313477020842,estimated
+11,10,control,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+11,10,control,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,8,8,1,1,-0.0095519873486845,0.0095519873486845,0.0,7.871730614992146,7.871730614992146,estimated
+11,10,control,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,8,8,1,1,-0.0007929537427931,0.0007929537427931,0.0,7.696867081677418,7.696867081677418,estimated
+11,10,control,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,8,8,0,0,,,,,,no_present_explained_rows
+12,11,control,viability_percent,dmso_M,DMSO,M,percentage points,frozen_gp_comparison_snapshot,130,48,12,12,-1.2575982885127968,1.3305355157255365,0.08333333333333333,0.0121040520289899,0.1,estimated
+12,11,control,viability_percent,ectoin_M,ectoin,M,percentage points,frozen_gp_comparison_snapshot,130,48,22,21,2.2771495107304074,2.5766716120122584,0.8181818181818182,0.0685407781099063,0.4166632147180427,estimated
+12,11,control,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,frozen_gp_comparison_snapshot,130,48,18,17,3.131125408663866,3.9534219930368977,0.6666666666666666,0.0938565115,1.5622244508682714,estimated
+12,11,control,viability_percent,glycerol_M,glycerol,M,percentage points,frozen_gp_comparison_snapshot,130,48,5,5,1.2432194865743829,2.079415801016098,0.6,0.1230991577776128,0.3827048614052893,estimated
+12,11,control,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,frozen_gp_comparison_snapshot,130,48,2,2,1.7217968476471524,2.2753423245497375,0.5,0.1517996000228061,0.4665420783684165,estimated
+12,11,control,viability_percent,trehalose_M,trehalose,M,percentage points,frozen_gp_comparison_snapshot,130,48,5,5,-0.06496734286276454,1.5052957526084358,0.4,0.0880014624143136,0.4834735693174652,estimated
+12,11,control,viability_percent,sucrose_M,sucrose,M,percentage points,frozen_gp_comparison_snapshot,130,48,4,4,-1.2788633438651824,1.2788633438651824,0.0,0.0298991495520079,0.3317047741665574,estimated
+12,11,control,viability_percent,raffinose_M,raffinose,M,percentage points,frozen_gp_comparison_snapshot,130,48,2,2,-4.625763611525828,4.625763611525828,0.0,0.2887095003508567,0.3,estimated
+12,11,control,viability_percent,taurine_M,taurine,M,percentage points,frozen_gp_comparison_snapshot,130,48,8,8,-1.9605972637513471,2.334031113167314,0.375,0.0004260838621623,0.3820141120127066,estimated
+12,11,control,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,frozen_gp_comparison_snapshot,130,48,4,4,-1.7396649669800537,2.5528126197664918,0.5,0.1869024836347554,0.4469746569712823,estimated
+12,11,control,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,frozen_gp_comparison_snapshot,130,48,0,0,,,,,,no_present_explained_rows
+12,11,control,viability_percent,betaine_M,betaine,M,percentage points,frozen_gp_comparison_snapshot,130,48,3,3,-0.31002888629322184,0.38840697519587336,0.3333333333333333,0.0175430468718685,0.2772825272208669,estimated
+12,11,control,viability_percent,proline_M,proline,M,percentage points,frozen_gp_comparison_snapshot,130,48,8,8,-0.7384303432413495,1.7130410502326785,0.25,0.01984576425,0.5,estimated
+12,11,control,viability_percent,glucose_M,glucose,M,percentage points,frozen_gp_comparison_snapshot,130,48,8,8,-0.8431054947432626,1.2885412634675273,0.375,0.066104668,0.4838870652371413,estimated
+12,11,control,viability_percent,creatine_M,creatine,M,percentage points,frozen_gp_comparison_snapshot,130,48,13,13,-1.8136214158470028,1.9172370657766893,0.07692307692307693,0.004765245,0.0272422574509164,estimated
+12,11,control,viability_percent,acetamide_M,acetamide,M,percentage points,frozen_gp_comparison_snapshot,130,48,4,4,-1.4356206540943284,2.8542364184695055,0.25,0.2054197020904849,0.3665641806955139,estimated
+12,11,control,viability_percent,sericin_pct,sericin,pct,percentage points,frozen_gp_comparison_snapshot,130,48,0,0,,,,,,no_present_explained_rows
+12,11,control,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,frozen_gp_comparison_snapshot,130,48,4,4,-1.5348492731622958,1.6013846519109975,0.25,0.0968433629948464,0.740774760113165,estimated
+12,11,control,viability_percent,dextran_pct,dextran,pct,percentage points,frozen_gp_comparison_snapshot,130,48,5,5,0.6225946729743201,1.970925656790478,0.4,1.803182474452244,8.347854319240385,estimated
+12,11,control,viability_percent,pvp_pct,PVP,pct,percentage points,frozen_gp_comparison_snapshot,130,48,4,4,0.15145721656286937,1.5706279554143303,0.5,1.6775579279368773,17.360345888650443,estimated
+12,11,control,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,frozen_gp_comparison_snapshot,130,48,5,5,0.45340767154831496,1.255904723217753,0.4,0.013560916738022,0.9976485941215104,estimated
+12,11,control,viability_percent,fbs_pct,FBS,pct,percentage points,frozen_gp_comparison_snapshot,130,48,13,12,0.8587019208854116,1.9445244893586655,0.6153846153846154,1.184390852842464,10.0,estimated
+12,11,control,viability_percent,hsa_pct,HSA,pct,percentage points,frozen_gp_comparison_snapshot,130,48,4,4,-1.3053119979490155,1.3799756046211167,0.25,6.987621104781921,8.684994925258765,estimated
+12,11,control,viability_percent,human_serum_pct,human serum,pct,percentage points,frozen_gp_comparison_snapshot,130,48,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,13,13,5,5,0.006048987232895681,0.015054098016459119,0.2,0.0121040520289899,0.3519774734416998,estimated
+12,11,control,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,13,13,8,8,-0.005421051431183687,0.008490540201860339,0.375,0.1517574580386533,0.4110977373526631,estimated
+12,11,control,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,13,13,8,8,-0.00563045188248215,0.005664778776012225,0.125,0.4434958440943709,1.5330693248584275,estimated
+12,11,control,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,13,13,2,2,0.0145876496244184,0.028331969103847998,0.5,0.1230991577776128,0.3363840938139893,estimated
+12,11,control,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,13,13,1,1,-0.007660610964891,0.007660610964891,0.0,0.423671033441645,0.423671033441645,estimated
+12,11,control,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,13,13,1,1,0.0501212385437549,0.0501212385437549,1.0,0.1,0.1,estimated
+12,11,control,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,13,13,1,1,-0.0108871675481459,0.0108871675481459,0.0,0.3772682270582229,0.3772682270582229,estimated
+12,11,control,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,13,13,2,2,0.01381140480333475,0.01381140480333475,1.0,0.1906269973817868,0.4003559668540912,estimated
+12,11,control,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,13,13,3,3,0.006580168383176467,0.011504371230834066,0.3333333333333333,0.0245274250591131,0.0263313477020842,estimated
+12,11,control,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+12,11,control,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,13,13,3,3,-0.004881751878615433,0.013021329466134234,0.3333333333333333,4.841137335482054,7.871730614992146,estimated
+12,11,control,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,13,13,2,2,0.01696503608686445,0.01696503608686445,1.0,4.658414069854614,7.696867081677418,estimated
+12,11,control,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,13,13,0,0,,,,,,no_present_explained_rows
+13,12,control,viability_percent,dmso_M,DMSO,M,percentage points,frozen_gp_comparison_snapshot,141,48,7,7,-0.63330133720728,1.0561908373584747,0.14285714285714285,0.0121040520289899,0.0960577194519765,estimated
+13,12,control,viability_percent,ectoin_M,ectoin,M,percentage points,frozen_gp_comparison_snapshot,141,48,22,20,3.0135042013815565,3.7039563211094912,0.8181818181818182,0.0421795058685515,0.4166632147180427,estimated
+13,12,control,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,frozen_gp_comparison_snapshot,141,48,22,20,3.6662756710772944,4.445539889143908,0.7727272727272727,0.2408447042230846,1.7529608706469717,estimated
+13,12,control,viability_percent,glycerol_M,glycerol,M,percentage points,frozen_gp_comparison_snapshot,141,48,5,5,3.213511438387674,3.213511438387674,1.0,0.1537267092157568,0.549726591657807,estimated
+13,12,control,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,frozen_gp_comparison_snapshot,141,48,1,1,5.081751460128382,5.081751460128382,1.0,0.4665420783684165,0.4665420783684165,estimated
+13,12,control,viability_percent,trehalose_M,trehalose,M,percentage points,frozen_gp_comparison_snapshot,141,48,6,6,-0.6581395701048476,1.8262576917885103,0.3333333333333333,0.0955978034966867,0.4212156104041252,estimated
+13,12,control,viability_percent,sucrose_M,sucrose,M,percentage points,frozen_gp_comparison_snapshot,141,48,3,3,-2.1237209118630633,2.1237209118630633,0.0,0.3317047741665574,0.4741207628781291,estimated
+13,12,control,viability_percent,raffinose_M,raffinose,M,percentage points,frozen_gp_comparison_snapshot,141,48,4,4,-2.439786604933264,5.6303188259548005,0.25,0.2887095003508567,0.429129568213765,estimated
+13,12,control,viability_percent,taurine_M,taurine,M,percentage points,frozen_gp_comparison_snapshot,141,48,1,1,0.1198155782872895,0.1198155782872895,1.0,0.0007369667758306,0.0007369667758306,estimated
+13,12,control,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,frozen_gp_comparison_snapshot,141,48,3,3,-0.9320258172224749,2.4382365118917417,0.6666666666666666,0.1869024836347554,0.4469746569712823,estimated
+13,12,control,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,frozen_gp_comparison_snapshot,141,48,0,0,,,,,,no_present_explained_rows
+13,12,control,viability_percent,betaine_M,betaine,M,percentage points,frozen_gp_comparison_snapshot,141,48,2,2,-0.2275640229134959,0.501347635331258,0.5,0.0175430468718685,0.4185894893614068,estimated
+13,12,control,viability_percent,proline_M,proline,M,percentage points,frozen_gp_comparison_snapshot,141,48,6,6,-0.5643097307841966,2.231021809940677,0.5,0.074405685517848,0.5,estimated
+13,12,control,viability_percent,glucose_M,glucose,M,percentage points,frozen_gp_comparison_snapshot,141,48,8,8,-0.5805228111866624,1.7046114142015139,0.5,0.066104668,0.5,estimated
+13,12,control,viability_percent,creatine_M,creatine,M,percentage points,frozen_gp_comparison_snapshot,141,48,10,10,-1.3232349123105165,1.531357048269332,0.1,0.004765245,0.0270538110717823,estimated
+13,12,control,viability_percent,acetamide_M,acetamide,M,percentage points,frozen_gp_comparison_snapshot,141,48,2,2,-0.3021897089408428,1.2186377433205484,0.5,0.2748057072146622,0.3234228953596418,estimated
+13,12,control,viability_percent,sericin_pct,sericin,pct,percentage points,frozen_gp_comparison_snapshot,141,48,0,0,,,,,,no_present_explained_rows
+13,12,control,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,frozen_gp_comparison_snapshot,141,48,3,3,-2.1385762804498514,2.1385762804498514,0.0,0.0968433629948464,0.7450063998291049,estimated
+13,12,control,viability_percent,dextran_pct,dextran,pct,percentage points,frozen_gp_comparison_snapshot,141,48,2,2,4.016875028325904,4.016875028325904,1.0,5.0,8.347854319240385,estimated
+13,12,control,viability_percent,pvp_pct,PVP,pct,percentage points,frozen_gp_comparison_snapshot,141,48,6,6,1.6236772450135633,2.877665877150243,0.5,1.6775579279368773,15.698226615285964,estimated
+13,12,control,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,frozen_gp_comparison_snapshot,141,48,5,5,-0.5092488786922672,1.811663148194136,0.4,0.2082567751639644,0.9874143241465968,estimated
+13,12,control,viability_percent,fbs_pct,FBS,pct,percentage points,frozen_gp_comparison_snapshot,141,48,15,13,2.229721173528398,3.4445977848626343,0.7333333333333333,2.5,10.0,estimated
+13,12,control,viability_percent,hsa_pct,HSA,pct,percentage points,frozen_gp_comparison_snapshot,141,48,7,7,-2.085296556777513,2.456209573188318,0.2857142857142857,0.6200547594370113,7.696867081677418,estimated
+13,12,control,viability_percent,human_serum_pct,human serum,pct,percentage points,frozen_gp_comparison_snapshot,141,48,0,0,,,,,,no_present_explained_rows
+13,12,control,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,17,17,5,5,-0.0036311868417236402,0.01662379489347056,0.2,0.0121040520289899,0.3519774734416998,estimated
+13,12,control,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,17,17,8,8,-0.03175841060531201,0.03175841060531201,0.0,0.1517574580386533,0.4110977373526631,estimated
+13,12,control,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,17,17,8,8,-0.025324784919953422,0.025324784919953422,0.0,0.4434958440943709,1.5330693248584275,estimated
+13,12,control,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,17,17,5,5,0.04773788924196974,0.05582496247974662,0.8,0.1230991577776128,0.549726591657807,estimated
+13,12,control,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,17,17,0,0,,,,,,no_present_explained_rows
+13,12,control,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,17,17,1,1,-0.0430235300382146,0.0430235300382146,0.0,0.423671033441645,0.423671033441645,estimated
+13,12,control,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,17,17,1,1,0.0332623494862658,0.0332623494862658,1.0,0.1,0.1,estimated
+13,12,control,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,17,17,0,0,,,,,,no_present_explained_rows
+13,12,control,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,17,17,0,0,,,,,,no_present_explained_rows
+13,12,control,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,17,17,0,0,,,,,,no_present_explained_rows
+13,12,control,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,17,17,0,0,,,,,,no_present_explained_rows
+13,12,control,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,17,17,0,0,,,,,,no_present_explained_rows
+13,12,control,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,17,17,1,1,-0.0290856320883684,0.0290856320883684,0.0,0.3772682270582229,0.3772682270582229,estimated
+13,12,control,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,17,17,3,3,0.03951148543705183,0.05203948493950824,0.6666666666666666,0.1655117495325703,0.4003559668540912,estimated
+13,12,control,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,17,17,4,4,0.026104608393207072,0.03626853371554612,0.5,0.0193594118068608,0.0263313477020842,estimated
+13,12,control,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,17,17,3,3,0.045225255167551735,0.045225255167551735,1.0,0.3234228953596418,0.5,estimated
+13,12,control,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,17,17,0,0,,,,,,no_present_explained_rows
+13,12,control,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,17,17,0,0,,,,,,no_present_explained_rows
+13,12,control,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,17,17,0,0,,,,,,no_present_explained_rows
+13,12,control,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,17,17,0,0,,,,,,no_present_explained_rows
+13,12,control,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,17,17,0,0,,,,,,no_present_explained_rows
+13,12,control,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,17,17,4,4,-0.008457326966603375,0.017921402308886974,0.25,4.841137335482054,7.871730614992146,estimated
+13,12,control,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,17,17,2,2,0.0024828313420021,0.0240255745829547,0.5,4.658414069854614,7.696867081677418,estimated
+13,12,control,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,17,17,0,0,,,,,,no_present_explained_rows
+14,13,control,viability_percent,dmso_M,DMSO,M,percentage points,frozen_gp_comparison_snapshot,152,48,8,8,-1.7773260789611607,1.7773260789611607,0.0,0.01285738975,0.0960577194519765,estimated
+14,13,control,viability_percent,ectoin_M,ectoin,M,percentage points,frozen_gp_comparison_snapshot,152,48,16,14,3.4638305389684403,3.555950635546636,0.875,0.112962607700229,0.4704227835841755,estimated
+14,13,control,viability_percent,ethylene_glycol_M,ethylene glycol,M,percentage points,frozen_gp_comparison_snapshot,152,48,21,19,1.7808271948866656,2.343993600693093,0.8571428571428571,0.0938565115,1.7529608706469717,estimated
+14,13,control,viability_percent,glycerol_M,glycerol,M,percentage points,frozen_gp_comparison_snapshot,152,48,6,6,2.9240102674858175,3.387329856927479,0.8333333333333334,0.1537267092157568,0.549726591657807,estimated
+14,13,control,viability_percent,propylene_glycol_M,propylene glycol,M,percentage points,frozen_gp_comparison_snapshot,152,48,2,2,0.8397589421975629,0.8411575750431557,0.5,0.002061542,0.4665420783684165,estimated
+14,13,control,viability_percent,trehalose_M,trehalose,M,percentage points,frozen_gp_comparison_snapshot,152,48,5,5,-0.392217274571974,0.8072533347309878,0.4,0.0880014624143136,0.3043658999964462,estimated
+14,13,control,viability_percent,sucrose_M,sucrose,M,percentage points,frozen_gp_comparison_snapshot,152,48,3,3,-1.3095360957737208,1.3095360957737208,0.0,0.0298991495520079,0.466252283875273,estimated
+14,13,control,viability_percent,raffinose_M,raffinose,M,percentage points,frozen_gp_comparison_snapshot,152,48,3,3,-3.0924581305823877,3.0924581305823877,0.0,0.1610862069077319,0.3934835465272594,estimated
+14,13,control,viability_percent,taurine_M,taurine,M,percentage points,frozen_gp_comparison_snapshot,152,48,2,2,-0.9849338605241272,0.9849338605241272,0.0,0.0007369667758306,0.1960514455328202,estimated
+14,13,control,viability_percent,myo_inositol_M,myo-inositol,M,percentage points,frozen_gp_comparison_snapshot,152,48,3,3,-4.024299534745605,4.024299534745605,0.0,0.2709101449785158,0.4469746569712823,estimated
+14,13,control,viability_percent,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,percentage points,frozen_gp_comparison_snapshot,152,48,0,0,,,,,,no_present_explained_rows
+14,13,control,viability_percent,betaine_M,betaine,M,percentage points,frozen_gp_comparison_snapshot,152,48,1,1,-1.7823252485773882,1.7823252485773882,0.0,0.4185894893614068,0.4185894893614068,estimated
+14,13,control,viability_percent,proline_M,proline,M,percentage points,frozen_gp_comparison_snapshot,152,48,3,3,-0.2290191502507025,0.4490448872287396,0.3333333333333333,0.01984576425,0.4712392022993907,estimated
+14,13,control,viability_percent,glucose_M,glucose,M,percentage points,frozen_gp_comparison_snapshot,152,48,5,5,-1.164956873629904,1.164956873629904,0.0,0.1127153068616857,0.5,estimated
+14,13,control,viability_percent,creatine_M,creatine,M,percentage points,frozen_gp_comparison_snapshot,152,48,8,8,-1.8250347757740233,2.0354124632745414,0.25,0.0217097246887252,0.0270538110717823,estimated
+14,13,control,viability_percent,acetamide_M,acetamide,M,percentage points,frozen_gp_comparison_snapshot,152,48,6,6,-3.399275667054129,3.399275667054129,0.0,0.2555827389810611,0.3679231947129825,estimated
+14,13,control,viability_percent,sericin_pct,sericin,pct,percentage points,frozen_gp_comparison_snapshot,152,48,0,0,,,,,,no_present_explained_rows
+14,13,control,viability_percent,methylcellulose_pct,methylcellulose,pct,percentage points,frozen_gp_comparison_snapshot,152,48,1,1,0.2256008180196628,0.2256008180196628,1.0,0.5935446221184634,0.5935446221184634,estimated
+14,13,control,viability_percent,dextran_pct,dextran,pct,percentage points,frozen_gp_comparison_snapshot,152,48,5,5,-0.26422999790849444,2.1216185217518784,0.4,0.5264431474892101,5.0,estimated
+14,13,control,viability_percent,pvp_pct,PVP,pct,percentage points,frozen_gp_comparison_snapshot,152,48,6,6,0.8728767805657793,1.6866476919767832,0.6666666666666666,1.6775579279368773,11.970569780865324,estimated
+14,13,control,viability_percent,hyaluronic_acid_pct,hyaluronic acid,pct,percentage points,frozen_gp_comparison_snapshot,152,48,4,4,-0.7477019481971745,0.7902932529603786,0.25,0.013560916738022,0.9488272429405464,estimated
+14,13,control,viability_percent,fbs_pct,FBS,pct,percentage points,frozen_gp_comparison_snapshot,152,48,10,8,1.0805800782273485,1.744070622387445,0.9,3.6078290441241623,10.0,estimated
+14,13,control,viability_percent,hsa_pct,HSA,pct,percentage points,frozen_gp_comparison_snapshot,152,48,4,4,-2.651036476164243,2.820809020839066,0.25,0.6200547594370113,7.696867081677418,estimated
+14,13,control,viability_percent,human_serum_pct,human serum,pct,percentage points,frozen_gp_comparison_snapshot,152,48,0,0,,,,,,no_present_explained_rows
+14,13,control,critical_axial_load_N_per_needle,dmso_M,DMSO,M,N per needle,retrospective_refit,21,21,5,5,-0.008668830134469938,0.01729634020567506,0.2,0.0121040520289899,0.3519774734416998,estimated
+14,13,control,critical_axial_load_N_per_needle,ectoin_M,ectoin,M,N per needle,retrospective_refit,21,21,9,9,-0.04224817078579914,0.04224817078579914,0.0,0.1517574580386533,0.4110977373526631,estimated
+14,13,control,critical_axial_load_N_per_needle,ethylene_glycol_M,ethylene glycol,M,N per needle,retrospective_refit,21,21,9,9,-0.034427338522949893,0.034427338522949893,0.0,0.4434958440943709,1.5330693248584275,estimated
+14,13,control,critical_axial_load_N_per_needle,glycerol_M,glycerol,M,N per needle,retrospective_refit,21,21,8,8,0.0505200874622214,0.056342434354993774,0.875,0.1230991577776128,0.5876018278307212,estimated
+14,13,control,critical_axial_load_N_per_needle,propylene_glycol_M,propylene glycol,M,N per needle,retrospective_refit,21,21,0,0,,,,,,no_present_explained_rows
+14,13,control,critical_axial_load_N_per_needle,trehalose_M,trehalose,M,N per needle,retrospective_refit,21,21,1,1,-0.0594686862173905,0.0594686862173905,0.0,0.423671033441645,0.423671033441645,estimated
+14,13,control,critical_axial_load_N_per_needle,sucrose_M,sucrose,M,N per needle,retrospective_refit,21,21,1,1,0.0216287151910583,0.0216287151910583,1.0,0.1,0.1,estimated
+14,13,control,critical_axial_load_N_per_needle,raffinose_M,raffinose,M,N per needle,retrospective_refit,21,21,0,0,,,,,,no_present_explained_rows
+14,13,control,critical_axial_load_N_per_needle,taurine_M,taurine,M,N per needle,retrospective_refit,21,21,0,0,,,,,,no_present_explained_rows
+14,13,control,critical_axial_load_N_per_needle,myo_inositol_M,myo-inositol,M,N per needle,retrospective_refit,21,21,0,0,,,,,,no_present_explained_rows
+14,13,control,critical_axial_load_N_per_needle,methoxyphenyl_beta_d_glucopyranoside_M,4-methoxyphenyl beta-D-glucopyranoside,M,N per needle,retrospective_refit,21,21,0,0,,,,,,no_present_explained_rows
+14,13,control,critical_axial_load_N_per_needle,betaine_M,betaine,M,N per needle,retrospective_refit,21,21,0,0,,,,,,no_present_explained_rows
+14,13,control,critical_axial_load_N_per_needle,proline_M,proline,M,N per needle,retrospective_refit,21,21,1,1,-0.0396937447711669,0.0396937447711669,0.0,0.3772682270582229,0.3772682270582229,estimated
+14,13,control,critical_axial_load_N_per_needle,glucose_M,glucose,M,N per needle,retrospective_refit,21,21,4,4,0.049805800519740276,0.06328972161398422,0.75,0.1154207649120643,0.4003559668540912,estimated
+14,13,control,critical_axial_load_N_per_needle,creatine_M,creatine,M,N per needle,retrospective_refit,21,21,5,5,0.04376285730861942,0.055887056207573935,0.6,0.0152603518177304,0.0263313477020842,estimated
+14,13,control,critical_axial_load_N_per_needle,acetamide_M,acetamide,M,N per needle,retrospective_refit,21,21,5,5,0.03133687669333396,0.03133687669333396,1.0,0.1766068137189645,0.5,estimated
+14,13,control,critical_axial_load_N_per_needle,sericin_pct,sericin,pct,N per needle,retrospective_refit,21,21,0,0,,,,,,no_present_explained_rows
+14,13,control,critical_axial_load_N_per_needle,methylcellulose_pct,methylcellulose,pct,N per needle,retrospective_refit,21,21,0,0,,,,,,no_present_explained_rows
+14,13,control,critical_axial_load_N_per_needle,dextran_pct,dextran,pct,N per needle,retrospective_refit,21,21,0,0,,,,,,no_present_explained_rows
+14,13,control,critical_axial_load_N_per_needle,pvp_pct,PVP,pct,N per needle,retrospective_refit,21,21,0,0,,,,,,no_present_explained_rows
+14,13,control,critical_axial_load_N_per_needle,hyaluronic_acid_pct,hyaluronic acid,pct,N per needle,retrospective_refit,21,21,0,0,,,,,,no_present_explained_rows
+14,13,control,critical_axial_load_N_per_needle,fbs_pct,FBS,pct,N per needle,retrospective_refit,21,21,5,5,-0.009367200192751798,0.022821284718921923,0.4,4.841137335482054,7.871730614992146,estimated
+14,13,control,critical_axial_load_N_per_needle,hsa_pct,HSA,pct,N per needle,retrospective_refit,21,21,2,2,-0.00013685473049395054,0.03022228526265055,0.5,4.658414069854614,7.696867081677418,estimated
+14,13,control,critical_axial_load_N_per_needle,human_serum_pct,human serum,pct,N per needle,retrospective_refit,21,21,0,0,,,,,,no_present_explained_rows

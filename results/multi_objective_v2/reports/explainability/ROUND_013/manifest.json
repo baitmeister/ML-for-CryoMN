@@ -1,0 +1,110 @@
+{
+  "report_version": 1,
+  "target_round": 13,
+  "training_cutoff": 12,
+  "viability_strategy": "control",
+  "decision_id": "group11-control-informed-user-v1",
+  "sources": {
+    "data/processed_v2/formulations.csv": "a13ce8ecb119832a7375b2cfb383e8946d75b16e05f66dad4240ff52b9426c87",
+    "data/processed_v2/observations.csv": "cf9eabc87ce0409293e1eea0c2d3730406cd30e118b8ec22a869c171015ff1ab",
+    "config_v2/ingredients.yaml": "3bba2bc62572380ae772967220f8fded09152257679d0fa9570a966465af0634",
+    "config_v2/optimization.yaml": "997c7a83470bb5fe7b7741c8cef3ee69a4d2cca6f148c4f8013b3491fb773a3f",
+    "results/multi_objective_v2/rounds/ROUND_013/proposal/gp_strategy_decision.json": "bc38ceeb65072f1eaa5eff4dd672dc937c8548120c1a109f9d70617c2dc90eae",
+    "results/multi_objective_v2/rounds/ROUND_013/gp_comparison/training_observations.csv": "a67a4ef45fb3458307c3b43bb9206b3f859ddff45d82353c63c1713e0f0d315d",
+    "results/multi_objective_v2/rounds/ROUND_013/gp_comparison/manifest.json": "19afffdcf837f14475261b35de8da0f3eb347b5bbb6151591e0d08e8e529adfb",
+    "results/multi_objective_v2/rounds/ROUND_013/gp_comparison/control.json": "b78b82df89358971f675de3e4e694a8e8fbbcfab3495ace172cff03c712ad8fe"
+  },
+  "training_evidence": "archived_training_observations",
+  "method": "SHAP PermutationExplainer; independent empirical background; identity link",
+  "method_reference": "https://shap.readthedocs.io/en/latest/generated/shap.PermutationExplainer.html",
+  "shap_version": "0.52.0",
+  "code_sha256": {
+    "explainability.py": "b6e62836de2ef1cae879cf193420a9316a76cd93430846df2be089ef32343e43",
+    "models.py": "9eea312c0b381ccfa27563f90a17f21a3c16fbf4000e85c48212f714bc6becc0",
+    "batch_gp.py": "373847fda8ac846fdbd10fb4403d43ff978a885a7555b3627026fed46ff63909",
+    "gp_strategy.py": "037389f288767a4d4e522ab4a34adc945e56aa6fbb3b9ea551e0fe6f60f58961",
+    "group10_config.py": "a64b514b12e1d3304fd2a734482f73d68be0e6e983641312a908d3ed6b5017fb"
+  },
+  "settings": {
+    "max_explain": 48,
+    "max_background": 16,
+    "permutations": 16,
+    "top_features": 12,
+    "seed": 42
+  },
+  "endpoints": {
+    "viability_percent": {
+      "status": "available",
+      "training_rows": 141,
+      "model_evidence": "frozen_gp_comparison_snapshot",
+      "mechanical_definition_id": null,
+      "explained_rows": 48,
+      "background_rows": 16,
+      "additivity_max_absolute_error": 2.1316282072803006e-14,
+      "background_prediction": 36.55872773949432
+    },
+    "critical_axial_load_N_per_needle": {
+      "status": "available",
+      "training_rows": 17,
+      "model_evidence": "retrospective_refit",
+      "mechanical_definition_id": "terminal_force_08mm_after_1N_v1",
+      "explained_rows": 17,
+      "background_rows": 16,
+      "additivity_max_absolute_error": 2.220446049250313e-16,
+      "background_prediction": 0.39846583050219636
+    },
+    "intact_patch_formation_pass": {
+      "status": "available",
+      "training_rows": 141,
+      "model_evidence": "retrospective_refit",
+      "mechanical_definition_id": null,
+      "explained_rows": 48,
+      "background_rows": 16,
+      "additivity_max_absolute_error": 4.440892098500626e-16,
+      "background_prediction": 0.8556604982077687
+    },
+    "initial_stiffness_N_per_mm_per_needle": {
+      "status": "available",
+      "training_rows": 17,
+      "model_evidence": "retrospective_refit",
+      "mechanical_definition_id": "terminal_force_08mm_after_1N_v1",
+      "explained_rows": 17,
+      "background_rows": 16,
+      "additivity_max_absolute_error": 2.220446049250313e-16,
+      "background_prediction": 0.4855316547075801
+    },
+    "preparation_feasibility_pass": {
+      "status": "unavailable",
+      "reason": "0 training rows; requires 8",
+      "training_rows": 0,
+      "model_evidence": "retrospective_refit"
+    }
+  },
+  "limitations": [
+    "Attributions explain model predictions, not causal effects or predictive accuracy.",
+    "No acquisition function, uncertainty bonus, penalties or empirical gate policy is explained.",
+    "Retrospective refits use today's implementation/configuration and preceding labels, not a preserved historical production model.",
+    "Frozen GPs are archived comparison models matching the recorded strategy; their provenance is separate from production proposal forecasts.",
+    "Legacy baseline evidence is assumed available before campaign Round 1, consistent with existing retrospective audits.",
+    "Backgrounds and explained training populations vary across rounds and endpoints; rankings are descriptive, not a controlled longitudinal comparison.",
+    "Interventional masking can create untested or infeasible mixtures and does not preserve ingredient correlations.",
+    "Permutation estimates are sampled; no statistical confidence intervals or causal claims are implied."
+  ],
+  "generated_sha256": {
+    "intact_patch_formation_pass_shap_summary.png": "809e160d862d94cc2502e0c0a67e3e8afad6245c1d4f97d49048ebd239ce45ad",
+    "viability_percent_explained_rows.csv": "c1ba05198f24ea5fe9f538a61dc0197923755fdea8ce30450bc5a57f57a949b0",
+    "critical_axial_load_N_per_needle_shap_summary.png": "22b23d18389e50e70c9a61c77244d276b3ce6be3bc856597dede448c52177745",
+    "feature_importance.csv": "2829a859d605b7403394604ea2b7bd5601d53dc0e3c5cefa5fbfec9a7ce52bf8",
+    "intact_patch_formation_pass_background.csv": "6615eba1a2a8b74e88ee5d08e82a14bca122e30793295b1779cda87e430dce60",
+    "critical_axial_load_N_per_needle_background.csv": "508c1b662b2c586d9756f75fdbc75ee770da6df847ddab758433bb86675b8b05",
+    "feature_importance.png": "b3aa59055090cbb714c142e3466815d815ffd530c0ab93179bcbc1d9300f1597",
+    "viability_percent_shap_summary.png": "ee796495020822f0016bd218339502bf9ed0f002a5d79476143219494e960a2c",
+    "shap_values.csv": "c4eec37e2107bad126e0599592aa3b0d58b104905c19c780d763e82dabc9c5ac",
+    "initial_stiffness_N_per_mm_per_needle_shap_summary.png": "69e5673d5be7e4c657d7759b068b6d7ada1039fbc85e0896a820538c952b642a",
+    "critical_axial_load_N_per_needle_explained_rows.csv": "d37756af9d613c0d016b702210909833d0ca8e47be11e7cd07655dccc6ad0b1c",
+    "intact_patch_formation_pass_explained_rows.csv": "b6be07f1583e12f9325ccc2c77df5ea3ede3e5a8f8634b78a8ca04c374d6f0a3",
+    "viability_percent_background.csv": "00670405bd77853be0148013af30f09e1624c5c7c84c112b613d65c3eda4f6c9",
+    "initial_stiffness_N_per_mm_per_needle_explained_rows.csv": "2afeda86dca4181a1a622e406b47df8b1c434549c3b0a6a7a802df5ad09cbc0a",
+    "initial_stiffness_N_per_mm_per_needle_background.csv": "508c1b662b2c586d9756f75fdbc75ee770da6df847ddab758433bb86675b8b05"
+  }
+}
