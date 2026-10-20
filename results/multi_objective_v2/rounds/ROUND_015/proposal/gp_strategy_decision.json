@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "model_version": "batch_gp_v1",
+  "decision_id": "group11-control-informed-user-v1",
+  "chosen_by": "user: explicit strategy selection and Group 11 sparse-control authorization",
+  "decided_at": "2026-09-17T11:00:49.568491+00:00",
+  "effective_round": 11,
+  "viability_strategy": "control",
+  "mechanical_strategy": "current_comparable_endpoint",
+  "acquisition": "shared_qlognehvi_finite_pool",
+  "objective": "expected_formulation_response",
+  "acceptance_thresholds": null,
+  "control_reference_sd_pp": 50,
+  "sparse_control_exception": {
+    "authorized": true,
+    "round": 11,
+    "minimum_control_batches": 1
+  },
+  "evidence": [
+    "docs/group10/audit/campaign_through_group10_20260917/combined_groups2_10/README.md",
+    "User approved control-informed model despite single historical control batch"
+  ],
+  "review_after_groups": [
+    11,
+    12
+  ],
+  "sha256": "06067632e2148cf01b2314b0f8a12884d64b5fe0ba4a22638fc3bbfae7169ed7"
+}

@@ -1,0 +1,14 @@
+{
+  "style_version": "selected_v1",
+  "context": "State after ROUND_014; terminal_force_08mm_after_1N_v1",
+  "format": "transparent PNG",
+  "dpi": 300,
+  "source_sha256": "99e4ef10ceab7c25a184e9973913812e5bae889518704f841d5564813c20477f",
+  "sources": [
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_014/Group14_3.csv",
+      "sha256": "6f97452819dab9da11c353e36f3387130a3bc7edf490df12b96c725f6f5429ee"
+    }
+  ],
+  "synthetic_data": false
+}
