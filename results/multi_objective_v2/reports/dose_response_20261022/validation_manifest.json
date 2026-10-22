@@ -1,0 +1,56 @@
+{
+  "seed": 20261022,
+  "synthetic_runs": 180,
+  "sequential_runs": 24,
+  "synthetic_conditions": {
+    "bracketed/broad": 30,
+    "bracketed/monotone": 30,
+    "bracketed/narrow": 30,
+    "campaign_design/broad": 30,
+    "campaign_design/monotone": 30,
+    "one_sided/broad": 30
+  },
+  "checks": [
+    "frozen model and training hashes",
+    "no target/future outcomes in historical snapshots",
+    "joint posterior NumPy/BoTorch agreement",
+    "independent BoTorch hypervolume agreement",
+    "source files unchanged during audit",
+    "unique simulation keys and probability bounds"
+  ],
+  "python": "3.14.6 (v3.14.6:c63aec69bd5, Jun 10 2026, 08:07:54) [Clang 21.0.0 (clang-2100.1.1.101)]",
+  "versions": {
+    "numpy": "2.4.6",
+    "pandas": "3.0.3",
+    "scipy": "1.17.1",
+    "scikit-learn": "1.9.0",
+    "torch": "2.12.0",
+    "botorch": "0.18.1",
+    "gpytorch": "1.15.2",
+    "matplotlib": "3.11.0"
+  },
+  "script_sha256": "ddfbab3fe0e174e67dacaeb9027d3f8f7da65cf9f355388ee5e9e3d2607b4b3d",
+  "outputs": {
+    "README.md": "5c08e6a6809c0f269d61d5611d63450bb67240a587c10b76167847adef2ea833",
+    "acquisition_validation.png": "bfcfb83009302ed45451236bc71aef2f548cb5244834df8700e0dffa93482790",
+    "actual_raw_acquisition.csv": "388f3ca919f61e8b4197f9ab6594e1dbc98a0c5329a936cf8a2a9979cdbccce8",
+    "actual_summary.json": "85bfec1bd7c61a33ced07c42f4d3451ea62f3cbe699538cff6bb706c0922f3c3",
+    "dose_support.csv": "468416fed5903a47356944cae94615aafb8ad8b696a31260da1ffe028f717f7a",
+    "ectoine_all_observed_backgrounds.csv": "d5a1a30d0b76d85988a862cfc4ae5403cac5e4e5dd870d077d1fa75a3f5f6cee",
+    "ectoine_curves.csv": "5d8b6e9dbb3a0a7941e9fe2fdc9969579bc3a3eb0c645ca96e7ff1025802a159",
+    "ectoine_history.csv": "b022d92a7f26fddb584863a06acb848cb6bd8ce29d548565fabd345309b8282d",
+    "ectoine_mechanical_contrasts.csv": "fa661e1dc2a9b101c453e37009065f98f7620123bd02a68973df3568a3d90295",
+    "ectoine_observations.csv": "6b9676802fd67b3d92e6b10ecde6a2cac138dae84eadce8bf6938249acfe9116",
+    "ectoine_posterior.png": "3d18ee07d56d10fb98e00558643dd3ff16651697d72583a1622a1f8b491cda15",
+    "ectoine_strategy_contrasts.csv": "f61b0f38abe1b7cb1daedf89c6faa558a9f5b53995d082abbe26dd9c8dc724c2",
+    "ingredient_screen.csv": "0269998c0afe129dc69168efb46ef399be03f60839e036f177e9cf8d2bc84ec5",
+    "leave_round_out_predictions.csv": "ceae2aa158e2617d95386d13687a3689644c7610169b66f3428cf25e0c8f8612",
+    "leave_round_out_shape.csv": "46849b7edb7018cc5aec9b789c8bf12fb4304e4f7dd63295f184feadf1a2f135",
+    "sequential_acquisition.csv": "a83e72e4c09dfe4697c868e927d80c3b6ce7adc7b92c52e58ba34342cc6e78ed",
+    "sequential_summary.csv": "a148dc91a4725f72fc704cc3bbd337a60677e250d2acd13b91458d30d469789e",
+    "synthetic_checks.png": "174be3643f0531edccedcef7d608bd2e31c8c78440c606a000c69d6dcfb89d3d",
+    "synthetic_example_curves.csv": "77fee12291c9fc5399f0ef1c4a43b5ab3de3f8d55abafc976f7d873d5018cfa0",
+    "synthetic_recovery.csv": "b6264e9a6d0c2ada3363b7b0b8eb93dbc1d397ee4fe7d3e9955a8677862c8fdd",
+    "synthetic_summary.csv": "050e155b6c4daa92b829d5eee14cc19ba92305a590bb1568e96ba830b057bb87"
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "training_ordinary": 163,
+  "training_controls": 5,
+  "ectoine_rows": 66,
+  "ectoine_unique_formulations": 52,
+  "mechanical_rows": 26,
+  "paired_baseline_rows": 26,
+  "primary_formulation_id": "v2_3e8ef993abba",
+  "contexts": {
+    "most_repeated_ectoine_recipe": "ethylene_glycol_M=1.06517",
+    "EG_0.5M": "ethylene_glycol_M=0.5",
+    "EG_1M_FBS_5pct": "ethylene_glycol_M=1; fbs_pct=5"
+  },
+  "batch_sd": 7.711710480469841,
+  "residual_sd": 10.084963448540753,
+  "ectoine_lengthscale_M": 0.1370779715855822,
+  "ectoine_loro_rmse": 16.286147686756607,
+  "ectoine_loro_95_coverage": 0.9242424242424242,
+  "source_hashes": {
+    "data/processed_v2/formulations.csv": "b889b2b3ccf9bef42cb715d47b451ba9b877d6669a3215fdfa2021cb23c50474",
+    "data/processed_v2/observations.csv": "da3352fac6979f1164e3ce4b47f47fe84a06c6489f450ef7d750f75c7f48456a",
+    "results/multi_objective_v2/rounds/ROUND_015/gp_comparison/training_observations.csv": "2e56ca0c5c69c62bd835c7404f912ae50867898204e5ded778a10f44a2f827d4",
+    "results/multi_objective_v2/rounds/ROUND_015/gp_comparison/manifest.json": "651ad137a05284e01c15873b10ad1e34d21d85bfb6f50047d2211a78988c881f",
+    "research/dose_response/validate_dose_response.py": "ddfbab3fe0e174e67dacaeb9027d3f8f7da65cf9f355388ee5e9e3d2607b4b3d",
+    "src/08_multi_objective/helper/batch_gp.py": "373847fda8ac846fdbd10fb4403d43ff978a885a7555b3627026fed46ff63909",
+    "src/08_multi_objective/helper/gp_strategy.py": "037389f288767a4d4e522ab4a34adc945e56aa6fbb3b9ea551e0fe6f60f58961",
+    "src/08_multi_objective/helper/models.py": "9eea312c0b381ccfa27563f90a17f21a3c16fbf4000e85c48212f714bc6becc0"
+  },
+  "provenance": {
+    "viability_strategy": "control",
+    "decision_id": "group11-control-informed-user-v1",
+    "sources": {
+      "results/multi_objective_v2/rounds/ROUND_015/proposal/gp_strategy_decision.json": "bc38ceeb65072f1eaa5eff4dd672dc937c8548120c1a109f9d70617c2dc90eae",
+      "results/multi_objective_v2/rounds/ROUND_015/gp_comparison/training_observations.csv": "2e56ca0c5c69c62bd835c7404f912ae50867898204e5ded778a10f44a2f827d4",
+      "results/multi_objective_v2/rounds/ROUND_015/gp_comparison/manifest.json": "651ad137a05284e01c15873b10ad1e34d21d85bfb6f50047d2211a78988c881f",
+      "results/multi_objective_v2/rounds/ROUND_015/gp_comparison/control.json": "3f8dcbe3120e9f32a628ef40e7463424eebd519dcaa1ff6228f93a1560240c3d"
+    },
+    "training_evidence": "archived_training_observations"
+  },
+  "posterior_adapter_verified": true
+}

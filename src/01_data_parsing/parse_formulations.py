@@ -669,7 +669,7 @@ def auto_resolve_duplicates(df: pd.DataFrame, duplicates: List[Tuple], interacti
             keep_idx = indices[0]
             rows_to_update[keep_idx] = {
                 'viability_percent': avg_viability,
-                'source_doi': '; '.join(set(str(s) for s in sources if s))[:500]  # Combine sources
+                'source_doi': '; '.join(set(str(s) for s in sources if s))  # Combine sources
             }
             rows_to_drop.extend(indices[1:])
     
