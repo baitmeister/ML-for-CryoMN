@@ -1,0 +1,79 @@
+{
+  "version": "batch_gp_v1",
+  "batch_id": "ROUND_016",
+  "cutoff": 15,
+  "created_at": "2026-10-22T13:30:46.196312+00:00",
+  "features": [
+    "dmso_M",
+    "ectoin_M",
+    "ethylene_glycol_M",
+    "glycerol_M",
+    "propylene_glycol_M",
+    "trehalose_M",
+    "sucrose_M",
+    "raffinose_M",
+    "taurine_M",
+    "myo_inositol_M",
+    "methoxyphenyl_beta_d_glucopyranoside_M",
+    "betaine_M",
+    "proline_M",
+    "glucose_M",
+    "creatine_M",
+    "acetamide_M",
+    "sericin_pct",
+    "methylcellulose_pct",
+    "dextran_pct",
+    "pvp_pct",
+    "hyaluronic_acid_pct",
+    "fbs_pct",
+    "hsa_pct",
+    "human_serum_pct"
+  ],
+  "reference_ids": [
+    "reference_b5a5b7b1176f",
+    "v2_34d667ff4762",
+    "v2_2df18f043f0c"
+  ],
+  "models": [
+    "current",
+    "campaign",
+    "campaign_noise",
+    "batch",
+    "control"
+  ],
+  "fit_errors": [],
+  "proposal_sha256": "47c7ed0cb2ef40567536992c31369cbfd3d53a3e6fef872f8e61b1dde2dcc64f",
+  "training_sha256": "3af142428175c0bfd19dc4050ac330eb9c610fe0bf153d2a521a19d4bdd9b092",
+  "code_sha256": {
+    "gp_comparison.py": "73b7c370b77268e3335b74ebc66e5fdd1368e0878fe3f64fee74d358d7418a28",
+    "batch_gp.py": "373847fda8ac846fdbd10fb4403d43ff978a885a7555b3627026fed46ff63909",
+    "gp_strategy.py": "037389f288767a4d4e522ab4a34adc945e56aa6fbb3b9ea551e0fe6f60f58961"
+  },
+  "data_source_sha256": "0bdaa75e84a93341ac9eb7d2a42e33f2ffeafc06c367598241b7420ab548454d",
+  "assumptions": {
+    "one_biological_batch_per_group": true,
+    "no_target_outcomes_viewed": true,
+    "residual_sd_bounds_pp": [
+      0.5,
+      30.0
+    ],
+    "batch_sd_bounds_pp": [
+      0.01,
+      50.0
+    ],
+    "reference_prior_sd_pp": 50.0,
+    "hyperparameters": "bounded maximum likelihood; parameter uncertainty not integrated",
+    "replicates": "formulation-batch means; no unverified independence-based variance division"
+  },
+  "hashes": {
+    "campaign.json": "606d1ff0126e3e6510f332c202e6c430edb75b0919b831d7a79414d5f21fc022",
+    "predictions.csv": "b92542d5984217dd93c5a3afafcaeace1ea695fef45bbd7e99acac2a5cc963f1",
+    "slate.csv": "601837b2e6cde529675a5dfbcb83b95919a4d6262f98c93ece0058cd80ee7bc2",
+    "campaign_noise.json": "3652717fb1c8e96f135b40ed394c5a21b10a2c0e41045154e1a6f4d5772e37fa",
+    "offsets.csv": "830446179eba2992f34662faea26ddc765ca5111add1f65b4d7e647f4d97eb5e",
+    "batch.json": "4159bfb3d15f55ef707fae55b443b759e3cff3c9f923692ce64e8c6a7d117710",
+    "current.json": "0629f17f0eaf38272ff9a6966227cea859b9590cdbd42e72039cb3314f594232",
+    "training_observations.csv": "3af142428175c0bfd19dc4050ac330eb9c610fe0bf153d2a521a19d4bdd9b092",
+    "control.json": "0d55ea379490c9d5f745a8f5777ce79b9d380c05ea5cf7bfc888f1ea230cd7d1"
+  }
+}

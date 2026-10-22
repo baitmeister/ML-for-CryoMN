@@ -1,9 +1,9 @@
 {
   "style_version": "selected_v1",
-  "context": "Cumulative campaign; frozen prospective evidence | Recorded GP decisions: ROUND_011: group11-control-informed-user-v1, ROUND_012: group11-control-informed-user-v1, ROUND_013: group11-control-informed-user-v1, ROUND_014: group11-control-informed-user-v1",
+  "context": "Cumulative campaign; frozen prospective evidence | Recorded GP decisions: ROUND_011: group11-control-informed-user-v1, ROUND_012: group11-control-informed-user-v1, ROUND_013: group11-control-informed-user-v1, ROUND_014: group11-control-informed-user-v1, ROUND_015: group11-control-informed-user-v1",
   "format": "transparent PNG",
   "dpi": 300,
-  "source_sha256": "a9835793ebc96a689d735f08154e84b841b9878da9f6dd3a1178a388f2a1e6d5",
+  "source_sha256": "88309b6b846398495e033f1a8845dfb92e40d0112202f4d56f7cb1d82639a7f2",
   "sources": [],
   "synthetic_data": false
 }
