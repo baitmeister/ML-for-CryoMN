@@ -108,3 +108,22 @@ formulation_id,viability_percent,dmso_percent,source_doi,dmso_M,trehalose_M,fbs_
 - **Unique ingredients**: 34
 - **Molar ingredients**: 14 (dmso, trehalose, glycerol, sucrose, etc.)
 - **Percentage ingredients**: 20 (fbs, hsa, hes, peg_400, peg_3350, peg_20k, pvp, etc.)
+
+
+## v2 concentration correction
+
+Unit matching distinguishes `M` from `mM`; ingredient matching is
+case-insensitive. The active CSVs have matching `_v2.csv` snapshots. This release
+corrects 42 verified concentration fields in 35 formulations, including raw
+record 102's `o.5M` typo, and retains all 198 records and their viability targets.
+Model retraining is outside the scope of this correction.
+
+The default script reads `data/raw/concentration_review_v2.json` after parsing.
+It warns about five unresolved concentration fields whose legacy values are
+unverified, preserves the baseline target groups for two matching composition
+pairs, and rejects a review whose input hash does not match the raw CSV.
+Changes to the input or unresolved entries require a corresponding source-review
+update. The pure `parse_csv()` function returns concentrations from the raw text.
+
+See [the v2 audit](../../docs/concentration_corrections_v2.md) for the error
+mechanism, commit provenance, unresolved fields and regeneration checks.

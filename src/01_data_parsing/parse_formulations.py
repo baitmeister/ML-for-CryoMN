@@ -14,6 +14,9 @@ import pandas as pd
 import numpy as np
 import re
 import os
+import hashlib
+import json
+import warnings
 from typing import Dict, List, Tuple, Optional
 from collections import defaultdict
 
@@ -164,60 +167,40 @@ CULTURE_MEDIA = [
 # =============================================================================
 
 def extract_concentration(text: str, ingredient: str) -> Tuple[Optional[float], Optional[str]]:
+    """Extract the concentration using the unit written next to its value.
+
+    Ingredient names are case-insensitive, but M (molar) and mM
+    (millimolar) are distinct. Never infer units from the regex source or
+    lowercase the input: either would turn molar values into millimolar.
     """
-    Extract concentration value and unit for an ingredient from text.
-    
-    Returns:
-        Tuple of (value, unit) or (None, None) if not found
-    """
-    text_lower = text.lower()
-    ingredient_lower = ingredient.lower()
-    
-    # Common patterns for concentration extraction
-    patterns = [
-        # "10% DMSO", "10 % DMSO"
-        rf'(\d+\.?\d*)\s*%\s*(?:v/v\s*)?{re.escape(ingredient_lower)}',
-        rf'{re.escape(ingredient_lower)}\s*(\d+\.?\d*)\s*%',
-        
-        # "10% (v/v) DMSO"
-        rf'(\d+\.?\d*)\s*%\s*\(?v/v\)?\s*{re.escape(ingredient_lower)}',
-        
-        # "PEG 400 (10 wt% in DMEM)" - ingredient followed by (X wt% ...)
-        rf'{re.escape(ingredient_lower)}\s*\(\s*(\d+\.?\d*)\s*(?:wt%|wt\s*%|w/v%)',
-        rf'{re.escape(ingredient_lower)}\s*\(\s*(\d+\.?\d*)\s*%',
-        
-        # "0.5M trehalose", "0.5 M trehalose"
-        rf'(\d+\.?\d*)\s*[mM]\s*{re.escape(ingredient_lower)}',
-        rf'{re.escape(ingredient_lower)}\s*(\d+\.?\d*)\s*[mM](?!\w)',
-        
-        # "500 mM trehalose"
-        rf'(\d+\.?\d*)\s*mM\s*{re.escape(ingredient_lower)}',
-        rf'{re.escape(ingredient_lower)}\s*(\d+\.?\d*)\s*mM',
-        
-        # "30 mmol/L trehalose"
-        rf'(\d+\.?\d*)\s*(?:mmol/[lL]|mM)\s*{re.escape(ingredient_lower)}',
-        
-        # "1.5M EG"
-        rf'(\d+\.?\d*)\s*M\s*{re.escape(ingredient_lower)}',
-        
-        # Generic number before ingredient
-        rf'(\d+\.?\d*)\s*(?:%|M|mM|mg/ml|wt%)\s*{re.escape(ingredient_lower)}',
+    name = rf'(?i:{re.escape(ingredient)})'
+    # Do not accept the trailing "5M" in a malformed value such as "o.5M".
+    value = r'(?<![\w.])(\d+(?:\.\d*)?|\.\d+)'
+
+    percentage_patterns = [
+        rf'{value}\s*%\s*(?i:v/v\s*)?{name}',
+        rf'{name}\s*{value}\s*%',
+        rf'{value}\s*%\s*\(?(?i:v/v)\)?\s*{name}',
+        rf'{name}\s*\(\s*{value}\s*(?i:wt%|wt\s*%|w/v%)',
+        rf'{name}\s*\(\s*{value}\s*%',
     ]
-    
-    for pattern in patterns:
-        match = re.search(pattern, text_lower, re.IGNORECASE)
+    for pattern in percentage_patterns:
+        match = re.search(pattern, text)
         if match:
-            value = float(match.group(1))
-            # Determine unit from pattern
-            if '%' in pattern or 'wt%' in text_lower:
-                return value, '%'
-            elif 'mM' in pattern or 'mmol' in pattern.lower():
-                return value, 'mM'
-            elif 'M' in pattern:
-                return value, 'M'
-            elif 'mg/ml' in pattern:
-                return value, 'mg/ml'
-    
+            return float(match.group(1)), '%'
+
+    unit = r'(?P<unit>mM|M|(?i:mmol/[lL]|mg/ml))'
+    for pattern in [rf'{value}\s*{unit}\s*{name}',
+                    rf'{name}\s*{value}\s*{unit}(?!\w)']:
+        match = re.search(pattern, text)
+        if match:
+            matched_unit = match.group('unit')
+            if matched_unit.lower().startswith('mmol/'):
+                matched_unit = 'mM'
+            elif matched_unit.lower() == 'mg/ml':
+                matched_unit = 'mg/ml'
+            return float(match.group(1)), matched_unit
+
     return None, None
 
 
@@ -532,7 +515,7 @@ def parse_csv(input_path: str) -> pd.DataFrame:
         if viability is None:
             continue
         
-        # Parse ingredients (now returns Dict[str, Tuple[float, str]])
+        # Parse ingredients into Dict[str, Tuple[float, str]]
         ingredients = parse_formulation_text(formulation_text)
         
         # Also get DMSO from dedicated column for accuracy
@@ -593,7 +576,63 @@ def parse_csv(input_path: str) -> pd.DataFrame:
     return output_df
 
 
-def find_duplicate_formulations(df: pd.DataFrame) -> List[Tuple[int, int, float, float]]:
+def apply_concentration_review(df: pd.DataFrame, input_path: str,
+                               review_path: str) -> Tuple[pd.DataFrame, Dict[int, int]]:
+    """Apply explicit pending-review holds for the source-checked v2 release.
+
+    These holds are not scientific corrections: their legacy values remain
+    unverified. The raw-file digest prevents applying row IDs to another input.
+    Verified concentrations are checked against the parser, never overridden.
+    """
+    with open(review_path, encoding='utf-8') as handle:
+        review = json.load(handle)
+    with open(input_path, 'rb') as handle:
+        digest = hashlib.sha256(handle.read()).hexdigest()
+    if digest != review['input_sha256']:
+        raise ValueError('Raw CSV changed: update the concentration review before writing output.')
+
+    reviewed = df.copy()
+    for entry in review['confirmed'] + review['pending']:
+        rows = reviewed['formulation_id'].isin(entry['raw_records'])
+        if int(rows.sum()) != len(entry['raw_records']):
+            raise ValueError(f"Missing reviewed raw records: {entry['raw_records']}")
+        expected = entry.get('correct_M', entry.get('raw_text_M'))
+        if not np.allclose(reviewed.loc[rows, entry['field']], expected,
+                           rtol=1e-12, atol=1e-14):
+            raise ValueError(f"Parsed concentration differs from review: {entry['field']}")
+
+    for entry in review['pending']:
+        rows = reviewed['formulation_id'].isin(entry['raw_records'])
+        reviewed.loc[rows, entry['field']] = entry['retained_legacy_M']
+    if review['pending']:
+        warnings.warn(
+            f"{len(review['pending'])} concentration fields remain UNVERIFIED; "
+            "legacy values retained by the v2 review. See data/raw/concentration_review_v2.json. "
+            "These holds must be resolved before treating the dataset as fully validated.",
+            UserWarning,
+            stacklevel=2,
+        )
+
+    protected_groups = {}
+    for group in review['preserved_duplicate_groups']:
+        for raw_id in group['raw_records']:
+            if raw_id in protected_groups or raw_id not in set(df['formulation_id']):
+                raise ValueError(f'Invalid preserved duplicate-group record: {raw_id}')
+            protected_groups[raw_id] = group['formulation_id']
+    return reviewed, protected_groups
+
+
+def _formulation_key(row, ingredient_cols, protected_groups):
+    # Preserve the baseline target groups for equal compositions across
+    # studies. Concentration correction must not re-average targets.
+    profile = tuple(round(row[col], 6) for col in ingredient_cols)
+    group = (protected_groups or {}).get(int(row['formulation_id']))
+    return profile, group
+
+
+def find_duplicate_formulations(df: pd.DataFrame,
+                                protected_groups: Optional[Dict[int, int]] = None
+                                ) -> List[Tuple[int, int, float, float]]:
     """
     Find formulations with identical ingredient profiles but different viabilities.
     
@@ -608,7 +647,7 @@ def find_duplicate_formulations(df: pd.DataFrame) -> List[Tuple[int, int, float,
     
     for idx, row in df.iterrows():
         # Create a hashable key from ingredient values
-        key = tuple(round(row[col], 6) for col in ingredient_cols)
+        key = _formulation_key(row, ingredient_cols, protected_groups)
         
         if key in seen:
             prev_idx, prev_viability = seen[key]
@@ -621,7 +660,8 @@ def find_duplicate_formulations(df: pd.DataFrame) -> List[Tuple[int, int, float,
     return duplicates
 
 
-def auto_resolve_duplicates(df: pd.DataFrame, duplicates: List[Tuple], interactive: bool = False) -> pd.DataFrame:
+def auto_resolve_duplicates(df: pd.DataFrame, duplicates: List[Tuple], interactive: bool = False,
+                            protected_groups: Optional[Dict[int, int]] = None) -> pd.DataFrame:
     """
     Automatically resolve duplicate formulations by averaging viabilities.
     
@@ -634,6 +674,7 @@ def auto_resolve_duplicates(df: pd.DataFrame, duplicates: List[Tuple], interacti
         df: Parsed DataFrame
         duplicates: List of duplicate pairs
         interactive: If True, prompt for each duplicate (only for small numbers)
+        protected_groups: Optional raw-record groups retained during source review
         
     Returns:
         DataFrame with duplicates resolved
@@ -650,7 +691,7 @@ def auto_resolve_duplicates(df: pd.DataFrame, duplicates: List[Tuple], interacti
     # Group all rows by their ingredient profile
     profile_groups = defaultdict(list)
     for idx, row in df.iterrows():
-        key = tuple(round(row[col], 6) for col in ingredient_cols)
+        key = _formulation_key(row, ingredient_cols, protected_groups)
         profile_groups[key].append(idx)
     
     # Find groups with multiple entries and different viabilities
@@ -711,10 +752,15 @@ def main():
     # Parse CSV
     df = parse_csv(input_path)
     
-    # Find and resolve duplicates (automatically average viabilities)
-    duplicates = find_duplicate_formulations(df)
+    # The v2 review limits this release to confirmed concentration corrections.
+    # Never silently replace pending source values or merge equal profiles.
+    review_path = os.path.join(project_root, 'data', 'raw', 'concentration_review_v2.json')
+    df, protected_groups = apply_concentration_review(df, input_path, review_path)
+
+    # Retain baseline duplicate averaging within each reviewed target group.
+    duplicates = find_duplicate_formulations(df, protected_groups)
     if duplicates:
-        df = auto_resolve_duplicates(df, duplicates)
+        df = auto_resolve_duplicates(df, duplicates, protected_groups=protected_groups)
     
     # Save output
     df.to_csv(output_path, index=False)

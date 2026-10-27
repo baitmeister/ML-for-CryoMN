@@ -1,0 +1,801 @@
+﻿All ingredients in cryoprotective solution,DMSO usage,Cooling rate,Viability,Recovery,Doubling time,Comments about method,Comments about results,Source (DOI link),Protective protein type,Protective protein concentration,Non-reducing sugar type,Non-reducing sugar concentration,PEG weight,PEG concentration,Alternative CPA type,Alternative CPA concentration,Basal medium
+MSCs: 300 mM Ethylene glycol + 1 mM Taurine + 1% Ectoine (SEGA 10°C).,10%,"Optimal at 1°C/min.
+",96%,"In 96-well(SEGA 10°C):40%, DMSO 1°C: 21%   In vial freezing SEGA 10°C = 103 ± 15 %",Not explicitly mentioned,"Differential Evolution (DE) Algorithm-Method Extensibility,High-throughput screening: 96-well plate ,and DMSO-free","Higher viability( in Vial freezing and good recovery)  It can be optimized by adding rate of addition and removal of cryopro-tectants, temperature of nucleation, incubation time,hold temperature and more.", https://doi.org/10.1002/term.2175,,,,,,,,,
+1) 0.25 M trehalose in DMEM/Ham F-12,0%,"Slow freezing: cryovials kept at -80°C overnight, then transferred to liquid nitrogen (-196°C)",12.50%,"least effective in preserving functional properties (morphology, differentiation, stemness)",Not explicitly stated; similar cell numbers from day 1 to 14 for fresh and cryopreserved ASCs suggest comparable proliferation rates. It takes around 14 days for them to double.,"- ASCs isolated from adipose tissue was cultured to passage 2, cryopreserved for 3 months in liquid nitrogen.
+- Six CPA combinations tested using slow freezing.
+- Post-thaw, cells sub-cultured to passage 3 for assays (viability via trypan blue, phenotyping, proliferation, differentiation, stemness via Real-Time PCR).
+- Differentiation assessed by staining and gene expression (adipogenic, osteogenic, chondrogenic markers).","- Cryopreserved ASCs maintained fibroblast-like morphology, surface markers, and differentiation potential (adipogenic, osteogenic, chondrogenic) similar to fresh ASCs.
+- 5% DMSO without FBS showed high viability, low cytotoxicity, and maintained functional properties, suggesting it as an ideal xeno-free CPA.
+- Stemness markers (NANOG, OCT-4, SOX-2, REX-1) showed significantly higher expression in cryopreserved ASCs (p<0.05).
+- Trehalose alone was least effective due to inability to prevent intracellular ice formation.",10.1038/srep09596,,,,,,,,,
+2) 5% DMSO in DMEM/Ham F-12,5%,"Slow freezing: cryovials kept at -80°C overnight, then transferred to liquid nitrogen (-196°C)",71%,"maintained functional properties (morphology, differentiation, stemness) comparable to 10% DMSO + 90% FBS",Not explicitly stated; similar cell numbers from day 1 to 14 for fresh and cryopreserved ASCs suggest comparable proliferation rates,,,10.1038/srep09596,,,,,,,,,
+3) 10% DMSO in DMEM/Ham F-12,10%,"Slow freezing: cryovials kept at -80°C overnight, then transferred to liquid nitrogen (-196°C)",82%,"not specified individually, assumed similar to other DMSO-based solutions unless combined with FBS",Not explicitly stated; similar cell numbers from day 1 to 14 for fresh and cryopreserved ASCs suggest comparable proliferation rates,,,10.1038/srep09596,,,,,,,,,
+4) 5% DMSO + 20% FBS in DMEM/Ham F-12,5%,"Slow freezing: cryovials kept at -80°C overnight, then transferred to liquid nitrogen (-196°C)",82%,"not specified individually, assumed similar to other DMSO-based solutions unless combined with FBS",Not explicitly stated; similar cell numbers from day 1 to 14 for fresh and cryopreserved ASCs suggest comparable proliferation rates,,,10.1038/srep09596,,,,,,,,,
+5) 10% DMSO + 20% FBS in DMEM/Ham F-12,10%,"Slow freezing: cryovials kept at -80°C overnight, then transferred to liquid nitrogen (-196°C)",84%,"not specified individually, assumed similar to other DMSO-based solutions unless combined with FBS",Not explicitly stated; similar cell numbers from day 1 to 14 for fresh and cryopreserved ASCs suggest comparable proliferation rates,,,10.1038/srep09596,,,,,,,,,
+6) 10% DMSO + 90% FBS in DMEM/Ham F-12,10%,"Slow freezing: cryovials kept at -80°C overnight, then transferred to liquid nitrogen (-196°C)",82%,"maintained functional properties (morphology, differentiation, stemness) comparable to 5% DMSO alone",Not explicitly stated; similar cell numbers from day 1 to 14 for fresh and cryopreserved ASCs suggest comparable proliferation rates,,,10.1038/srep09596,,,,,,,,,
+"Dulbecco's modified eagle medium, supplemented with 10% fetal calf serum, 5% DMSO",5%,"3°C/min, 5/min, 10/min 
+",66.25%,,,The cells were allowed to reach room temp so that the cryopreservant could diffuse into the cells. They were cooled down to -80C and stored in liquid nitrogen.,Standard cyropreservation procedures do not seem to be efficient for BMMeSCs. Viability assays by flow cytometry was more sensitive. Significant cell death is due to cell shrinkage and decreased nucleus to cytoplasm ratio. ,10.1016/j.transproceed.2008.03.04,,,,,,,,,
+"10 µM S1P+0.05 M glucose, 0.05 M sucrose,and 1.5 M ethylene glycol(cocktail solution)((S1P→C ))",0,−1 ◦C/min from 25◦C to−80 ◦C,91.4 ±2.7%,"didn't mentioned, but can get approximate prediction from percentage of early apoptotic cells(3.6 ±0.4%) and late apoptotic cells( 2.3 ±0.2%)",S1P→C (34.2 ±1.2%) compared with control (31.7 ±0.8%),"High-standard preparation, with usage of fluorescently-labeled antibodies to ensure the pluripotent property of DP-MSCs.  Different assements method were utilized to determine the desire result, such as WST-1 assay in cell morphology, Annexin V-FITC and PI in apoptosis,  trypan blue for viablity test",S1P Pre-Treatment Reduced Actin Cytoskeletal Disruption and Improved Adhesion Ability,https://doi.org/10.3390/life13061286 ,,,,,,,,,
+10% DMSO and 10% FBS,10%,−1 ◦C/min from 25◦C to−80 ◦C,(85.7 ±2.8%),"didn't mentioned, but can get approximate prediction from percentage of early apoptotic cells(4.4 ±1.0%) and late apoptotic cells( 3.6 ±0.4%)",(37.63 ±1.1%),,,https://doi.org/10.3390/life13061286 ,,,,,,,,,
+"0.05 M glucose, 0.05 M sucrose,and 1.5 M ethylene glycol(cocktail solution)","0
+",−1 ◦C/min from 25◦C to−80 ◦C,84.0 ±1.0%,"didn't mentioned, but can get approximate prediction from percentage of early apoptotic cells(4.7 ±0.9%) and late apoptotic cells(4.4 ±0.5%)",(37.8 ±1.9%),,,https://doi.org/10.3390/life13061286 ,,,,,,,,,
+1) STD10: 10% DMSO + 4% HSA in saline,10%,"-1°C/min D570°C, -2°C/min to -45°C, -5°C/min to -100°C, then stored in liquid nitrogen (-196°C)", 95.2% ± 0.9,90%,"No significant difference in Max PDT among STD10, CS2, CS10, PIM1, PIM2","- ASCs isolated from adipose tissue (lipoaspirate) of five healthy donors via collagenase digestion, cultured in DMEM with 10% pooled human platelet lysate (pHPL).
+- Cryopreserved in five media (STD10, CS2, CS10, PIM1, PIM2) at 2×10^6 cells/tube, frozen in a rate-controlled freezer, stored in liquid nitrogen.- - Post-thaw: viability/recovery via Acridine Orange/DAPI, proliferation via Incucyte imaging, migration via transwell assay, phenotype via flow cytometry (CD73, CD90, CD105, CD45, CD31), differentiation (adipogenic, chondrogenic), and immunomodulation (T cell suppression, IDO1/PDL1/PDL2 expression).
+- Statistical analysis: One-way ANOVA with Tukey’s test.","- STD10, CS10, and PIM2 showed higher viability than CS2; PIM1 and PIM2 had better recovery than CS2.
+- All media preserved ASC phenotype (CD73+, CD90+, CD105+, CD45-, CD31-) and differentiation potential (adipogenic, chondrogenic).- Proliferation and migration were comparable across media, though CS10 reached confluency faster.
+- T cell suppression was Me2SO dose-dependent (CS10 > STD10 > CS2, PIM2 > PIM1), but IDO1, PDL1, PDL2 expression was comparable.
+- PIM2 (2% Me2SO + 10% pentaisomaltose) is a less toxic,effective alternative to 10% Me2SO media, with potential for 1% Me2SO (PIM1).",10.1016/j.cryobiol.2020.05.014,,,,,,,,,
+2) CS2: 2% Me2SO + Dextran-40 in saline (CryoStor),2%,"-1°C/min D570°C, -2°C/min to -45°C, -5°C/min to -100°C, then stored in liquid nitrogen (-196°C)", 89.8% ± 0.9 ,78.9% ± 3.6 (p < 0.05 vs. PIM1/PIM2),"No significant difference in Max PDT among STD10, CS2, CS10, PIM1, PIM2; time to 100% confluency 90.5 h","Cryopreserved in five media (STD10, CS2, CS10, PIM1, PIM2) at 2×10^6 cells/tube, frozen in a rate-controlled freezer, stored in liquid nitrogen.","All media preserved ASC phenotype (CD73+, CD90+, CD105+, CD45-, CD31-) and differentiation potential (adipogenic, chondrogenic).",10.1016/j.cryobiol.2020.05.014,,,,,,,,,
+3) CS10: 10% Me2SO + Dextran-40 in saline (CryoStor),10%,"-1°C/min D570°C, -2°C/min to -45°C, -5°C/min to -100°C, then stored in liquid nitrogen (-196°C)",  95.8% ± 0.6,82%,"No significant difference in Max PDT among STD10, CS2, CS10, PIM1, PIM2; time to 100% confluency 81.3 h (p < 0.01 vs. CS2 and PIM1)","Post-thaw: viability/recovery via Acridine Orange/DAPI, proliferation via Incucyte imaging, migration via transwell assay, phenotype via flow cytometry (CD73, CD90, CD105, CD45, CD31), differentiation (adipogenic, chondrogenic), and immunomodulation (T cell suppression, IDO1/PDL1/PDL2 expression).","Proliferation and migration were comparable across media, though CS10 reached confluency faster.",10.1016/j.cryobiol.2020.05.014,,,,,,,,,
+4) PIM1: 1% Me2SO + 10% pentaisomaltose + 4% HSA in saline,1%,"-1°C/min D570°C, -2°C/min to -45°C, -5°C/min to -100°C, then stored in liquid nitrogen (-196°C)", 89.8% ± 0.9 ,93.56% ± 5.2,"No significant difference in Max PDT among STD10, CS2, CS10, PIM1, PIM2; time to 100% confluency 90.4 h (p < 0.01 vs. CS10)",Statistical analysis: One-way ANOVA with Tukey’s test.,"T cell suppression was Me2SO dose-dependent (CS10 > STD10 > CS2, PIM2 > PIM1), but IDO1, PDL1, PDL2 expression was comparable.",10.1016/j.cryobiol.2020.05.014,,,,,,,,,
+5) PIM2: 2% Me2SO + 10% pentaisomaltose + 4% HSA in saline,2%,"-1°C/min D570°C, -2°C/min to -45°C, -5°C/min to -100°C, then stored in liquid nitrogen (-196°C)",95.7% ± 0.5,93.8% ± 6.0,"No significant difference in Max PDT among STD10, CS2, CS10, PIM1, PIM2",,"PIM2 (2% Me2SO + 10% pentaisomaltose) is a less toxic, effective alternative to 10% Me2SO media, with potential for 1% Me2SO (PIM1)",10.1016/j.cryobiol.2020.05.014,,,,,,,,,
+"10 %DMSO, glucose and high polymer anhydrous dextrose (STEM-CELLBANKERTM )(CB) + xeno-free serum culture medium",10%,−1 ◦C/min to−80 ◦C,85.6 ± 5.7 %,"Ad-MSCs(87.8 ± 15.4 %), BM-MSCs(56.7 ± 16.1 %)","Ad-MSCs(38.1 ± 13.6h), BM-MSCs (47.7 ± 11.4h)","Propidium Iodide (PI) testing  accompany with the assesment which allow only alive cells counted for culculating the result. b-Galactosidase staining,  flow cytometryfor and relative monoclonal FITC or PE conjugated
+antibodies were utilized to evaluate the degree of cellular senescence and property of cells (markers) respectively.","The result show that CB enhanced the preservation of MSC viability, growth and mesodermal differentiation potential when compared to DMSO in MesencultÒ -XF. Furthermore, the CB cryopreservation medium was better for Ad-MSCs compared to BM-MSCs.",https://doi.org/10.1007/s10561-014-9463-8,,,,,,,,,
+2.5% DMSO + 30 mmol/L trehalose,2.50%,"- Wait: Hold at 4.0°C
+- Stage 1: Ramp 1.0°C/min to −5.0°C (sample)
+- Stage 2: Ramp 21°C/min to −54.0°C (chamber)
+- Stage 3: Ramp 17°C/min to −21.0°C (chamber)
+- Stage 4: Ramp 2.0°C/min to −40.0°C (sample)
+- Stage 5: Ramp 10°C/min to −80.0°C (sample)",(94.18±3.97)%,(91.18±7.40)%,"Not mentioned , but can utilize Colony Forming Units (Pre- and Postcryopreservation) eaasy result as the analyze of proliferation and differentiation capacity of stem cells average CFU (36.14±2.06)
+×10^5(fresh UCB) and (31.86±0.64)×10^5(after thawing)","three cryoprotectants were assessed to compare their ability on store the umbilical cord blood (UCB), detailed processing of UCB isolation and subsequent properties assesment such as Colony Forming Units, CD34+,Cell Apoptosis Analysis and so on.","The data showed that group C exhibited higher cell viability and CFUs and a lower apoptosis rate after thawing than either group A,B,or D",https://doi.org/10.1155/2016/1396783,,,,,,,,,
+10% EG + 2.0% DMSO ,2.00%,"- Wait: Hold at 4.0°C
+- Stage 1: Ramp 1.0°C/min to −5.0°C (sample)
+- Stage 2: Ramp 21°C/min to −54.0°C (chamber)
+- Stage 3: Ramp 17°C/min to −21.0°C (chamber)
+- Stage 4: Ramp 2.0°C/min to −40.0°C (sample)
+- Stage 5: Ramp 10°C/min to −80.0°C (sample)",(92.35±5.26)%,(87.35±6.52),stem cells average CFU (36.14±2.06)×10^5(fresh UCB) and (27.78±0.58)×10^5(after thawing),,,https://doi.org/10.1155/2016/1396783,,,,,,,,,
+10% DMSO + 2.0% dextran-40,10.00%,"- Wait: Hold at 4.0°C
+- Stage 1: Ramp 1.0°C/min to −5.0°C (sample)
+- Stage 2: Ramp 21°C/min to −54.0°C (chamber)
+- Stage 3: Ramp 17°C/min to −21.0°C (chamber)
+- Stage 4: Ramp 2.0°C/min to −40.0°C (sample)
+- Stage 5: Ramp 10°C/min to −80.0°C (sample)",(89.43±5.12)%,(82.43±5.51)%,stem cells average CFU (36.14±2.06)×10^5(fresh UCB) and (22.25±0.52)×10^5(after thawing),,,https://doi.org/10.1155/2016/1396783,,,,,,,,,
+"1% HSA, 3.5% DMSO, 2.5% HES",3.50%,Uncontrolled; storage at -80C,68.00%,79.6% for CD34+ cells,Not mentioned,"Fresh cryoprotectant soln was made using 7% DMSO, 2% HAS and 5% HES and stored at 4C. It was mixed (vol/vol) with AC at 4C and final concs were achieved. The final components were stored in freezing bags and vials. Freezing bags were kept horizontaly. Uncontrolled-rate freezing was utilised and stored at -80C. ","The transfusions were well tolerated  by the patients, and mortality related to the procedure was only 0.9% (1 of 109). The study shows that conventional controlled-rate freezing is not necessary for successful cryopreservation of PBPCs.",doi:10.1046/j.1537-2995.2001.41050667.x,,,,,,,,,
+"5% DMSO, 6% HES",5%,Uncontrolled; storage at -80C,82.25,96.7% for NCs,NA,,,doi:10.1046/j.1537-2995.2001.41050667.x,,,,,,,,,
+10% DMSO,10%,Uncontrolled; storage at -80C,90%,86% for NCs,NA,,,doi:10.1046/j.1537-2995.2001.41050667.x,,,,,,,,,
+5% DMSO,5%,Uncontrolled; storage at -80C,84.70%,86% for NCs,NA,,,doi:10.1046/j.1537-2995.2001.41050667.x,,,,,,,,,
+5% DMSO,5%,Uncontrolled; storage at -80C,78%,91% for NCs,NA,,,doi:10.1046/j.1537-2995.2001.41050667.x,,,,,,,,,
+10%  DMSO solution was diluted with ADMEM supplemented with 10%  FBS,10%,Equilibrate at 1°C for 30 min Cool at −2°C/min to −9°C Hold at −9°C to −9.1°C for 5 min Cool at −0.3°C/min to −40°C Cool at −10°C/min to −140°C and then immediately plung into liquid nitrogen,81.2±0.58%,Not mentioned ,55.49±0.06 h close to the contorl (54.28±0.05 h),"trypan blue exclusion test utilized for the viability testing , Flow cytometry assay and Western blotting were used to confirm the pluripotency of WJMSCs , however, the result of cell counting before and after thawing haven't showed in the paper      ADMEM at room temperature and the solution was then stored at 4oC overnight to obtain a homogeneous preparation","This study compared six cryoprotectants and found that 10% DMSO + 10% FBS (Solution C) produced the best freezing results, with a high post-thaw cell survival rate (81.2%). However, removing FBS significantly reduced survival (for example, Solution D had only 6.8%), demonstrating the critical importance of FBS. Freezing increased cell apoptosis (especially Solution B, which had high BAX/p53 expression and poor survival), but did not affect stem cell appearance, markers, or differentiation ability (they could become fat cells or bone cells).",https://doi.org/10.15283/ijsc.2015.8.2.155,,,,,,,,,
+"0.05 M glucose, 0.05 M sucrose, 1.5 M ethylene glycol, 10% FBS","0
+",Equilibrate at 1°C for 30 min Cool at −2°C/min to −9°C Hold at −9°C to −9.1°C for 5 min Cool at −0.3°C/min to −40°C Cool at −10°C/min to −140°C and then immediately plung into liquid nitrogen,70%,Not mentioned ,55.79±0.12 h,,,https://doi.org/10.15283/ijsc.2015.8.2.155,,,,,,,,,
+"0.05 M glucose, 0.05 M sucrose, 1.5 M ethylene glycol, 0% FBS","0
+",Equilibrate at 1°C for 30 min Cool at −2°C/min to −9°C Hold at −9°C to −9.1°C for 5 min Cool at −0.3°C/min to −40°C Cool at −10°C/min to −140°C and then immediately plung into liquid nitrogen,40%,Not mentioned ,Not mentioned,,,https://doi.org/10.15283/ijsc.2015.8.2.155,,,,,,,,,
+"10%  DMSO, 0.05 M glucose, 0.05 M sucrose, 1.5 M ethylene glycol, 0% FBS",10%,Equilibrate at 1°C for 30 min Cool at −2°C/min to −9°C Hold at −9°C to −9.1°C for 5 min Cool at −0.3°C/min to −40°C Cool at −10°C/min to −140°C and then immediately plung into liquid nitrogen,58%,Not mentioned ,Not mentioned,,,https://doi.org/10.15283/ijsc.2015.8.2.155,,,,,,,,,
+10% HES450,0,Directly to the vapour phase at -134C,10% at day 3,Not mentioned ,Not mentioned,,,doi:10.1186/1472-6750-12-49,,,,,,,,,
+"1% DMSO, 9% HES450",1%,Directly to the vapour phase at -134C,17% at day 3,Not mentioned ,Not mentioned,,,doi:10.1186/1472-6750-12-49,,,,,,,,,
+"2% DMSO, 8% HES450",2%,Directly to the vapour phase at -134C,20% at day 3,Not mentioned ,Not mentioned,,,doi:10.1186/1472-6750-12-49,,,,,,,,,
+"3% DMSO, 7% HES450",3%,Directly to the vapour phase at -134C,22% at day 3,Not mentioned ,Not mentioned,,,doi:10.1186/1472-6750-12-49,,,,,,,,,
+"4% DMSO, 6% HES450",4%,Directly to the vapour phase at -134C,50% at day 3,Not mentioned ,Not mentioned,,,doi:10.1186/1472-6750-12-49,,,,,,,,,
+"5% DMSO,5% HES450",5%,Directly to the vapour phase at -134C,80% at day 3,Not mentioned ,Not mentioned,CPA with 500 ul of prepared cryoprotectant  was introduced to centrifuged cell samples. They were kept on ice until they were cooled according to the protocol. The chamber was cooled to 4C before the protocol was applied and then the cells were stored at -134C liquid nitrogen. MTT assay was used for viability. ALP assays were performed for post-thaw differentiation capacity.,"The paper studies 77 different groups with varying DMSO and HES concs, accross 7 different cooling protocols. Trading off for viability and differentiationability, a formulation of 5% DMSO/5% HES is recommended, using a straight freeze approach to save time.",doi:10.1186/1472-6750-12-49,,,,,,,,,
+"6% DMSO, 4% HES450",6%,Directly to the vapour phase at -134C,70% at day 3,Not mentioned ,Not mentioned,,,doi:10.1186/1472-6750-12-49,,,,,,,,,
+"7% DMSO, 3% HES450",7%,Directly to the vapour phase at -134C,100% at day 3,Not mentioned ,Not mentioned,,,doi:10.1186/1472-6750-12-49,,,,,,,,,
+"8% DMSO, 2% HES450",8%,Directly to the vapour phase at -134C,100% at day 3,Not mentioned ,Not mentioned,,,doi:10.1186/1472-6750-12-49,,,,,,,,,
+"9% DMSO, 1% HES450",9%,Directly to the vapour phase at -134C,80% at day 3,Not mentioned ,Not mentioned,,,doi:10.1186/1472-6750-12-49,,,,,,,,,
+10% DMSO,10%,Directly to the vapour phase at -134C,90% at day 3,Not mentioned ,Not mentioned,,,doi:10.1186/1472-6750-12-49,,,,,,,,,
+a-MEM+200mM sucrose (culture medium with 10% PL),"0
+",with the cooling rate of 1 degree/min down to-80 °C with following plunging into liquid nitrogen.,58 ± 4%,(55 ± 5%),42.0 ± 4.8 h,"There are two main process in this experiment 1: find out the optimal concentration of crypprotectant (sucrose 200mM) through pretrement 2:compare the viability, recovery,PDT, Adipogenic differentiation and Osteogenic differentiation ability of different pretrement soultion affect on the ASCs.","The result showed during cryopreservation, their presence only outside the cellsnhas been shown to be insufficient for obtaining satisfactory results. Sugar is required in both the intra and extracellular compartments. The optimal sucrose concentrations for the preservation of ASCs were 100 mM. In general, the presented DMSO-free/xeno-free ASCs preparation process allows preserving about 60% of cells after cryopreservation in the absence of DMSO and FS.",https://doi.org/10.1007/s10616-016-0055-2,,,,,,,,,
+a-MEM+200mM sucrose (culture medium with 10% FS),"0
+",same,45 ± 3%,(45 ± 3%),89.2 ± 4.3 h,,,https://doi.org/10.1007/s10616-016-0055-3,,,,,,,,,
+"30% FBS, 5% DMSO, 65% ⍺-MEM",5%,1°C/min; for overnight freezing in a−80°C freezer.,85.07%,Not mentioned ,Not mentioned,Flow cytometry was used to evaluate cell viability. The cells were stained with Annexin-V and DAPI. Annexin-/DAPI- were considered viable,"The results showed that as concentration of DMSO increased, viability increased, however >10% viability decreased. Also as higher concentration of DMSO may cause side-effects in patients, 5% DMSO should be used.",http://dx.doi.org/10.1016/j.jcyt.2016.04.005,,,,,,,,,
+"0.5% DMSO, 99.5% human albumin",0.50%,1°C/min; for overnight freezing in a−80°C freezer.,22%,Not mentioned ,Not mentioned,,,http://dx.doi.org/10.1016/j.jcyt.2016.04.005,,,,,,,,,
+"1% DMSO, 99% human albumin",1%,1°C/min; for overnight freezing in a−80°C freezer.,28%,Not mentioned ,Not mentioned,,,http://dx.doi.org/10.1016/j.jcyt.2016.04.005,,,,,,,,,
+"2% DMSO, 98% human albumin",2%,1°C/min; for overnight freezing in a−80°C freezer.,65%,Not mentioned ,Not mentioned,,,http://dx.doi.org/10.1016/j.jcyt.2016.04.005,,,,,,,,,
+"4% DMSO, 96% human albumin",4%,1°C/min; for overnight freezing in a−80°C freezer.,68%,Not mentioned ,Not mentioned,,,http://dx.doi.org/10.1016/j.jcyt.2016.04.005,,,,,,,,,
+"5% DMSO, 95% human albumin",5%,1°C/min; for overnight freezing in a−80°C freezer.,85.65%,Not mentioned ,Not mentioned,,,http://dx.doi.org/10.1016/j.jcyt.2016.04.005,,,,,,,,,
+"10% DMSO, 90% human albumin",10%,1°C/min; for overnight freezing in a−80°C freezer.,88.50%,Not mentioned ,Not mentioned,,,http://dx.doi.org/10.1016/j.jcyt.2016.04.005,,,,,,,,,
+"15% DMSO, 85% human albumin",15%,1°C/min; for overnight freezing in a−80°C freezer.,70.60%,Not mentioned ,Not mentioned,,,http://dx.doi.org/10.1016/j.jcyt.2016.04.005,,,,,,,,,
+"20% DMSO, 80% human albumin",20%,1°C/min; for overnight freezing in a−80°C freezer.,64.10%,Not mentioned ,Not mentioned,,,http://dx.doi.org/10.1016/j.jcyt.2016.04.005,,,,,,,,,
+0.3M Trehalose in phosphate buffer saline (PBS),0%,1°C/min; for overnight freezing in a−80°C freezer.,47%,Not mentioned ,Not mentioned,Trypan blue staining was used to evaluate cell viability. Colorimetric asessment at 450 nm was used to obtain OD value to represent cell proliferation. FACS cytometer was used for asessment of cell markers.,"The study found that CPA combination of Trehalose and glycerol improves viability, proliferation and migration compared to Trehalose or Glycerol alone, and comparable to DMSO + FBS. Cells cryopreserved in Trehalose and glycerol also express the same surface markers and exhibit the same multi-lineage differentation potential as DMSO + FBS and fresh cells.",https://doi.org/10.1186/s13287-020-01969-0,Adipose Derived Stem Cell (ADSC),,,,,,,,
+0.6M Trehalose in PBS,0%,1°C/min; for overnight freezing in a−80°C freezer.,56%,Not mentioned ,Not mentioned,,,https://doi.org/10.1186/s13287-020-01969-0,,,,,,,,,
+1.0M Trehalose in PBS,0%,1°C/min; for overnight freezing in a−80°C freezer.,65%,Not mentioned ,Not mentioned,,,https://doi.org/10.1186/s13287-020-01969-0,,,,,,,,,
+1.25M Trehalose in PBS,0%,1°C/min; for overnight freezing in a−80°C freezer.,58%,Not mentioned ,Not mentioned,,,https://doi.org/10.1186/s13287-020-01969-0,,,,,,,,,
+10% Glycerol in PBS,0%,1°C/min; for overnight freezing in a−80°C freezer.,54%,Not mentioned ,Not mentioned,,,https://doi.org/10.1186/s13287-020-01969-0,,,,,,,,,
+20% Glycerol in PBS,0%,1°C/min; for overnight freezing in a−80°C freezer.,63%,Not mentioned ,Not mentioned,,,https://doi.org/10.1186/s13287-020-01969-0,,,,,,,,,
+30% Glycerol in PBS,0%,1°C/min; for overnight freezing in a−80°C freezer.,50%,Not mentioned ,Not mentioned,,,https://doi.org/10.1186/s13287-020-01969-0,,,,,,,,,
+1.0M Trehalose + 20% Glycerol in PBS,0%,1°C/min; for overnight freezing in a−80°C freezer.,77%,Not mentioned ,Not mentioned,,,https://doi.org/10.1186/s13287-020-01969-0,,,,,,,,,
+10% DMSO + 90% FBS,10%,1°C/min; for overnight freezing in a−80°C freezer.,75%,Not mentioned ,Not mentioned,,,https://doi.org/10.1186/s13287-020-01969-0,,,,,,,,,
+10% DMSO,10%,Directly at -80C ,80%,Reported as cell number (feeder independent) or colony number (feeder dependent),Not mentioned,"The study used two types of culture, feeder dependent and independent. For both types, no significant difference was observed in viability across all solutions except for 10% PROH. PI viability, colony count (4-5 days), Annexin V/PI apoptosis, caspase-9, DHE ROS, F-actin, ICC (Oct4/Nanog/SSEA4/Tra1-60/Tra1-81)",The results of viabilty implies that low  cell recovery after slow-freezing cryopreservation is associated with apoptosis rather than necrosis induced by cryoinjury. ,10.1002/btpr.358,Human Embryonic stem cells ,,,,,,,,
+10% DMSO + 10 uM ROCK inhibitor,10%,Directly at -80C ,82%,Reported as cell number (feeder independent) or colony number (feeder dependent),Not mentioned,,,10.1002/btpr.358,,,,,,,,,
+7.5% DMSO,7.50%,Directly at -80C ,84%,Reported as cell number (feeder independent) or colony number (feeder dependent),Not mentioned,,,10.1002/btpr.358,,,,,,,,,
+7.5% DMSO + 10 uM ROCK inhibitor,7.50%,Directly at -80C ,76%,Reported as cell number (feeder independent) or colony number (feeder dependent),Not mentioned,,,10.1002/btpr.358,,,,,,,,,
+7.5% DMSO + 2.5% PEG ,7.50%,Directly at -80C ,87%,Reported as cell number (feeder independent) or colony number (feeder dependent),Not mentioned,,Optimal reduced DMSO.,10.1002/btpr.358,,,,,,,,,
+7.5% DMSO + 2.5% PEG  + 10 uM ROCK inhibitor,7.50%,Directly at -80C ,85%,Reported as cell number (feeder independent) or colony number (feeder dependent),Not mentioned,,,10.1002/btpr.358,,,,,,,,,
+10% PROH ,0%,Directly at -80C ,56%,no colony formation,Not mentioned,,,10.1002/btpr.358,,,,,,,,,
+7.5% PROH + 2.5% PEG ,0%,Directly at -80C ,74%,no colony formation,Not mentioned,,,10.1002/btpr.358,,,,,,,,,
+10% DMSO + 30% FBS,10%,1°C/min  to −80°C,92%,51%,Not measrued ,Trypan blue exclusion test was used for cell viability and cell recovery usind 2 equations. Flow cytometry was used to assess stem cell surface markers that indicate multipotency. ,"Polyampholyte rescues low-DMSO cryopreservation; retains cell size/granularity, multipotency markers (no significant change vs. controls), and multilineage differentiation; scalable GMP synthesis; reduces clinical toxicity risks","https://dx.doi.org/10.1021/acsabm.0c00638
+",Human bone marrow-derived mesenchymal stromal (stem) cells (hBM-MSC) ,,,,,,,,
+2.5% DMSO + 30% FBS,2.50%,1°C/min  to −80°C,47%,17%,Not measured ,,,"https://dx.doi.org/10.1021/acsabm.0c00638
+",,,,,,,,,
+2.5% DMSO + 30% FBS + 20 mg/ml polyampholyte ,2.50%,1°C/min  to −80°C,76%,30%,Not Measured ,,,"https://dx.doi.org/10.1021/acsabm.0c00638
+",,,,,,,,,
+⍺-MEM 20% FBS + 5% DMSO,5%,"Nonprogrammed: -20°C for 20 mins, followed by -80°C for 12-16h and then stored in liquid nitrogen ",87%,Not reported ,30 ± 4 hours ,"post-thaw: trypan blue viability, RT-PCR (Oct4/Nanog), flow cytometry (CD markers), differentiation (osteo/adipo/chondro) assays","The study conducted the experiments using 2 different freezing protocols (programmed and non-programmed), since there was no significant difference in the results, nonprogrammed is recommeded due to its ease. Though glycerol showed lower viability compared to DMSO, it is still viable for cell cultures, stemness was preserved and no toxicity.",10.1155/2012/649353,Human Amniotic Fluid stem cells ,,,,,,,,
+⍺-MEM 20% FBS + 10% DMSO,10%,"Nonprogrammed: -20°C for 20 mins, followed by -80°C for 12-16h and then stored in liquid nitrogen ",95%,Not reported ,30 ± 4 hours ,,,10.1155/2012/649353,,,,,,,,,
+⍺-MEM 20% FBS + 5% Glycerol,0%,"Nonprogrammed: -20°C for 20 mins, followed by -80°C for 12-16h and then stored in liquid nitrogen ",78%,Not reported ,30 ± 4 hours ,,,10.1155/2012/649353,,,,,,,,,
+⍺-MEM 20% FBS + 10% Glycerol,0%,"Nonprogrammed: -20°C for 20 mins, followed by -80°C for 12-16h and then stored in liquid nitrogen ",83%,Not reported ,30 ± 4 hours ,,,10.1155/2012/649353,,,,,,,,,
+⍺-MEM 20% FBS + 30 mM Sucrose,0%,"Nonprogrammed: -20°C for 20 mins, followed by -80°C for 12-16h and then stored in liquid nitrogen ",21%,Not reported ,30 ± 4 hours ,,,10.1155/2012/649353,,,,,,,,,
+⍺-MEM 20% FBS + 60 mM Sucrose,0%,"Nonprogrammed: -20°C for 20 mins, followed by -80°C for 12-16h and then stored in liquid nitrogen ",28%,Not reported ,30 ± 4 hours ,,,10.1155/2012/649353,,,,,,,,,
+⍺-MEM 20% FBS + 60 mM Trehalose,0%,"Nonprogrammed: -20°C for 20 mins, followed by -80°C for 12-16h and then stored in liquid nitrogen ",36%,Not reported ,30 ± 4 hours ,,,10.1155/2012/649353,,,,,,,,,
+⍺-MEM 20% FBS + 100 mM Trehalose ,0%,"Nonprogrammed: -20°C for 20 mins, followed by -80°C for 12-16h and then stored in liquid nitrogen ",38%,Not reported ,30 ± 4 hours ,,,10.1155/2012/649353,,,,,,,,,
+10% DMSO in A-DMEM + 10% FBS ,10%,1°C/min  to −80°C,29.70%,Same proliferation curve as fresh,Not reported,PI staining for dead cells and Hoechst staining for all cells to assess viability. MTT assays carried out for cell proliferation after cryopreservation and compared with fresh. ,"Cocktail solution in programmed cooling showed highest viability, similar cell proliferation as fresh cells and stemness maintained. ",10.1002/term.1945,Human dental follicle stem cells,,,,,,,,
+"0.05 M glucose, 0.05 M sucrose, 1.5M ethylene glycol in PBS",0%,1°C/min  to −80°C,32.70%,Same proliferation curve as fresh,Not reported,,,10.1002/term.1945,,,,,,,,,
+10% DMSO in A-DMEM + 10% FBS ,10%,Equilibrate at 1°C for 30 min Cool at −2°C/min to −9°C Hold at −9°C to −9.1°C for 5 min Cool at −0.3°C/min to −40°C Cool at −10°C/min to −140°C,35.30%,Same proliferation curve as fresh,Not reported,,,10.1002/term.1945,,,,,,,,,
+"0.05 M glucose, 0.05 M sucrose, 1.5M ethylene glycol in PBS",0%,Equilibrate at 1°C for 30 min Cool at −2°C/min to −9°C Hold at −9°C to −9.1°C for 5 min Cool at −0.3°C/min to −40°C Cool at −10°C/min to −140°C,79.30%,Same proliferation curve as fresh,Not reported,,,10.1002/term.1945,,,,,,,,,
+10% DMEM + 80% HS + 10% DMSO ,10%,1°C/min  to −80°C,82.50%,Not mentioned ,Not mentioned,"seed 6-well plate 24h; flow cytom (annexin V-FITC/PI, n=6), MTT prolif, oil red O/alizarin red OD diff (14/21 days), RT-PCR","10% PVP in DMEM yields ~70% viability (24h annexin V/PI), comparable to 10% DMSO+80% serum controls (~83%, ns), with low apoptosis/necrosis; extremes (1%/40% PVP) toxic. Serum addition marginal",10.1089/ten.TEC.2009.0552,Adipose tissue derived stem cells ,,,,,,,,
+10% DMEM + 80% FCS + 10% DMSO ,10%,1°C/min  to −80°C,84.10%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+1% PVP + 99% DMEM ,0%,1°C/min  to −80°C,5.70%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+5% PVP + 95% DMEM,0%,1°C/min  to −80°C,49.30%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+10% PVP + 90% DMEM,0%,1°C/min  to −80°C,69.70%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+20% PVP + 80% DMEM,0%,1°C/min  to −80°C,55.50%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+40% PVP + 60% DMEM ,0%,1°C/min  to −80°C,4.60%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+5% PVP + 85% DMEM + 10% HS,0%,1°C/min  to −80°C,53.20%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+10% PVP + 80% DMEM + 10% HS,0%,1°C/min  to −80°C,72.10%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+20% PVP + 70% DMEM + 10% HS ,0%,1°C/min  to −80°C,61.80%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+5% PVP + 85% DMEM + 10% FCS,0%,1°C/min  to −80°C,55.40%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+10% PVP + 80% DMEM + 10% FCS,0%,1°C/min  to −80°C,69.20%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+20% PVP + 70% DMEM + 10% FCS,0%,1°C/min  to −80°C,64.30%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+10% PVP + 50% DMEM + 40% FCS,0%,1°C/min  to −80°C,70.50%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+10% PVP + 10% DMEM + 80% FCS ,0%,1°C/min  to −80°C,72.50%,Not mentioned ,Not mentioned,,,10.1089/ten.TEC.2009.0552,,,,,,,,,
+0.5M ethylene glycol (EG) in Mesencult complete medium,0%,"~1°C/min to –85°C by using a dump-freeze method, then stored at –85°C or –196°C in liquid nitrogen",65%,Not mentioned ,Not mentioned ,DPSC cell lines from four separate  cultures were used.  Viability was determined by trypan blue exclusion after thawing.,The freezing effect of 1.0M and 1.5M Me₂SO was significantly better than that of EG or PG at the same concentration. There was no significant difference between the two concentrations.,https://doi.org/10.1016/j.cryobiol.2009.06.005,DPSC,,,,,,,,
+1M ethylene glycol (EG) in Mesencult complete medium,0%,"~1°C/min to –85°C by using a dump-freeze method, then stored at –85°C or –196°C in liquid nitrogen",75%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2009.06.005,,,,,,,,,
+1.5M ethylene glycol (EG) in Mesencult complete medium,0%,"~1°C/min to –85°C by using a dump-freeze method, then stored at –85°C or –196°C in liquid nitrogen",77%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2009.06.005,,,,,,,,,
+"0.5M propylene glycol in in Mesencult complete medium
+(1,2 propane diol; PG)",0%,"~1°C/min to –85°C by using a dump-freeze method, then stored at –85°C or –196°C in liquid nitrogen",43%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2009.06.005,,,,,,,,,
+"1M propylene glycol in in Mesencult complete medium
+",0%,"~1°C/min to –85°C by using a dump-freeze method, then stored at –85°C or –196°C in liquid nitrogen",68%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2009.06.005,,,,,,,,,
+"1.5M propylene glycol in in Mesencult complete medium
+",0%,"~1°C/min to –85°C by using a dump-freeze method, then stored at –85°C or –196°C in liquid nitrogen",67%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2009.06.005,,,,,,,,,
+0.5M DMSO in Mesencult complete medium,10%,"~1°C/min to –85°C by using a dump-freeze method, then stored at –85°C or –196°C in liquid nitrogen",74%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2009.06.005,,,,,,,,,
+1M DMSO in Mesencult complete medium,10%,"~1°C/min to –85°C by using a dump-freeze method, then stored at –85°C or –196°C in liquid nitrogen",90.6% ± 8.9%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2009.06.005,,,,,,,,,
+1.5M DMSO in Mesencult complete medium,10%,"~1°C/min to –85°C by using a dump-freeze method, then stored at –85°C or –196°C in liquid nitrogen",91.0% ± 8.1%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2009.06.005,,,,,,,,,
+PM-1( preadipocyte medium) + 10% DMSO,10%,1°C/min  to −80°C,95%,Not mentioned ,Not mentioned ,"trypan blue for viablity test,Von Kossa’s method for checking differentiation ",High viability and relatively low  proliferation and lose osteogenic differentiation ability,https://doi.org/10.3727/096368911X605556,,,,,,,,,
+"DMEM/Ham’s F-12( (1:1,; Dulbecco’s modified Eagle medium: Nutrient Mixture F-12) medium (serum free) + 10% DMSO, 0.1 mol/L maltose, and
+1% sericin",10%,1°C/min  to −80°C,95%,Not mentioned ,Not mentioned ,,High viability and relatively higher  proliferation and lose  osteogenic differentiation ability,https://doi.org/10.3727/096368911X605556,,,,,,,,,
+DMEM + 80% HS + 10% DMSO,10%,"~1.1°C/min to  –40°C then 0.7°C/min to  –50°C,  then 0.3°C/min  and then 0.1°C/min to  –80°C",82.5 (±8.3) %,Not mentioned ,Not mentioned ,"The viability tested was conducted by quantitative flow cytometry annexin V-FITC-negative and PI-negative; annexin V− and PI− , Oil Red O staining and Alizarin Red staining for checking adipogenic differentiation and osteogenic differentiation respectively.","The absence of DMSO (with MC) significantly increased apoptosis and necrosis of ASC.ASCs can be frozen in serum-free DMEM containing at minimum 2% DMSO to maintain their viability and adipogenic and osteogenic differentiation capacity after thawing, providing a feasible solution for their clinical application.",https://doi.org/10.1089/scd.2009.0173,,,,,,,,,
+DMEM + 80% FCS + 10% DMSO,10%,"~1.1°C/min to  –40°C then 0.7°C/min to  –50°C,  then 0.3°C/min  and then 0.1°C/min to  –80°C",84.1 (±7.7)%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1089/scd.2009.0173,,,,,,,,,
+DMEM ,0%,"~1.1°C/min to  –40°C then 0.7°C/min to  –50°C,  then 0.3°C/min  and then 0.1°C/min to  –80°C",25.3% ± 5.7%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1089/scd.2009.0173,,,,,,,,,
+DMEM + 2% DMSO,2%,"~1.1°C/min to  –40°C then 0.7°C/min to  –50°C,  then 0.3°C/min  and then 0.1°C/min to  –80°C", 83.8% ± 5.3%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1089/scd.2009.0173,,,,,,,,,
+DMEM + 4% DMSO,4%,"~1.1°C/min to  –40°C then 0.7°C/min to  –50°C,  then 0.3°C/min  and then 0.1°C/min to  –80°C",80.6% ±3.1%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1089/scd.2009.0173,,,,,,,,,
+DMEM + 6% DMSO,6%,"~1.1°C/min to  –40°C then 0.7°C/min to  –50°C,  then 0.3°C/min  and then 0.1°C/min to  –80°C",86.0% ± 4.6%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1089/scd.2009.0173,,,,,,,,,
+DMEM + 8% DMSO,8%,"~1.1°C/min to  –40°C then 0.7°C/min to  –50°C,  then 0.3°C/min  and then 0.1°C/min to  –80°C",85.6% ± 2.8%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1089/scd.2009.0173,,,,,,,,,
+DMEM + 10% DMSO,10%,"~1.1°C/min to  –40°C then 0.7°C/min to  –50°C,  then 0.3°C/min  and then 0.1°C/min to  –80°C",87.9% ± 2.9%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1089/scd.2009.0173,,,,,,,,,
+DMEM + 1% MC,0%,"~1.1°C/min to  –40°C then 0.7°C/min to  –50°C,  then 0.3°C/min  and then 0.1°C/min to  –80°C",46.8% ± 7.6%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1089/scd.2009.0173,,,,,,,,,
+DMEM + 1% MC + 10% HS,0%,"~1.1°C/min to  –40°C then 0.7°C/min to  –50°C,  then 0.3°C/min  and then 0.1°C/min to  –80°C",40.0% ± 8%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1089/scd.2009.0173,,,,,,,,,
+DMEM + 1% MC + 10% FCS,0%,"~1.1°C/min to  –40°C then 0.7°C/min to  –50°C,  then 0.3°C/min  and then 0.1°C/min to  –80°C",40.0% ± 8%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1089/scd.2009.0173,,,,,,,,,
+DMEM + 1% MC + 10% DMSO,10%,"~1.1°C/min to  –40°C then 0.7°C/min to  –50°C,  then 0.3°C/min  and then 0.1°C/min to  –80°C",79.8% ± 2.8%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1089/scd.2009.0173,,,,,,,,,
+10% DMSO  in α-MEM,10%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,82.7 ± 3.7%,Not mentioned ,Not mentioned ,"The viability was tested by FACSCalibur flow cytometer using the Annexin V-fluorescein isothiocyanate (FITC) apoptosis. AlamarBlue assay and calcein AM assay were used to check Cell metabolic activity and proliferation and Cell morphology respectively. Alkaline phosphatase (ALP) expression, Oil Red O and toluidine blue staining for confirm the differentiation ability of Osteogenic differentiation, and adipogenic differentiation chondrogenic differentiation.","With DMSO as the sole permeating CPA, the paper found that the minimum DMSO concentration is around 5% (v/v) to achieve [ 73% cell survival. DMSO can be replaced with another permeating CPA, such as 1,2-propanediol although the cell survival is slightly lower. FBS can be replaced with albumin and 2% (w/v) albumin in CPA solution can significantly enhance the cell survival.",https://doi.org/10.1002/btpr.464,,,,,,,,,
+10% DMSO + 10% FBS in α-MEM,10%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,83.8 ± 2.9%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1002/btpr.464,,,,,,,,,
+10% DMSO + 90% FBS in α-MEM,10%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,90.2 ± 1.4%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1002/btpr.464,,,,,,,,,
+7.5% DMSO + 2.5% PEG in α-MEM,7.50%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,72%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1002/btpr.464,,,,,,,,,
+7.5% DMSO + 2.5% PEG + 2% BSA in α-MEM,7.50%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,82.9 ± 4.3%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1002/btpr.464,,,,,,,,,
+5% DMSO + 5% PEG in α-MEM,5%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,70%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1002/btpr.464,,,,,,,,,
+5% DMSO + 5% PEG + 2% BSA  in α-MEM,5%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,80%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1002/btpr.464,,,,,,,,,
+5% DMSO + 2% PEG + 3% trehalose  in α-MEM,5%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,56%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1002/btpr.464,,,,,,,,,
+5% DMSO + 2% PEG + 3% trehalose + 2% BSA in α-MEM,5%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,65%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1002/btpr.464,,,,,,,,,
+2.5% DMSO + 7.5% PEG  in α-MEM,2.50%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,32%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1002/btpr.464,,,,,,,,,
+2.5% DMSO + 7.5% PEG + 2% BSA  in α-MEM,2.50%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,38%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1002/btpr.464,,,,,,,,,
+"10% 1,2-propanediol + 2% BSA  in α-MEM",0%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,68%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1002/btpr.464,,,,,,,,,
+"7.5% 1,2-propanediol + 2.5% PEG + 2% BSA in α-MEM",0%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,73%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1002/btpr.464,,,,,,,,,
+"Sucrose 150 mM, Glycerol 342mM, Creatine 12.5 mM (SGC)",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",60%,Not mentioned,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Glucose 150 mM, Glycerol 342mM, Creatine 12.5 mM (GGC)",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",40%,Not mentioned,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 150 mM, Glycerol 684 mM, Creatine 25 mM (SGC-A)",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",70%,82 ± 7%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 300 mM, Glycerol 684 mM, Creatine 12.5 mM (SGC-B)",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",0%,71 ± 5%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 75 mM, Mannitol 63 mM, Creatine 13 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,47%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 225 mM, Mannitol 188 mM, Creatine 3 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,43%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 225 mM, Mannitol 125 mM, Creatine 0 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,29%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 0 mM, Mannitol 63 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,54%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 75 mM, Mannitol 125 mM, Creatine 3 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,48%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 30 mM, Mannitol 25 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,31%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 225 mM, Mannitol 188 mM, Creatine 3 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,46%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 150 mM, Mannitol 63 mM, Creatine 6 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,41%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 0 mM, Mannitol 25 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,52%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 75 mM, Mannitol 63 mM, Creatine 19 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,38%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 30 mM, Mannitol 0 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,29%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 50 mM, Mannitol 63 mM, Creatine 13 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,37%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 150 mM, Mannitol 63 mM, Creatine 0 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,22%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 30 mM, Mannitol 25 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,33%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 300 mM, Mannitol 250 mM, Creatine 3 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,9%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 150 mM, Mannitol 188 mM, Creatine 3 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,49%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 30 mM, Mannitol 25 mM, Creatine 19 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,20%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 150 mM, Mannitol 25 mM, Creatine 6 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,33%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 0 mM, Mannitol 125 mM, Creatine 13 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,32%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 150 mM, Mannitol 63 mM, Creatine 6 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,34%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 30 mM, Mannitol 63 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,47%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 30 mM, Mannitol 125 mM, Creatine 19 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,31%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 300 mM, Mannitol 250 mM, Creatine 0 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,15%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 150 mM, Mannitol 188 mM, Creatine 19 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,26%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 225 mM, Mannitol 250 mM, Creatine 3 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,19%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 225 mM, Glycerol 684 mM, Creatine 0 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,94%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 300 mM, Glycerol 342 mM, Creatine 0 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,78%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 300 mM, Glycerol 342 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,102%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 300 mM, Glycerol 0 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,78%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 300 mM, Glycerol 171 mM, Creatine 19 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,59%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 0 mM, Glycerol 684 mM, Creatine 19 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,64%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 75 mM, Glycerol 68 mM, Creatine 19 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,53%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 30 mM, Glycerol 171 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,36%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 50 mM, Glycerol 68 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,38%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 75 mM, Glycerol 684 mM, Creatine 3 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,67%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 0 mM, Glycerol 684 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,76%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 150 mM, Glycerol 513 mM, Creatine 0 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,68%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 30 mM, Glycerol 68 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,31%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 225 mM, Glycerol 513 mM, Creatine 6 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,44%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 75 mM, Glycerol 684 mM, Creatine 13 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,46%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 0 mM, Glycerol 754 mM, Creatine 24 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,113%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 50 mM, Glycerol 513 mM, Creatine 0 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,110%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 225 mM, Glycerol 342 mM, Creatine 13 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,55%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 300 mM, Glycerol 513 mM, Creatine 3 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,54%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 150 mM, Glycerol 684 mM, Creatine 3 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,43%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 0 mM, Glycerol 171 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,58%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 150 mM, Glycerol 684 mM, Creatine 0 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,54%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 0 mM, Glycerol 68 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,33%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 150 mM, Glycerol 342 mM, Creatine 6 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,30%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 30 mM, Glycerol 684 mM, Creatine 19 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,45%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 0 mM, Glycerol 68 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,21%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 30 mM, Glycerol 171 mM, Creatine 13 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,39%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 150 mM, Glycerol 68 mM, Creatine 13 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,68%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 30 mM, Glycerol 684 mM, Creatine 19 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,43%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+"Sucrose 30 mM, Glycerol 171 mM, Creatine 25 mM",0%,"1. Starting temp 20°C
+2.-10°C/min to 0°C
+3. Hold at 0°C for 15 min
+4.-1°C/min to-8°C
+5.-50°C/min to-45°C
+6. +15°C/min to-12°C
+7.-3°C/min to-100°C",Not mentioned ,41%,Not mentioned ,,,https://doi.org/10.1089/TEN.TEC.2016.0288,,,,,,,,,
+PEG 400 (10 wt% in DMEM）,"0
+",1°C/min  to −80°C and then stored in a liquid nitrogen tank,55%,5%,Not mentioned ,"Trypan blue and CCK-8 assay was utilized to quantify cell viability and cytotoxicity. Alizarin Red staining, Oil Red O staining, and Alcian Blue staining were employed to confirm the ability of osteogenic differentiation, adipogenic differentiation, chondrogenic differentiation respectively.","The result showed the 2h pretreatment of 400KDa-600KDa PEG and 0h pretreatment of middle range of molecular weight of PEG (1K, 1.5K, 5K Da) can improve the recovery rate of MSCs in cryoprotectant.",https://doi.org/10.1186/s40824-023-00356-z,,,,,,,,,
+PEG 600 (10 wt% in DMEM),"0
+",1°C/min  to −80°C and then stored in a liquid nitrogen tank,58%,5%,Not mentioned ,,,https://doi.org/10.1186/s40824-023-00356-z,,,,,,,,,
+PEG 1K (10 wt% in DMEM),"0
+",1°C/min  to −80°C and then stored in a liquid nitrogen tank,80%,35%,Not mentioned ,,,https://doi.org/10.1186/s40824-023-00356-z,,,,,,,,,
+PEG 1.5K (10 wt% in DMEM),"0
+",1°C/min  to −80°C and then stored in a liquid nitrogen tank,83%,48%,Not mentioned ,,,https://doi.org/10.1186/s40824-023-00356-z,,,,,,,,,
+PEG 5K (10 wt% in DMEM),"0
+",1°C/min  to −80°C and then stored in a liquid nitrogen tank,86%,55%,Not mentioned ,,,https://doi.org/10.1186/s40824-023-00356-z,,,,,,,,,
+PEG 10K (10 wt% in DMEM),"0
+",1°C/min  to −80°C and then stored in a liquid nitrogen tank,80%,28%,Not mentioned ,,,https://doi.org/10.1186/s40824-023-00356-z,,,,,,,,,
+PEG 20K (10 wt% in DMEM),"0
+",1°C/min  to −80°C and then stored in a liquid nitrogen tank,80%,22%,Not mentioned ,,,https://doi.org/10.1186/s40824-023-00356-z,,,,,,,,,
+DMSO 10% in DMEM (control),10%,1°C/min  to −80°C and then stored in a liquid nitrogen tank,25%,70 ± 2.8%,Not mentioned ,,,https://doi.org/10.1186/s40824-023-00356-z,,,,,,,,,
+10% DMSO + 2%FBS (control),10%,"Uncontrolled-rate freezing (placed at −20°C for 1–1.5 h, then −80°C)",65%,Not mentioned ,65–75h,,,https://doi.org/10.3390/biom12050610,,,,,,,,,
+5% DMSO + 2%FBS,5%,"Uncontrolled-rate freezing (placed at −20°C for 1–1.5 h, then −80°C)",63%,Not mentioned ,Not mentioned ,,,https://doi.org/10.3390/biom12050610,,,,,,,,,
+3% DMSO + 2%FBS,3%,"Uncontrolled-rate freezing (placed at −20°C for 1–1.5 h, then −80°C)",67%,Not mentioned ,130–140h,,,https://doi.org/10.3390/biom12050610,,,,,,,,,
+5% DMSO + 0.1% hmw-ha + 2%FBS,5%,"Uncontrolled-rate freezing (placed at −20°C for 1–1.5 h, then −80°C)",75%,Not mentioned ,Not mentioned ,,,https://doi.org/10.3390/biom12050610,,,,,,,,,
+5% DMSO + 0.2% hmw-ha + 2%FBS,5%,"Uncontrolled-rate freezing (placed at −20°C for 1–1.5 h, then −80°C)",70%,Not mentioned ,Not mentioned ,,,https://doi.org/10.3390/biom12050610,,,,,,,,,
+3% DMSO + 0.1% hmw-ha + 2%FBS,3%,"Uncontrolled-rate freezing (placed at −20°C for 1–1.5 h, then −80°C)",70%,Not mentioned ,60–70h,,,https://doi.org/10.3390/biom12050610,,,,,,,,,
+3% DMSO + 0.2% hmw-ha + FBS,3%,"Uncontrolled-rate freezing (placed at −20°C for 1–1.5 h, then −80°C)",78%,Not mentioned ,Not mentioned ,,,https://doi.org/10.3390/biom12050610,,,,,,,,,
+PBS + 0.1% methylcellulose + 1% proline + 1% ectoin,0%,1°C/min  to −150°C,68 ± 14%,24 ± 17% (48h),Not mentioned ,Viability testing and adipogenic differentiation ability were tested by Trypan Blue dye and Oil red O staining respectively,"The result showed the optimal non-commercial DMSO-free cryoprotectant protocol is PBS + 0.1% methylcellulose + 1% proline + 1% ectoin, Moreover, a combination of two compatible solutes is more effective than the single molecules alone.",https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 1% proline + 1% ectoin,0%,5°C/min  to −150°C,76 ± 5%,64 ± 2% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 1% proline + 1% ectoin,0%,10°C/min  to −150°C,66 ± 3%,47 ± 13% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 1% proline + 10% ectoin,0%,1°C/min  to −150°C,62 ± 7%,52 ± 18% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 1% proline + 10% ectoin,0%,5°C/min  to −150°C,81 ± 2%,78 ± 5% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 1% proline + 10% ectoin,0%,10°C/min  to −150°C,66 ± 18%,81 ± 5% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 5% proline + 5% ectoin,0%,1°C/min  to −150°C,65 ± 6%,38 ± 20% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 5% proline + 5% ectoin,0%,5°C/min  to −150°C,86 ± 11%,57 ± 3% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 5% proline + 5% ectoin,0%,10°C/min  to −150°C,84 ± 5%,64 ± 9% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 10% proline + 1% ectoin,0%,1°C/min  to −150°C,58 ± 1%,19 ± 11% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 10% proline + 1% ectoin,0%,5°C/min  to −150°C,67 ± 1%,27 ± 2% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 10% proline + 1% ectoin,0%,10°C/min  to −150°C,70 ± 7%,22 ± 7% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 10% proline + 10% ectoin,0%,1°C/min  to −150°C,68 ± 13%,48 ± 8% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 10% proline + 10% ectoin,0%,5°C/min  to −150°C,72 ± 18%,72 ± 7% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 10% proline + 10% ectoin,0%,10°C/min  to −150°C,72 ± 2%,64 ± 7% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose + 10% DMSO (positive control),10%,10°C/min  to −150°C,91 ± 6%,98 ± 2% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+PBS + 0.1% methylcellulose (negative control),0%,10°C/min  to −150°C,38 ± 22%,12 ± 3% (48h),Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2011.05.002,,,,,,,,,
+Medium 199 + 10% FCS + 5% Me2SO,5%,"-1°C/min to -80°C, then liquid nitrogen",73 ± 5%,Not mentioned,Not mentioned,"Two-step slow freezing, no controlled ice nucleation",Lower viability and metabolic activity for AEMS compared to CSMS with 5% Me2SO,https://doi.org/10.1016/j.cryobiol.2013.02.002,,,,,,,,,
+Medium 199 + 10% FCS + 10% Me2SO,10%,"-1°C/min to -80°C, then liquid nitrogen",82 ± 2%,Not mentioned ,Not mentioned,"Two-step slow freezing, no controlled ice nucleation",No significant difference in viability between AEMS and CSMS with 10% Me2SO,https://doi.org/10.1016/j.cryobiol.2013.02.002,,,,,,,,,
+Medium 199 + 10% FCS + 10% Me2SO,10%,"-1°C/min to -7°C, ice nucleation, -1°C/min to -40°C, -10°C/min to -80°C, then liquid nitrogen", 88 ± 3%,Not mentioned,Not mentioned,Three-step slow cooling with controlled ice nucleation,Highest viability and metabolic activity for AEMS; retained multilineage differentiation,https://doi.org/10.1016/j.cryobiol.2013.02.002,,,,,,,,,
+Medium 199 + 10% FCS + 10% Me2SO,10%,Approx. -200°C/min (direct immersion in liquid nitrogen,3 ± 4%,Not mentioned ,Not mentioned,Rapid one-step freezing,"Critical damage to MSCs, loss of alginate transparency",https://doi.org/10.1016/j.cryobiol.2013.02.002,,,,,,,,,
+E8 medium + 50% KnockOut Serum Replacement + 10% DMSO + 10 μM ROCK Inhibitor,10%,-1°C/min to -80°C (CoolCell container),80%,Not mentioned,Not mentioned,"Conventional freezing in CoolCell, -1°C/min, cryovials",Baseline viability; no significant difference from bottom-up at 10% DMSO,https://doi.org/10.1002/btpr.70019,,,,,,,,,
+E8 medium + 50% KnockOut Serum Replacement + 10% DMSO + 10 μM ROCK Inhibitor,10%,"90 s nucleation at -80°C, then -1°C/min from -5°C to -80°C",80%,Not mentioned ,Not mentioned,"Bottom-up freezing in CELL equipment, 90 s nucleation, -1°C/min, cryovials",Similar viability to conventional at 10% DMSO; differentiation unaffected,https://doi.org/10.1002/btpr.70019,,,,,,,,,
+E8 medium + 50% KnockOut Serum Replacement + 5% DMSO + 10 μM ROCK Inhibitor,5%,"90 s nucleation at -80°C, then -1°C/min from -5°C to -80°C",75%,Not mentioned,Not mentioned,"Bottom-up freezing in CELL equipment, 90 s nucleation, -1°C/min, cryovials",Higher metabolic viability (53%) than conventional (41%) at 5% DMSO,https://doi.org/10.1002/btpr.70019,,,,,,,,,
+Culture medium + 10% DMSO,10%,"-1°C/min to -180°C (slow freezing in freezing container), stored in liquid nitrogen",59.50%,Not mentioned ,Not mentioned,"ENSdN cryopreserved in 90% culture medium + 10% DMSO, slow freezing at -1°C/min in a freezing container, stored in liquid nitrogen for 2 weeks, thawed at 37°C in culture medium","Viability ~59.5% (dissociated cells); significant upregulation of PGP9.5, ß-TubulinIII, GFAP, S100, p75, Nestin, Sox2 mRNA; significant upregulation of Oct4, S100 protein; calcium response not tested",https://doi.org/10.3389/fcell.2022.832377,,,,,,,,,
+5% DMSO + plasma replacement fluid,5%,"Controlled rate freezing (not specified), stored at ≤–150°C in vapor phase of liquid nitrogen",>80%,Neutrophil: 67% (median 22 days); Platelet: 50% (median 21 days),Not Mentioned,"HID HSCs cryopreserved in 5% DMSO + plasma, controlled rate freezing, stored ≤–150°C vapor phase LN2 (median 11 days), thawed at 37°C for 5 min, infused immediately","No significant difference in engraftment rates/times; 1-year OS 50% (vs. 41%, p=0.56)",https://doi.org/10.21873/invivo.13565,,,,,,,,,
+5% trehalose + 2.5% dextran in DMEM,0%,"Slow freezing (rate not specified, stored at -195°C in liquid nitrogen)","750 mM: ~80% (day 3)
+","750 mM trehalose: Significantly higher than 0 mM (Fig. 5d, no exact numbers)",Not mentioned ,"Trehalose delivered via ultrasound + microbubbles (UMT) at 0.25 MPa, 5 min exposure; cells cryopreserved for ≥4 weeks
+Standard MSC cryopreservation protocol; no UMT treatment for this cryosoup","Effective CPA, maintains viability and pluripotency; higher trehalose concentrations (250–750 mM) optimal
+Higher percentage of dead cells at 0 mM trehalose compared to trehalose + dextran; DMSO is cytotoxic",https://doi.org/10.1038/s44172-024-00239-0,,,,,,,,,
+"1M DMSO, 1M acetamide, 3M Propylene glycol in PBS",20%,-4.9°C/min    ,77%,Not mentioned ,Not mentioned ,"MSC monolayers were first cultured in Equilibrium solution for 10 mins before vitrification. Vitrification solution added for 5 mins, removed by aspiration. Warmed by added warm rewarming solution. Trypan blue exclusion for quantitative viability after dispersal. Annexin V-FITC / PI staining to assess apoptosis vs necrosis. Cell Counting Kit-8 (CCK-8) for cell proliferation (read at 450 nm).","COOH-PLL (polyampholyte) strongly stabilised the glassy state, reduced devitrification and cytotoxicity, and inhibited apoptosis. P-VS (EG + sucrose + 10% COOH-PLL) produced the best outcomes: lowest apoptosis (Annexin V), highest viability after warming and 1 day culture, and preserved proliferation and osteogenic/adipogenic differentiation. Slow vitrification (even at 4.9 °C/min) became feasible with COOH-PLL — advantage for fragile 2D constructs because it avoids mechanical stresses of direct immersion.",DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,Not used ,PBS 
+"6.5M EG, 0.5M Sucrose in PBS",0%,-4.9°C/min    ,50%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,6.5M,PBS 
+"6.5M EG, 10% (wt) COOH-PLL, 0.5M Sucrose in PBS",0%,-4.9°C/min    ,95%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,6.5M,PBS 
+"1M DMSO, 1M acetamide, 3M Propylene glycol in PBS",20%,-10.8°C/min    ,85%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,Not used ,PBS 
+"6.5M EG, 0.5M Sucrose in PBS",0%,-10.8°C/min    ,95%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,6.5M,PBS 
+"6.5M EG, 10% (wt) COOH-PLL, 0.5M Sucrose in PBS",0%,-10.8°C/min    ,100%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,6.5M,PBS 
+"1M DMSO, 1M acetamide, 3M Propylene glycol in PBS",20%,-20.4°C/min    ,85%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,Not used ,PBS 
+"6.5M EG, 0.5M Sucrose in PBS",0%,-20.4°C/min    ,98%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,6.5M,PBS 
+"6.5M EG, 10% (wt) COOH-PLL, 0.5M Sucrose in PBS",0%,-20.4°C/min    ,100%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,6.5M,PBS 
+"1M DMSO, 1M acetamide, 3M Propylene glycol in PBS",20%,-34.5°C/min    ,85%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,Not used ,PBS 
+"6.5M EG, 0.5M Sucrose in PBS",0%,-34.5°C/min    ,98%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,6.5M,PBS 
+"6.5M EG, 10% (wt) COOH-PLL, 0.5M Sucrose in PBS",0%,-34.5°C/min    ,100%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,6.5M,PBS 
+"1M DMSO, 1M acetamide, 3M Propylene glycol in PBS",20%,-3900°C/min    ,85%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,Not used ,PBS 
+"6.5M EG, 0.5M Sucrose in PBS",0%,-3900°C/min    ,98%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,6.5M,PBS 
+"6.5M EG, 10% (wt) COOH-PLL, 0.5M Sucrose in PBS",0%,-3900°C/min    ,100%,Not mentioned ,Not mentioned ,,,DOI: 10.1021/acsbiomaterials.6b00150,Use in cell culture and differentation media,Not used,Not used ,Not used ,Not used ,N/A,,6.5M,PBS 
+"50 mM Sucrose in electroporation buffer (10mM K2HPO4, 10mM KH2PO4, 1mM MgCl2)",0%,Stored overnight at -80°C,5%,Not mentioned ,Not mentioned ,"8 pulses at 1.5 kV/cm field strength was used for electroporation. To achieve a physiological pH of 7.4, K2HPO4 and KH2PO4 were mixed in the ratio of 40.5 to 9.5Typhan blue exclusion and flow cytometry used for viability testing. ",400mM highest ,https://doi.org/10.1016/j.cryobiol.2019.10.002,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+"100 mM Sucrose in electroporation buffer (10mM K2HPO4, 10mM KH2PO4, 1mM MgCl2)",0%,Stored overnight at -80°C,17%,Not mentioned ,Not mentioned ,,cells were able to attach 24 h after thawing demonstrating characteristic shape and sugar-loaded vacuoles,https://doi.org/10.1016/j.cryobiol.2019.10.002,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+"150 mM Sucrose in electroporation buffer (10mM K2HPO4, 10mM KH2PO4, 1mM MgCl2)",0%,Stored overnight at -80°C,60%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2019.10.002,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+"400 mM Sucrose in electroporation buffer (10mM K2HPO4, 10mM KH2PO4, 1mM MgCl2)",0%,Stored overnight at -80°C,80%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2019.10.002,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+"50 mM Trehalose in electroporation buffer (10mM K2HPO4, 10mM KH2PO4, 1mM MgCl2)",0%,Stored overnight at -80°C,3%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2019.10.002,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+"100 mM Trehalose in electroporation buffer (10mM K2HPO4, 10mM KH2PO4, 1mM MgCl2)",0%,Stored overnight at -80°C,14%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2019.10.002,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+"150 mM Trehalose in electroporation buffer (10mM K2HPO4, 10mM KH2PO4, 1mM MgCl2)",0%,Stored overnight at -80°C,62%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2019.10.002,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+"400 mM Trehalose in electroporation buffer (10mM K2HPO4, 10mM KH2PO4, 1mM MgCl2)",0%,Stored overnight at -80°C,78%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2019.10.002,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+"50 mM Raffinose in electroporation buffer (10mM K2HPO4, 10mM KH2PO4, 1mM MgCl2)",0%,Stored overnight at -80°C,7%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2019.10.002,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+"100 mM Raffinose in electroporation buffer (10mM K2HPO4, 10mM KH2PO4, 1mM MgCl2)",0%,Stored overnight at -80°C,19%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2019.10.002,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+"150 mM Raffinose in electroporation buffer (10mM K2HPO4, 10mM KH2PO4, 1mM MgCl2)",0%,Stored overnight at -80°C,75%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2019.10.002,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+"400 mM RAffinose in electroporation buffer (10mM K2HPO4, 10mM KH2PO4, 1mM MgCl2)",0%,Stored overnight at -80°C,80%,Not mentioned ,Not mentioned ,,,https://doi.org/10.1016/j.cryobiol.2019.10.002,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+10% DMSO in culture medium (Knockout DMEM),10%,-1°C/min in alcohol bath to -80°C,Not reported ,15%,Not mentioned ,,,doi:10.4061/2011/981606,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+10% Ethylene Glycol (EG) in culture medium (Knockout DMEM),0%,-1°C/min in alcohol bath to -80°C,Not reported ,17%,Not mentioned ,,,doi:10.4061/2011/981606,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,10%,Not used 
+10% propylene glycol (PEG) in culture medium (Knockout DMEM),0%,-1°C/min in alcohol bath to -80°C,Not reported ,10%,Not mentioned ,,,doi:10.4061/2011/981606,Not used ,Not used ,Not used ,Not used ,10%,Not reported ,,Not used ,Not used 
+10% glycerol in culture medium (Knockout DMEM),0%,-1°C/min in alcohol bath to -80°C,Not reported ,5%,Not mentioned ,,,doi:10.4061/2011/981606,Not used ,Not used ,Not used ,10%,Not used ,Not reported ,,Not used ,Not used 
+10% Ethylene Glycol (EG) in culture medium (Knockout DMEM) + 10 µM ROCK Inhibitor ,0%,-1°C/min in alcohol bath to -80°C,Not reported ,22%,Not mentioned ,,,doi:10.4061/2011/981606,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,10%,Not used 
+10% DMSO in culture medium (Knockout DMEM) + Accutase ,10%,-1°C/min in alcohol bath to -80°C,Not reported ,44%,Not mentioned ,,,doi:10.4061/2011/981606,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+10% Ethylene Glycol (EG) in culture medium (Knockout DMEM) + Accutase,0%,-1°C/min in alcohol bath to -80°C,Not reported ,52%,Not mentioned ,,,doi:10.4061/2011/981606,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,10%,Not used 
+10% propylene glycol (PEG) in culture medium (Knockout DMEM )+ Accutase,0%,-1°C/min in alcohol bath to -80°C,Not reported ,24%,Not mentioned ,,,doi:10.4061/2011/981606,Not used ,Not used ,Not used ,Not used ,10%,Not reported ,,Not used ,Not used 
+10% glycerol in culture medium (Knockout DMEM) + Accutase,0%,-1°C/min in alcohol bath to -80°C,Not reported ,18%,Not mentioned ,,,doi:10.4061/2011/981606,Not used ,Not used ,Not used ,10%,Not used ,Not reported ,,Not used ,Not used 
+10% Ethylene Glycol (EG) in culture medium (Knockout DMEM) + 10 µM ROCK Inhibitor + Accutase,0%,-1°C/min in alcohol bath to -80°C,Not reported ,12%,Not mentioned ,,,doi:10.4061/2011/981606,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,10%,Not used 
+Complete culture medium ((HUXUC-90011),0%,-1 ◦C/min to −80 ◦C,2%,Not mentioned ,Not mentioned ,"8 pulses at 2.25 kV/cm field strength was used for electroporation. After cryopreservation, the cell suspension was replenished to 1 ml with the solution, incubated for 30 mins before cryopreservation. Live/Dead kit used for viability, with counting using ImageJ. ROS detection using 2,7-dichlorofluorescin diacetate. ","8% betaine showed best results, with viability comparable to DMSO. Lower ROS than DMSO.",https://doi.org/10.3390/ijms22147445,,,,,,,,,
+Complete culture medium + 2% betaine ,0%,-1 ◦C/min to −80 ◦C,18%,Not mentioned ,Not mentioned ,,,https://doi.org/10.3390/ijms22147445,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+Complete culture medium + 4% betaine ,0%,-1 ◦C/min to −80 ◦C,30%,Not mentioned ,Not mentioned ,,,https://doi.org/10.3390/ijms22147445,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+Complete culture medium + 6% betaine ,0%,-1 ◦C/min to −80 ◦C,78%,Not mentioned ,Not mentioned ,,,https://doi.org/10.3390/ijms22147445,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+Complete culture medium + 8% betaine ,0%,-1 ◦C/min to −80 ◦C,84%,Not mentioned ,Not mentioned ,,,https://doi.org/10.3390/ijms22147445,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+Complete culture medium + 10% betaine ,0%,-1 ◦C/min to −80 ◦C,40%,Not mentioned ,Not mentioned ,,,https://doi.org/10.3390/ijms22147445,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+Complete Minimum Essential Medium (MEM) + 10% DMSO,10%,-1 ◦C/min to −80 ◦C,74%,Not mentioned ,Number of cells doubled in approx 3 days ,Viability measured by trypan blue exclusion with Bürker chamber; adhesion/proliferation by LDH assay; phenotype by flow cytometry ,"Complete DMEM + 15% Glycerol Optimal: higher adhesion/proliferation vs. DMSO; higher CD184 (~97%), lower CD146; similar spreading (~1500 µm²); maintained fibroblastoid morphology/differentiation",doi:10.1038/s41598-024-65469-4,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+Complete Minimum Essential Medium (MEM) + 10% Glycerol,0%,-1 ◦C/min to −80 ◦C,62%,Not mentioned ,Number of cells doubled in approx 3 days ,,,doi:10.1038/s41598-024-65469-4,Not used ,Not used ,Not used ,10%,Not used ,N/A,,Not used ,Not used 
+Complete Minimum Essential Medium (MEM) + 15% Glycerol,0%,-1 ◦C/min to −80 ◦C,70%,Not mentioned ,Number of cells doubled in approx 3 days ,,,doi:10.1038/s41598-024-65469-4,Not used ,Not used ,Not used ,15%,Not used ,N/A,,Not used ,Not used 
+Complete Minimum Essential Medium (MEM) + 20% Glycerol,0%,-1 ◦C/min to −80 ◦C,58%,Not mentioned ,Number of cells doubled in approx 3 days ,,,doi:10.1038/s41598-024-65469-4,Not used ,Not used ,Not used ,20%,Not used ,N/A,,Not used ,Not used 
+Complete DMEM + 10% DMSO,10%,-1 ◦C/min to −80 ◦C,76%,Not mentioned ,"Number of cells doubled in approx 3 days, before doubling again on day 4",,,doi:10.1038/s41598-024-65469-4,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+Complete DMEM + 10% Glycerol,0%,-1 ◦C/min to −80 ◦C,74%,Not mentioned ,"Number of cells doubled in approx 3 days, before doubling again on day 5",,,doi:10.1038/s41598-024-65469-4,Not used ,Not used ,Not used ,10%,Not used ,N/A,,Not used ,Not used 
+Complete DMEM + 15% Glycerol,0%,-1 ◦C/min to −80 ◦C,78%,Not mentioned ,"Number of cells doubled in approx 3 days, before doubling again on day 6",,,doi:10.1038/s41598-024-65469-4,Not used ,Not used ,Not used ,15%,Not used ,N/A,,Not used ,Not used 
+Complete DMEM + 20% Glycerol,0%,-1 ◦C/min to −80 ◦C,52%,Not mentioned ,"Number of cells doubled in approx 3 days, before doubling again on day 7",,,doi:10.1038/s41598-024-65469-4,Not used ,Not used ,Not used ,20%,Not used ,N/A,,Not used ,Not used 
+Lactated Ringer Solution with 10% PEG,0%,directly to −80 ◦C for 24hrs then stored in liquid nitrogen ,60%,64%,Not mentioned ,Viability measured by trypan blue staining with OneCell Counter; recovery as viable cell ratio post-thaw,LR 3T 5D Optimal DMSO-free; similar viability/recovery/proliferation/differentiation/markers (>95% CD73/CD90/CD105+) to 10% DMSO; lower proliferation than lower PG conc.,10.1007/s10616-022-00541-3,Not used ,Not used ,Not used ,Not used ,10%,N/A,,Not used ,Not used 
+Lactated Ringer Solution with 10% PEG + 3% Trehalose ,0%,directly to −80 ◦C for 24hrs then stored in liquid nitrogen ,82%,82%,Not mentioned ,,,10.1007/s10616-022-00541-3,Not used ,Not used ,Not used ,Not used ,10%,N/A,,Not used ,Not used 
+Lactated Ringer Solution with 10% PEG + 3% Trehalose + 5% Dextran,0%,directly to −80 ◦C for 24hrs then stored in liquid nitrogen ,94%,96%,Not mentioned ,,,10.1007/s10616-022-00541-3,Not used ,Not used ,Not used ,Not used ,10%,N/A,,Not used ,Not used 
+0 mg/ml storage protein 2 + 4% DMSO in ⍺-MEM,4%,-1 ◦C/min to −80 ◦C,76%,Not mentioned ,Approx. 2 days ,Viability measured by WST-1 assay (absorbance at 450 nm); proliferation by WST-1; ROS by DCFH-DA fluorescence; phenotype by flow cytometry,5 mg/mlOptimal; comparable to FBS; low ROS; maintained after 1 year; effective for UC/BM/AD-MSCs,DOI: 10.1002/term.2116,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+0 mg/ml storage protein 2 + 4% DMSO in ⍺-MEM,4%,-1 ◦C/min to −80 ◦C,78%,Not mentioned ,Approx. 2 days ,,,DOI: 10.1002/term.2116,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+0.1mg/ml storage protein 2 + 4% DMSO in ⍺-MEM,4%,-1 ◦C/min to −80 ◦C,82%,Not mentioned ,Approx. 2 days ,,,DOI: 10.1002/term.2116,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+0.2 mg/ml storage protein 2 + 4% DMSO in ⍺-MEM,4%,-1 ◦C/min to −80 ◦C,85%,Not mentioned ,Approx. 2 days ,,,DOI: 10.1002/term.2116,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+0.5 mg/ml storage protein 2 + 4% DMSO in ⍺-MEM,4%,-1 ◦C/min to −80 ◦C,90%,Not mentioned ,Approx. 2 days ,,,DOI: 10.1002/term.2116,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+1 mg/ml storage protein 2 + 4% DMSO in ⍺-MEM,4%,-1 ◦C/min to −80 ◦C,94%,Not mentioned ,Approx. 2 days ,,,DOI: 10.1002/term.2116,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+2 mg/ml storage protein 2 + 4% DMSO in ⍺-MEM,4%,-1 ◦C/min to −80 ◦C,95%,Not mentioned ,Approx. 2 days ,,,DOI: 10.1002/term.2116,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+5 mg/ml storage protein 2 + 4% DMSO in ⍺-MEM,4%,-1 ◦C/min to −80 ◦C,97%,Not mentioned ,Approx. 2 days ,,,DOI: 10.1002/term.2116,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+10 mg/ml storage protein 2 + 4% DMSO in ⍺-MEM,4%,-1 ◦C/min to −80 ◦C,98%,Not mentioned ,Approx. 2 days ,,,DOI: 10.1002/term.2116,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+7.5% COOH-PLL (mol fraction 0) in DMEM,0%,directly to −80 ◦C ,4%,Not mentioned ,38 hrs,"Viability measured post-thaw (trypan blue exclusion); proliferation by cell counting,",0.65 mol fraction best. maintained stemness and differentiation; membrane attachment mechanism differs from penetrating CPAs like DMSO; safer for clinical transplantation,10.1080/09205063.2013.771318,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+7.5% COOH-PLL (mol fraction 0.1) in DMEM,0%,directly to −80 ◦C ,20%,Not mentioned ,38 hrs,,,10.1080/09205063.2013.771318,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+7.5% COOH-PLL (mol fraction 0.2) in DMEM,0%,directly to −80 ◦C ,78%,Not mentioned ,38 hrs,,,10.1080/09205063.2013.771318,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+7.5% COOH-PLL (mol fraction 0.46) in DMEM,0%,directly to −80 ◦C ,86%,Not mentioned ,38 hrs,,,10.1080/09205063.2013.771318,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+7.5% COOH-PLL (mol fraction 0.65) in DMEM,0%,directly to −80 ◦C ,96%,Not mentioned ,38 hrs,,,10.1080/09205063.2013.771318,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+7.5% COOH-PLL (mol fraction 0.76) in DMEM,0%,directly to −80 ◦C ,92%,Not mentioned ,38 hrs,,,10.1080/09205063.2013.771318,Not used ,Not used ,Not used ,Not used ,Not used ,N/A,,Not used ,Not used 
+DMEM+20% FBS+10% DMSO,10%,1◦C/min stored overnight at -80°C before storage at -150˚C,91% ± 7.0%,79% ± 3.0%,Not mentioned ,"load without NYC;  Used Annexin V-FITC & 7-AAD staining  for(viability/apoptosis), Flow cytometric analysis of cell surface markers","This study demonstrated an overall high cell integrity after LCPT-URC application (83–99%), with no significant differences between the CPs employed, DMSO or EG. However, a consistent cell viability was also obtained with treatments of DMSO or EG (68% and 51% respectively)",https://doi.org/10.1371/journal.pone.0220055 ,,,,,,,,,
+DMEM+0.5M trehalose,0%,105 ˚C/min to -150˚,99% ± 0.0%,26% ± 15%,Not mentioned ,loaded on NYC,,https://doi.org/10.1371/journal.pone.0220055 ,,,,,,,,,
+DMEM+ 10% DMSO ,0%,105 ˚C/min to -150˚,99% ± 0.6%,28% ± 2.0%,Not mentioned ,loaded on NYC,,https://doi.org/10.1371/journal.pone.0220055 ,,,,,,,,,
+DMEM+ 10% EG ,10%,105 ˚C/min to -150˚,83% ± 14%,68% ± 20%,Not mentioned ,loaded on NYC,,https://doi.org/10.1371/journal.pone.0220055 ,,,,,,,,,
+DMEM+0.5M trehalose+ 10% DMSO ,10%,105 ˚C/min to -150˚,99% ± 0.0%,48% ± 11%,Not mentioned ,loaded on NYC,,https://doi.org/10.1371/journal.pone.0220055 ,,,,,,,,,
+DMEM+0.5M trehalose + 10% EG,0%,105 ˚C/min to -150˚,87% ± 11%,51% ± 13%,Not mentioned ,loaded on NYC,,https://doi.org/10.1371/journal.pone.0220055 ,,,,,,,,,
+90% autologous plasma+10% DMSO,10%,"assume: -1°C/min to –90°C and then storgae in -150°C (only mentioned specifically,only mention –90°C and vapor phase liquid nitrogen)",>90%,Not mentioned ,Not mentioned , viability tested by trypan blue,"After thawing, the MSCs were more than 90% viable and sterile",10.3109/14653240903313966,,,,,,,,,
+culture medium + 20% FBS + 10% DMSO,10%,"-1°C/min to -40°C, then -10°C/min to -70°C,then rapid to -196°C",85 ± 2.2%,Not mentioned ,Not mentioned , viability tested by trypan blue,Overall results indicated that the best CPAs were both containing 10% (v/v) DMSO and showed a unsatisfactory viability for Trehalose group,10.1089/bio.2012.0005,,,,,,,,,
+culture medium + 20% FBS + 5% DMSO + 60 mM Trehalose,5%,"-1°C/min to -40°C, then -10°C/min to -70°C,then rapid to -196°C",<10%,Not mentioned ,Not mentioned ,,,10.1089/bio.2012.0005,,,,,,,,,
+culture medium + 20% FBS + 2.5% DMSO + 30 mM Trehalose,2.50%,"-1°C/min to -40°C, then -10°C/min to -70°C,then rapid to -196°C",<10%,Not mentioned ,Not mentioned ,,,10.1089/bio.2012.0005,,,,,,,,,
+culture medium + 20% FBS + 264 mM Trehalose,0%,"-1°C/min to -40°C, then -10°C/min to -70°C,then rapid to -196°C",<10%,Not mentioned ,Not mentioned ,,,10.1089/bio.2012.0005,,,,,,,,,
+culture medium + 5% DMSO + 20% FBS + 500 mM Trehalose,5%,"-1°C/min to -40°C, then -10°C/min to -70°C,then rapid to -196°C",73 ± 3.3%,Not mentioned ,Not mentioned ,,,10.1089/bio.2012.0005,,,,,,,,,
+culture medium + 7% DMSO + 5% HES + 2% BSA,7%,"-1°C/min to -40°C, then -10°C/min to -70°C,then rapid to -196°C",45 ± 2.93%,Not mentioned ,Not mentioned ,,,10.1089/bio.2012.0005,,,,,,,,,
+culture medium + 5% DMSO + 4% HES + 4% FBS,5%,"-1°C/min to -40°C, then -10°C/min to -70°C,then rapid to -196°C",38 ± 5.18%,Not mentioned ,Not mentioned ,,,10.1089/bio.2012.0005,,,,,,,,,
+culture medium + 10% DMSO + 12% HES + 8% FBS,10%,"-1°C/min to -40°C, then -10°C/min to -70°C,then rapid to -196°C",80 ± 6.39%,Not mentioned ,Not mentioned ,,,10.1089/bio.2012.0005,,,,,,,,,
+culture medium + 30 μM Caspase Inhibitor z-VAD-fmk + 10% DMSO + 20% FBS,10%,"-1°C/min to -40°C, then -10°C/min to -70°C,then rapid to -196°C",79 ± 0.54%,Not mentioned ,Not mentioned ,,,10.1089/bio.2012.0005,,,,,,,,,
+culture medium + 90% FBS + 10% DMSO,10%,"-1°C/min to -40°C, then -10°C/min to -70°C,then rapid to -196°C",90 ± 0.7%,Not mentioned ,Not mentioned ,,,10.1089/bio.2012.0005,,,,,,,,,
+"Human serum (HS), 10% DMSO, 20% hydroxychyl starch ",10%,"according to the BioArchive profile curve, and stored at – 196 ° C.",63.02% ± 2.33%,81.03% ± 4.30%,38 ± 1.69 h,Thawing involved stepwise dilution with a solution containing 20% HS and 5% ACD.Viability assessed by flow cytometry (PI & Annexin V）,"Results showed a high post-thawing cell recovery rate 114% ± 2.90% and relatively high viability at 72.71% ± 2.12% but will keep decreasing to around 81.03% ± 4.30% and 63.02% ± 2.33% along with the time and differentiation ability haven’t showed a big impact after thawing. The result showed that MSSF (1°C/min, FS-1) is the optimal solution with highest viability (87±5%) and vitrification showed a poor result in general.",10.3109/14653249.2012.677820,,,,,,,,,
+0.1 M Sucrose + 10% DMSO + 20% FBS in L-15 media,10%,"2℃/min to 0℃ and then 1℃/min to - 40℃, 5℃/min to - 80℃ and finally -196℃",87 ± 5%,Not mentioned ,Not mentioned ,Trypan blue dye for viability test and Flow cytometry for checking cell surface markers,"Current Stem Cell Research & Therapy, 2013, 8, 60-72",10.3109/14653249.2012.677820,,,,,,,,,
+0.1 M Sucrose + 10% DMSO + 20% FBS in L-15 media,10%,"2℃/min to 0℃ and then 0.3℃/min to - 40℃, 5℃/min to - 80℃ and finally -196℃",76 ± 4%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+0.1 M Sucrose + 10% DMSO + 20% FBS in L-15 media,10%,1°C/min to –80°C and then -196°C,70 ± 5%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+0.2 M Trehalose + 10% DMSO + 20% FBS in L-15 media,10%,"2℃/min to 0℃ and then 1℃/min to - 40℃, 5℃/min to - 80℃ and finally -196℃",82 ± 6%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+0.2 M Trehalose + 10% DMSO + 20% FBS in L-15 media,10%,"2℃/min to 0℃ and then 0.3℃/min to - 40℃, 5℃/min to - 80℃ and finally -196℃",75 ± 5%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+0.2 M Trehalose + 10% DMSO + 20% FBS in L-15 media,10%,1°C/min to –80°C and then -196°C,66 ± 7%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+HES + 5% DMSO + 4% HSA in L-15 media,5%,"2℃/min to 0℃ and then 1℃/min to - 40℃, 5℃/min to - 80℃ and finally -196℃",70 ± 1%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+HES + 5% DMSO + 4% HSA in L-15 media,5%,"2℃/min to 0℃ and then 0.3℃/min to - 40℃, 5℃/min to - 80℃ and finally -196℃",60 ± 9%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+HES + 5% DMSO + 4% HSA in L-15 media,5%,1°C/min to –80°C and then -196°C,55 ± 1%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+0.1 M Sucrose + 1.5 M EG + 20% FBS in L-15 media,0%,"2℃/min to 0℃ and then 1℃/min to - 40℃, 5℃/min to - 80℃ and finally -196℃",80 ± 7%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+0.1 M Sucrose + 1.5 M EG + 20% FBS in L-15 media,0%,"2℃/min to 0℃ and then 0.3℃/min to - 40℃, 5℃/min to - 80℃ and finally -196℃",71 ± 5%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+0.1 M Sucrose + 1.5 M EG + 20% FBS in L-15 media,0%,1°C/min to –80°C and then -196°C,65 ± 8%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+10% DMSO + 20% FBS in DMEM/F-12 media,10%,"2℃/min to 0℃ and then 1℃/min to - 40℃, 5℃/min to - 80℃ and finally -196℃",85 ± 6%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+10% DMSO + 20% FBS in DMEM/F-12 media,10%,"2℃/min to 0℃ and then 0.3℃/min to - 40℃, 5℃/min to - 80℃ and finally -196℃",78 ± 8%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+10% DMSO + 20% FBS in DMEM/F-12 media,10%,1°C/min to –80°C and then -196°C,67 ± 7%,Not mentioned ,Not mentioned ,,,10.3109/14653249.2012.677820,,,,,,,,,
+"Equilibration Solution: 20% Ethylene Glycol (EG), 20% Fetal Bovine Serum (FBS), in DPBS",0%,"Vitrification: Rapid cooling by plunging into liquid nitrogen (~2500°C/min to 5000°C/min), exact rate not specified",84.3 ± 3.2%,"Post-thaw: Retained fibroblast-like morphology, proliferation up to Passage 14 (30-31 doublings), maintained expression of MSC markers (CD44, CD49d, CD59, CD90, CD105, HLA-ABC) and ESC markers (Oct-4, TRA-1-60, SSEA-3, SSEA-4), differentiated into osteoblasts, adipocytes, and chondrocytes","Post-thaw: Average 3.4 days (Passage 3 to 14), comparable to non-cryopreserved HAMs (3.3 days)","HAMs isolated from 10 human placentas (Cesarean section) with IRB approval, treated with trypsin and collagenase/DNase, cultured in DMEM-LG with 10% FBS; vitrification with two-step exposure (20% EG for 5 min, then 40% EG + 18% Ficoll 70 + 0.3 M sucrose for 40 s), plunged into liquid nitrogen in cryovials, stored for 2 weeks, thawed in 37°C water bath with stepwise sucrose dilution; viability assessed by Trypan Blue, morphology and proliferation monitored to Passage 14, surface antigens (CD31, CD34, CD44, etc.) analyzed by flow cytometry, ESC markers (Oct-4, Nestin, etc.) by RT-PCR and immunocytochemistry, differentiation (osteogenic, adipogenic, chondrogenic) evaluated with Von Kossa, Oil Red O, and Alcian Blue staining; statistical analysis with χ² test (p<0.05).","Vitrification yielded 84.3 ± 3.2% viability, preserving fibroblast-like morphology, proliferation (doubling time 3.4 days), and MSC/ESC marker expression (CD44, CD90, Oct-4, TRA-1-60) post-thaw; cells differentiated into osteoblasts (CBFA-1), adipocytes (LPL), and chondrocytes (Decorin) similarly to non-cryopreserved controls; EG-based solution (EFS 40) outperformed slow freezing and combinations with DMSO/PROH, with Ficoll 70 enhancing permeation; limitations include short 2-week storage and potential contamination risks from liquid nitrogen.",10.1093/humrep/den202,,,,,,,,,
+"Vitrification Solution: 40% Ethylene Glycol (EG), 18% Ficoll 70, 0.3 M Sucrose, 20% FBS, in DPBS",0%,"Thawing: Rapid warming in 37°C water bath, exact rate not specified",84.3 ± 3.2%,"Post-thaw: Retained fibroblast-like morphology, proliferation up to Passage 14 (30-31 doublings), maintained expression of MSC markers (CD44, CD49d, CD59, CD90, CD105, HLA-ABC) and ESC markers (Oct-4, TRA-1-60, SSEA-3, SSEA-4), differentiated into osteoblasts, adipocytes, and chondrocytes","Post-thaw: Average 3.4 days (Passage 3 to 14), comparable to non-cryopreserved HAMs (3.3 days)",,,10.1093/humrep/den202,,,,,,,,,
+"6% Hydroxyethyl Starch, 20% DMSO, in 50 mL cell suspension (final 10% DMSO)",10%,"Controlled-rate freezing at -1°C/min to -80°C, then gas-phase liquid nitrogen storage",Not Mentioned,Not Mentioned,Not mentioned ,"HPC collected from 94 patients (2013–2022) via apheresis, platelet depletion, volume reduction, cryopreserved with 10% DMSO + 6% HES in EVA bags, controlled-rate freezing (MiniDigitcool), stored in gas-phase LN2; microbiological testing negative",,10.1186/s12967-022-03703-1,,,,,,,,,
+"6% Hydroxyethyl Starch (1:1 dilution with thawed bag), processed via Sepax-2 S100 SmartWash program",Residual DMSO removed (>95% reduction),Not Mentioned,78%,"CD34+ cell recovery: 75% (66–83%) (Run 1), 73% (64–79%) (Run 2); maintained functionality (CFU-GM for allogeneic grafts)",Not mentioned ,"Thawing with Smart-Max (9 min static + 1 min dynamic at 37°C), 1:1 dilution with 6% HES, Sepax-2 S100 SmartWash to concentrate 2 bags into 1 (150 mL), same day, same operator, 3–4 h interval (n=45); CD34+/CD45+ viability via flow cytometry (Stem-Kit, ISCT protocol), CFU-GM assay for allogeneic; Mann-Whitney, Bland-Altman analysis (p≤0.05, GraphPad Prism 5)","Comparable CD34+ recovery (75% vs. 73%, p=0.54) and viability (CD34+ 78% vs. 78%, CD45+ 79% vs. 80%, p=0.85/0.59), bias near 0% (Bland-Altman); recovery linked to initial product quality",10.1186/s12967-022-03703-1,,,,,,,,,
+"6% Hydroxyethyl Starch (1:1 dilution with thawed bag), processed via Sepax-2 S100 SmartWash program",Residual DMSO removed (>95% reduction),Not Mentioned,84%,"CD34+ cell recovery: 77% (68–85%) (Run 1), 77% (70–84%) (Run 2); maintained functionality (CFU-GM for allogeneic grafts)",Not mentioned ,"Thawing with Smart-Max (9 min static + 1 min dynamic at 37°C), 1:1 dilution with 6% HES, Sepax-2 S100 SmartWash to concentrate 2 bags into 1 (150 mL), different days, different operators (n=49); CD34+/CD45+ viability via flow cytometry (Stem-Kit, ISCT protocol), CFU-GM assay for allogeneic; Mann-Whitney, Bland-Altman analysis (p≤0.05, GraphPad Prism 5)","Comparable CD34+ recovery (77% vs. 77%, p=0.74) and viability (CD34+ 84% vs. 85%, CD45+ 79% vs. 78%, p=0.95/0.69), bias near 0% (Bland-Altman); recovery linked to initial product quality",10.1186/s12967-022-03703-1,,,,,,,,,
+"10% Glycerol, 2:1 DMEM/HAM F12, 10% FBS, 4 mM L-glutamine, 50 μg/mL penicillin-streptomycin, 5 μg/mL insulin, 0.4 μg/mL hydrocortisone, 0.18 mM adenine, 8.1 μg/mL cholera toxin, 2 nM triiodothyronine, 10 ng/mL EGF",0%,"Slow rate-controlled cooling using isopropanol freezing container (Mr. Frosty) to -20°C for 24h, then liquid nitrogen",60.6% ± 7.9%,"Maintained clonogenic capacity (CFE 17.0% ± 0.1% clonogenic, 3.6% ± 1.2% abortive), proliferative capacity (CCD 45 ± 7.6 doublings), and differentiation (p63α 33.1% ± 21.7% at P3, 21.0% ± 7.0% at P5; K19 63.8% ± 17.9% at P3, 65.5% ± 12.3% at P5)",Not mentioned ,"Conjunctival cells from 3 cadaveric donors (36–79 years) isolated by trypsin/EDTA, cultured on 3T3-J2 feeder layer, cryopreserved in 0.5 mL 10% glycerol solution with culture medium, slow cooling (Mr. Frosty) to -20°C for 24h then liquid nitrogen for 30 days; viability by trypan blue, quality tests (CFE, CCD, immunohistochemistry) over 6 passages; statistical analysis with two-tailed t-test (p<0.05, SPSS v24)","Viability 60.6% ± 7.9%, lower than DMSO (p=0.001); maintained proliferative (CCD 45 ± 7.6), clonogenic (CFE 17.0% ± 0.1%), and differentiation capacity (p63α, K19 unchanged, p≥0.05)",10.1089/bio.2020.0091,,,,,,,,,
+"CryoStor CS10 (10% DMSO, serum-free), 2:1 DMEM/HAM F12, 10% FBS, 4 mM L-glutamine, 50 μg/mL penicillin-streptomycin, 5 μg/mL insulin, 0.4 μg/mL hydrocortisone, 0.18 mM adenine, 8.1 μg/mL cholera toxin, 2 nM triiodothyronine, 10 ng/mL EGF",10%,"Slow rate-controlled cooling using isopropanol freezing container (Mr. Frosty) to -20°C for 24h, then liquid nitrogen",79.9% ± 7.0%,"Maintained clonogenic capacity (CFE 16.4% ± 0.9% clonogenic, 3.2% ± 0.8% abortive), proliferative capacity (CCD 47 ± 3.3 doublings), and differentiation (p63α 20.1% ± 11.4% at P3, 22.9% ± 21.7% at P5; K19 68.9% ± 10.1% at P3, 64.0% ± 12.5% at P5)",Not mentioned ,"Conjunctival cells from 3 cadaveric donors (36–79 years) isolated by trypsin/EDTA, cultured on 3T3-J2 feeder layer, cryopreserved in 0.5 mL CryoStor CS10 (10% DMSO) with culture medium, slow cooling (Mr. Frosty) to -20°C for 24h then liquid nitrogen for 30 days; viability by trypan blue, quality tests (CFE, CCD, immunohistochemistry) over 6 passages; statistical analysis with two-tailed t-test (p<0.05, SPSS v24)","Viability 79.9% ± 7.0%, higher than glycerol (p=0.001); maintained proliferative (CCD 47 ± 3.3), clonogenic (CFE 16.4% ± 0.9%), and differentiation capacity (p63α, K19 unchanged, p≥0.05)",10.1089/bio.2020.0091,,,,,,,,,
+Culture medium (2:1 DMEM/HAM F12 with supplements),,Rapid thawing at 37°C,Not Mentioned,Not Mentioned,Not mentioned ,"Rapid thawing at 37°C, centrifugation at 112×g for 5 min, resuspension in culture medium",,10.1089/bio.2020.0091,,,,,,,,,
+"95% FBS, 5% DMSO",5%,-1 ◦C/min to −80 ◦C,68.50%,Not measured ,Not measured ,The cells were thawed at 37C. Cell viability was measured by TC20 automated cell counter using 0.4% tryphan blue.,"DMSO and Ethylene glycol showed equal efficeincy, and addition of sucrose does not significantly affect post-thaw viability. Glycerol not efficient, however the addition of sucrose does imporve performance.",10.1007/s10517-021-05187-3,,,,,,,,,
+"92.5% FBS, 7.5% DMSO",7.50%,-1 ◦C/min to −80 ◦C,69.50%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"90% FBS, 10% DMSO",10%,-1 ◦C/min to −80 ◦C,73.50%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"95% FBS, 5% DMSO + 0.2M sucrose",5%,-1 ◦C/min to −80 ◦C,70%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"92.5% FBS, 7.5% DMSO + 0.2M sucrose",7.50%,-1 ◦C/min to −80 ◦C,71%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"90% FBS, 10% DMSO + 0.2M sucrose",10%,-1 ◦C/min to −80 ◦C,73.10%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"95% FBS, 5% Ethylene Glycol",0%,-1 ◦C/min to −80 ◦C,69.60%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"92.5% FBS, 7.5% Ethylene Glycol",0%,-1 ◦C/min to −80 ◦C,72%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"90% FBS, 10% Ethylene Glycol",0%,-1 ◦C/min to −80 ◦C,73.80%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"95% FBS, 5% Ethylene Glycol + 0.2M sucrose",0%,-1 ◦C/min to −80 ◦C,68.20%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"92.5% FBS, 7.5% Ethylene Glycol + 0.2M sucrose",0%,-1 ◦C/min to −80 ◦C,73%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"90% FBS, 10% Ethylene Glycol + 0.2M sucrose",0%,-1 ◦C/min to −80 ◦C,74.90%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"95% FBS, 5% Glycerol",0%,-1 ◦C/min to −80 ◦C,42.40%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"92.5% FBS, 7.5% Glycerol",0%,-1 ◦C/min to −80 ◦C,47.60%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"90% FBS, 10% Glycerol",0%,-1 ◦C/min to −80 ◦C,52.10%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"95% FBS, 5% Glycerol + 0.2M sucrose",0%,-1 ◦C/min to −80 ◦C,50.30%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"92.5% FBS, 7.5% Glycerol + 0.2M sucrose",0%,-1 ◦C/min to −80 ◦C,55.30%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+"90% FBS, 10% Glycerol+ 0.2M sucrose",0%,-1 ◦C/min to −80 ◦C,69.00%,Not measured ,Not measured ,,,10.1007/s10517-021-05187-3,,,,,,,,,
+50 mg/ml PEG 5000 in DMEM,0%,-1 ◦C/min to −80 ◦C then transferred to liquid nitrogen at -196°C,Not reported ,35%,Not measured ,,,https://doi.org/10.1021/acsami.1c09933,,,,,,,,,
+50 mg/ml PEG 1000 in DMEM,0%,-1 ◦C/min to −80 ◦C then transferred to liquid nitrogen at -196°C,Not reported ,17%,Not measured ,,,https://doi.org/10.1021/acsami.1c09933,,,,,,,,,
+30 mg/ml 80% Hydrolysed PVA in DMEM,0%,-1 ◦C/min to −80 ◦C then transferred to liquid nitrogen at -196°C,Not reported ,10%,Not measured ,,,https://doi.org/10.1021/acsami.1c09933,,,,,,,,,
+30 mg/ml 100% Hydrolysed PVA in DMEM,0%,-1 ◦C/min to −80 ◦C then transferred to liquid nitrogen at -196°C,Not reported ,12%,Not measured ,,,https://doi.org/10.1021/acsami.1c09933,,,,,,,,,
+2% human serum + 10% DMSO,10%,-1°C/min to 80°C and stay overnight then to -196°C,88.0 ± 0.8%,not mention,1.0 ± 0.1 days (at passage 3),Trypan blue exclusion test and Ki-67 immunofluorescence staining were used to assess the properties of Cell viability and Proliferation.,"The result showed all three groups maintained the CSSCs morphology and stem cell phenotype, higher viability and the anti-inflammatory function was not lost. The optimal cryoprotectant is 4% human serum (HS), 10% DMSO, CSSC medium.",10.1089/ten.TEC.2019.0195,,,,,,,,,
+4% human serum +10% DMSO,10%,-1°C/min to 80°C and stay overnight then to -196°C,92.7 ± 1.3%,not mention,1.0 ± 0.1 days (at passage 3),,,10.1089/ten.TEC.2019.0195,,,,,,,,,
+90% human serum +10% DMSO,10%,-1°C/min to 80°C and stay overnight then to -196°C,90.0 ± 1.4%,not mention,1.0 ± 0.1 days (at passage 3),,,10.1089/ten.TEC.2019.0195,,,,,,,,,
+"10%DMSO+10% Dulbecco’s modified Eagle’s medium/F12 Ham’s, 80% FBS",10%,not explicited mentioned but finally store at 196°C,81.10%,not mention,not mention,Trypan blue exclusion test with hemocytometer counting for viability test and Colony-forming unit (CFU) assays was testing the differentiation potential.,"The result showed the optimal cell concentration was 0.5×10⁶ cells/mL and protocol is 10% DMSO, 10% Dulbecco’s modified Eagle’s medium/F12 Ham’s, 80%FBS which got 81.1% viability eventually.",10.1002/term.35,,,,,,,,,
+α-MEM with 0.2M Sucrose ,0%,-1°C/min to 80°C and stay overnight then to -196°C,45%,not mention,Not mention,two-stage centrifugation was used to separate Platelet-poor plasma from platelet-rich plasma from blood samples. MSC were pretreated for 24 hrs in complete cell culture supplemented with 0.1M sucrose. Tryphan blue was used to assess viability,use of PPP increased post-thaw viability by a lot,https://doi.org/10.1155/2019/4150690,,,,,,,,,
+α-MEM with 0.2M Sucrose + 1% DMSO,1%,-1°C/min to 80°C and stay overnight then to -196°C,68%,not mention,Not mention,,,https://doi.org/10.1155/2019/4150690,,,,,,,,,
+α-MEM with 0.2M Sucrose + 2% DMSO,2%,-1°C/min to 80°C and stay overnight then to -196°C,68.90%,not mention,Not mention,,,https://doi.org/10.1155/2019/4150690,,,,,,,,,
+α-MEM with 0.2M Sucrose + 5% DMSO,5%,-1°C/min to 80°C and stay overnight then to -196°C,79.60%,not mention,Not mention,,,https://doi.org/10.1155/2019/4150690,,,,,,,,,
+α-MEM with 0.2M Sucrose + 10% DMSO,10%,-1°C/min to 80°C and stay overnight then to -196°C,85.60%,not mention,Not mention,,,https://doi.org/10.1155/2019/4150690,,,,,,,,,
+PPP with 0.2M Sucrose ,0%,-1°C/min to 80°C and stay overnight then to -196°C,0.00%,not mention,Not mention,,,https://doi.org/10.1155/2019/4150690,,,,,,,,,
+PPP with 0.2M Sucrose + 1% DMSO,1%,-1°C/min to 80°C and stay overnight then to -196°C,77%,not mention,Not mention,,,https://doi.org/10.1155/2019/4150690,,,,,,,,,
+PPP with 0.2M Sucrose + 2% DMSO,2%,-1°C/min to 80°C and stay overnight then to -196°C,79%,not mention,Not mention,,,https://doi.org/10.1155/2019/4150690,,,,,,,,,
+PPP with 0.2M Sucrose + 5% DMSO,5%,-1°C/min to 80°C and stay overnight then to -196°C,83%,not mention,Not mention,,,https://doi.org/10.1155/2019/4150690,,,,,,,,,
+PPP with 0.2M Sucrose + 10% DMSO,10%,-1°C/min to 80°C and stay overnight then to -196°C,86.50%,not mention,Not mention,,,https://doi.org/10.1155/2019/4150690,,,,,,,,,
+"electroporation buffer (10 mM K2HPO4, 10 mM KH2PO4, 1 mM MgCl2) ",0%,-1°C/min to 80°C and stay overnight then to -196°C,5%,not mentioned ,not mentioned ,Electroporation was used to introduce trehalose to the cells. Tryphan blue was used for cell viability,,https://doi.org/10.1007/s10616-021-00465-4,,,,,,,,,
+electroporation buffer + 10 mM trehalose,0%,-1°C/min to 80°C and stay overnight then to -196°C,6%,not mentioned ,not mentioned ,adipose derived mesenchymal cells ,,https://doi.org/10.1007/s10616-021-00465-4,,,,,,,,,
+electroporation buffer + 50 mM trehalose,0%,-1°C/min to 80°C and stay overnight then to -196°C,12.50%,not mentioned ,not mentioned ,,,https://doi.org/10.1007/s10616-021-00465-4,,,,,,,,,
+electroporation buffer + 100 mM trehalose,0%,-1°C/min to 80°C and stay overnight then to -196°C,40%,not mentioned ,not mentioned ,,,https://doi.org/10.1007/s10616-021-00465-4,,,,,,,,,
+electroporation buffer + 250 mM trehalose,0%,-1°C/min to 80°C and stay overnight then to -196°C,72%,not mentioned ,not mentioned ,,,https://doi.org/10.1007/s10616-021-00465-4,,,,,,,,,
+"electroporation buffer (10 mM K2HPO4, 10 mM KH2PO4, 1 mM MgCl2) ",0%,-1°C/min to 80°C and stay overnight then to -196°C,2%,not mentioned ,not mentioned ,umbilical-cord-derived mesenchymal,,https://doi.org/10.1007/s10616-021-00465-4,,,,,,,,,
+electroporation buffer + 10 mM trehalose,0%,-1°C/min to 80°C and stay overnight then to -196°C,4%,not mentioned ,not mentioned ,,,https://doi.org/10.1007/s10616-021-00465-4,,,,,,,,,
+electroporation buffer + 50 mM trehalose,0%,-1°C/min to 80°C and stay overnight then to -196°C,14.00%,not mentioned ,not mentioned ,,,https://doi.org/10.1007/s10616-021-00465-4,,,,,,,,,
+electroporation buffer + 100 mM trehalose,0%,-1°C/min to 80°C and stay overnight then to -196°C,38%,not mentioned ,not mentioned ,,,https://doi.org/10.1007/s10616-021-00465-4,,,,,,,,,
+electroporation buffer + 250 mM trehalose,0%,-1°C/min to 80°C and stay overnight then to -196°C,82%,not mentioned ,not mentioned ,,,https://doi.org/10.1007/s10616-021-00465-4,,,,,,,,,
+"electroporation buffer (10 mM K2HPO4, 10 mM KH2PO4, 1 mM MgCl2) + 250 mM",0%,-1°C/min to 80°C and stay overnight then to -196°C,82%,not mentioned ,not mentioned ,,,10.1007/s00232-016-9916-z,,,,,,,,,
+"electroporation buffer (10 mM K2HPO4, 10 mM KH2PO4, 1 mM MgCl2) + 450 mM",0%,-1°C/min to 80°C and stay overnight then to -196°C,75%,not mentioned ,not mentioned ,,,10.1007/s00232-016-9916-z,,,,,,,,,
+,,,,,,,,10.1007/s00232-016-9916-z,,,,,,,,,

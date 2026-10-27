@@ -1,0 +1,668 @@
+{
+  "version": 2,
+  "date": "2026-10-27",
+  "baseline_commit": "6b296d1b1975a016fe1b90e41c1c20667929caa0",
+  "input_file": "data/raw/Cryopreservative Data 2026.csv",
+  "input_sha256": "33bbee1cc727a65bf52c1c904c00b378f729b8c8a711e1cb493d6b686100f723",
+  "scope": "Confirmed concentration corrections only. Pending legacy concentrations are explicitly unverified. Preserve baseline record IDs, source strings and viability target groups; no retraining.",
+  "raw_text_corrections": [
+    {
+      "raw_record": 102,
+      "old": "o.5M",
+      "new": "0.5M",
+      "reason": "Letter o was entered instead of zero; Woods et al. Methods specifies 0.5, 1.0 and 1.5 M.",
+      "source": "https://doi.org/10.1016/j.cryobiol.2009.06.005"
+    }
+  ],
+  "confirmed": [
+    {
+      "formulation_id": 2,
+      "field": "trehalose_M",
+      "raw_records": [
+        2
+      ],
+      "previous_M": 0.00025,
+      "correct_M": 0.25,
+      "verification_sources": [
+        "https://doi.org/10.1038/srep09596"
+      ]
+    },
+    {
+      "formulation_id": 9,
+      "field": "ethylene_glycol_M",
+      "raw_records": [
+        9,
+        11,
+        28,
+        81,
+        83
+      ],
+      "previous_M": 0.0015,
+      "correct_M": 1.5,
+      "verification_sources": [
+        "https://doi.org/10.3390/life13061286",
+        "https://doi.org/10.15283/ijsc.2015.8.2.155",
+        "https://doi.org/10.1002/term.1945"
+      ]
+    },
+    {
+      "formulation_id": 9,
+      "field": "sucrose_M",
+      "raw_records": [
+        9,
+        11,
+        28,
+        81,
+        83
+      ],
+      "previous_M": 5e-05,
+      "correct_M": 0.05,
+      "verification_sources": [
+        "https://doi.org/10.3390/life13061286",
+        "https://doi.org/10.15283/ijsc.2015.8.2.155",
+        "https://doi.org/10.1002/term.1945"
+      ]
+    },
+    {
+      "formulation_id": 9,
+      "field": "glucose_M",
+      "raw_records": [
+        9,
+        11,
+        28,
+        81,
+        83
+      ],
+      "previous_M": 5e-05,
+      "correct_M": 0.05,
+      "verification_sources": [
+        "https://doi.org/10.3390/life13061286",
+        "https://doi.org/10.15283/ijsc.2015.8.2.155",
+        "https://doi.org/10.1002/term.1945"
+      ]
+    },
+    {
+      "formulation_id": 27,
+      "field": "ethylene_glycol_M",
+      "raw_records": [
+        27
+      ],
+      "previous_M": 0.0015,
+      "correct_M": 1.5,
+      "verification_sources": [
+        "https://doi.org/10.15283/ijsc.2015.8.2.155"
+      ]
+    },
+    {
+      "formulation_id": 27,
+      "field": "sucrose_M",
+      "raw_records": [
+        27
+      ],
+      "previous_M": 5e-05,
+      "correct_M": 0.05,
+      "verification_sources": [
+        "https://doi.org/10.15283/ijsc.2015.8.2.155"
+      ]
+    },
+    {
+      "formulation_id": 27,
+      "field": "glucose_M",
+      "raw_records": [
+        27
+      ],
+      "previous_M": 5e-05,
+      "correct_M": 0.05,
+      "verification_sources": [
+        "https://doi.org/10.15283/ijsc.2015.8.2.155"
+      ]
+    },
+    {
+      "formulation_id": 29,
+      "field": "ethylene_glycol_M",
+      "raw_records": [
+        29
+      ],
+      "previous_M": 0.0015,
+      "correct_M": 1.5,
+      "verification_sources": [
+        "https://doi.org/10.15283/ijsc.2015.8.2.155"
+      ]
+    },
+    {
+      "formulation_id": 29,
+      "field": "sucrose_M",
+      "raw_records": [
+        29
+      ],
+      "previous_M": 5e-05,
+      "correct_M": 0.05,
+      "verification_sources": [
+        "https://doi.org/10.15283/ijsc.2015.8.2.155"
+      ]
+    },
+    {
+      "formulation_id": 29,
+      "field": "glucose_M",
+      "raw_records": [
+        29
+      ],
+      "previous_M": 5e-05,
+      "correct_M": 0.05,
+      "verification_sources": [
+        "https://doi.org/10.15283/ijsc.2015.8.2.155"
+      ]
+    },
+    {
+      "formulation_id": 52,
+      "field": "trehalose_M",
+      "raw_records": [
+        52
+      ],
+      "previous_M": 0.0003,
+      "correct_M": 0.3,
+      "verification_sources": [
+        "https://doi.org/10.1186/s13287-020-01969-0"
+      ]
+    },
+    {
+      "formulation_id": 53,
+      "field": "trehalose_M",
+      "raw_records": [
+        53
+      ],
+      "previous_M": 0.0006,
+      "correct_M": 0.6,
+      "verification_sources": [
+        "https://doi.org/10.1186/s13287-020-01969-0"
+      ]
+    },
+    {
+      "formulation_id": 54,
+      "field": "trehalose_M",
+      "raw_records": [
+        54
+      ],
+      "previous_M": 0.001,
+      "correct_M": 1.0,
+      "verification_sources": [
+        "https://doi.org/10.1186/s13287-020-01969-0"
+      ]
+    },
+    {
+      "formulation_id": 55,
+      "field": "trehalose_M",
+      "raw_records": [
+        55
+      ],
+      "previous_M": 0.00125,
+      "correct_M": 1.25,
+      "verification_sources": [
+        "https://doi.org/10.1186/s13287-020-01969-0"
+      ]
+    },
+    {
+      "formulation_id": 59,
+      "field": "trehalose_M",
+      "raw_records": [
+        59
+      ],
+      "previous_M": 0.001,
+      "correct_M": 1.0,
+      "verification_sources": [
+        "https://doi.org/10.1186/s13287-020-01969-0"
+      ]
+    },
+    {
+      "formulation_id": 99,
+      "field": "ethylene_glycol_M",
+      "raw_records": [
+        99
+      ],
+      "previous_M": 0.0005,
+      "correct_M": 0.5,
+      "verification_sources": [
+        "https://doi.org/10.1016/j.cryobiol.2009.06.005"
+      ]
+    },
+    {
+      "formulation_id": 100,
+      "field": "ethylene_glycol_M",
+      "raw_records": [
+        100
+      ],
+      "previous_M": 0.001,
+      "correct_M": 1.0,
+      "verification_sources": [
+        "https://doi.org/10.1016/j.cryobiol.2009.06.005"
+      ]
+    },
+    {
+      "formulation_id": 101,
+      "field": "ethylene_glycol_M",
+      "raw_records": [
+        101
+      ],
+      "previous_M": 0.0015,
+      "correct_M": 1.5,
+      "verification_sources": [
+        "https://doi.org/10.1016/j.cryobiol.2009.06.005"
+      ]
+    },
+    {
+      "formulation_id": 102,
+      "field": "propylene_glycol_M",
+      "raw_records": [
+        102
+      ],
+      "previous_M": 0.005,
+      "correct_M": 0.5,
+      "verification_sources": [
+        "https://doi.org/10.1016/j.cryobiol.2009.06.005"
+      ]
+    },
+    {
+      "formulation_id": 103,
+      "field": "propylene_glycol_M",
+      "raw_records": [
+        103
+      ],
+      "previous_M": 0.001,
+      "correct_M": 1.0,
+      "verification_sources": [
+        "https://doi.org/10.1016/j.cryobiol.2009.06.005"
+      ]
+    },
+    {
+      "formulation_id": 104,
+      "field": "propylene_glycol_M",
+      "raw_records": [
+        104
+      ],
+      "previous_M": 0.0015,
+      "correct_M": 1.5,
+      "verification_sources": [
+        "https://doi.org/10.1016/j.cryobiol.2009.06.005"
+      ]
+    },
+    {
+      "formulation_id": 236,
+      "field": "propylene_glycol_M",
+      "raw_records": [
+        236,
+        239,
+        242,
+        245,
+        248
+      ],
+      "previous_M": 0.003,
+      "correct_M": 3.0,
+      "verification_sources": [
+        "https://doi.org/10.1021/acsbiomaterials.6b00150"
+      ]
+    },
+    {
+      "formulation_id": 236,
+      "field": "acetamide_M",
+      "raw_records": [
+        236,
+        239,
+        242,
+        245,
+        248
+      ],
+      "previous_M": 0.001,
+      "correct_M": 1.0,
+      "verification_sources": [
+        "https://doi.org/10.1021/acsbiomaterials.6b00150"
+      ]
+    },
+    {
+      "formulation_id": 237,
+      "field": "ethylene_glycol_M",
+      "raw_records": [
+        237,
+        238,
+        240,
+        241,
+        243,
+        244,
+        246,
+        247,
+        249,
+        250
+      ],
+      "previous_M": 0.0065,
+      "correct_M": 6.5,
+      "verification_sources": [
+        "https://doi.org/10.1021/acsbiomaterials.6b00150"
+      ]
+    },
+    {
+      "formulation_id": 306,
+      "field": "trehalose_M",
+      "raw_records": [
+        306
+      ],
+      "previous_M": 0.0005,
+      "correct_M": 0.5,
+      "verification_sources": [
+        "https://doi.org/10.1371/journal.pone.0220055"
+      ]
+    },
+    {
+      "formulation_id": 309,
+      "field": "trehalose_M",
+      "raw_records": [
+        309
+      ],
+      "previous_M": 0.0005,
+      "correct_M": 0.5,
+      "verification_sources": [
+        "https://doi.org/10.1371/journal.pone.0220055"
+      ]
+    },
+    {
+      "formulation_id": 310,
+      "field": "trehalose_M",
+      "raw_records": [
+        310
+      ],
+      "previous_M": 0.0005,
+      "correct_M": 0.5,
+      "verification_sources": [
+        "https://doi.org/10.1371/journal.pone.0220055"
+      ]
+    },
+    {
+      "formulation_id": 323,
+      "field": "sucrose_M",
+      "raw_records": [
+        323,
+        324,
+        325
+      ],
+      "previous_M": 0.0001,
+      "correct_M": 0.1,
+      "verification_sources": [
+        "https://doi.org/10.2174/1574888X11308010008"
+      ],
+      "note": "Concentration is confirmed by Balci & Can; the recorded CSV source DOI appears misattributed and is left unchanged in this concentration-only release."
+    },
+    {
+      "formulation_id": 349,
+      "field": "sucrose_M",
+      "raw_records": [
+        349
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1007/s10517-021-05187-3"
+      ]
+    },
+    {
+      "formulation_id": 350,
+      "field": "sucrose_M",
+      "raw_records": [
+        350
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1007/s10517-021-05187-3"
+      ]
+    },
+    {
+      "formulation_id": 351,
+      "field": "sucrose_M",
+      "raw_records": [
+        351
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1007/s10517-021-05187-3"
+      ]
+    },
+    {
+      "formulation_id": 355,
+      "field": "sucrose_M",
+      "raw_records": [
+        355
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1007/s10517-021-05187-3"
+      ]
+    },
+    {
+      "formulation_id": 356,
+      "field": "sucrose_M",
+      "raw_records": [
+        356
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1007/s10517-021-05187-3"
+      ]
+    },
+    {
+      "formulation_id": 357,
+      "field": "sucrose_M",
+      "raw_records": [
+        357
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1007/s10517-021-05187-3"
+      ]
+    },
+    {
+      "formulation_id": 361,
+      "field": "sucrose_M",
+      "raw_records": [
+        361
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1007/s10517-021-05187-3"
+      ]
+    },
+    {
+      "formulation_id": 362,
+      "field": "sucrose_M",
+      "raw_records": [
+        362
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1007/s10517-021-05187-3"
+      ]
+    },
+    {
+      "formulation_id": 363,
+      "field": "sucrose_M",
+      "raw_records": [
+        363
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1007/s10517-021-05187-3"
+      ]
+    },
+    {
+      "formulation_id": 372,
+      "field": "sucrose_M",
+      "raw_records": [
+        372,
+        377
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1155/2019/4150690"
+      ]
+    },
+    {
+      "formulation_id": 373,
+      "field": "sucrose_M",
+      "raw_records": [
+        373,
+        378
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1155/2019/4150690"
+      ]
+    },
+    {
+      "formulation_id": 374,
+      "field": "sucrose_M",
+      "raw_records": [
+        374,
+        379
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1155/2019/4150690"
+      ]
+    },
+    {
+      "formulation_id": 375,
+      "field": "sucrose_M",
+      "raw_records": [
+        375,
+        380
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1155/2019/4150690"
+      ]
+    },
+    {
+      "formulation_id": 376,
+      "field": "sucrose_M",
+      "raw_records": [
+        376,
+        381
+      ],
+      "previous_M": 0.0002,
+      "correct_M": 0.2,
+      "verification_sources": [
+        "https://doi.org/10.1155/2019/4150690"
+      ]
+    }
+  ],
+  "pending": [
+    {
+      "formulation_id": 237,
+      "field": "sucrose_M",
+      "raw_records": [
+        237,
+        238,
+        240,
+        241,
+        243,
+        244,
+        246,
+        247,
+        249,
+        250
+      ],
+      "retained_legacy_M": 0.0005,
+      "raw_text_M": 0.5,
+      "status": "unverified_legacy_value_not_corrected",
+      "reason": "Table 1 and published abstract state 0.5 M; accessible author-manuscript Methods states 0.75 M. Unit error definite, final intended concentration requires source clarification."
+    },
+    {
+      "formulation_id": 326,
+      "field": "trehalose_M",
+      "raw_records": [
+        326,
+        327,
+        328
+      ],
+      "retained_legacy_M": 0.0002,
+      "raw_text_M": 0.2,
+      "status": "unverified_legacy_value_not_corrected",
+      "reason": "Raw-data-based unit correction. Listed DOI appears wrong; citation note and reported outcomes point to Balci & Can 2013, DOI 10.2174/1574888X11308010008. Relevant full table requires source verification."
+    },
+    {
+      "formulation_id": 332,
+      "field": "ethylene_glycol_M",
+      "raw_records": [
+        332,
+        333,
+        334
+      ],
+      "retained_legacy_M": 0.0015,
+      "raw_text_M": 1.5,
+      "status": "unverified_legacy_value_not_corrected",
+      "reason": "Raw-data-based unit correction. Listed DOI appears wrong; citation note and reported outcomes point to Balci & Can 2013, DOI 10.2174/1574888X11308010008. Relevant full table requires source verification."
+    },
+    {
+      "formulation_id": 332,
+      "field": "sucrose_M",
+      "raw_records": [
+        332,
+        333,
+        334
+      ],
+      "retained_legacy_M": 0.0001,
+      "raw_text_M": 0.1,
+      "status": "unverified_legacy_value_not_corrected",
+      "reason": "Raw-data-based unit correction. Listed DOI appears wrong; citation note and reported outcomes point to Balci & Can 2013, DOI 10.2174/1574888X11308010008. Relevant full table requires source verification."
+    },
+    {
+      "formulation_id": 339,
+      "field": "sucrose_M",
+      "raw_records": [
+        339
+      ],
+      "retained_legacy_M": 0.0003,
+      "raw_text_M": 0.3,
+      "status": "unverified_legacy_value_not_corrected",
+      "reason": "0.3 M supported by supplied first-pass extraction; full original Methods not retrieved in this audit."
+    }
+  ],
+  "preserved_duplicate_groups": [
+    {
+      "formulation_id": 2,
+      "raw_records": [
+        2
+      ]
+    },
+    {
+      "formulation_id": 386,
+      "raw_records": [
+        386,
+        391
+      ]
+    },
+    {
+      "formulation_id": 41,
+      "raw_records": [
+        41,
+        42
+      ]
+    },
+    {
+      "formulation_id": 372,
+      "raw_records": [
+        372,
+        377
+      ]
+    }
+  ],
+  "preserved_duplicate_reason": "Unit correction makes profiles 2/386 (0.25 M trehalose) and 41/372 (0.2 M sucrose) equal. Keep their baseline target groups separate; merging would change viability targets and is outside this correction."
+}
