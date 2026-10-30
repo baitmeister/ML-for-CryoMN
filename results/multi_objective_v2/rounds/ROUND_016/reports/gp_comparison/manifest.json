@@ -1,0 +1,13 @@
+{
+  "evaluated_at": "2026-10-30T04:49:07.939032+00:00",
+  "frozen_manifest_sha256": "75f1b83ef255a097e42e1de040eb0cbd701d532da3b32dec1cdfb4112d4f271c",
+  "hashes": {
+    "offsets.csv": "9220c559e4f0563262f2be80aba90ab2f5d64059195d3e17c50d002b18730eb9",
+    "predictions.csv": "edc666f202ec725d1effcfcb5fbf462b3970d66233aa2c82dd10f58a9b90a439"
+  },
+  "inputs": {
+    "frozen_manifest_sha256": "75f1b83ef255a097e42e1de040eb0cbd701d532da3b32dec1cdfb4112d4f271c",
+    "target_observations_sha256": "00b0233c0dd4f819bebbaf80a7e0adeefbee553f1f5bc14039dc3fda7bb96589"
+  },
+  "stage": "evaluation"
+}
