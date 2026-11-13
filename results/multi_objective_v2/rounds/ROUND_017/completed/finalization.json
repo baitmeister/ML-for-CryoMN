@@ -1,0 +1,7 @@
+{
+  "completion_attested": true,
+  "replicate_count_policy": "operator attests planned measurements finished; no inferred quota",
+  "unmeasured_outcomes": [],
+  "unmeasured_reason": "",
+  "version": 1
+}
