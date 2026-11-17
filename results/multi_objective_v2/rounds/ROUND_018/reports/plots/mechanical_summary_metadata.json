@@ -1,0 +1,42 @@
+{
+  "style_version": "selected_v1",
+  "context": "State after ROUND_018; terminal force and apparent secant stiffness",
+  "format": "transparent PNG",
+  "dpi": 300,
+  "source_sha256": "762f60bbec2cd38799e9fe79984312f8d38b90358b574f44fc1b50ef19fe81ea",
+  "sources": [
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_018/Group18_1.csv",
+      "sha256": "e2318d965ac00e77b2409bcd1bac1f396b1859d715d082cc008994ac60fd016c"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_018/Group18_5.csv",
+      "sha256": "9d2b2d0567a1267c0475ec1b479e58d8f39b80d0aedd23772318266e54473260"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_018/Group18_2.csv",
+      "sha256": "dd28e8760181914249091f04654449cb6551934d9031704673903f96ffacaf15"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_018/Group18_6.csv",
+      "sha256": "8dd1409ec47585beecbdfcb5d20a0b52a1ef17f0d29ad9bf10be77a45592c4e3"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_018/Group18_3.csv",
+      "sha256": "1f88ec2377364ee3746c350b48183bb788b8b12aa1dec874157564f5ac242f61"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_018/Group18_7.csv",
+      "sha256": "7f3a058bc893dbc570ff00a06c8ec29aa7f01912bac22f57eae911417f330e80"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_018/Group18_4.csv",
+      "sha256": "d84f482b571dfd22022399bfbf8089659770ffe1c23d74e193f951a8ef8497eb"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_018/Group18_8.csv",
+      "sha256": "85d0a284622390e494f7363d521427a3f094cce1dea167241c06bb0d38cee86c"
+    }
+  ],
+  "synthetic_data": false
+}

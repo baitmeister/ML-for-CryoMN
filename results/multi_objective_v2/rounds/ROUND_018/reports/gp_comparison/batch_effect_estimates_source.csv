@@ -1,0 +1,3 @@
+batch_id,offset,sd,controls,ordinary,strategy,stage,target_batch
+ROUND_018,0.9013118881751504,5.873616018722034,0,2,batch,reference_conditioned,ROUND_018
+ROUND_018,-1.6991309395976493,5.215133655489916,1,2,control,reference_conditioned,ROUND_018
