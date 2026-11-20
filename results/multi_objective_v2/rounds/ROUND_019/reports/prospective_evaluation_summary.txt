@@ -1,0 +1,29 @@
+CryoMN v2 Prospective Evaluation
+=================================
+
+Policy version: prospective_evaluation_v2
+Formal prospective cohort starts: ROUND_003
+Prediction source: archived proposal-time means and uncertainties
+Technical replicate handling: continuous endpoints use the mean; the intact-patch gate uses all-pass within formulation and round
+
+Round: ROUND_019
+Provenance classification: formal_frozen
+Formal cohort: yes
+
+- critical_axial_load_N_per_needle: formulations observed=5/12, MAE=0.199
+  95% interval: coverage=1.000; mean width=1.132
+- Intact-patch formation gate: formulations observed=11/12; passed=11; failed=0; Brier=0.082; accuracy=0.818
+- viability_percent: formulations observed=11/12, MAE=12.555
+  95% interval: coverage=0.909; mean width=59.838
+
+Interpretation:
+- Reconstructed and migration-frozen rounds are reported separately from the formal pooled metric.
+- Cross-validation reports retrain models and answer a different question.
+- Missing measurements remain visible as ineligible audit rows; they are not imputed.
+
+Interval scores
+Phase mechanics_enabled. Forecast provenance formal_frozen.
+- Viability proposal (95%) mean score 67.108 percentage points. Coverage 10/11. Mean width 59.838 percentage points. Scored 11/11 eligible cases.
+- Viability future batch (95%) mean score 78.851 percentage points. Coverage 11/11. Mean width 78.851 percentage points. Scored 11/11 eligible cases.
+- Compression proposal (95%) mean score 1.132 N per loaded needle. Coverage 5/5. Mean width 1.132 N per loaded needle. Scored 5/5 eligible cases.
+See tables/interval_scores.csv for widths, counts, and directions of misses.

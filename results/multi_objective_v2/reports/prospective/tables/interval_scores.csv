@@ -17,6 +17,9 @@ round,ROUND_017,critical_axial_load_N_per_needle,terminal_force_08mm_after_1N_v1
 round,ROUND_018,viability_percent,,proposal,0.95,pp,11,11,11,1.0,55.58336022319714,55.58336022319714,0,0
 round,ROUND_018,viability_percent,,future_batch,0.95,pp,11,11,11,1.0,76.74380252134955,76.74380252134955,0,0
 round,ROUND_018,critical_axial_load_N_per_needle,terminal_force_08mm_after_1N_v1,proposal,0.95,N_per_needle,4,4,3,0.75,1.0902406502824558,2.8641814987465715,0,1
-pooled,FULL_MECHANICS,viability_percent,,proposal,0.95,pp,66,66,55,0.8333333333333334,51.29425398238777,143.52902279906849,9,2
-pooled,FULL_MECHANICS,viability_percent,,future_batch,0.95,pp,66,66,59,0.8939393939393939,72.20517468472426,107.50453612618549,7,0
-pooled,FULL_MECHANICS,critical_axial_load_N_per_needle,terminal_force_08mm_after_1N_v1,proposal,0.95,N_per_needle,25,25,23,0.92,1.0919412279222591,1.4727031619132571,0,2
+round,ROUND_019,viability_percent,,proposal,0.95,pp,11,11,10,0.9090909090909091,59.83841305063804,67.10840681961662,0,1
+round,ROUND_019,viability_percent,,future_batch,0.95,pp,11,11,11,1.0,78.85105507840079,78.85105507840079,0,0
+round,ROUND_019,critical_axial_load_N_per_needle,terminal_force_08mm_after_1N_v1,proposal,0.95,N_per_needle,5,5,5,1.0,1.1320987443840127,1.1320987443840127,0,0
+pooled,FULL_MECHANICS,viability_percent,,proposal,0.95,pp,77,77,65,0.8441558441558441,52.514848134994956,132.61179194486107,9,3
+pooled,FULL_MECHANICS,viability_percent,,future_batch,0.95,pp,77,77,70,0.9090909090909091,73.15458616953518,103.41118169078769,7,0
+pooled,FULL_MECHANICS,critical_axial_load_N_per_needle,terminal_force_08mm_after_1N_v1,proposal,0.95,N_per_needle,30,30,28,0.9333333333333333,1.0986341473325514,1.415935758991716,0,2

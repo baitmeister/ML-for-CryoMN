@@ -1,0 +1,101 @@
+CryoMN v2 Best Performers
+=========================
+
+Database snapshot:
+- Formulations tracked: 490
+- Observation rows: 1809
+- Candidate formulations shown: 12
+
+Best observed viability performers:
+- scope: feasible wetlab_feedback campaign formulations only
+- #1 v2_d761a257b9cf | viability 79.3% | source instron_5942_terminal_v1, wetlab_feedback
+  formulation: 147mM ectoin + 1.13M ethylene glycol + 2.75% HSA
+- #2 v2_e7227d9a236d | viability 78.1% | source instron_5942_terminal_v1, wetlab_feedback
+  formulation: 156mM ectoin + 974mM ethylene glycol + 8.45% FBS
+- #3 v2_589019ff3e5a | viability 77.0% | source instron_5942_terminal_v1, wetlab_feedback
+  formulation: 211mM ectoin + 1.65M ethylene glycol + 2.96% HSA
+- #4 v2_3ef7e225c05b | viability 76.0% | source wetlab_feedback
+  formulation: 131mM ectoin + 1.09M ethylene glycol + 3.21% HSA
+- #5 v2_7621db76c38a | viability 74.5% | source instron_5942_terminal_v1, wetlab_feedback
+  formulation: 98.6mM ectoin + 1.28M ethylene glycol + 3.62% HSA
+
+Historical literature-reference viability leaders:
+- #1 legacy_lit_38 | viability 100.0%
+  formulation: 1.13M DMSO
+- #2 legacy_lit_37 | viability 100.0%
+  formulation: 986mM DMSO
+- #3 legacy_lit_306 | viability 99.0%
+  formulation: 0.5mM trehalose
+- #4 legacy_lit_309 | viability 99.0%
+  formulation: 1.41M DMSO + 0.5mM trehalose
+- #5 legacy_lit_1 | viability 96.0%
+  formulation: 1.41M DMSO + 70.3mM ectoin + 300mM ethylene glycol + 1mM taurine
+
+Best observed mechanical performers:
+- scope: feasible wetlab_feedback campaign formulations only
+- #1 v2_e25da9b67825 | critical load 1.359 N/needle | viability 41.7%
+  formulation: 295mM glycerol + 166mM glucose + 19.4mM creatine
+- #2 v2_ef1651db5234 | critical load 1.341 N/needle | viability 46.4%
+  formulation: 265mM glycerol + 115mM glucose + 15.3mM creatine
+- #3 v2_5983eb9be098 | critical load 1.338 N/needle | viability 30.3%
+  formulation: 273mM glycerol + 95.9mM glucose + 24.2mM creatine
+- #4 v2_d76d47b3d308 | critical load 0.998 N/needle | viability 12.0%
+  formulation: 727mM glycerol + 197mM acetamide
+- #5 v2_0ce286c9e9e0 | critical load 0.920 N/needle | viability 18.5%
+  formulation: 415mM glycerol + 148mM acetamide
+
+Balanced multi-objective leaders:
+- scope: feasible wetlab_feedback campaign formulations only
+- #1 v2_d761a257b9cf | viability 79.3% | critical load 0.324 N/needle
+  formulation: 147mM ectoin + 1.13M ethylene glycol + 2.75% HSA
+- #2 v2_7621db76c38a | viability 74.5% | critical load 0.456 N/needle
+  formulation: 98.6mM ectoin + 1.28M ethylene glycol + 3.62% HSA
+- #3 v2_12171dbe9aaa | viability 73.6% | critical load 0.500 N/needle
+  formulation: 91.2mM ectoin + 637mM ethylene glycol + 8.04% FBS
+- #4 v2_0fcc1f381661 | viability 71.3% | critical load 0.580 N/needle
+  formulation: 123mM ectoin + 782mM ethylene glycol + 8.95% FBS
+- #5 v2_73a98ba6a931 | viability 58.9% | critical load 0.824 N/needle
+  formulation: 490mM glycerol + 177mM acetamide
+
+Retest-priority recommendations:
+- v2_88288eae8f28 | predicted viability 25.0% | intact probability 0.98
+  note: retest_priority: reason=single_batch_neighbor_anomaly_confirmation; feedback_batches=1; batch_range=0.0; latest_batch_n=4; latest_batch_sd=1.8; neighbor_residual=41.7; viability_std_diagnostic=9.6; cumulative_intact_failures=0; completed_automatic_retests=0/1
+  formulation: 29.9mM sucrose + 10% FBS
+
+ROUND_019 completed-round candidates:
+- #1 reference_b5a5b7b1176f | viability unknown | intact probability 1.00 | mechanical test False
+  completed result: viability 42.31% (sample SD 6.44, n=4); intact pass
+  formulation: 352mM DMSO + 100mM sucrose
+- #2 v2_12171dbe9aaa | predicted viability 65.1% | intact probability 0.90 | mechanical test True
+  completed result: viability 82.66% (sample SD 2.20, n=4); intact pass
+  formulation: 91.2mM ectoin + 637mM ethylene glycol + 8.04% FBS
+- #3 v2_88288eae8f28 | predicted viability 25.0% | intact probability 0.98 | mechanical test False
+  completed result: viability 35.89% (sample SD 4.13, n=4); intact pass
+  formulation: 29.9mM sucrose + 10% FBS
+- #4 v2_b801eea119d4 | predicted viability 39.9% | intact probability 0.97 | mechanical test True
+  completed result: viability 24.98% (sample SD 2.37, n=4); intact pass
+  formulation: 387mM glycerol + 94.2mM glucose + 24.8mM creatine
+- #5 v2_589019ff3e5a | predicted viability 63.7% | intact probability 0.36 | mechanical test True
+  completed result: viability 77.00% (sample SD 6.23, n=4); intact pass
+  formulation: 211mM ectoin + 1.65M ethylene glycol + 2.96% HSA
+- #6 v2_ced53a796ffa | predicted viability 36.6% | intact probability 0.84 | mechanical test True
+  completed result: viability 39.35% (sample SD 5.05, n=4); intact pass
+  formulation: 888mM glycerol + 359mM acetamide
+- #7 v2_e76190d61298 | predicted viability 40.1% | intact probability 0.97 | mechanical test False
+  completed result: viability 52.42% (sample SD 6.75, n=4); intact pass
+  formulation: 819mM propylene glycol + 300mM raffinose
+- #8 v2_521ed1ce10d9 | predicted viability 43.5% | intact probability 0.98 | mechanical test False
+  completed result: viability 62.90% (sample SD 6.40, n=4); intact pass
+  formulation: 812mM propylene glycol + 242mM raffinose
+- #9 v2_6ac22e8f5e1d | predicted viability 40.3% | intact probability 0.39 | mechanical test False
+  completed result: viability 48.03% (sample SD 3.32, n=4); intact pass
+  formulation: 1.15M glycerol + 169mM acetamide
+- #10 v2_69e025f3f76a | predicted viability 33.5% | intact probability 0.89 | mechanical test False
+  completed result: viability 6.50% (sample SD 1.55, n=4); intact pass
+  formulation: 206mM raffinose + 26.2mM creatine + 0.828% methylcellulose
+- #11 v2_4e6416610157 | predicted viability 38.9% | intact probability 0.73 | mechanical test False
+  completed result: viability 47.13% (sample SD 3.68, n=4); intact pass
+  formulation: 521mM glycerol + 5.4% HSA
+- #12 v2_8a6407ee9b27 | predicted viability 36.2% | intact probability 0.99 | mechanical test False
+  completed result: viability 32.28% (sample SD 2.52, n=4); intact pass
+  formulation: 219mM betaine + 21.2mM creatine

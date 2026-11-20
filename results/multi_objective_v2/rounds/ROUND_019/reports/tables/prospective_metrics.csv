@@ -1,0 +1,4 @@
+mechanical_definition_id,scope,round_id,provenance_class,formal_cohort,endpoint,endpoint_role,n_proposed,n_evaluated,completion_rate,mae,rmse,bias,r2,interval_95_coverage,interval_95_mean_width,interval_95_median_width,brier_score,accuracy
+terminal_force_08mm_after_1N_v1,round,ROUND_019,formal_frozen,True,critical_axial_load_N_per_needle,mechanical_secondary,12,5,0.4166666666666667,0.19915030963900057,0.2439163233984703,0.19048580016017308,-0.16470036109890307,1.0,1.1320987443840127,1.206991715438331,,
+,round,ROUND_019,formal_frozen,True,intact_patch_formation_pass,gate_secondary,12,11,0.9166666666666666,,,,,,,,0.08221086397252263,0.8181818181818182
+,round,ROUND_019,formal_frozen,True,viability_percent,primary,12,11,0.9166666666666666,12.554520878391621,14.261125230179768,-4.2184986794572845,0.5501499948382198,0.9090909090909091,59.83841305063804,57.67994123211335,,

@@ -1,9 +1,9 @@
 {
   "style_version": "selected_v1",
-  "context": "Cumulative campaign; frozen prospective evidence | Recorded GP decisions: ROUND_011: group11-control-informed-user-v1, ROUND_012: group11-control-informed-user-v1, ROUND_013: group11-control-informed-user-v1, ROUND_014: group11-control-informed-user-v1, ROUND_015: group11-control-informed-user-v1, ROUND_016: group11-control-informed-user-v1, ROUND_017: group11-control-informed-user-v1, ROUND_018: group11-control-informed-user-v1",
+  "context": "Cumulative campaign; frozen prospective evidence | Recorded GP decisions: ROUND_011: group11-control-informed-user-v1, ROUND_012: group11-control-informed-user-v1, ROUND_013: group11-control-informed-user-v1, ROUND_014: group11-control-informed-user-v1, ROUND_015: group11-control-informed-user-v1, ROUND_016: group11-control-informed-user-v1, ROUND_017: group11-control-informed-user-v1, ROUND_018: group11-control-informed-user-v1, ROUND_019: group11-control-informed-user-v1",
   "format": "transparent PNG",
   "dpi": 300,
-  "source_sha256": "e98cc91de794e4e149a5af618f3821d5e3aae3f1f8f9145ec0cde09deb58cc9c",
+  "source_sha256": "7edbf1d650979d832036729aa4f00d1ad65aaac9d5bc7dab0d4ccb6c21ecf10e",
   "sources": [],
   "synthetic_data": false
 }

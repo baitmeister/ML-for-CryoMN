@@ -1,0 +1,50 @@
+{
+  "style_version": "selected_v1",
+  "context": "State after ROUND_019; terminal force and apparent secant stiffness",
+  "format": "transparent PNG",
+  "dpi": 300,
+  "source_sha256": "e1b5b511bd3ea9c48694b819155565d94132f11019e6fe4c0eefd87c27988041",
+  "sources": [
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_019/Group19_1.csv",
+      "sha256": "b7c1ca7c7e66ea4ba24b3281d70776a5637a67e1ffc92c7f3e7698d203cacab6"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_019/Group19_6.csv",
+      "sha256": "87046069dc2233fe90bc6ddfebe7361d69497eaef28fb3c7a0f31f3df178eb8d"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_019/Group19_2.csv",
+      "sha256": "53d472f0f0b602c0b73a992e43a41dedc883287652223730fabda3b3fad67f2b"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_019/Group19_7.csv",
+      "sha256": "338b079a7080c7f647c2e1253aa2c330a732358399a11351881db4dcf8c83544"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_019/Group19_3.csv",
+      "sha256": "712c2d05108e7b8ee15f0cd3ed116ba7c7e609186ba71951f65342a0f95acd3c"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_019/Group19_8.csv",
+      "sha256": "c700acc92aa4088ac47bccc2f4b326104b136667adddd86dafdf1cdafac271e1"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_019/Group19_4.csv",
+      "sha256": "fec489c6e9f00e40de6a59f3abf0b89f49e06e4e66585b6d3773d43ae7cc11dc"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_019/Group19_9.csv",
+      "sha256": "014092967d68ef4a3a3ef9edf308700175bb9ff11964d5802e5566d2953f29e0"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_019/Group19_5.csv",
+      "sha256": "98cfcff2bf6c2dca57449e1082240da2b3cb638ae621f4acbd8964f6f743a1a3"
+    },
+    {
+      "path": "/Users/doggonebastard/Antigravity/ML for CryoMN/data/raw/instron/ROUND_019/Group19_10.csv",
+      "sha256": "6f1ab5cccbedc78a52677bd10dcc79fa7088238b72dfce832904783bfac2c1c2"
+    }
+  ],
+  "synthetic_data": false
+}
