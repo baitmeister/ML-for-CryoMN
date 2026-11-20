@@ -8,9 +8,9 @@ All new exports are transparent-background PNGs at 300 dpi, intended for light b
 | `campaign_timeline.png` (B1) | How have tested outcomes, prediction error, interval coverage, and intact success changed? | Round-specific evidence with reconstructed/supplementary/formal provenance and explicit missing-round gaps. Error and coverage use separately labelled scales; crossings do not have scientific meaning. |
 | `surrogate_trust.png` (C3) | How wrong, precise, and reliable were frozen predictions? | Formal eligible frozen predictions only. Pink signed-error violins retain every dot; blue interval widths show reported precision, green calibration shows coverage, and orange symbols show intact outcomes. |
 | `candidate_decisions.png` (D) | Which candidates are proposed, and how are mechanical tests assigned? | Stored selection order, public predictions, empirical combination intact probabilities, primary/backup flags and ranks. Unknown predictions have no numerical position. Full identifiers and ingredient concentrations are in the CSV. |
-| `diagnostics_1.png` | How do cross-validated models perform? | All-data viability/mechanics parity and intact classifier evaluations; the R² trend separately uses cumulative paired cohorts. |
+| `diagnostics_1.png` | How do cross-validated models perform? | Folds group records by formulation. The cumulative R² trend uses the paired viability and mechanics cohort. Open the latest completed round's report for the current snapshot. |
 | `diagnostics_2.png` | How do paired models and observed objective-space progress compare? | Paired-cohort parity; existing normalized hypervolume and IGD relative to the final observed frontier in the report. These are retrospective diagnostics, not proposal-time benchmarks or a known optimum. |
-| `publication_summary.png` (E, optional) | What compact figure summarizes current campaign evidence? | Actual feasible pairs, formal prospective parity and tested batch outcomes. |
+| `publication_summary.png` (E, optional) | What compact figure summarizes current campaign evidence? | Observed feasible pairs and campaign batch outcomes flank the full-mechanics viability parity panel. Each forecast in that panel was frozen before its round. Before full mechanics is available, the panel uses all formally eligible rounds. |
 | `mechanical_trace_formulation_*.png` | Where were the sustained trigger, terminal point and apparent secant extracted on each raw curve? | Recorded trajectory with the fixed trigger-to-+0.8 mm window and source hash. |
 | `mechanical_summary.png` | How do terminal force and apparent secant stiffness compare across tested formulations? | Every replicate, means, sample SD only for `n>=2`, and explicit lost-replicate annotations. |
 
@@ -19,6 +19,10 @@ The diagnostic intact classifier is distinct from the empirical combination prob
 ## Uncertainty and color
 
 Signed error is prediction minus observation. Interval width is the full nominal 95% model interval in percentage points: wider means less precise. Coverage tests whether those intervals actually contain later results. These answer different questions; a wide interval can cover an inaccurate central prediction. Coverage shading uses descriptive Wilson intervals, not a dependence-adjusted guarantee for an adaptive campaign.
+
+Each completed round and the cumulative full-mechanics report write `tables/interval_scores.csv`. The [reporting README](README.md#interval-scoring) explains the scores, the forecast sources and a historical benchmark for each endpoint.
+
+`tables/viability_segments.csv` gives pooled full-mechanics metrics and an exploratory split at 40% measured viability. An absolute error of at most 10 percentage points counts as a hit. The split describes where the model missed after measurements arrived. Each segment's R² uses that segment's observed mean as its reference.
 
 The selected violin renderer uses Scott bandwidth, stops at observed extrema, and falls back to dots/summaries with fewer than five observations or three distinct values. This is a rendering guard, not a statistical adequacy claim. Dark rose marks support the pastel pink fill. Blue circles/solid lines, vermilion squares/dashed lines, and green triangles/dash-dot lines distinguish B's metrics without depending on color alone.
 
@@ -31,7 +35,7 @@ Sources retained from the subsequent visualization revision (not attributed to S
 
 ## Generate and backfill
 
-Normal proposal and completed-round entrypoints generate the selected suite automatically. Existing reporting arguments retain their meanings. The optional publication summary is enabled explicitly:
+Normal proposal and completed-round entrypoints generate the selected suite automatically. Enable the optional publication summary once with the following command. Subsequent campaign reports refresh the existing figure automatically.
 
 ```sh
 python3 src/08_multi_objective/04_report_campaign/report_campaign.py --include-publication-summary

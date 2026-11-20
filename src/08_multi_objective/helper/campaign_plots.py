@@ -10,6 +10,9 @@ import numpy as np
 import pandas as pd
 from .plot_theme import apply_plot_theme
 from .evaluation_metrics import compute_observed_pareto_front
+from .forecast_diagnostics import VIABILITY_TOLERANCE_PP
+from .plot_data import _round_number
+from .terminal_force import DEFINITION as TERMINAL_FORCE_DEFINITION
 
 BLUE, RED, GREEN, GRAY = '#0072B2', '#D55E00', '#009E73', '#666666'
 PINK, PINK_EDGE = '#E8BDD1', '#A64D79'
@@ -239,7 +242,7 @@ def decision_figure(table):
     fig.text(.03,.037,'Hollow diamond = prior-only intact probability (zero effective evidence). Filled circle = empirical evidence available.',fontsize=10,color=GRAY)
     return fig
 
-def publication_figure(timeline, trust, metrics, feasible):
+def publication_figure(timeline, trust, metrics, feasible, *, full_mechanics=False):
     """Restyle the triptych using actual paired evidence, never the A demo."""
     style()
     fig = plt.figure(figsize=(13, 9))
@@ -252,8 +255,9 @@ def publication_figure(timeline, trust, metrics, feasible):
     parity = fig.add_subplot(gs[1, 1])
     progress_head = fig.add_subplot(gs[3, 1])
     progress = fig.add_subplot(gs[4, 1])
-    header(left_head, 'Observed feasible trade-off', note='Requires paired viability, load, and an intact pass')
+    tradeoff_title = 'Observed trade-off among intact patches'
     if feasible.empty:
+        header(left_head, tradeoff_title, note='Requires paired viability and load measurements')
         left.set_axis_off()
         left.text(.06, .70, 'Mechanical evidence pending', transform=left.transAxes,
                   fontsize=16, weight='bold', color=GRAY, va='top')
@@ -268,14 +272,22 @@ def publication_figure(timeline, trust, metrics, feasible):
             group = labelled.loc[labelled.is_pareto.eq(flag)]
             left.scatter(group.viability_percent, group.critical_axial_load_N_per_needle,
                          color=color, marker=marker, label=label)
-        left.set(xlabel='Observed viability (%)', ylabel='Observed critical load (N/needle)')
-        left_head.legend(*left.get_legend_handles_labels(), frameon=False, loc='lower left', bbox_to_anchor=(0, -.2), ncol=2, fontsize=8)
+        definition = feasible.get('mechanical_definition_id', pd.Series(dtype=str)).dropna().unique().tolist()
+        load_label = 'Observed critical load (N/needle)'
+        if definition == [TERMINAL_FORCE_DEFINITION]:
+            load_label = 'Terminal compression resistance\n(nominal N per loaded needle)'
+        left.set(xlabel='Observed viability (%)', ylabel=load_label)
+        handles, _ = left.get_legend_handles_labels()
+        header(left_head, tradeoff_title, handles=handles)
         finish_axis(left)
-    header(parity_head, 'Formal prospective validation', note='Dots: frozen predictions | dashed: perfect prediction')
     viability = trust.loc[trust.panel.eq('viability_prediction')]
+    parity_title = 'Full-mechanics viability forecasts' if full_mechanics else 'Formal prospective viability forecasts'
+    tolerance = VIABILITY_TOLERANCE_PP
+    header(parity_head, parity_title, note=f'Shading marks ±{tolerance:g} percentage points')
     parity.scatter(viability.observed, viability.prediction, color=BLUE, alpha=.65, s=24)
     values = pd.concat([viability.observed, viability.prediction]).dropna()
-    limits = [min(-5, values.min()-5), max(105, values.max()+5)] if len(values) else [-5, 105]
+    limits = np.array([min(-5, values.min()-5), max(105, values.max()+5)] if len(values) else [-5, 105])
+    parity.fill_between(limits, limits - tolerance, limits + tolerance, color=BLUE, alpha=.12, zorder=0)
     parity.plot(limits, limits, ls='--', lw=1, color=GRAY)
     parity.set(xlim=limits, ylim=limits, xlabel='Observed viability (%)', ylabel='Frozen prediction (%)')
     header(progress_head, 'Experimental batch outcomes', handles=[
@@ -286,7 +298,8 @@ def publication_figure(timeline, trust, metrics, feasible):
     intact_round = round_series(timeline, 'intact_pass_proportion', rounds)
     progress.plot(rounds, viability_round.value, color=BLUE, marker='o', lw=1.5)
     progress.set(xlabel='Campaign round', ylabel='Median viability (%)', ylim=(0, 100))
-    progress.set_xticks(rounds, ['R'+str(r) for r in rounds])
+    labelled_rounds = np.linspace(rounds[0], rounds[-1], min(9, len(rounds)), dtype=int)
+    progress.set_xticks(labelled_rounds, [f'R{number}' for number in labelled_rounds])
     rate_axis = progress.twinx()
     rate_axis.plot(rounds, intact_round.value, color=GREEN, marker='s', ls='--', lw=1.5)
     rate_axis.set(ylabel='Intact pass proportion', ylim=(0, 1.05))
@@ -298,8 +311,14 @@ def publication_figure(timeline, trust, metrics, feasible):
     formal = metrics.loc[metrics.scope.eq('pooled_formal') & metrics.endpoint.eq('viability_percent')]
     if len(formal):
         row = formal.iloc[0]
-        fig.text(.08, .93, f'Formal frozen viability | n={int(row.n_evaluated)} | MAE {row.mae:.1f} pp | bias {row.bias:+.1f} pp | 95% coverage {100*row.interval_95_coverage:.1f}%', fontsize=10)
-    fig.text(.08, .066, 'pp = percentage points. Batch medians summarize tested formulations, not standalone optimizer improvement.', fontsize=9, color=GRAY)
+        parity_rounds = viability.round_id.map(_round_number).dropna()
+        scope = 'Frozen viability forecasts'
+        if len(parity_rounds):
+            start, end = int(parity_rounds.min()), int(parity_rounds.max())
+            span = f'Round {start}' if start == end else f'Rounds {start}–{end}'
+            scope = f'Frozen viability forecasts from {span}'
+        fig.text(.08, .93, f'{scope} | n={int(row.n_evaluated)} | R² {row.r2:.2f} | MAE {row.mae:.1f} pp | bias {row.bias:+.1f} pp', fontsize=10)
+    fig.text(.08, .066, 'The dashed parity line marks exact predictions. The batch panel spans the campaign.', fontsize=9, color=GRAY)
     fig.text(.08, .037, 'Outcome panel uses two labelled scales. Curve crossings do not have a scientific interpretation.', fontsize=9, color=GRAY)
     return fig
 
@@ -498,7 +517,6 @@ def _parity(ax,head,frame,title,unit,color):
 
 
 def _round_trend(ax,frame,series,ylabel):
-    from .plot_data import _round_number
     if frame.empty:
         ax.set_axis_off()
         ax.text(.5,.5,'No recoverable paired-round evidence',ha='center',transform=ax.transAxes,color=GRAY)
@@ -520,7 +538,7 @@ def diagnostic_figures(frames, paired_frames, metrics, r2_frame, context='Curren
     from sklearn.metrics import accuracy_score, brier_score_loss
     v='viability_percent';m='critical_axial_load_N_per_needle';g='intact_patch_formation_pass'
     empty=pd.DataFrame()
-    fig,h,a=_diagnostic_axes('Diagnostics 1  Model validation',context+' | Grouped cross-validation; distinct from formal prospective validation')
+    fig,h,a=_diagnostic_axes('Diagnostics 1  Grouped cross-validation',context+' | Folds group records by formulation')
     _parity(a[0],h[0],frames.get(v,empty),'All-data viability CV','viability (%)',BLUE)
     _parity(a[1],h[1],frames.get(m,empty),'All-data mechanics CV','load (N/needle)',RED)
     gate=frames.get(g,empty).reindex(columns=['actual','predicted']).apply(pd.to_numeric,errors='coerce').dropna()
@@ -535,9 +553,9 @@ def diagnostic_figures(frames, paired_frames, metrics, r2_frame, context='Curren
     header(h[2],'Diagnostic intact classifier',note)
     a[2].set(xlim=(-.03,1.03),ylim=(-.3,1.3),xlabel='Cross-validated pass probability')
     a[2].set_yticks([0,1],['Fail ×','Pass ○']);finish_axis(a[2])
-    header(h[3],'Cumulative paired-cohort R²',handles=[line_handle('Viability',BLUE,'o'),line_handle('Mechanics',RED,'s','--')])
-    _round_trend(a[3],r2_frame,[('viability_r2',BLUE,'o','-'),('load_r2',RED,'s','--')],'R² (negative values retained)')
-    fig.text(.09,.055,'Top/classifier panels: endpoint-specific all-data cohorts. R² trend: paired viability/load cohort only.',fontsize=9,color=GRAY)
+    header(h[3],'Cumulative paired-cohort CV R²',handles=[line_handle('Viability',BLUE,'o'),line_handle('Mechanics',RED,'s','--')])
+    _round_trend(a[3],r2_frame,[('viability_r2',BLUE,'o','-'),('load_r2',RED,'s','--')],'R² from grouped CV')
+    fig.text(.09,.055,'Parity and classifier panels use all data for each endpoint. The trend uses only paired viability and load measurements.',fontsize=9,color=GRAY)
     fig2,h,a=_diagnostic_axes('Diagnostics 2  Paired-objective evaluation',context+' | Paired measurements; retrospective comparison reference')
     _parity(a[0],h[0],paired_frames.get(v,empty),'Paired-cohort viability CV','viability (%)',BLUE)
     _parity(a[1],h[1],paired_frames.get(m,empty),'Paired-cohort mechanics CV','load (N/needle)',RED)

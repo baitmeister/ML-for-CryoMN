@@ -19,6 +19,7 @@ from helper import plot_reporting as reports, campaign_plots as plots
 from helper.plot_backfill import restyle_existing, archived_observations, _promote
 from helper.paths import RESULTS_V2_DIR
 from helper.evaluation_metrics import _round_metrics
+from helper.forecast_diagnostics import write_full_mechanics_diagnostics
 
 class V2VisualizationContractTests(unittest.TestCase):
     @classmethod
@@ -66,6 +67,65 @@ class V2VisualizationContractTests(unittest.TestCase):
                 generated=generate_campaign_prospective_artifacts(self.observations,root,include_publication_summary=True)
                 self.assertIn('publication_summary.png',[p.name for p in generated])
 
+            rounds = ['ROUND_008', 'ROUND_018']
+            with patch('helper.prospective_evaluation.build_round_prospective_table',
+                       side_effect=lambda batch_id, *_args, **_kwargs: self.table.loc[self.table.round_id.eq(batch_id)]), \
+                 patch('helper.prospective_evaluation._completed_round_ids', return_value=rounds):
+                generated = generate_campaign_prospective_artifacts(self.observations, root)
+            publication_source = next(path for path in generated if path.name == 'publication_summary_source.csv')
+            source = pd.read_csv(publication_source)
+            parity = source.loc[source.panel.eq('viability_prediction')]
+            expected = self.table.loc[
+                self.table.round_id.eq('ROUND_018') & self.table.endpoint.eq('viability_percent')
+                & self.table.formal_metric_eligible
+            ]
+            self.assertEqual(set(parity.round_id), {'ROUND_018'})
+            self.assertEqual(set(parity.parity_cohort), {'full_mechanics'})
+            np.testing.assert_allclose(parity.prediction, expected.prediction_mean)
+            np.testing.assert_allclose(parity.observed, expected.observed_mean)
+
+    def test_full_mechanics_diagnostics_score_frozen_matches_and_cutoff(self):
+        with tempfile.TemporaryDirectory() as name:
+            root = Path(name)
+            frozen = root / 'rounds/ROUND_013/gp_comparison'
+            frozen.mkdir(parents=True)
+            data = pd.DataFrame([
+                ('ROUND_012', 'f1', 'bootstrap', 'True', 25, 50, 42, 58),
+                ('ROUND_013', 'f1', 'mechanics_enabled', 'True', 38, 48, 40, 56),
+                ('ROUND_013', 'f2', 'mechanics_enabled', 'True', 40, 50, 42, 58),
+                ('ROUND_014', 'f3', 'mechanics_enabled', 'True', 65, 60, 52, 68),
+                ('ROUND_014', 'f4', 'mechanics_enabled', 'False', 0, 100, 90, 110),
+            ], columns=['round_id', 'formulation_id', 'active_phase', 'formal_metric_eligible',
+                        'observed_mean', 'prediction_mean', 'interval_95_lower', 'interval_95_upper'])
+            data['endpoint'] = 'viability_percent'
+            evidence = 'pre_outcome_challenger_after_slate_selection'
+            pd.DataFrame([
+                ('f1', 'control', 'before_batch', 48, 35, 61),
+                ('f1', 'control', 'reference_conditioned', 48, 0, 90),
+                ('f1', 'batch', 'before_batch', 48, 0, 90),
+                ('f2', 'control', 'before_batch', 49, 37, 61),
+            ], columns=['formulation_id', 'strategy', 'stage', 'predicted', 'future_lower', 'future_upper']).assign(
+                batch_id='ROUND_013', evidence=evidence, is_control=False,
+            ).to_csv(frozen / 'predictions.csv', index=False)
+            write_full_mechanics_diagnostics(data, root, root, {'ROUND_013': {'viability_strategy': 'control'}}, .95)
+
+            scores = pd.read_csv(root / 'interval_scores.csv').set_index(['round_id', 'interval_type'])
+            pooled = scores.loc[('FULL_MECHANICS', 'proposal')]
+            self.assertEqual((pooled.n_eligible, pooled.n_scored, pooled.n_covered), (3, 3, 1))
+            self.assertAlmostEqual(pooled.mean_interval_score, (96 + 96 + 16) / 3)
+            future = scores.loc[('FULL_MECHANICS', 'future_batch')]
+            self.assertEqual((future.n_eligible, future.n_scored), (3, 1))
+            self.assertEqual(future.mean_interval_score, 26)
+            self.assertTrue(np.isnan(scores.loc[('ROUND_014', 'future_batch'), 'mean_interval_score']))
+
+            segments = pd.read_csv(root / 'viability_segments.csv').set_index('segment')
+            below = segments.loc['observed_below_cutoff']
+            above = segments.loc['observed_at_or_above_cutoff']
+            self.assertEqual((below.n, below.n_hits, above.n, above.n_hits), (1, 1, 2, 2))
+            self.assertEqual(above.observed_min_percent, 40)
+            self.assertTrue(np.isnan(below.r2))
+            self.assertAlmostEqual(above.r2, 0.6)
+
     def test_completed_entrypoint_uses_prepared_evidence(self):
         with tempfile.TemporaryDirectory() as name:
             inputs=({}, {}, pd.DataFrame(), pd.DataFrame())
@@ -107,6 +167,7 @@ class V2VisualizationContractTests(unittest.TestCase):
         for fig in figs:fig.canvas.draw()
         pd.testing.assert_frame_equal(metrics,before)
         trend=[ax for ax in figs[0].axes if ax.get_ylabel().startswith('R²')][0]
+        self.assertEqual(trend.get_ylabel(), 'R² from grouped CV')
         self.assertLess(trend.get_ylim()[0],-3)
         self.assertTrue(np.isnan(trend.lines[0].get_ydata()[1]))
         source=reports.diagnostic_source(frames,frames,metrics,r2)

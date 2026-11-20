@@ -20,3 +20,10 @@ Interpretation:
 - Reconstructed and migration-frozen rounds are reported separately from the formal pooled metric.
 - Cross-validation reports retrain models and answer a different question.
 - Missing measurements remain visible as ineligible audit rows; they are not imputed.
+
+Interval scores
+Phase mechanics_enabled. Forecast provenance formal_frozen.
+- Viability proposal (95%) mean score 55.583 percentage points. Coverage 11/11. Mean width 55.583 percentage points. Scored 11/11 eligible cases.
+- Viability future batch (95%) mean score 76.744 percentage points. Coverage 11/11. Mean width 76.744 percentage points. Scored 11/11 eligible cases.
+- Compression proposal (95%) mean score 2.864 N per loaded needle. Coverage 3/4. Mean width 1.090 N per loaded needle. Scored 4/4 eligible cases.
+See tables/interval_scores.csv for widths, counts, and directions of misses.

@@ -103,7 +103,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--skip-review",
         action="store_true",
-        help="Skip post-ingestion round reports (advanced/debug use only).",
+        help="Skip post-ingestion reports and interval scoring (advanced/debug use only).",
     )
     parser.add_argument("--gp-strategy-decision", default=None, help="Recorded strategy JSON passed to next proposal generation.")
     parser.add_argument("--skip-generate", action="store_true", help="Skip Stage 02 candidate generation.")
@@ -518,6 +518,9 @@ def _run_locked(args):
                 f"Generated {len(round_prospective_paths)} round prospective "
                 f"evaluation file(s): {round_paths.reports_dir.resolve()}"
             )
+            for path in round_prospective_paths:
+                if path.name == "interval_scores.csv":
+                    print(f"Round interval scores saved to {path.resolve()}")
             campaign_prospective_paths = generate_campaign_prospective_artifacts(
                 observations,
                 results_root=results_root,

@@ -12,6 +12,7 @@ from .evaluation_metrics import (
     _round_metrics, _cross_validated_predictions, endpoint_r2_history,
     summarize_prospective_metrics,
 )
+from .forecast_diagnostics import VIABILITY, full_mechanics_forecasts
 from .registry import load_registry
 
 ENDPOINTS=['viability_percent','critical_axial_load_N_per_needle','intact_patch_formation_pass']
@@ -109,6 +110,14 @@ def write_diagnostics(inputs,directory,prefix='',context='Current evidence'):
     return generated
 
 
+def read_strategy_decisions(results_root):
+    """Read the archived production strategy for each round with a decision."""
+    return {
+        path.parents[1].name: json.loads(path.read_text())
+        for path in Path(results_root).glob('rounds/*/proposal/gp_strategy_decision.json')
+    }
+
+
 def write_prospective(observations,table,metrics,candidates,directory,context,
                       include_publication_summary=False,formulations=None,strategy_decisions=None):
     timeline=timeline_table(observations,table,metrics,candidates)
@@ -118,8 +127,11 @@ def write_prospective(observations,table,metrics,candidates,directory,context,
     trust=trust_table(table)
     trust['production_strategy']=trust.round_id.map(lambda r: decisions.get(r, {}).get('viability_strategy', 'current'))
     trust['interval_type']='stored official prediction interval; not reconstructed future-batch uncertainty'
-    if decisions:
-        context += ' | Recorded GP decisions: ' + ', '.join(f"{r}: {d['decision_id']}" for r,d in sorted(decisions.items()))
+    displayed = timeline.loc[timeline.strategy_decision_id.ne('historical_current'), ['round_id', 'strategy_decision_id']].drop_duplicates()
+    if not displayed.empty:
+        context += ' | Recorded GP decisions: ' + ', '.join(
+            f'{row.round_id}: {row.strategy_decision_id}' for row in displayed.itertuples(index=False)
+        )
     # A per-round metrics archive has no pooled row. Summarize only its frozen cohort.
     display_metrics=metrics
     if 'pooled_formal' not in metrics.get('scope',pd.Series(dtype=str)).values:
@@ -129,11 +141,22 @@ def write_prospective(observations,table,metrics,candidates,directory,context,
              ('surrogate_trust',plots.trust_figure(trust,display_metrics,mechanics),trust)]
     if include_publication_summary:
         feasible,_=build_feasible_paired_objectives(formulations if formulations is not None else pd.DataFrame(),observations)
-        source=pd.concat([timeline.assign(section='timeline'),trust.assign(section='trust'),feasible.assign(section='feasible')],ignore_index=True)
-        figures.append(('publication_summary',plots.publication_figure(timeline,trust,display_metrics,feasible),source))
+        full_mechanics = full_mechanics_forecasts(table)
+        use_full_mechanics = not full_mechanics.empty and full_mechanics['endpoint'].eq(VIABILITY).any()
+        parity_trust = trust_table(full_mechanics) if use_full_mechanics else trust
+        parity = parity_trust.loc[parity_trust.panel.eq('viability_prediction')].copy()
+        parity['parity_cohort'] = 'full_mechanics' if use_full_mechanics else 'all_formal'
+        parity['production_strategy'] = parity.round_id.map(lambda r: decisions.get(r, {}).get('viability_strategy', 'current'))
+        parity_metrics = summarize_prospective_metrics(full_mechanics) if use_full_mechanics else display_metrics
+        source = pd.concat([
+            timeline.assign(section='timeline'), parity.assign(section='trust'), feasible.assign(section='feasible'),
+        ], ignore_index=True)
+        figure = plots.publication_figure(timeline, parity, parity_metrics, feasible, full_mechanics=use_full_mechanics)
+        figures.append(('publication_summary', figure, source))
     generated=[]
     for stem,fig,source in figures:
-        fig.text(.5,.008,context,ha='center',fontsize=8,color=plots.GRAY)
+        if stem != 'publication_summary':
+            fig.text(.5,.008,context,ha='center',fontsize=8,color=plots.GRAY)
         generated+=write_plot(fig,source,directory,stem,context)
     return generated
 

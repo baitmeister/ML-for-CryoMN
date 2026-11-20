@@ -1,0 +1,4 @@
+scope,round_id,endpoint,mechanical_definition_id,interval_type,nominal_coverage,unit,n_eligible,n_scored,n_covered,coverage,mean_width,mean_interval_score,missed_below,missed_above,provenance_class,active_phase
+round,ROUND_017,viability_percent,,proposal,0.95,pp,11,11,10,0.9090909090909091,52.15433023050794,104.2967990889768,1,0,formal_frozen,mechanics_enabled
+round,ROUND_017,viability_percent,,future_batch,0.95,pp,11,11,10,0.9090909090909091,74.09256969743171,90.90014489006893,1,0,formal_frozen,mechanics_enabled
+round,ROUND_017,critical_axial_load_N_per_needle,terminal_force_08mm_after_1N_v1,proposal,0.95,N_per_needle,4,4,4,1.0,1.0010541866287677,1.0010541866287677,0,0,formal_frozen,mechanics_enabled

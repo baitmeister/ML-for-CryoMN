@@ -7,7 +7,7 @@ import shutil
 import tempfile
 import pandas as pd
 from PIL import Image
-from .plot_reporting import (write_decision, write_pareto, write_diagnostics,
+from .plot_reporting import (read_strategy_decisions, write_decision, write_pareto, write_diagnostics,
                              write_prospective, diagnostic_inputs, ENDPOINTS)
 
 REPLACED = {
@@ -22,7 +22,7 @@ REPLACED = {
 
 def archived_observations(table):
     """Use the archived formulation-round aggregate, not today's canonical measurements."""
-    cols=['formulation_id','round_id','endpoint','observed_mean']
+    cols=['formulation_id','round_id','endpoint','observed_mean','mechanical_definition_id']
     frame=table.reindex(columns=cols).dropna(subset=['observed_mean']).drop_duplicates()
     if frame.duplicated(['formulation_id','round_id','endpoint']).any():
         raise ValueError('Conflicting archived observation aggregates')
@@ -61,6 +61,7 @@ def _promote(stage,destination,generated):
 
 def restyle_existing(results_root,include_publication_summary=False,round_id=None):
     root=Path(results_root)
+    decisions=read_strategy_decisions(root)
     records=[]
     def render(destination,render_fn,sources):
         try:
@@ -92,7 +93,7 @@ def restyle_existing(results_root,include_publication_summary=False,round_id=Non
                 records.append({'destination':str(report.relative_to(root)),'status':'skipped','reason':'Prospective archive does not contain exactly its declared round.'})
                 continue
             observed=archived_observations(table)
-            render(report/'plots',lambda dest:write_prospective(observed,table,metrics,pd.DataFrame(),dest,directory.name+' only; archived frozen evidence'),[source,metric])
+            render(report/'plots',lambda dest:write_prospective(observed,table,metrics,pd.DataFrame(),dest,directory.name+' only; archived frozen evidence',strategy_decisions=decisions),[source,metric])
             # Trade-off is explicitly single-round evidence; no inference about older/literature data.
             render(report/'plots',lambda dest:write_pareto(pd.DataFrame(),observed,pd.DataFrame(),dest,context=directory.name+' only; archived observations'),[source])
         else:records.append({'destination':str(report.relative_to(root)),'status':'skipped','reason':'No stored prospective table and metrics; historical reports preserved.'})
@@ -130,7 +131,8 @@ def restyle_existing(results_root,include_publication_summary=False,round_id=Non
             proposal=root/'next_round/next_round_candidates.csv'
             candidates=pd.read_csv(proposal) if proposal.exists() else pd.DataFrame()
             sources=[source,metric]+([proposal] if proposal.exists() else [])
-            render(report/'plots',lambda dest:write_prospective(observed,table,metrics,candidates,dest,'Cumulative campaign; archived frozen evidence',include_publication_summary),sources)
+            refresh_publication = include_publication_summary or (report/'plots/publication_summary.png').is_file()
+            render(report/'plots',lambda dest:write_prospective(observed,table,metrics,candidates,dest,'Cumulative campaign; archived frozen evidence',refresh_publication,strategy_decisions=decisions),sources)
             render(root/'reports/plots',lambda dest:write_pareto(pd.DataFrame(),observed,candidates,dest,context='Cumulative campaign; archived observations and current proposal'),sources)
     # New index, rather than rewriting scientific summaries or their historical provenance.
     for directory in {root/record['destination'] for record in records if record['status']=='refreshed'}:

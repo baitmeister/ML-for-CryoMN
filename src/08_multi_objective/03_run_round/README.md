@@ -213,7 +213,7 @@ Stage 03 performs these operations in order:
 5. archive the exact worksheet bytes as `completed/completed.csv`;
 6. freeze `completed/mechanical_execution_manifest.json`;
 7. generate replicate-aggregated descriptive, formulation-grouped
-   cross-validation, and frozen-proposal prospective reports;
+   cross-validation, and frozen-proposal prospective reports with interval scores;
 8. refresh cumulative prospective reports;
 9. run Stage 02 for the following proposal unless `--skip-generate` is set.
 
@@ -259,6 +259,7 @@ results/multi_objective_v2/rounds/ROUND_###/
     ├── best_performers_summary.txt
     ├── prospective_evaluation_summary.txt
     ├── tables/
+    │   └── interval_scores.csv
     └── plots/
 ```
 
@@ -267,6 +268,11 @@ replicate plus a formulation summary for terminal force and apparent secant
 stiffness. Each transparent 300 dpi PNG has a source CSV and hash-bearing
 metadata JSON. Sample SD is shown only for formulations with at least two
 recorded replicates; missing specimens are never imputed.
+
+Open `prospective_evaluation_summary.txt` for the round's mean interval scores,
+coverage, and widths. The accompanying CSV also records forecast provenance, the
+number of scored cases, and the direction of misses. See the calculation and
+campaign benchmarks in the [reporting README](../04_report_campaign/README.md#interval-scoring).
 
 `completed.csv` is the exact ingested worksheet. Proposal-time prospective
 reports read frozen predictions and do not retrain. Model-evaluation reports

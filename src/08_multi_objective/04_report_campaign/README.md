@@ -60,6 +60,78 @@ During a normal experimental iteration, do not call this script separately.
 Stage 03 generates the completed round report and cumulative report before it
 creates the next proposal. Use this CLI only to refresh or backfill reports.
 
+## Interval scoring
+
+Each completed round has `reports/tables/interval_scores.csv` and an Interval
+scores section in `reports/prospective_evaluation_summary.txt`. The round report
+includes eligible cases for that phase and records forecast provenance. Rounds 1
+and 2 carry their reconstructed and supplementary labels. The cumulative
+`reports/prospective/tables/interval_scores.csv` pools eligible formal
+full-mechanics cases, with one score per formulation and round. Its round-level
+rows show how much the score varies across batches.
+
+For a prediction interval with bounds `L` and `U` and measured value `y`, the
+nominal 95% interval score is
+
+```text
+(U − L) + 40 × (max(L − y, 0) + max(y − U, 0))
+```
+
+Lower is better. A covered result costs the full interval width. A miss adds
+40 times the distance to the nearest bound. For example, a viability interval
+of 40–60% scores 20 percentage points if the result is 55%. It scores 220
+percentage points if the result is 65%. This is the score in equation 43 of
+Section 6.2. [Gneiting and Raftery (2007), *Journal of the American Statistical Association*, 102(477), 359–378](https://sites.stat.washington.edu/raftery/Research/PDF/Gneiting2007jasa.pdf)
+
+Viability scores use percentage points. Compression scores evaluate the interval
+for terminal compression resistance in nominal N per loaded needle. For
+example, an interval of 0.40–0.80 N per loaded needle scores 2.40 when the
+measured value is 0.85. The width is 0.40 and the miss adds 2.00.
+
+`proposal` uses the archived proposal bounds as reported. Some viability bounds
+extend outside 0–100%, and the score can exceed 100 percentage points.
+`future_batch` uses the archived pre-measurement viability band for the
+production strategy, matched to the proposal point forecast. `n_eligible`
+counts evaluable forecast and measurement pairs. `n_scored` counts pairs with
+usable bounds. Blank scores indicate unavailable intervals. Compare interval
+scores at the same nominal level, for the same endpoint and protocol, on the
+same cases. Read mean width and coverage alongside the score.
+[Gneiting, Balabdaoui, and Raftery (2007) on calibration and sharpness](https://doi.org/10.1111/j.1467-9868.2007.00587.x)
+
+### Benchmarks through Round 18
+
+To put the scores on the campaign's scale, use a recipe-independent historical
+band. For each target round, take the 2.5th and 97.5th percentiles of earlier
+non-control campaign formulation–round means, using the same terminal-force
+protocol for compression. Score that band on the same formulations as the
+model. These descriptive benchmarks use Rounds 13–18 as targets and are
+specific to this cohort.
+
+| Nominal 95% interval | Pooled score | Coverage | Mean width |
+|---|---:|---:|---:|
+| Viability historical band | 93.8 pp | 57/66 | 69.5 pp |
+| Viability proposal | 143.5 pp | 55/66 | 51.3 pp |
+| Viability future batch | 107.5 pp | 59/66 | 72.2 pp |
+| Compression historical band | 1.476 N per loaded needle | 24/25 | 1.223 N per loaded needle |
+| Compression proposal | 1.473 N per loaded needle | 23/25 | 1.092 N per loaded needle |
+
+A good result improves on the historical score while keeping coverage close to
+the target and the interval narrow enough to inform a decision. The viability
+future-batch band improves on the proposal band. The historical band still has
+the lowest viability score. The two compression scores are practically tied on
+25 cases. Use the pooled comparison to judge improvement and the round rows to
+investigate individual misses.
+
+## Interim monitoring and final figures
+
+Use the automatic round reports during discovery to catch systematic misses.
+Once the discovery dataset is locked, generate the final publication tables and
+figures from the archived forecasts and completed measurements. Timing of
+forecast freezing determines whether an evaluation is prospective. The
+40%-measured-viability split was chosen after inspecting the Round 13–18 parity
+plot. Keep the split and ±10 pp tolerance fixed when checking later discovery
+rounds. Report the separate Pareto confirmation as its own validation result.
+
 ## Selected plotting suite
 
 See [plotting documentation](PLOTTING.md) for A/B1/C3/D, the two diagnostic sheets, optional E, transparent PNG exports, and safe rendering-only backfill.

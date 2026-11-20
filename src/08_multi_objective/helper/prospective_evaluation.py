@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import math
 import os
 from pathlib import Path
@@ -55,7 +54,9 @@ from .evaluation_metrics import (
     summarize_prospective_metrics,
 )
 
-from .plot_reporting import write_prospective
+from .plot_reporting import read_strategy_decisions, write_prospective
+from .forecast_diagnostics import VIABILITY, round_interval_scores, write_full_mechanics_diagnostics
+from .terminal_force import MODEL_FIELD
 
 
 PAGE_BG = "#f7f2e8"
@@ -169,6 +170,33 @@ def _format_metric(value: object, digits: int = 3) -> str:
     if parsed is None or not math.isfinite(parsed):
         return "n/a"
     return f"{parsed:.{digits}f}"
+
+
+def round_interval_summary(scores: pd.DataFrame) -> str:
+    """Format the same interval evidence as the single-round CSV."""
+    lines = ["Interval scores"]
+    if not scores.empty:
+        case = scores.iloc[0]
+        lines.append(f"Phase {case.active_phase}. Forecast provenance {case.provenance_class}.")
+    for row in scores.itertuples(index=False):
+        endpoint = "Viability" if row.endpoint == VIABILITY else "Compression"
+        unit = "percentage points" if row.endpoint == VIABILITY else "N per loaded needle"
+        interval = row.interval_type.replace("_", " ")
+        label = f"{endpoint} {interval} ({row.nominal_coverage:.0%})"
+        counted = f"Scored {row.n_scored}/{row.n_eligible} eligible cases."
+        if row.n_scored:
+            lines.append(
+                f"- {label} mean score {_format_metric(row.mean_interval_score)} {unit}. "
+                f"Coverage {row.n_covered}/{row.n_scored}. Mean width {_format_metric(row.mean_width)} {unit}. "
+                f"{counted}"
+            )
+        else:
+            lines.append(f"- {label} score unavailable. {counted}")
+    for endpoint, label in [(VIABILITY, "Viability"), (MODEL_FIELD, "Compression")]:
+        if not scores["endpoint"].eq(endpoint).any():
+            lines.append(f"- {label} score unavailable. No eligible forecast and measurement pairs.")
+    lines.append("See tables/interval_scores.csv for widths, counts, and directions of misses.")
+    return "\n".join(lines) + "\n"
 
 
 def _summary_text(
@@ -304,6 +332,9 @@ def generate_round_prospective_artifacts(
         evaluation_config=evaluation_config,
     )
     metrics = summarize_prospective_metrics(table)
+    strategy_decisions = read_strategy_decisions(results_root)
+    confidence = float(evaluation_config.get("prediction_interval", {}).get("confidence", 0.95))
+    interval_scores = round_interval_scores(table, results_root, strategy_decisions, confidence)
     with tempfile.TemporaryDirectory(
         prefix=f".{batch_id}_prospective_",
         dir=reports_dir.parent,
@@ -312,16 +343,18 @@ def generate_round_prospective_artifacts(
         (staging / "tables").mkdir(parents=True)
         (staging / "plots").mkdir(parents=True)
         table.to_csv(staging / "tables" / "prospective_evaluation_table.csv", index=False)
+        interval_scores.to_csv(staging / "tables" / "interval_scores.csv", index=False)
         metrics[metrics["scope"].astype(str) == "round"].to_csv(
             staging / "tables" / "prospective_metrics.csv",
             index=False,
         )
         (staging / "prospective_evaluation_summary.txt").write_text(
-            _summary_text(table, metrics, evaluation_config, campaign=False),
+            _summary_text(table, metrics, evaluation_config, campaign=False)
+            + "\n" + round_interval_summary(interval_scores),
             encoding="utf-8",
         )
         round_observations=observations.loc[observations.batch_id.astype(str).eq(batch_id)]
-        write_prospective(round_observations,table,metrics,pd.DataFrame(),staging/'plots',f'{batch_id} only; frozen prospective evidence',strategy_decisions=_strategy_decisions(results_root))
+        write_prospective(round_observations,table,metrics,pd.DataFrame(),staging/'plots',f'{batch_id} only; frozen prospective evidence',strategy_decisions=strategy_decisions)
         from .group10_reporting import additional_reports
         additional_reports(observations, table, results_root, staging / "tables")
         return _promote_tree(staging, reports_dir)
@@ -339,11 +372,6 @@ def _completed_round_ids(results_root: Path) -> list[str]:
     return sorted(round_ids, key=_round_sort_key)
 
 
-def _strategy_decisions(results_root):
-    import json
-    return {p.parents[1].name:json.loads(p.read_text()) for p in Path(results_root).glob('rounds/*/proposal/gp_strategy_decision.json')}
-
-
 def generate_campaign_prospective_artifacts(
     observations: pd.DataFrame,
     results_root: str | Path = RESULTS_V2_DIR,
@@ -355,6 +383,8 @@ def generate_campaign_prospective_artifacts(
     results_root = Path(results_root)
     output_dir = results_root / "reports" / "prospective"
     output_dir.parent.mkdir(parents=True, exist_ok=True)
+    refresh_publication = include_publication_summary or (output_dir / "plots/publication_summary.png").is_file()
+    strategy_decisions = read_strategy_decisions(results_root)
     tables = [
         build_round_prospective_table(
             batch_id,
@@ -383,8 +413,12 @@ def generate_campaign_prospective_artifacts(
             _summary_text(table, metrics, evaluation_config, campaign=True),
             encoding="utf-8",
         )
+        write_full_mechanics_diagnostics(
+            table, staging / "tables", results_root, strategy_decisions,
+            confidence=float(evaluation_config.get("prediction_interval", {}).get("confidence", 0.95)),
+        )
         write_prospective(observations,table,metrics,pd.DataFrame(),staging/'plots','Cumulative campaign; frozen prospective evidence',
-                          include_publication_summary=include_publication_summary,strategy_decisions=_strategy_decisions(results_root))
+                          include_publication_summary=refresh_publication,strategy_decisions=strategy_decisions)
         from .group10_reporting import additional_reports
         additional_reports(observations, table, results_root, staging / "tables")
         return _promote_tree(staging, output_dir)

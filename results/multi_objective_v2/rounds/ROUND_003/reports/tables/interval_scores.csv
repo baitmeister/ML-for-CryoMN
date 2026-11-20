@@ -1,0 +1,3 @@
+scope,round_id,endpoint,mechanical_definition_id,interval_type,nominal_coverage,unit,n_eligible,n_scored,n_covered,coverage,mean_width,mean_interval_score,missed_below,missed_above,provenance_class,active_phase
+round,ROUND_003,viability_percent,,proposal,0.95,pp,12,12,11,0.9166666666666666,77.03061184755326,88.01704345460821,0,1,formal_frozen,screening_only
+round,ROUND_003,viability_percent,,future_batch,0.95,pp,12,0,0,,,,0,0,formal_frozen,screening_only

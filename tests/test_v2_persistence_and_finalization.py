@@ -374,6 +374,31 @@ def test_retry_after_report_failure_skips_ingest_without_duplicate_rows(tmp_path
         run('--skip-review')
 
 
+def test_round_update_writes_interval_scores(tmp_path, round_case):
+    module, sheet, working, _, run = round_case
+    sheet['predicted_viability_percent'] = [50, 70]
+    sheet['viability_std'] = 5
+    round_dir = tmp_path / 'results/rounds/ROUND_001'
+    sheet.to_csv(round_dir / 'proposal/proposal.csv', index=False)
+    sheet['viability_percent'] = [55, 65]
+    sheet['intact_patch_formation_pass'] = [0, 0]
+    sheet.to_csv(working, index=False)
+
+    with patch.object(module, 'generate_completed_round_artifacts', return_value=[]):
+        run('--finalize')
+
+    report = round_dir / 'reports'
+    scores = pd.read_csv(report / 'tables/interval_scores.csv').set_index('interval_type')
+    proposal = scores.loc['proposal']
+    assert (proposal.scope, proposal.round_id, proposal.provenance_class) == ('round', 'ROUND_001', 'reconstructed')
+    assert (proposal.n_eligible, proposal.n_scored, proposal.n_covered) == (2, 2, 2)
+    assert proposal.mean_interval_score == pytest.approx(19.6)
+    assert scores.loc['future_batch', 'n_scored'] == 0
+    summary = (report / 'prospective_evaluation_summary.txt').read_text()
+    assert 'Viability proposal (95%) mean score 19.600 percentage points' in summary
+    assert 'Compression score unavailable' in summary
+
+
 @pytest.fixture
 def selection_case(tmp_path):
     from helper.candidate_workflow import CandidateSelectionOptions
