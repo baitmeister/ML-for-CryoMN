@@ -1,0 +1,27 @@
+{
+  "round": "ROUND_020",
+  "packet_sha256": "19018039cab96c358b3001d9044e627658ee01b02756928aef9646a119956881",
+  "status": "accepted",
+  "provenance": "Two Codex agents received a human-readable summary of the as-of-R19 evidence. The scientist supplied the first response and an independent critic supplied the second. The packet digest binds playback to the corresponding structured evidence.",
+  "exchanges": [
+    {
+      "role": "scientist",
+      "response": {
+        "decision": "keep_default",
+        "question": "On fresh preparations from a new cell batch, do both recipes form, and does the ectoin repeat match or exceed the screened hit on viability (%) and terminal force (N/loaded needle)?",
+        "alternative": "Releasing the slot tests another optimizer choice. The ectoin result could reflect batch variation.",
+        "if_supported": "Keep the ectoin recipe as the comparator for the next round.",
+        "if_refuted": "Prioritize the hit if it matches or exceeds ectoin on both endpoints and leads on one. Retain both if each leads on one. Record failed formation for that attempt. Missing force leaves the joint comparison open.",
+        "rationale": "Ectoin viability rose from 64.63% to 82.66%, but its two force readings were 0.316 and 0.684 N/needle. Record preparation and cell-batch IDs. Missing provenance leaves independence unverified.",
+        "reference_ids": ["pair_screened_hit", "repeat_frontier"]
+      }
+    },
+    {
+      "role": "critic",
+      "response": {
+        "verdict": "accept",
+        "reason": "Testing both formulations from the same new cell batch allows a direct comparison if each passes formation and has both endpoints measured. Keeping the repeat uses one slot to resolve uncertainty in the R19 force estimate. Record preparation and cell-batch IDs and both force readings. Any observed dominance applies to this batch. The missing R19 identifiers limit verification of independence, and no margin defines reproducibility or application success."
+      }
+    }
+  ]
+}
